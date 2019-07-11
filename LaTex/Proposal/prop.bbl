@@ -1,0 +1,251 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.0 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\datalist[entry]{anyt/global//global/global}
+  \entry{7178338}{inproceedings}{}
+    \name{author}{3}{}{%
+      {{hash=CA}{%
+         family={{Chiş}},
+         familyi={C\bibinitperiod},
+         given={A.},
+         giveni={A\bibinitperiod},
+      }}%
+      {{hash=LJ}{%
+         family={{Lundén}},
+         familyi={L\bibinitperiod},
+         given={J.},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=KV}{%
+         family={{Koivunen}},
+         familyi={K\bibinitperiod},
+         given={V.},
+         giveni={V\bibinitperiod},
+      }}%
+    }
+    \keyw{battery powered vehicles;demand side management;economic
+  forecasting;iterative methods;learning (artificial intelligence);Markov
+  processes;optimisation;power engineering computing;power
+  markets;pricing;scheduling;secondary cells;smart power grids;plug-in electric
+  vehicle;PEV battery charging scheduling problem;PEV battery charging
+  optimization;smart grid demand side management;Markov decision process;cost
+  reduction;unknown transition probability;fitted Q-iteration batch
+  reinforcement learning algorithm;kernel-based approximation;day-ahead
+  electricity price forecasting;Batteries;Kernel;Pricing;Electric
+  vehicles;Learning (artificial intelligence);Approximation
+  algorithms;Approximation methods;Plug-in electric vehicles;smart
+  charging;cost reduction;demand side management;reinforcement learning}
+    \strng{namehash}{CALJKV1}
+    \strng{fullhash}{CALJKV1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{CLK15}
+    \field{sortinit}{C}
+    \field{sortinithash}{C}
+    \field{booktitle}{2015 IEEE International Conference on Acoustics, Speech
+  and Signal Processing (ICASSP)}
+    \verb{doi}
+    \verb 10.1109/ICASSP.2015.7178338
+    \endverb
+    \field{issn}{1520-6149}
+    \field{pages}{2086\bibrangedash 2089}
+    \field{title}{Optimization of plug-in electric vehicle charging with
+  forecasted price}
+    \field{year}{2015}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{7401112}{article}{}
+    \name{author}{6}{}{%
+      {{hash=RF}{%
+         family={{Ruelens}},
+         familyi={R\bibinitperiod},
+         given={F.},
+         giveni={F\bibinitperiod},
+      }}%
+      {{hash=CBJ}{%
+         family={{Claessens}},
+         familyi={C\bibinitperiod},
+         given={B.\bibnamedelima J.},
+         giveni={B\bibinitperiod\bibinitdelim J\bibinitperiod},
+      }}%
+      {{hash=VS}{%
+         family={{Vandael}},
+         familyi={V\bibinitperiod},
+         given={S.},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=DB}{%
+         family={{De Schutter}},
+         familyi={D\bibinitperiod},
+         given={B.},
+         giveni={B\bibinitperiod},
+      }}%
+      {{hash=BR}{%
+         family={{Babuška}},
+         familyi={B\bibinitperiod},
+         given={R.},
+         giveni={R\bibinitperiod},
+      }}%
+      {{hash=BR}{%
+         family={{Belmans}},
+         familyi={B\bibinitperiod},
+         given={R.},
+         giveni={R\bibinitperiod},
+      }}%
+    }
+    \keyw{demand side management;heat pumps;learning (artificial
+  intelligence);Monte Carlo methods;power engineering computing;power
+  markets;residential demand response;thermostatically controlled loads;batch
+  reinforcement learning;model-based approaches;batch RL techniques;system
+  identification step;fitted Q-iteration;policy adjustment method;open-loop
+  schedule;day-ahead market;model-free Monte Carlo method;state-action value
+  function;Q-function;day-ahead schedule;heat-pump thermostat;Load
+  management;Water heating;Resistance heating;Atmospheric modeling;Load
+  modeling;Feature extraction;Learning (artificial intelligence);Batch
+  reinforcement learning;demand response;electric water heater;fitted
+  Q-iteration;heat pump}
+    \strng{namehash}{RF+1}
+    \strng{fullhash}{RFCBJVSDBBRBR1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{{Rue}+17}
+    \field{sortinit}{R}
+    \field{sortinithash}{R}
+    \verb{doi}
+    \verb 10.1109/TSG.2016.2517211
+    \endverb
+    \field{issn}{1949-3053}
+    \field{number}{5}
+    \field{pages}{2149\bibrangedash 2159}
+    \field{title}{Residential Demand Response of Thermostatically Controlled
+  Loads Using Batch Reinforcement Learning}
+    \field{volume}{8}
+    \field{journaltitle}{IEEE Transactions on Smart Grid}
+    \field{year}{2017}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{8727484}{article}{}
+    \name{author}{3}{}{%
+      {{hash=SN}{%
+         family={{Sadeghianpourhamami}},
+         familyi={S\bibinitperiod},
+         given={N.},
+         giveni={N\bibinitperiod},
+      }}%
+      {{hash=DJ}{%
+         family={{Deleu}},
+         familyi={D\bibinitperiod},
+         given={J.},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=DC}{%
+         family={{Develder}},
+         familyi={D\bibinitperiod},
+         given={C.},
+         giveni={C\bibinitperiod},
+      }}%
+    }
+    \keyw{Load modeling;Electric vehicle charging;Aggregates;Charging
+  stations;Reinforcement learning;Markov processes;Data models;demand
+  response;electric vehicles;batch reinforcement learning.}
+    \strng{namehash}{SNDJDC1}
+    \strng{fullhash}{SNDJDC1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{SDD19}
+    \field{sortinit}{S}
+    \field{sortinithash}{S}
+    \verb{doi}
+    \verb 10.1109/TSG.2019.2920320
+    \endverb
+    \field{issn}{1949-3053}
+    \field{pages}{1\bibrangedash 1}
+    \field{title}{Definition and evaluation of model-free coordination of
+  electrical vehicle charging with reinforcement learning}
+    \field{journaltitle}{IEEE Transactions on Smart Grid}
+    \field{year}{2019}
+  \endentry
+
+  \entry{7056534}{article}{}
+    \name{author}{5}{}{%
+      {{hash=VS}{%
+         family={{Vandael}},
+         familyi={V\bibinitperiod},
+         given={S.},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=CB}{%
+         family={{Claessens}},
+         familyi={C\bibinitperiod},
+         given={B.},
+         giveni={B\bibinitperiod},
+      }}%
+      {{hash=ED}{%
+         family={{Ernst}},
+         familyi={E\bibinitperiod},
+         given={D.},
+         giveni={D\bibinitperiod},
+      }}%
+      {{hash=HT}{%
+         family={{Holvoet}},
+         familyi={H\bibinitperiod},
+         given={T.},
+         giveni={T\bibinitperiod},
+      }}%
+      {{hash=DG}{%
+         family={{Deconinck}},
+         familyi={D\bibinitperiod},
+         given={G.},
+         giveni={G\bibinitperiod},
+      }}%
+    }
+    \keyw{battery powered vehicles;learning (artificial intelligence);power
+  engineering computing;power markets;power system planning;secondary
+  cells;stochastic programming;batch mode reinforcement learning;heuristic EV
+  fleet charging;day-ahead electricity market;cost-effective day-ahead
+  consumption plan;plug-in times;power limitations;battery size;power
+  curve;resulting charging behavior;multistage stochastic programming
+  solution;Schedules;Batteries;Learning (artificial intelligence);Electricity
+  supply industry;Stochastic processes;Aerospace electronics;Benchmark
+  testing;Demand-side management;electric vehicles (EVs);reinforcement learning
+  (RL);stochastic programming (SP);Demand-side management;electric vehicles
+  (EVs);reinforcement learning (RL);stochastic programming (SP)}
+    \strng{namehash}{VS+1}
+    \strng{fullhash}{VSCBEDHTDG1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{{Van}+15}
+    \field{sortinit}{V}
+    \field{sortinithash}{V}
+    \verb{doi}
+    \verb 10.1109/TSG.2015.2393059
+    \endverb
+    \field{issn}{1949-3053}
+    \field{number}{4}
+    \field{pages}{1795\bibrangedash 1805}
+    \field{title}{Reinforcement Learning of Heuristic EV Fleet Charging in a
+  Day-Ahead Electricity Market}
+    \field{volume}{6}
+    \field{journaltitle}{IEEE Transactions on Smart Grid}
+    \field{year}{2015}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+\enddatalist
+\endinput

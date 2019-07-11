@@ -1,0 +1,99 @@
+
+
+\documentclass[letterpaper]{scrartcl}
+
+\usepackage[citestyle=alphabetic,style=alphabetic, backend=bibtex]{biblatex}
+
+\usepackage{geometry}
+\geometry{scale=.75}% use 80% of the page - adjust as desired
+
+\bibliography{../refs.bib}
+
+
+\subtitle{MSc. Thesis Proposal Autumn 2019}
+
+\title{Joint Control of Bidirectional Electric Vehicle 
+	Charging and Home Energy Scheduling Using Reinforcement Learning}
+
+\author{Christian Baumann}
+
+\begin{document}
+
+	\maketitle
+
+	
+	\section{Introduction}
+	\label{sec:intro}
+	
+	Electric vehicles (EVs) that allow bidirectional charging
+	can be used as batteries in smart homes to store energy
+	e.g. from photovoltaic (PV) systems and used later on. 
+	When consuming mentioned energy it has to be in such a way that
+	the users requirements on the use of the EV are still satisfied.
+	Therefore this project tries to find a control strategy using
+	reinforcement learning that jointly controls the charging / 
+	discharging of the EV and the home energy systems.
+	
+	\section{Objectives and Goals}
+	
+	The goal of this thesis is to learn a control strategy using model-free
+	reinforcement learning from past data and implement it in a real-world
+	application at Empa. 
+	
+	\subsection{Base Problem}
+	
+	Control of EV charging and heating considering energy
+	from PV. The driving patterns of the EV are assumed to be known
+	at least a few hours ahead. 
+	
+	\subsection{Extended Problem}	
+	
+	Same setup as in the base problem, but 
+	adding air conditioning and natural ventilation as control 
+	objectives. Use weather forecasts to improve control strategy.
+	
+	\textbf{Optional:} Analyze impact of larger number of EVs.
+	Use real-time electricity prices with forecast model. 
+	
+	
+	\section{Methods of Investigation / Implementation}
+	
+	As a reinforcement learning algorithm, fitted Q-iteration
+	will be used as is done e.g. in \cite{7401112, 7178338, 8727484, 7056534}.
+	The authors of \cite{7401112} even extend it to take into account
+	predictions of future state information. 
+	The implementation will be done in python.
+	
+	\section{Background / Prior Work}
+	
+	Blah blah, papers.
+	
+	\section{Timetable and Milestones}
+	
+	\subsection{Task 1}
+	
+	Finalize the scope of control problem, i.e. build the final list of inputs  (measurements, information signals, past data) and outputs (P/Q charging/discharging profiles at Empa side) and 
+	come up with a ML-based control strategy.
+	
+	\subsection{Task 2}
+	
+	Building prediction models for the measurements of interest and doing dimension reduction. Get results from past measurement and / or simulated data.
+	
+	\subsection{Task 3}
+	
+	Implementing the control strategy at Empa.
+	
+	\subsection{Task 4}
+	
+	Test implementation and analyze results.
+	
+	\subsection{Task 5}
+	
+	Finalize report and presentation.
+	
+	
+	\printbibliography
+	
+	
+\end{document}
+
