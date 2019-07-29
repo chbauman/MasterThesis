@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7050 64-bit) (preloaded format=pdflatex 2019.7.8)  11 JUL 2019 03:04
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7050 64-bit) (preloaded format=pdflatex 2019.7.8)  11 JUL 2019 16:12
 entering extended mode
 **./paper_overview.tex
 (paper_overview.tex
@@ -556,14 +556,14 @@ Underfull \hbox (badness 10000) in paragraph at lines 95--95
 |[]\OT1/cmr/bx/n/12 ``Real-time vehicle-to-grid con-
  []
 
+[1
 
+{C:/Users/Chrigi/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}]
 Underfull \hbox (badness 10000) in paragraph at lines 108--108
 \OT1/cmr/bx/n/12 ti-la-tion through re-in-force-ment
  []
 
-[1
 
-{C:/Users/Chrigi/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}]
 Underfull \hbox (badness 5331) in paragraph at lines 130--130
 |[]\OT1/cmr/bx/n/12 ``Bidirectional En-ergy Trad-ing
  []
@@ -611,7 +611,7 @@ Package logreq Info: Writing requests to 'paper_overview.run.xml'.
 Here is how much of TeX's memory you used:
  8280 strings out of 492895
  160560 string characters out of 3123269
- 432270 words of memory out of 3000000
+ 432279 words of memory out of 3000000
  12158 multiletter control sequences out of 15000+200000
  8402 words of font info for 30 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -626,7 +626,7 @@ s/Chrigi/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr17
 .pfb><C:/Users/Chrigi/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsf
 onts/cm/cmti10.pfb><C:/Users/Chrigi/AppData/Local/Programs/MiKTeX 2.9/fonts/typ
 e1/public/amsfonts/cm/cmtt10.pfb>
-Output written on paper_overview.pdf (4 pages, 136917 bytes).
+Output written on paper_overview.pdf (4 pages, 137450 bytes).
 PDF statistics:
  47 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)

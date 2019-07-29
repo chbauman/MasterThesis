@@ -5,22 +5,24 @@
 \usepackage[citestyle=alphabetic,style=alphabetic, backend=bibtex]{biblatex}
 
 \usepackage{geometry}
-\geometry{scale=.75}% use 80% of the page - adjust as desired
+\geometry{scale=.77}% use 80% of the page - adjust as desired
 
 \bibliography{../refs.bib}
-
 
 \subtitle{MSc. Thesis Proposal Autumn 2019}
 
 \title{Joint Control of Bidirectional Electric Vehicle 
 	Charging and Home Energy Scheduling Using Reinforcement Learning}
 
-\author{Christian Baumann}
+
+\author{\makebox[.9\textwidth]{\textbf{Author:}}\\Christian Baumann, MSc. Student CSE 
+\and \textbf{Supervisors:}\\ Bratislav Svetozarevic, Post-doc, ehub group\\ 
+Philipp Heer, Group Leader, ehub group}
+
 
 \begin{document}
 
 	\maketitle
-
 	
 	\section{Introduction}
 	\label{sec:intro}
@@ -29,68 +31,90 @@
 	can be used as batteries in smart homes to store energy
 	e.g. from photovoltaic (PV) systems and used later on. 
 	When consuming mentioned energy it has to be in such a way that
-	the users requirements on the use of the EV are still satisfied.
+	the user's requirements on the use of the EV are still satisfied.
 	Therefore this project tries to find a control strategy using
 	reinforcement learning that jointly controls the charging / 
 	discharging of the EV and the home energy systems.
 	
 	\section{Objectives and Goals}
 	
-	The goal of this thesis is to learn a control strategy using model-free
-	reinforcement learning from past data and implement it in a real-world
-	application at Empa. 
+	The goal of this thesis is to jointly coordinate charging and discharging
+	of an plugged-in EV and manage the home energy system of a smart home. This
+	shall be achieved by learning a control strategy using model-free
+	reinforcement learning using past data only and implement it in a real-world
+	application at Empa to evaluate it empirically. We evaluate two nested problems, first a simpler base problem is analyzed and later on more advanced problem
+	that extends the first one. They are structured as follows.
 	
 	\subsection{Base Problem}
 	
-	Control of EV charging and heating considering energy
+	Control of EV charging and heat pump boiler of DFAB including energy
 	from PV. The driving patterns of the EV are assumed to be known
-	at least a few hours ahead. 
+	at least a few hours ahead. The objective of the optimization will be 
+	to minimize the electricity costs while maintaining home user's comfort 
+	requirements. We either assume constant or varying, but ahead known, 
+	electricity prices.
 	
-	\subsection{Extended Problem}	
+	\subsection{Extended Problem}
 	
 	Same setup as in the base problem, but 
-	adding air conditioning and natural ventilation as control 
-	objectives. Use weather forecasts to improve control strategy.
+	adding heating / cooling and ventilation (AC) as control 
+	objectives. Further, energy storage in a home battery (or hydrogen generation)
+	will be incorporated and weather forecasts shall be taken into 
+	account to improve control policy.
 	
-	\textbf{Optional:} Analyze impact of larger number of EVs.
-	Use real-time electricity prices with forecast model. 
+	\subsection{Further Possible Extensions} 
 	
-	
+	\begin{itemize}
+		\item Analyze impact of larger number of EVs on objective.
+		\item Analyze influence of battery capacity of EVs.
+		\item Use real-time electricity prices with forecast model. 
+	\end{itemize}
+		
 	\section{Methods of Investigation / Implementation}
 	
-	As a reinforcement learning algorithm, fitted Q-iteration
-	will be used as is done e.g. in \cite{7401112, 7178338, 8727484, 7056534}.
-	The authors of \cite{7401112} even extend it to take into account
-	predictions of future state information. 
-	The implementation will be done in python.
+	As a reinforcement learning algorithm, fitted Q-iteration (FQI)
+	will be used since it is model-free and can be trained using
+	past data only. Further in \cite{7401112} an extension of FQI is
+	proposed that can take into account forecasted data to help improving 
+	the control policy.
+	The implementation will be done in python. 
+	The EV (e.g. Nissan Leaf, Renault Zoe) will be simulated by using a static 
+	battery at NEST and limiting the capacity to one of the EVs 
+	considered in the study.
 	
 	\section{Background / Prior Work}
 	
-	Blah blah, papers.
+	Most papers only consider either controlling the home
+	energy system, e.g. \cite{8060306, CHEN2018195, 7401112}, or
+	EV charging, e.g. 
+	\cite{6102330, 7178338, 6695263, 8727484, 8335743, 7056534}. 
+	In the case of EVs, often the charging of
+	a fleet of EVs is considered. There are a few works that combine
+	them, e.g. \cite{en11082010, 6892986, 7552560, 6547831, 6596523}, whereas
+	most of them use some kind of receding horizon control strategy.
+	The goal of this work is to use reinforcement learning to do control,
+	since \cite{4717266} showed that RL can have similar performance to 
+	receding horizon control, MPC in this case, even if it does
+	not know the dynamics model which is required for MPC. 
+	The authors of \cite{en11082010} actually use RL to home energy
+	management even considering EVs, but only as load, they do not
+	directly control the charging of the EV. As mentioned before, 
+	we aim to use FQI as RL algorithm. 	
+	It has been applied in various control applications related to 
+	EV charging and home energy management, e.g in 
+	\cite{7401112, 7178338, 8727484, 7056534}. Certainly this listing 
+	is not complete, but it should give an overview of related current research.
 	
 	\section{Timetable and Milestones}
 	
-	\subsection{Task 1}
-	
-	Finalize the scope of control problem, i.e. build the final list of inputs  (measurements, information signals, past data) and outputs (P/Q charging/discharging profiles at Empa side) and 
-	come up with a ML-based control strategy.
-	
-	\subsection{Task 2}
-	
-	Building prediction models for the measurements of interest and doing dimension reduction. Get results from past measurement and / or simulated data.
-	
-	\subsection{Task 3}
-	
-	Implementing the control strategy at Empa.
-	
-	\subsection{Task 4}
-	
-	Test implementation and analyze results.
-	
-	\subsection{Task 5}
-	
-	Finalize report and presentation.
-	
+	\begin{itemize}
+		\item \textbf{Task 1: } Finalize the scope of control problem, i.e. build the final list of inputs  (measurements, information signals, past data) and outputs (P/Q charging/discharging profiles at Empa side) and 
+		come up with a ML-based control strategy.
+		\item \textbf{Task 2: } Building prediction models for the measurements of interest and doing dimension reduction. Get results from past measurement and / or simulated data.
+		\item \textbf{Task 3: } Implementing the control strategy at Empa.	
+		\item \textbf{Task 4: } Test implementation and analyze results.	
+		\item \textbf{Task 5: } Finalize report and presentation.
+	\end{itemize}
 	
 	\printbibliography
 	

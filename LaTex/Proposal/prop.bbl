@@ -17,6 +17,103 @@
 \endgroup
 
 \datalist[entry]{anyt/global//global/global}
+  \entry{CHEN2018195}{article}{}
+    \name{author}{4}{}{%
+      {{hash=CY}{%
+         family={Chen},
+         familyi={C\bibinitperiod},
+         given={Yujiao},
+         giveni={Y\bibinitperiod},
+      }}%
+      {{hash=NLK}{%
+         family={Norford},
+         familyi={N\bibinitperiod},
+         given={Leslie\bibnamedelima K.},
+         giveni={L\bibinitperiod\bibinitdelim K\bibinitperiod},
+      }}%
+      {{hash=SHW}{%
+         family={Samuelson},
+         familyi={S\bibinitperiod},
+         given={Holly\bibnamedelima W.},
+         giveni={H\bibinitperiod\bibinitdelim W\bibinitperiod},
+      }}%
+      {{hash=MA}{%
+         family={Malkawi},
+         familyi={M\bibinitperiod},
+         given={Ali},
+         giveni={A\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{CY+1}
+    \strng{fullhash}{CYNLKSHWMA1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{Che+18}
+    \field{sortinit}{C}
+    \field{sortinithash}{C}
+    \verb{doi}
+    \verb https://doi.org/10.1016/j.enbuild.2018.03.051
+    \endverb
+    \field{issn}{0378-7788}
+    \field{pages}{195 \bibrangedash  205}
+    \field{title}{Optimal control of HVAC and window systems for natural
+  ventilation through reinforcement learning}
+    \verb{url}
+    \verb http://www.sciencedirect.com/science/article/pii/S0378778818302184
+    \endverb
+    \field{volume}{169}
+    \field{journaltitle}{Energy and Buildings}
+    \field{year}{2018}
+  \endentry
+
+  \entry{6695263}{inproceedings}{}
+    \name{author}{3}{}{%
+      {{hash=CA}{%
+         family={{Chiş}},
+         familyi={C\bibinitperiod},
+         given={A.},
+         giveni={A\bibinitperiod},
+      }}%
+      {{hash=LJ}{%
+         family={{Lundén}},
+         familyi={L\bibinitperiod},
+         given={J.},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=KV}{%
+         family={{Koivunen}},
+         familyi={K\bibinitperiod},
+         given={V.},
+         giveni={V\bibinitperiod},
+      }}%
+    }
+    \keyw{demand side management;electric vehicles;Markov
+  processes;pricing;secondary cells;smart power grids;plug-in electric vehicle
+  battery charging scheduling;price prediction;Sarsa reinforcement learning
+  method;demand side management;smart grids;charging cost;Markov decision
+  process;MDP;pricing patterns;day-ahead prices;true pricing data;cost
+  savings;Batteries;Optimal scheduling;Smart grids;Prediction algorithms;Energy
+  consumption;Pricing;Electricity;Smart Grid;Plug-In Electric Vehicle;Markov
+  decision process;Price prediction}
+    \strng{namehash}{CALJKV1}
+    \strng{fullhash}{CALJKV1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{CLK13}
+    \field{sortinit}{C}
+    \field{sortinithash}{C}
+    \field{booktitle}{IEEE PES ISGT Europe 2013}
+    \verb{doi}
+    \verb 10.1109/ISGTEurope.2013.6695263
+    \endverb
+    \field{issn}{2165-4816}
+    \field{pages}{1\bibrangedash 5}
+    \field{title}{Scheduling of plug-in electric vehicle battery charging with
+  price prediction}
+    \field{year}{2013}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
   \entry{7178338}{inproceedings}{}
     \name{author}{3}{}{%
       {{hash=CA}{%
@@ -66,6 +163,321 @@
     \field{pages}{2086\bibrangedash 2089}
     \field{title}{Optimization of plug-in electric vehicle charging with
   forecasted price}
+    \field{year}{2015}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{4717266}{article}{}
+    \name{author}{4}{}{%
+      {{hash=ED}{%
+         family={{Ernst}},
+         familyi={E\bibinitperiod},
+         given={D.},
+         giveni={D\bibinitperiod},
+      }}%
+      {{hash=GM}{%
+         family={{Glavic}},
+         familyi={G\bibinitperiod},
+         given={M.},
+         giveni={M\bibinitperiod},
+      }}%
+      {{hash=CF}{%
+         family={{Capitanescu}},
+         familyi={C\bibinitperiod},
+         given={F.},
+         giveni={F\bibinitperiod},
+      }}%
+      {{hash=WL}{%
+         family={{Wehenkel}},
+         familyi={W\bibinitperiod},
+         given={L.},
+         giveni={L\bibinitperiod},
+      }}%
+    }
+    \keyw{closed loop systems;control system synthesis;nonlinear control
+  systems;open loop systems;optimal control;power system control;predictive
+  control;unsupervised learning;reinforcement learning;model predictive
+  control;power system problem;nonlinear controller synthesis;deterministic
+  electrical power oscillations damping problem;discrete-time optimal control
+  problem;cost function;open-loop policies;interior-point solver;minimization
+  problem;model-free way closed-loop policies;batch-mode supervised
+  learning;Power system modeling;Learning;Predictive models;Predictive
+  control;Power system control;Power systems;Open loop systems;Optimal
+  control;Control system synthesis;Damping;Approximate dynamic programming
+  (ADP);electric power oscillations damping;fitted $Q$ iteration;interior-point
+  method (IPM);model predictive control (MPC);reinforcement learning
+  (RL);tree-based supervised learning (SL);Approximate dynamic programming
+  (ADP);electric power oscillations damping;fitted $Q$ iteration;interior-point
+  method (IPM);model predictive control (MPC);reinforcement learning
+  (RL);tree-based supervised learning (SL)}
+    \strng{namehash}{ED+1}
+    \strng{fullhash}{EDGMCFWL1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{{Ern}+09}
+    \field{sortinit}{E}
+    \field{sortinithash}{E}
+    \verb{doi}
+    \verb 10.1109/TSMCB.2008.2007630
+    \endverb
+    \field{issn}{1083-4419}
+    \field{number}{2}
+    \field{pages}{517\bibrangedash 529}
+    \field{title}{Reinforcement Learning Versus Model Predictive Control: A
+  Comparison on a Power System Problem}
+    \field{volume}{39}
+    \field{journaltitle}{IEEE Transactions on Systems, Man, and Cybernetics,
+  Part B (Cybernetics)}
+    \field{year}{2009}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{6547831}{article}{}
+    \name{author}{4}{}{%
+      {{hash=KB}{%
+         family={{Kim}},
+         familyi={K\bibinitperiod},
+         given={B.},
+         giveni={B\bibinitperiod},
+      }}%
+      {{hash=RS}{%
+         family={{Ren}},
+         familyi={R\bibinitperiod},
+         given={S.},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=vM}{%
+         family={{van der Schaar}},
+         familyi={v\bibinitperiod},
+         given={M.},
+         giveni={M\bibinitperiod},
+      }}%
+      {{hash=LJ}{%
+         family={{Lee}},
+         familyi={L\bibinitperiod},
+         given={J.},
+         giveni={J\bibinitperiod},
+      }}%
+    }
+    \keyw{electric vehicles;load dispatching;power markets;power system
+  economics;smart power grids;bidirectional energy trading;residential load
+  scheduling;electric vehicles;smart grid;power grid;power system
+  aggregator;electricity load scheduling algorithms;electricity bill;optimal
+  distributed load scheduling algorithm;social welfare;load demand
+  uncetainty;Electricity;Batteries;Energy consumption;Home
+  appliances;Games;Scheduling;Power systems;Bidirectional energy
+  trading;residential load scheduling;electric vehicles;load demand
+  uncertainty;optimization theory;game theory}
+    \strng{namehash}{KB+1}
+    \strng{fullhash}{KBRSvMLJ1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{{Kim}+13}
+    \field{sortinit}{K}
+    \field{sortinithash}{K}
+    \verb{doi}
+    \verb 10.1109/JSAC.2013.130706
+    \endverb
+    \field{issn}{0733-8716}
+    \field{number}{7}
+    \field{pages}{1219\bibrangedash 1234}
+    \field{title}{Bidirectional Energy Trading and Residential Load Scheduling
+  with Electric Vehicles in the Smart Grid}
+    \field{volume}{31}
+    \field{journaltitle}{IEEE Journal on Selected Areas in Communications}
+    \field{year}{2013}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{en11082010}{article}{}
+    \name{author}{2}{}{%
+      {{hash=KS}{%
+         family={Kim},
+         familyi={K\bibinitperiod},
+         given={Sunyong},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=LH}{%
+         family={Lim},
+         familyi={L\bibinitperiod},
+         given={Hyuk},
+         giveni={H\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{KSLH1}
+    \strng{fullhash}{KSLH1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{KL18}
+    \field{sortinit}{K}
+    \field{sortinithash}{K}
+    \verb{doi}
+    \verb 10.3390/en11082010
+    \endverb
+    \field{issn}{1996-1073}
+    \field{number}{8}
+    \field{title}{Reinforcement Learning Based Energy Management Algorithm for
+  Smart Energy Buildings}
+    \verb{url}
+    \verb https://www.mdpi.com/1996-1073/11/8/2010
+    \endverb
+    \field{volume}{11}
+    \field{journaltitle}{Energies}
+    \field{year}{2018}
+  \endentry
+
+  \entry{8335743}{article}{}
+    \name{author}{3}{}{%
+      {{hash=KH}{%
+         family={{Ko}},
+         familyi={K\bibinitperiod},
+         given={H.},
+         giveni={H\bibinitperiod},
+      }}%
+      {{hash=PS}{%
+         family={{Pack}},
+         familyi={P\bibinitperiod},
+         given={S.},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=LVCM}{%
+         family={{Leung}},
+         familyi={L\bibinitperiod},
+         given={V.\bibnamedelima C.\bibnamedelima M.},
+         giveni={V\bibinitperiod\bibinitdelim C\bibinitperiod\bibinitdelim
+  M\bibinitperiod},
+      }}%
+    }
+    \keyw{battery powered vehicles;distributed power generation;electric
+  vehicle charging;learning (artificial intelligence);Markov processes;optimal
+  control;power engineering computing;power generation
+  scheduling;vehicle-to-grid;vehicle-to-grid control algorithm;vehicle-to-grid
+  system;electric vehicles;microgrid autonomy;mobility-aware V2G control
+  algorithm;Markov decision process;Vehicle-to-grid;Mathematical model;State of
+  charge;Microgrids;Markov processes;Batteries;Vehicle-to-grid (V2G);electric
+  vehicle (EV);microgrid;Markov decision process (MDP);reinforcement learning
+  (RL)}
+    \strng{namehash}{KHPSLVCM1}
+    \strng{fullhash}{KHPSLVCM1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{KPL18}
+    \field{sortinit}{K}
+    \field{sortinithash}{K}
+    \verb{doi}
+    \verb 10.1109/TITS.2018.2816935
+    \endverb
+    \field{issn}{1524-9050}
+    \field{number}{7}
+    \field{pages}{2165\bibrangedash 2174}
+    \field{title}{Mobility-Aware Vehicle-to-Grid Control Algorithm in
+  Microgrids}
+    \field{volume}{19}
+    \field{journaltitle}{IEEE Transactions on Intelligent Transportation
+  Systems}
+    \field{year}{2018}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{6596523}{article}{}
+    \name{author}{2}{}{%
+      {{hash=NDT}{%
+         family={{Nguyen}},
+         familyi={N\bibinitperiod},
+         given={D.\bibnamedelima T.},
+         giveni={D\bibinitperiod\bibinitdelim T\bibinitperiod},
+      }}%
+      {{hash=LLB}{%
+         family={{Le}},
+         familyi={L\bibinitperiod},
+         given={L.\bibnamedelima B.},
+         giveni={L\bibinitperiod\bibinitdelim B\bibinitperiod},
+      }}%
+    }
+    \keyw{building management systems;cost reduction;demand side
+  management;electric vehicles;energy management
+  systems;HVAC;optimisation;scheduling;joint optimization;electric vehicle;home
+  energy scheduling;user comfort preference;electricity cost
+  minimization;household occupancy;EV travel patterns;dynamic storage
+  facility;thermal dynamics;customer occupancy patterns;energy demand
+  reduction;residential community;HVAC;Electricity;Vehicle
+  dynamics;Optimization;Heating;Buildings;Mathematical model;Power
+  generation;Electric vehicle;HVAC system;energy management
+  system;aggregator;day-ahead electricity price;occupancy pattern;travel
+  pattern;cost minimization;user comfort}
+    \strng{namehash}{NDTLLB1}
+    \strng{fullhash}{NDTLLB1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{NL14}
+    \field{sortinit}{N}
+    \field{sortinithash}{N}
+    \verb{doi}
+    \verb 10.1109/TSG.2013.2274521
+    \endverb
+    \field{issn}{1949-3053}
+    \field{number}{1}
+    \field{pages}{188\bibrangedash 199}
+    \field{title}{Joint Optimization of Electric Vehicle and Home Energy
+  Scheduling Considering User Comfort Preference}
+    \field{volume}{5}
+    \field{journaltitle}{IEEE Transactions on Smart Grid}
+    \field{year}{2014}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{6892986}{article}{}
+    \name{author}{3}{}{%
+      {{hash=NHT}{%
+         family={{Nguyen}},
+         familyi={N\bibinitperiod},
+         given={H.\bibnamedelima T.},
+         giveni={H\bibinitperiod\bibinitdelim T\bibinitperiod},
+      }}%
+      {{hash=NDT}{%
+         family={{Nguyen}},
+         familyi={N\bibinitperiod},
+         given={D.\bibnamedelima T.},
+         giveni={D\bibinitperiod\bibinitdelim T\bibinitperiod},
+      }}%
+      {{hash=LLB}{%
+         family={{Le}},
+         familyi={L\bibinitperiod},
+         given={L.\bibnamedelima B.},
+         giveni={L\bibinitperiod\bibinitdelim B\bibinitperiod},
+      }}%
+    }
+    \keyw{building management systems;cost reduction;energy management
+  systems;HVAC;power generation scheduling;solar heating;energy scheduling
+  problem;solar assisted heating;ventilation;air conditioning;water heating
+  system;real-time pricing environment;thermal comfort requirements;thermal
+  dynamics;electricity price uncertainty;solar energy;solar source;home hot
+  water demand;user thermal indoor temperature preference;user comfort
+  tolerance;electricity cost reduction;electricity consumption load
+  profile;solar assisted thermal system factors;energy management;Water
+  heating;Solar heating;Electricity;Uncertainty;Thermal loading;Storage
+  tanks;Comfort constraints;demand response (DR);energy optimization
+  problem;heating, ventilation and air conditioning (HVAC) scheduling;home
+  energy management;thermal dynamics;Comfort constraints;demand response
+  (DR);energy optimization problem;heating;ventilation;air conditioning (HVAC)
+  scheduling;home energy management;thermal dynamics}
+    \strng{namehash}{NHTNDTLLB1}
+    \strng{fullhash}{NHTNDTLLB1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{NNL15}
+    \field{sortinit}{N}
+    \field{sortinithash}{N}
+    \verb{doi}
+    \verb 10.1109/TSG.2014.2350831
+    \endverb
+    \field{issn}{1949-3053}
+    \field{number}{1}
+    \field{pages}{301\bibrangedash 314}
+    \field{title}{Energy Management for Households With Solar Assisted Thermal
+  Load Considering Renewable Energy and Price Uncertainty}
+    \field{volume}{6}
+    \field{journaltitle}{IEEE Transactions on Smart Grid}
     \field{year}{2015}
     \warn{\item Invalid format of field 'month'}
   \endentry
@@ -245,6 +657,141 @@
     \field{volume}{6}
     \field{journaltitle}{IEEE Transactions on Smart Grid}
     \field{year}{2015}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{6102330}{inproceedings}{}
+    \name{author}{2}{}{%
+      {{hash=W}{%
+         family={{Wenbo Shi}},
+         familyi={W\bibinitperiod},
+      }}%
+      {{hash=WVWS}{%
+         family={{Wong}},
+         familyi={W\bibinitperiod},
+         given={V.\bibnamedelima W.\bibnamedelima S.},
+         giveni={V\bibinitperiod\bibinitdelim W\bibinitperiod\bibinitdelim
+  S\bibinitperiod},
+      }}%
+    }
+    \keyw{distributed power generation;electric vehicles;frequency control;load
+  flow control;Markov processes;power grids;power markets;real-time
+  vehicle-to-grid control;price uncertainty;energy flow;electric
+  vehicles;distributed power;frequency regulation service;electricity
+  price;Markov chain;Markov decision process;current control
+  operation;Q-learning;electricity market;Pricing;Real time
+  systems;System-on-a-chip;Electricity;Batteries;Uncertainty;Frequency control}
+    \strng{namehash}{WWVWS1}
+    \strng{fullhash}{WWVWS1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{WW11}
+    \field{sortinit}{W}
+    \field{sortinithash}{W}
+    \field{booktitle}{2011 IEEE International Conference on Smart Grid
+  Communications (SmartGridComm)}
+    \verb{doi}
+    \verb 10.1109/SmartGridComm.2011.6102330
+    \endverb
+    \field{pages}{261\bibrangedash 266}
+    \field{title}{Real-time vehicle-to-grid control algorithm under price
+  uncertainty}
+    \field{year}{2011}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{8060306}{inproceedings}{}
+    \name{author}{3}{}{%
+      {{hash=WT}{%
+         family={{Wei}},
+         familyi={W\bibinitperiod},
+         given={T.},
+         giveni={T\bibinitperiod},
+      }}%
+      {{hash=Y}{%
+         family={{Yanzhi Wang}},
+         familyi={Y\bibinitperiod},
+      }}%
+      {{hash=ZQ}{%
+         family={{Zhu}},
+         familyi={Z\bibinitperiod},
+         given={Q.},
+         giveni={Q\bibinitperiod},
+      }}%
+    }
+    \keyw{building management systems;buildings (structures);cost
+  reduction;energy consumption;HVAC;learning (artificial intelligence);deep
+  reinforcement learning;building HVAC control;data-driven approach;DRL
+  algorithm;EnergyPlus tool;intelligent scheduling;air conditioning;United
+  States;total energy consumption;HVAC control;energy cost
+  reduction;Buildings;Mathematical model;Training;Learning (artificial
+  intelligence);Meteorology;Aerospace electronics;Neural networks}
+    \strng{namehash}{WTYZQ1}
+    \strng{fullhash}{WTYZQ1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{WYZ17}
+    \field{sortinit}{W}
+    \field{sortinithash}{W}
+    \field{booktitle}{2017 54th ACM/EDAC/IEEE Design Automation Conference
+  (DAC)}
+    \verb{doi}
+    \verb 10.1145/3061639.3062224
+    \endverb
+    \field{pages}{1\bibrangedash 6}
+    \field{title}{Deep reinforcement learning for building HVAC control}
+    \field{year}{2017}
+    \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{7552560}{article}{}
+    \name{author}{3}{}{%
+      {{hash=YL}{%
+         family={{Yu}},
+         familyi={Y\bibinitperiod},
+         given={L.},
+         giveni={L\bibinitperiod},
+      }}%
+      {{hash=JT}{%
+         family={{Jiang}},
+         familyi={J\bibinitperiod},
+         given={T.},
+         giveni={T\bibinitperiod},
+      }}%
+      {{hash=ZY}{%
+         family={{Zou}},
+         familyi={Z\bibinitperiod},
+         given={Y.},
+         giveni={Y\bibinitperiod},
+      }}%
+    }
+    \keyw{computer centres;electric vehicle charging;electric vehicles;energy
+  management systems;minimisation;smart power grids;stochastic
+  programming;Lyapunov optimization technique;uncertain system parameters;DC
+  work-loads;electricity prices;EV charging demands;DC workloads;EV energy
+  demands;DC;distributed data centers;smart grid;electric vehicles;data
+  centers;distributed online energy management;Servers;Distributed
+  databases;Power demand;Internet of things;Electric vehicles;Delays;Algorithm
+  design and analysis;Data centers (DCs);distributed online algorithm;electric
+  vehicles (EVs);energy management;smart grid}
+    \strng{namehash}{YLJTZY1}
+    \strng{fullhash}{YLJTZY1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{labelalpha}{YJZ16}
+    \field{sortinit}{Y}
+    \field{sortinithash}{Y}
+    \verb{doi}
+    \verb 10.1109/JIOT.2016.2602846
+    \endverb
+    \field{issn}{2327-4662}
+    \field{number}{6}
+    \field{pages}{1373\bibrangedash 1384}
+    \field{title}{Distributed Online Energy Management for Data Centers and
+  Electric Vehicles in Smart Grid}
+    \field{volume}{3}
+    \field{journaltitle}{IEEE Internet of Things Journal}
+    \field{year}{2016}
     \warn{\item Invalid format of field 'month'}
   \endentry
 \enddatalist
