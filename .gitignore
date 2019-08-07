@@ -1,2 +1,6 @@
 *.log
 *.gz
+*.vs
+*__pycache__
+*.pyproj
+*.sln
