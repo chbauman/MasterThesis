@@ -15,11 +15,9 @@ class NFQI:
                  nb_actions,
                  mlp_layers=[20, 20],
                  discount_factor=0.99,
-                 separate_target_network=False,
-                 target_network_update_freq=None,
+                 target_network_update_freq=20,
                  lr=0.01,
-                 max_iters=20000,
-                 max_q_predicted = 100000):
+                 max_iters=100):
 
         """
         Init function, stores all required parameters.
@@ -28,6 +26,9 @@ class NFQI:
         self.nb_actions = nb_actions
         self.mlp_layers = mlp_layers
         self.discount_factor = discount_factor
+        self.target_network_update_freq = target_network_update_freq
+        self.lr = lr
+        self.max_iters = max_iters
          
         self.opt_model = self.create_optimization_target()
         
@@ -61,13 +62,17 @@ class NFQI:
         a_t_one_hot = OneHot(self.nb_actions)(a_t)
         print(a_t_one_hot)
         q_out = self.create_Q_model(a_t_one_hot, s_t, self.mlp_layers, trainable = True)
+        self.Q_net = Model(inputs=[s_t, a_t], outputs=q_out)
 
         # Target Q-network
         s_tp1_tar = RepeatVector(self.nb_actions)(s_tp1);
         a_t_tar = PrepInput(self.nb_actions)(s_tp1)        
         q_out_tar = self.create_Q_model(a_t_tar, s_tp1_tar, self.mlp_layers, trainable = False)
         max_q = ReduceMax2D(0)(q_out_tar)
+        self.target_Q_net = Model(inputs=s_tp1, outputs=max_q)
+
         lam_max_q = Lambda(lambda x: x * self.discount_factor)(max_q)
+        
 
         # Optimization Target
         opt_target = Subtract()([q_out, lam_max_q])
@@ -86,5 +91,20 @@ class NFQI:
         Fit the Q-function.
         """
                
-        self.opt_model.fit([D_s, D_a, D_s_prime], D_r, epochs = 10, validation_split = 0.1)
+        num_targ_net_update = self.max_iters // self.target_network_update_freq
+
+        for k in range(num_targ_net_update):   
+            
+            # Copy parameters to target network
+            self.target_Q_net.set_weights(self.Q_net.get_weights())
+
+            # Fit model with constant target network
+            curr_init_epoch = k * self.target_network_update_freq
+            self.opt_model.fit([D_s, D_a, D_s_prime], D_r, 
+                               epochs = self.max_iters, 
+                               initial_epoch = curr_init_epoch,
+                               validation_split = 0.1)
+
+            
+
         pass
