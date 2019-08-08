@@ -23,7 +23,7 @@ class ReduceMax2D(Layer):
 
 class OneHot(Layer):
     """
-    Assuming input of shape (None, n). 
+    Assuming input of shape (None, 1). 
     """
     def __init__(self, num_classes = 10, **kwargs):
         self.num_classes = num_classes
@@ -33,10 +33,11 @@ class OneHot(Layer):
         super(OneHot, self).build(input_shape) 
 
     def call(self, x):
-        return K.one_hot(x, self.num_classes)
+        one_h_enc = K.one_hot(x, self.num_classes)
+        return K.reshape(one_h_enc, (-1, self.num_classes))
 
     def compute_output_shape(self, input_shape):
-        return (input_shape[0], input_shape[1], self.num_classes)
+        return (input_shape[0], self.num_classes)
 
 
 class PrepInput(Layer):
@@ -52,11 +53,8 @@ class PrepInput(Layer):
 
     def call(self, x):
         tf_constant = K.arange(self.num_classes)
-        print(tf_constant)
         one_hot_enc = K.one_hot(tf_constant, self.num_classes)
-        print(one_hot_enc)
         one_hot_enc_p1 = K.reshape(one_hot_enc, (1, self.num_classes, self.num_classes))
-        print(one_hot_enc_p1)
         all_encs = K.tile(one_hot_enc_p1, (K.shape(x)[0], 1, 1))
         return K.reshape(all_encs, (K.shape(x)[0], self.num_classes, self.num_classes))
 

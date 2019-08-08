@@ -21,13 +21,15 @@ class NFQI:
                  max_iters=20000,
                  max_q_predicted = 100000):
 
-        
+        """
+        Init function, stores all required parameters.
+        """
         self.state_dim = state_dim
         self.nb_actions = nb_actions
         self.mlp_layers = mlp_layers
         self.discount_factor = discount_factor
          
-        self.create_optimization_target()
+        self.opt_model = self.create_optimization_target()
         
     def create_Q_model(self, a_t, s_t, mlp_layers=[20, 20], trainable=True):
         """
@@ -46,14 +48,19 @@ class NFQI:
         return out
 
     def create_optimization_target(self):
+        """
+        Creates Q(s_t, a_t) - \gamma \max_a Q(s_tp1, a) as Keras model.
+        """
 
         # State and action inputs
         s_t = Input(shape=(self.state_dim,))
         s_tp1 = Input(shape=(self.state_dim,))
-        a_t = Input(shape=(self.nb_actions,))
+        a_t = Input(shape=(1,), dtype = np.int32)
 
         # Get Q-network
-        q_out = self.create_Q_model(a_t, s_t, self.mlp_layers, trainable = True)
+        a_t_one_hot = OneHot(self.nb_actions)(a_t)
+        print(a_t_one_hot)
+        q_out = self.create_Q_model(a_t_one_hot, s_t, self.mlp_layers, trainable = True)
 
         # Target Q-network
         s_tp1_tar = RepeatVector(self.nb_actions)(s_tp1);
@@ -73,3 +80,11 @@ class NFQI:
         return model
 
     #target_model.set_weights(model.get_weights()) 
+
+    def fit(self, D_s, D_a, D_r, D_s_prime):
+        """
+        Fit the Q-function.
+        """
+               
+        self.opt_model.fit([D_s, D_a, D_s_prime], D_r, epochs = 10, validation_split = 0.1)
+        pass
