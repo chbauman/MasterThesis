@@ -17,15 +17,15 @@ class SimpleBatteryTest:
 
         # Specific parameters
         self.t_max = 9
-        self.max_charge = 3
+        self.max_charge = 4
         self.p_d = 1
         self.p_n = 2
         self.p_e = 3
-        self.pen = 5
+        self.pen = 4
 
         # Price vector
         self.el_prices = np.ones(9) * self.p_d
-        self.el_prices[3:4] = self.p_n
+        self.el_prices[3:5] = self.p_n
         self.el_prices[8] = self.p_e
 
         # Initial state: time = 0, b = 0 
@@ -115,9 +115,9 @@ class SimpleBatteryTest:
                 a_t = 0
             r_t = self.reward_function(curr_state, a_t)
             tot_rew += r_t
-            print("State:", k, curr_state, ", action:", a_t, ", reward:", r_t)
+            print("State:", k, curr_state, ", action:", a_t, ", reward:", int(r_t))
             curr_state = self.state_transition(curr_state, a_t)
 
         print("Reward should be:", (self.pen - self.p_d) * self.max_charge)
-        print("Reward is:", tot_rew)
+        print("Reward is:", int(tot_rew))
         return tot_rew

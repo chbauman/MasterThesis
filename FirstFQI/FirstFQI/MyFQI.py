@@ -16,9 +16,9 @@ class NFQI:
                  nb_actions,
                  mlp_layers=[50, 50],
                  discount_factor=0.99,
-                 target_network_update_freq=5,
+                 target_network_update_freq=3,
                  lr=0.0003,
-                 max_iters=50):
+                 max_iters=100):
 
         """
         Init function, stores all required parameters.
@@ -45,7 +45,7 @@ class NFQI:
         for i in range(n_fc_layers):
             a_s_t = Dense(mlp_layers[i], activation='relu', trainable=trainable, kernel_regularizer=l2(0.01))(a_s_t)
             #a_s_t = Dense(mlp_layers[i], activation='tanh', trainable=trainable, kernel_regularizer=l2(0.01))(a_s_t)
-            #a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
+            a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
             #a_s_t = Dropout(0.2)(a_s_t)
 
         # Reduce to 1D
