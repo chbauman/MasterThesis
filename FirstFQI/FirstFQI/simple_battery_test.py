@@ -39,9 +39,11 @@ class SimpleBatteryTest:
         t = s_t[0]
         if t == self.t_max:
             return np.copy(self.init_state)
+        
         s_tp1 = s_t
-        s_tp1[0] += 1
-        s_tp1[1] += a_t
+        s_tp1[0] += 1        
+        if s_t[1] < self.max_charge:
+            s_tp1[1] += a_t
         return s_tp1
 
     def reward_function(self, s_t, a_t):

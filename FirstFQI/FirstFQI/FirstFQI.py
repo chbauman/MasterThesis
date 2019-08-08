@@ -12,6 +12,8 @@ def simple_battery_FQI():
 
     [s_t, a_t, r_t, s_tp1] = sbt.get_transition_tuples()
 
+    print((np.c_[s_t, a_t, r_t, s_tp1])[:15])
+
     fqi = NFQI(state_dim, nb_actions)
     fqi.fit(s_t, a_t, r_t, s_tp1)
 

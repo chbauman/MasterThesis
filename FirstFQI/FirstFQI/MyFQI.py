@@ -48,7 +48,6 @@ class NFQI:
             a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
             #a_s_t = Dropout(0.2)(a_s_t)
 
-
         # Reduce to 1D
         out = Dense(1, activation=None, trainable=trainable)(a_s_t)
         return out
