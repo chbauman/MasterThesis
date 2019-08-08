@@ -2,6 +2,7 @@ import numpy as np
 
 import keras
 from keras import backend as K
+from keras.optimizers import RMSprop
 from keras.models import Sequential, Model
 from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, Lambda, Subtract
 
@@ -71,20 +72,18 @@ class NFQI:
         max_q = ReduceMax2D(0)(q_out_tar)
         self.target_Q_net = Model(inputs=s_tp1, outputs=max_q)
 
-        lam_max_q = Lambda(lambda x: x * self.discount_factor)(max_q)
-        
+        lam_max_q = Lambda(lambda x: x * self.discount_factor)(max_q)        
 
         # Optimization Target
         opt_target = Subtract()([q_out, lam_max_q])
 
         # Define model
         model = Model(inputs=[s_t, a_t, s_tp1], outputs=opt_target)
-        model.compile(optimizer='rmsprop', loss='mse')
+        optim = RMSprop(lr=self.lr)
+        model.compile(optimizer=optim, loss='mse')
         model.summary()
 
         return model
-
-    #target_model.set_weights(model.get_weights()) 
 
     def fit(self, D_s, D_a, D_r, D_s_prime):
         """
@@ -104,7 +103,5 @@ class NFQI:
                                epochs = self.max_iters, 
                                initial_epoch = curr_init_epoch,
                                validation_split = 0.1)
-
-            
 
         pass
