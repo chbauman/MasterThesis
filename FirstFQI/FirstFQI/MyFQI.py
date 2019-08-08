@@ -4,7 +4,7 @@ import keras
 from keras import backend as K
 from keras.optimizers import RMSprop
 from keras.models import Sequential, Model
-from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, Lambda, Subtract
+from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, Lambda, Subtract, BatchNormalization
 
 from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput
 
@@ -14,11 +14,11 @@ class NFQI:
     def __init__(self,
                  state_dim,
                  nb_actions,
-                 mlp_layers=[20, 20],
+                 mlp_layers=[20, 20, 20],
                  discount_factor=0.99,
-                 target_network_update_freq=20,
-                 lr=0.01,
-                 max_iters=100):
+                 target_network_update_freq=10,
+                 lr=0.02,
+                 max_iters=300):
 
         """
         Init function, stores all required parameters.
@@ -44,6 +44,9 @@ class NFQI:
         n_fc_layers = len(mlp_layers)
         for i in range(n_fc_layers):
             a_s_t = Dense(mlp_layers[i], activation='relu', trainable=trainable)(a_s_t)
+            a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
+            a_s_t = Dropout(0.2)(a_s_t)
+
 
         # Reduce to 1D
         out = Dense(1, activation=None, trainable=trainable)(a_s_t)
@@ -102,12 +105,19 @@ class NFQI:
             # Fit model with constant target network
             curr_init_epoch = k * self.target_network_update_freq
             self.opt_model.fit([D_s, D_a, D_s_prime], D_r, 
-                               epochs = self.max_iters, 
+                               epochs = curr_init_epoch + self.target_network_update_freq, 
                                initial_epoch = curr_init_epoch,
                                validation_split = 0.1)
 
         pass
 
-    def predict(self, ):
-
-        self.greedy_policy.predict()
+    def get_policy(self):
+        """
+        Returns the fitted policy.
+        """
+        def policy(s_t):
+            s_t = np.reshape(s_t, (1, -1))
+            action = self.greedy_policy.predict(s_t)
+            return action[0][0]
+        
+        return policy

@@ -21,7 +21,7 @@ class SimpleBatteryTest:
         self.p_d = 1
         self.p_n = 2
         self.p_e = 3
-        self.pen = 10
+        self.pen = 5
 
         # Price vector
         self.el_prices = np.ones(9) * self.p_d
@@ -38,7 +38,7 @@ class SimpleBatteryTest:
         """
         t = s_t[0]
         if t == self.t_max:
-            return self.init_state
+            return np.copy(self.init_state)
         s_tp1 = s_t
         s_tp1[0] += 1
         s_tp1[1] += a_t
@@ -53,7 +53,7 @@ class SimpleBatteryTest:
             return -self.el_prices[t] * a_t
         else:
             # End of day
-            return self.max_charge - s_t[1]
+            return self.pen * s_t[1]
 
     def random_action_policy(self, s_t):
         """
@@ -78,7 +78,7 @@ class SimpleBatteryTest:
         a_t = np.empty((n_tuples), dtype = np.int)
         r_t = np.empty((n_tuples), dtype = np.int)
 
-        curr_state = self.init_state
+        curr_state = np.copy(self.init_state)
         for k in range(n_tuples):
         
             # Apply policy
@@ -98,18 +98,22 @@ class SimpleBatteryTest:
         return [s_t, a_t, r_t, s_tp1]
 
 
-    def eval_policy(policy):
+    def eval_policy(self, policy):
         """
         Evaluates a given policy.
         """
 
         tot_rew = 0
 
-        curr_state = self.init_state
-        for k in range(self.t_max):
+        curr_state = np.copy(self.init_state)
+        for k in range(self.t_max + 1):
             # select action
             a_t = policy(curr_state)
-            tot_rew += self.reward_function(curr_state, a_t)
+            r_t = self.reward_function(curr_state, a_t)
+            tot_rew += r_t
+            print("State:", k, curr_state, ", action:", a_t, ", reward:", r_t)
             curr_state = self.state_transition(curr_state, a_t)
 
+        print("Reward should be:", self.max_charge - self.max_charge * self.p_d)
+        print("Reward is:", tot_rew)
         return tot_rew

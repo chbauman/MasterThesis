@@ -15,7 +15,7 @@ def simple_battery_FQI():
     fqi = NFQI(state_dim, nb_actions)
     fqi.fit(s_t, a_t, r_t, s_tp1)
 
-    sbt.eval()
+    sbt.eval_policy(fqi.get_policy())
 
 def main():
 
