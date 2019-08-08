@@ -49,15 +49,16 @@ class NFQI:
 
         # State and action inputs
         s_t = Input(shape=(self.state_dim,))
+        s_tp1 = Input(shape=(self.state_dim,))
         a_t = Input(shape=(self.nb_actions,))
 
         # Get Q-network
         q_out = self.create_Q_model(a_t, s_t, self.mlp_layers, trainable = True)
 
         # Target Q-network
-        s_t_tar = RepeatVector(self.nb_actions)(s_t);
-        a_t_tar = PrepInput(self.nb_actions)(s_t)        
-        q_out_tar = self.create_Q_model(a_t_tar, s_t_tar, self.mlp_layers, trainable = False)
+        s_tp1_tar = RepeatVector(self.nb_actions)(s_tp1);
+        a_t_tar = PrepInput(self.nb_actions)(s_tp1)        
+        q_out_tar = self.create_Q_model(a_t_tar, s_tp1_tar, self.mlp_layers, trainable = False)
         max_q = ReduceMax2D(0)(q_out_tar)
         lam_max_q = Lambda(lambda x: x * self.discount_factor)(max_q)
 
@@ -65,7 +66,7 @@ class NFQI:
         opt_target = Subtract()([q_out, lam_max_q])
 
         # Define model
-        model = Model(inputs=[a_t, s_t], outputs=opt_target)
+        model = Model(inputs=[s_t, a_t, s_tp1], outputs=opt_target)
         model.compile(optimizer='rmsprop', loss='mse')
         model.summary()
 
