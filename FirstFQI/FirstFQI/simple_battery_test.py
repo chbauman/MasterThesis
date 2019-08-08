@@ -109,8 +109,10 @@ class SimpleBatteryTest:
 
         curr_state = np.copy(self.init_state)
         for k in range(self.t_max + 1):
-            # select action
+            # select action            
             a_t = policy(curr_state)
+            if curr_state[1] == self.max_charge:
+                a_t = 0
             r_t = self.reward_function(curr_state, a_t)
             tot_rew += r_t
             print("State:", k, curr_state, ", action:", a_t, ", reward:", r_t)
