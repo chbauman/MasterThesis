@@ -7,8 +7,10 @@ on 07.08.2019.
 
 import numpy as np
 import time
-from keras.models import Sequential
+import keras
+from keras.models import Sequential, Model
 from keras.layers.core import Dense, Activation, Flatten, Dropout
+from keras.layers import Dense, Activation, Flatten, Dropout, Input
 from keras.layers.convolutional import Convolution2D
 from keras.optimizers import RMSprop
 from keras.callbacks import RemoteMonitor
@@ -38,7 +40,6 @@ class NFQ:
                  state_dim,
                  nb_actions,
                  terminal_states,
-                 convolutional=False,
                  mlp_layers=[20, 20],
                  discount_factor=0.99,
                  separate_target_network=False,
@@ -55,9 +56,6 @@ class NFQ:
                     convolutional = False, a 2D tuple otherwise.
         nb_actions : The number of possible actions
         terminal_states : The integer indices of the terminal states
-        convolutional : Boolean. When True, uses convolutional neural networks 
-                        and dropout regularization. Otherwise, uses a simple
-                        MLP.
         mlp_layers : A list consisting of an integer number of neurons for each
                      hidden layer. Default = [20, 20]. For convolutional = 
                      False.
@@ -77,7 +75,7 @@ class NFQ:
                           Used to allocate memory for NumPy arrays. Default = 
                           100000.
         """
-        self.convolutional = convolutional
+        self.convolutional = False
         self.separate_target_network = separate_target_network
         self.target_network_update_freq = target_network_update_freq
         self.k = 0  # Keep track of the number of iterations
@@ -95,18 +93,12 @@ class NFQ:
 
         self.terminal_states = terminal_states
 
-        if self.convolutional:
-            self.Q = self._init_convolutional_NFQ()
-        else:
-            self.Q = self._init_MLP(mlp_layers=mlp_layers)
+        self.Q = self._init_MLP(mlp_layers=mlp_layers)
 
         if self.separate_target_network:
             assert target_network_update_freq is not None
 
-            if self.convolutional:
-                self.Q_target = self._init_convolutional_NFQ()
-            else:
-                self.Q_target = self._init_MLP(mlp_layers=mlp_layers)
+            self.Q_target = self._init_MLP(mlp_layers=mlp_layers)
             # Copy the initial weights from the Q network
             self.Q_target.set_weights(self.Q.get_weights())
 
@@ -116,20 +108,7 @@ class NFQ:
     def __str__(self):
         """Print the current Q function and value function."""
         string = ""
-        if self.convolutional:
-            string += 'Tabular values not available for NFQ with a ' + \
-                      'Convolutional Neural Network function approximator.'
-        else:
-            for s in np.arange(self.state_dim):
-                for a in np.arange(self.nb_actions):
-                    r = self._Q_value(s, a)
-                    string += 'Q(s={}, a={}) = {}\n'.format(s, a, r)
-
-            for s in np.arange(self.state_dim):
-                v = self._greedy_action_value(s)
-                string += 'V({}) = {}\n'.format(s, v)
-
-        return string
+        return "Not implemented"
 
     def fit_vectorized(self, D_s, D_a, D_r, D_s_prime,
                        num_iters=1,
@@ -204,9 +183,10 @@ class NFQ:
             D_r_train = D_r_train[indices]
             D_s_prime_train = D_s_prime_train[indices]
 
-        print('k: {}, update frequency: {}'.format(self.k, self.target_network_update_freq))
 
         if self.separate_target_network:
+            print('k: {}, update frequency: {}'.format(self.k, self.target_network_update_freq))
+
             # Update the target Q-network every target_network_update_freq
             # iterations with the parameters from the main Q-network
             if self.k % self.target_network_update_freq == 0:
@@ -319,76 +299,30 @@ class NFQ:
             values[s] = self._greedy_action_value(s)
         return values
 
-    def _init_MLP(self, mlp_layers):
-        """Initialize the MLP that corresponds to the Q function.
-
-        Parameters
-        ----------
-        state_dim : The state dimensionality
-        nb_actions : The number of possible actions
-        mlp_layers : A list consisting of an integer number of neurons for each
-                     hidden layer. Default = [20, 20]
-        """
-        model = Sequential()
-        for i in range(len(mlp_layers)):
-            if i == 0:
-                model.add(Dense(mlp_layers[i],
-                          input_dim=self.state_dim + self.nb_actions))
-            else:
-                model.add(Dense(mlp_layers[i]))
-            model.add(Activation('relu'))
-        model.add(Dense(1))
-        model.add(Activation('relu'))
-        rmsprop = RMSprop()
-        model.compile(loss='mean_squared_error', optimizer=rmsprop)
-        return model
-
-    def _init_convolutional_NFQ(self):
-        """Initialize a convolutional NFQ network.
+    def _init_MLP(self, mlp_layers=[20, 20]):
+        """Initialize an NFQ network.
 
         TODO: Allow customization of the network topology.
         """
-        # ConvNet to process the input image
-        cnn = Sequential()
-
-        cnn.add(Convolution2D(nb_filter=16, nb_row=8, nb_col=8,
-                              input_shape=(1, 64, 64), subsample=(4, 4)))
-        cnn.add(Activation('relu'))
-
-        cnn.add(Dropout(0.25))
-        cnn.add(Convolution2D(nb_filter=32, nb_row=4, nb_col=4,
-                              subsample=(2, 2)))
-        cnn.add(Activation('relu'))
-
-        cnn.add(Dropout(0.25))
-        cnn.add(Flatten())
-
-        # Combine the ConvNet output with the action to get the Q-value estimate
-        graph = Graph()
 
         # State and action inputs
-        graph.add_input(name='input_state', input_shape=self.state_dim)
-        graph.add_input(name='input_action', input_shape=(self.nb_actions,))
-        graph.add_node(cnn, name='cnn', input='input_state')
+        s_t = Input(shape=(self.state_dim,))
+        a_t = Input(shape=(self.nb_actions,))
+        a_s_t = keras.layers.concatenate([a_t, s_t], axis=-1)
 
-        graph.add_node(Dense(256),
-                       name='nfq_dense_0',
-                       inputs=['cnn', 'input_action'])
-        graph.add_node(Activation('relu'),
-                       name='nfq_activation_0',
-                       input='nfq_dense_0')
+        # Add layers
+        n_fc_layers = len(mlp_layers)
+        for i in range(n_fc_layers):
+            a_s_t = Dense(mlp_layers[i], activation='relu')(a_s_t)
 
-        graph.add_node(Dropout(0.25), name='nfq_dropout', input='nfq_dense_0')
+        # Reduce to 1D
+        out = Dense(1, activation=None)(a_s_t)
 
-        graph.add_node(Dense(1),
-                       name='nfq_output_dense',
-                       input='nfq_dropout')
+        # Define model
+        model = Model(inputs=[a_t, s_t], outputs=out)
+        model.compile(optimizer='rmsprop', loss='mse')
 
-        # Unscaled output
-        graph.add_output(name='output_q_value', input='nfq_output_dense')
-
-        graph.compile(loss={'output_q_value': 'mse'}, optimizer=RMSprop(lr=self.lr))
-        return graph
+        return model
 
     def _generate_pattern_set_vectorized(self, D_s, D_a, D_r, D_s_prime):
         """Generate pattern set. Vectorized version for improved performance.
@@ -410,13 +344,9 @@ class NFQ:
         # all the samples from D at the same time for efficiency
 
         # P contains the pattern set of inputs and targets
-        if self.convolutional:
-            P_input_values_actions = \
+        P_input_values_actions = \
                 self._one_hot_encode_actions_vectorized(D_a)
-            P_input_values = D_s, P_input_values_actions
-        else:
-            P_input_values = \
-                self._one_hot_encode_states_actions_vectorized(D_s, D_a)
+        P_input_values = D_s, P_input_values_actions
 
         if self.separate_target_network:
             target_network = self.Q_target
@@ -445,15 +375,9 @@ class NFQ:
     def _Q_value_vectorized(self, s, a, Q_network):
         """Calculates the Q-values of two vectors of state, action pairs
         """
-        if self.convolutional:
-            a_one_hot = self._one_hot_encode_actions_vectorized(a)
-            output = Q_network.predict({'input_state': s,
-                                        'input_action': a_one_hot})
-            output = output['output_q_value'].reshape(a.shape[0])
-        else:
-            X = self._one_hot_encode_states_actions_vectorized(s, a)
-            # Perform a batch forward pass of the Q-network
-            output = Q_network.predict(X).reshape(X.shape[0])
+        a_one_hot = self._one_hot_encode_actions_vectorized(a)
+        output = Q_network.predict([a_one_hot, s])
+        #output = output['output_q_value'].reshape(a.shape[0])
 
         # Set the Q-value of terminal states to zero
         if self.terminal_states is not None:
@@ -479,7 +403,7 @@ class NFQ:
             action_vector = np.empty((nb_states), dtype=np.int64)
             action_vector.fill(a)
             action_value[:, a] = \
-                self._Q_value_vectorized(s, action_vector, Q_network=Q_network)
+                self._Q_value_vectorized(s, action_vector, Q_network=Q_network)[:,0]
 
         greedy_action_value = np.max(action_value, axis=1)
 

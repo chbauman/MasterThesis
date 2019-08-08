@@ -2,6 +2,7 @@
 
 
 from rcnfq import NFQ
+from MyFQI import NFQI
 
 def simple_battery_FQI():
 
@@ -9,8 +10,7 @@ def simple_battery_FQI():
 
     [s_t, a_t, r_t, s_tp1] = get_transition_tuples()
 
-    fqi = NFQ(state_dim, nb_actions, None)
-    fqi.fit_vectorized(s_t, a_t, r_t, s_tp1)
+    fqi = NFQI(state_dim, nb_actions)
 
 
 def main():
