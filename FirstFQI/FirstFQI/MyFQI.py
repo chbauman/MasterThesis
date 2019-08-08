@@ -5,7 +5,7 @@ from keras import backend as K
 from keras.optimizers import RMSprop
 from keras.models import Sequential, Model
 from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, Lambda, Subtract, BatchNormalization
-
+from keras.regularizers import l2
 from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput
 
 
@@ -14,11 +14,11 @@ class NFQI:
     def __init__(self,
                  state_dim,
                  nb_actions,
-                 mlp_layers=[20, 20, 20],
+                 mlp_layers=[50, 50],
                  discount_factor=0.99,
-                 target_network_update_freq=10,
-                 lr=0.02,
-                 max_iters=300):
+                 target_network_update_freq=1,
+                 lr=0.0003,
+                 max_iters=100):
 
         """
         Init function, stores all required parameters.
@@ -43,9 +43,10 @@ class NFQI:
         # Add layers
         n_fc_layers = len(mlp_layers)
         for i in range(n_fc_layers):
-            a_s_t = Dense(mlp_layers[i], activation='relu', trainable=trainable)(a_s_t)
+            a_s_t = Dense(mlp_layers[i], activation='relu', trainable=trainable, kernel_regularizer=l2(0.01))(a_s_t)
+            #a_s_t = Dense(mlp_layers[i], activation='tanh', trainable=trainable, kernel_regularizer=l2(0.01))(a_s_t)
             a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
-            a_s_t = Dropout(0.2)(a_s_t)
+            #a_s_t = Dropout(0.2)(a_s_t)
 
 
         # Reduce to 1D

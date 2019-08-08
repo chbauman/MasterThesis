@@ -84,11 +84,11 @@ class SimpleBatteryTest:
             # Apply policy
             action = self.random_action_policy(curr_state)
             reward = self.reward_function(curr_state, action)
-            next_state = self.state_transition(curr_state, action)
+            next_state = self.state_transition(np.copy(curr_state), action)
 
             # Save data
-            s_t[k,:] = curr_state
-            s_tp1[k,:] = next_state
+            s_t[k,:] = np.copy(curr_state)
+            s_tp1[k,:] = np.copy(next_state)
             a_t[k] = action
             r_t[k] = reward
         
@@ -114,6 +114,6 @@ class SimpleBatteryTest:
             print("State:", k, curr_state, ", action:", a_t, ", reward:", r_t)
             curr_state = self.state_transition(curr_state, a_t)
 
-        print("Reward should be:", self.max_charge - self.max_charge * self.p_d)
+        print("Reward should be:", (self.pen - self.p_d) * self.max_charge)
         print("Reward is:", tot_rew)
         return tot_rew

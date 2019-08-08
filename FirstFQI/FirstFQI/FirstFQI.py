@@ -1,5 +1,5 @@
 
-
+import numpy as np
 
 from MyFQI import NFQI
 from simple_battery_test import SimpleBatteryTest
