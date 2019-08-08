@@ -6,7 +6,7 @@ from keras.optimizers import RMSprop
 from keras.models import Sequential, Model
 from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, Lambda, Subtract
 
-from keras_layers import ReduceMax2D, OneHot, PrepInput
+from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput
 
 
 class NFQI:
@@ -59,7 +59,7 @@ class NFQI:
         s_tp1 = Input(shape=(self.state_dim,))
         a_t = Input(shape=(1,), dtype = np.int32)
 
-        # Get Q-network
+        # Build Q-network
         a_t_one_hot = OneHot(self.nb_actions)(a_t)
         print(a_t_one_hot)
         q_out = self.create_Q_model(a_t_one_hot, s_t, self.mlp_layers, trainable = True)
@@ -70,6 +70,8 @@ class NFQI:
         a_t_tar = PrepInput(self.nb_actions)(s_tp1)        
         q_out_tar = self.create_Q_model(a_t_tar, s_tp1_tar, self.mlp_layers, trainable = False)
         max_q = ReduceMax2D(0)(q_out_tar)
+        argmax_q = ReduceArgMax2D(0)(q_out_tar)
+        self.greedy_policy = Model(inputs=s_tp1, outputs=argmax_q)
         self.target_Q_net = Model(inputs=s_tp1, outputs=max_q)
 
         lam_max_q = Lambda(lambda x: x * self.discount_factor)(max_q)        
@@ -105,3 +107,7 @@ class NFQI:
                                validation_split = 0.1)
 
         pass
+
+    def predict(self, ):
+
+        self.greedy_policy.predict()

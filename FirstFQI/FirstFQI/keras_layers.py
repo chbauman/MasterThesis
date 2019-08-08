@@ -21,6 +21,24 @@ class ReduceMax2D(Layer):
         else:
             return (input_shape[0], input_shape[1])
 
+class ReduceArgMax2D(Layer):
+
+    def __init__(self, axis = 0, **kwargs):
+        self.axis = axis
+        super(ReduceArgMax2D, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        super(ReduceArgMax2D, self).build(input_shape) 
+
+    def call(self, x):
+        return K.argmax(x, axis = self.axis + 1)
+
+    def compute_output_shape(self, input_shape):
+        if self.axis == 0:
+            return (input_shape[0], input_shape[2])
+        else:
+            return (input_shape[0], input_shape[1])
+
 class OneHot(Layer):
     """
     Assuming input of shape (None, 1). 
