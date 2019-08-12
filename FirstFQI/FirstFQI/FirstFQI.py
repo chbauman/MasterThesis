@@ -6,7 +6,7 @@ from simple_battery_test import SimpleBatteryTest
 
 def simple_battery_FQI():
 
-    sbt = SimpleBatteryTest()
+    sbt = SimpleBatteryTest(bidirectional = True)
     state_dim = sbt.state_dim
     nb_actions = sbt.nb_actions
 

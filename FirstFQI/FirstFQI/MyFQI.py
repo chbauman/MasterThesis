@@ -14,11 +14,12 @@ class NFQI:
     def __init__(self,
                  state_dim,
                  nb_actions,
-                 mlp_layers=[50, 50],
-                 discount_factor=0.99,
+                 mlp_layers=[50, 50, 50],
+                 discount_factor=0.9,
+                 use_diff_target_net = True,
                  target_network_update_freq=3,
-                 lr=0.0003,
-                 max_iters=100):
+                 lr=0.0001,
+                 max_iters=200):
 
         """
         Init function, stores all required parameters.
@@ -27,6 +28,7 @@ class NFQI:
         self.nb_actions = nb_actions
         self.mlp_layers = mlp_layers
         self.discount_factor = discount_factor
+        self.use_diff_target_net = use_diff_target_net
         self.target_network_update_freq = target_network_update_freq
         self.lr = lr
         self.max_iters = max_iters
@@ -39,6 +41,7 @@ class NFQI:
         """
 
         a_s_t = keras.layers.concatenate([a_t, s_t], axis=-1)
+        a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
 
         # Add layers
         n_fc_layers = len(mlp_layers)
@@ -64,13 +67,12 @@ class NFQI:
 
         # Build Q-network
         a_t_one_hot = OneHot(self.nb_actions)(a_t)
-        print(a_t_one_hot)
         q_out = self.create_Q_model(a_t_one_hot, s_t, self.mlp_layers, trainable = True)
         self.Q_net = Model(inputs=[s_t, a_t], outputs=q_out)
 
         # Target Q-network
         s_tp1_tar = RepeatVector(self.nb_actions)(s_tp1);
-        a_t_tar = PrepInput(self.nb_actions)(s_tp1)        
+        a_t_tar = PrepInput(self.nb_actions)(s_tp1)
         q_out_tar = self.create_Q_model(a_t_tar, s_tp1_tar, self.mlp_layers, trainable = False)
         max_q = ReduceMax2D(0)(q_out_tar)
         argmax_q = ReduceArgMax2D(0)(q_out_tar)
@@ -100,13 +102,15 @@ class NFQI:
         for k in range(num_targ_net_update):   
             
             # Copy parameters to target network
-            self.target_Q_net.set_weights(self.Q_net.get_weights())
+            if self.use_diff_target_net:
+                self.target_Q_net.set_weights(self.Q_net.get_weights())
 
             # Fit model with constant target network
             curr_init_epoch = k * self.target_network_update_freq
             self.opt_model.fit([D_s, D_a, D_s_prime], D_r, 
                                epochs = curr_init_epoch + self.target_network_update_freq, 
                                initial_epoch = curr_init_epoch,
+                               batch_size = 128,
                                validation_split = 0.1)
 
         pass

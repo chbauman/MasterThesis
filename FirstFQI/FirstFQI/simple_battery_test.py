@@ -9,15 +9,15 @@ import random
 
 
 class SimpleBatteryTest:
-    def __init__(self):
+    def __init__(self, bidirectional = False):
 
-
+        self.bidir = bidirectional
         self.state_dim = 2
-        self.nb_actions = 2
+        self.nb_actions = 2 + bidirectional
 
         # Specific parameters
         self.t_max = 9
-        self.max_charge = 4
+        self.max_charge = 3
         self.p_d = 1
         self.p_n = 2
         self.p_e = 3
@@ -41,9 +41,11 @@ class SimpleBatteryTest:
             return np.copy(self.init_state)
         
         s_tp1 = s_t
-        s_tp1[0] += 1        
-        if s_t[1] < self.max_charge:
+        s_tp1[0] += 1
+        if a_t == 1 and s_t[1] < self.max_charge:
             s_tp1[1] += a_t
+        if self.bidir and a_t == 2 and s_t[1] > 0:
+            s_tp1[1] -= 1
         return s_tp1
 
     def reward_function(self, s_t, a_t):
@@ -52,7 +54,11 @@ class SimpleBatteryTest:
         """
         t = s_t[0]
         if t < self.t_max:
-            return -self.el_prices[t] * a_t
+            if a_t == 1 and s_t[1] < self.max_charge:
+                return -self.el_prices[t]
+            if self.bidir and a_t == 2 and s_t[1] > 0:
+                return self.el_prices[t]
+            return 0
         else:
             # End of day
             return self.pen * s_t[1]
@@ -63,12 +69,15 @@ class SimpleBatteryTest:
         """
         b_t = s_t[1]
         if b_t < self.max_charge:
-            return random.randint(0,1)
-        else:
-            return 0
+            if self.bidir and b_t > 0:
+                return random.randint(0, 2)
+            else:
+                return random.randint(0, 1)
+        elif self.bidir:
+            return 2 * random.randint(0, 1)
         return 0
 
-    def get_transition_tuples(self, n_tuples = 10000):
+    def get_transition_tuples(self, n_tuples = 200000):
         """
         Creates n_tuples tuples of the form (s_t, a_t, r_t, s_tp1)
         for training of FQI.
@@ -111,8 +120,8 @@ class SimpleBatteryTest:
         for k in range(self.t_max + 1):
             # select action            
             a_t = policy(curr_state)
-            if curr_state[1] == self.max_charge:
-                a_t = 0
+            #if curr_state[1] == self.max_charge:
+            #    a_t = 0
             r_t = self.reward_function(curr_state, a_t)
             tot_rew += r_t
             print("State:", k, curr_state, ", action:", a_t, ", reward:", int(r_t))
