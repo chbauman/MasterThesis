@@ -1,7 +1,8 @@
 
 import numpy as np
 
-from MyFQI import NFQI
+from FQI import NFQI
+from LSPI import LSPI
 from simple_battery_test import SimpleBatteryTest
 
 def simple_battery_FQI():
@@ -10,11 +11,13 @@ def simple_battery_FQI():
     state_dim = sbt.state_dim
     nb_actions = sbt.nb_actions
 
-    [s_t, a_t, r_t, s_tp1] = sbt.get_transition_tuples()
+    [s_t, a_t, r_t, s_tp1] = sbt.get_transition_tuples(n_tuples = 30000)
 
-    print((np.c_[s_t, a_t, r_t, s_tp1])[:15])
+    #print((np.c_[s_t, a_t, r_t, s_tp1])[:15])
 
-    fqi = NFQI(state_dim, nb_actions)
+    #fqi = NFQI(state_dim, nb_actions)
+
+    fqi = LSPI(state_dim, nb_actions)
     fqi.fit(s_t, a_t, r_t, s_tp1)
 
     sbt.eval_policy(fqi.get_policy())
@@ -28,6 +31,7 @@ def main():
 
 
 main()
+
 
 
 
