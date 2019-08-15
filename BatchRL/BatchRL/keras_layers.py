@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 from keras import backend as K
 from keras.layers import Layer
@@ -14,6 +15,33 @@ class ReduceMax2D(Layer):
 
     def call(self, x):
         return K.max(x, axis = self.axis + 1)
+
+    def compute_output_shape(self, input_shape):
+        if self.axis == 0:
+            return (input_shape[0], input_shape[2])
+        else:
+            return (input_shape[0], input_shape[1])
+
+class ReduceProbabilisticSoftMax2D(Layer):
+
+    def __init__(self, axis = 0, beta = 1.0, regular = 0.001, **kwargs):
+        self.axis = axis
+        self.beta = beta
+        self.regular = regular
+        super(ReduceProbabilisticSoftMax2D, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        super(ReduceProbabilisticSoftMax2D, self).build(input_shape) 
+
+    def call(self, x):
+        x_sh = x.shape
+        act_axis = self.axis + 1
+        mu = K.mean(x, axis=act_axis)
+        s = K.std(x, axis=act_axis)
+        x_stdized = (x - mu) / (s + self.regular)
+        x_std_res = K.reshape(x_stdized, (-1, x_sh[1]))
+        indices = tf.random.multinomial(self.beta * x_std_res, 1)
+        return K.reshape(indices, (-1, x_sh[1], x_sh[2]))
 
     def compute_output_shape(self, input_shape):
         if self.axis == 0:

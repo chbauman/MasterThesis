@@ -4,12 +4,25 @@ import keras
 from keras import backend as K
 from keras.optimizers import RMSprop
 from keras.models import Sequential, Model
-from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, Lambda, Subtract, BatchNormalization
+from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, \
+    Lambda, Subtract, BatchNormalization
 from keras.regularizers import l2
-from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput
+from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput, \
+    ReduceProbabilisticSoftMax2D
 
 
 class NFQI:
+
+    """
+    Implements the algorithm described in:
+        Neural Fitted Q Iteration - First Experiences with a Data 
+        Efficient Neural Reinforcement Learning Method
+        by: Martin Riedmiller
+    If stoch_policy_imp = True, then the stochastic 
+        policy improvement is used. From the paper:
+        Non-Deterministic Policy Improvement Stabilizes Approximated Reinforcement Learning,
+        by: Wendelin Böhmer, Rong Guo and Klaus Obermayer
+    """
 
     def __init__(self,
                  state_dim,
@@ -19,11 +32,15 @@ class NFQI:
                  use_diff_target_net = True,
                  target_network_update_freq=3,
                  lr=0.0001,
-                 max_iters=200):
+                 max_iters=200,
+                 stoch_policy_imp = False,
+                 stochasticity_beta = 1.0
+                 ):
 
         """
         Init function, stores all required parameters.
         """
+
         self.state_dim = state_dim
         self.nb_actions = nb_actions
         self.mlp_layers = mlp_layers
@@ -32,8 +49,12 @@ class NFQI:
         self.target_network_update_freq = target_network_update_freq
         self.lr = lr
         self.max_iters = max_iters
+
+        self.stoch_policy_imp = stoch_policy_imp
+        self.stochasticity_beta = stochasticity_beta
          
         self.opt_model = self.create_optimization_target()
+  
         
     def create_Q_model(self, a_t, s_t, mlp_layers=[20, 20], trainable=True):
         """
@@ -74,14 +95,19 @@ class NFQI:
         s_tp1_tar = RepeatVector(self.nb_actions)(s_tp1);
         a_t_tar = PrepInput(self.nb_actions)(s_tp1)
         q_out_tar = self.create_Q_model(a_t_tar, s_tp1_tar, self.mlp_layers, trainable = False)
+        if self.stoch_policy_imp:
+            argmax_q = ReduceProbabilisticSoftMax2D(0, self.stochasticity_beta)(q_out_tar)
+        else:
+            argmax_q = ReduceArgMax2D(0)(q_out_tar)
         max_q = ReduceMax2D(0)(q_out_tar)
+        self.target_Q_net = Model(inputs=s_tp1, outputs=max_q)               
+
+        # Greedy Policy
         argmax_q = ReduceArgMax2D(0)(q_out_tar)
         self.greedy_policy = Model(inputs=s_tp1, outputs=argmax_q)
-        self.target_Q_net = Model(inputs=s_tp1, outputs=max_q)
-
-        lam_max_q = Lambda(lambda x: x * self.discount_factor)(max_q)        
 
         # Optimization Target
+        lam_max_q = Lambda(lambda x: x * self.discount_factor)(max_q) 
         opt_target = Subtract()([q_out, lam_max_q])
 
         # Define model

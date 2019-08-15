@@ -110,8 +110,6 @@ class LSPI:
         
         phi_s_a = np.zeros((self.nb_actions))
 
-        print(b)
-        e_0 = 0
         elements = np.arange(self.nb_actions)
 
         # Iterate
@@ -149,8 +147,6 @@ class LSPI:
 
             # Test convergence
             w_diff = np.linalg.norm(w - w_new)
-            if i == 0:
-                e_0 = w_diff
             if w_diff < self.accur:
                 print("Converged!!")
                 break
