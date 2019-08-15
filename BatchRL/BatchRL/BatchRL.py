@@ -17,7 +17,7 @@ def simple_battery_FQI():
 
     #fqi = NFQI(state_dim, nb_actions)
 
-    fqi = LSPI(state_dim, nb_actions)
+    fqi = LSPI(state_dim, nb_actions, stoch_policy_imp=True)
     fqi.fit(s_t, a_t, r_t, s_tp1)
 
     sbt.eval_policy(fqi.get_policy())
