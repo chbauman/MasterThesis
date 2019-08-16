@@ -1,0 +1,4 @@
+[submodule "Master-ThesisOverLeaf"]
+	path = Master-ThesisOverLeaf
+	url = https://github.com/chbauman/Master-ThesisOverLeaf
+	branch = master
