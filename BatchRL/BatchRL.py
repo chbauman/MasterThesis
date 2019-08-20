@@ -5,6 +5,27 @@ from FQI import NFQI
 from LSPI import LSPI
 from simple_battery_test import SimpleBatteryTest
 
+import restclient
+import pandas as pd
+
+
+def getData():
+    """
+    
+    """
+    REST = restclient.client(username='bach', password='Welc0me$2019!') # User of visualizer
+
+    df_read = REST.read(df_data=pd.DataFrame(columns=['42190140']),
+                                             startDate='2019-08-03',
+                                             endDate='2019-08-04')
+    print(df_read)
+    print(df_read.to_string())
+    return df_read
+
+
+
+
+
 def simple_battery_FQI():
 
     sbt = SimpleBatteryTest(bidirectional = True)
@@ -24,7 +45,9 @@ def simple_battery_FQI():
 
 def main():
 
-    simple_battery_FQI()
+    getData()
+
+    #simple_battery_FQI()
 
     return 0
 
