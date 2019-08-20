@@ -62,7 +62,7 @@ class DataStruct:
                                              endDate = self.endDate)
         return ret_val
 
-
+    pass
 
 
 ElData = DataStruct(
