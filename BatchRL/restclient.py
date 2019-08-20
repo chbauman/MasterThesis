@@ -17,31 +17,27 @@ import numpy as np
 import time
 import os
 
-import wx
 from pw_gui import getPW
+
+import wx
 
 save_dir = '../Data/'
 
 
 class client(object):
-    def __init__(self, username, password, 
+    def __init__(self, 
                  domain='nest.local', 
                  url='https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/',
                  ):
         """
         Initialize parameters and empty data containers.
         """
-        self.username = username
-        self.password = password
         self.domain = domain
         self.url = url
         self.save_dir = save_dir
-
         self.startDate = None
         self.np_data = []
-
-        print(time.ctime() + ' REST client initialized')
-
+        pass
 
     def read(self, df_data=[], startDate='2019-01-01', endDate='2019-12-31'):
         """
@@ -53,6 +49,9 @@ class client(object):
         self.endDate = endDate
 
         # Check Login
+        log_data = getPW()
+        self.username = log_data[0]
+        self.password = log_data[1]
         self.auth = HttpNegotiateAuth(domain=self.domain, 
                                       username=self.username, 
                                       password=self.password)

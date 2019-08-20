@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 
+
 import restclient
 
 class DataStruct:
@@ -27,8 +28,17 @@ class DataStruct:
 
         self.num_cols = len(data_desc)
         self.data_ids = [str(base_id + i) for i in range(self.num_cols)]
-        self.REST = restclient.client(username='bach', password='Welc0me$2019!')
+        self.client_loaded = False
+
         pass
+
+    def load_client(self):
+        """
+        Loads the REST client if not yet loaded.
+        """
+        if not self.client_loaded:
+            self.REST = restclient.client()
+            self.client_loaded = True
 
     def getData(self):
         """
@@ -37,6 +47,7 @@ class DataStruct:
         the local data is read and returned.
         """
 
+        self.load_client()
         data_folder = self.REST.get_data_folder(self.name, self.startDate, self.endDate)
         if not os.path.isdir(data_folder):
             # Read from SQL database and write for later use
@@ -97,3 +108,13 @@ HeatingData = DataStruct(
             )
 
 
+TestData = DataStruct(
+            data_desc = [
+                "alarm active",
+                "th. power total",
+            ],
+            base_id = 421100171,
+            name = "Test",
+            startDate='2019-08-08',
+            endDate='2019-08-09'
+            )

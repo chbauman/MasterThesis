@@ -5,7 +5,7 @@ from FQI import NFQI
 from LSPI import LSPI
 from simple_battery_test import SimpleBatteryTest
 
-from data import ElData, HeatingData
+from data import ElData, HeatingData, TestData
 
 
 
@@ -32,6 +32,7 @@ def main():
 
     dat = ElData.getData()
     dat = HeatingData.getData()
+    dat = TestData.getData()
     print(len(dat))
     print(dat)
 
