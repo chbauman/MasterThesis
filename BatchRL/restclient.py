@@ -29,56 +29,60 @@ class client(object):
                  url='https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/',
                  ):
         """
-        Initialize parameters and empty data containers
-        and check login credentials.
+        Initialize parameters and empty data containers.
         """
         self.username = username
         self.password = password
         self.domain = domain
         self.url = url
         self.save_dir = save_dir
-        self.startDate = None
 
-        self.df_data = None
+        self.startDate = None
         self.np_data = []
 
-        self.auth = HttpNegotiateAuth(domain=self.domain, username=self.username, password=self.password)
         print(time.ctime() + ' REST client initialized')
 
 
     def read(self, df_data=[], startDate='2019-01-01', endDate='2019-12-31'):
+        """
+        Reads data defined by the list of column IDs df_data
+        that was acquired between startDate and endDate.
+        """
 
         self.startDate = startDate
         self.endDate = endDate
 
+        # Check Login
+        self.auth = HttpNegotiateAuth(domain=self.domain, 
+                                      username=self.username, 
+                                      password=self.password)
         s = requests.Session()
         r = s.get(url=self.url, auth=self.auth)
         if r.status_code != requests.codes.ok:
             print(r.status_code)
-        else:
-            print(time.ctime() + ' REST client login successfull')
-            for ct, column in enumerate(df_data):
-                df = pd.DataFrame(data=s.get(url=self.url + column +'/timeline?startDate='+ startDate + '&endDate=' + endDate).json())
+            print("Login failed!")
+            return None
+        print(time.ctime() + ' REST client login successfull')
 
-                # Convert to Numpy
-                vals = df.loc[:, "value"].to_numpy()
-                ts = pd.to_datetime(df.loc[:, "timestamp"]).to_numpy(dtype=np.datetime64)
-                self.np_data += [(vals, ts)]
-                
-                df.columns =['value_' + str(ct), column + "_" + str(ct)]
-                if self.df_data is None:
-                    # Initialize
-                    self.df_data = df
-                else:                        
-                    # Add column and timestamp
-                    self.df_data = pd.concat([self.df_data, df], axis=1, sort=False)
+        # Iterate over column IDs
+        for ct, column in enumerate(df_data):
+            url = self.url + column +'/timeline?startDate='+ startDate + '&endDate=' + endDate
+            df = pd.DataFrame(data=s.get(url=url).json())
 
-                print("Added column", ct + 1, "with ID", column)
+            # Convert to Numpy
+            vals = df.loc[:, "value"].to_numpy()
+            ts = pd.to_datetime(df.loc[:, "timestamp"]).to_numpy(dtype=np.datetime64)
+            self.np_data += [(vals, ts)]
+            print("Added column", ct + 1, "with ID", column)
 
-            print(time.ctime() + ' REST client data acquired')
-            return self.df_data
+        print(time.ctime() + ' REST client data acquired')
+        return self.np_data
 
     def get_data_folder(self, name, startDate, endDate):
+        """
+        Defines the naming of the data directory given
+        the name and the dates.
+        """
         ext = startDate + "__" + endDate + "__"
         data_dir = os.path.join(save_dir, ext + name)
         return data_dir
@@ -88,6 +92,8 @@ class client(object):
         Writes the read data in numpy format
         to files.
         """
+
+        print("Writing Data to local disk.")
 
         # Create directory
         if self.startDate is None:
@@ -117,22 +123,25 @@ class client(object):
         Read numpy data that has already been created.
         """
 
+        # Get folder name and initialize lists of np.arrays
         data_dir = self.get_data_folder(name, startDate, endDate)
         val_list = []
         ts_list = []
 
         # Loop over files in directory
-        for f in os.listdir(folder):
-            file_path = os.path.join(folder, f)
+        for f in os.listdir(data_dir):
+            file_path = os.path.join(data_dir, f)
             nparr = np.load(file_path)
             if f[:5] == "dates":
                 ts_list += [nparr]
             elif f[:6] == "values":
-                val_list = [nparr]
+                val_list += [nparr]
             else:
                 print("Unknown File Name!!!")
 
-        return val_list, ts_list
+        # Transform to list of pairs and return
+        list_of_tuples = list(zip(val_list, ts_list))
+        return list_of_tuples
 
 
 
