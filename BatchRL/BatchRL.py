@@ -15,9 +15,32 @@ def getData():
     """
     REST = restclient.client(username='bach', password='Welc0me$2019!') # User of visualizer
 
-    df_read = REST.read(df_data=['42190140', '42190141'],
-                                             startDate='2019-08-03',
-                                             endDate='2019-12-04')
+    data_desc = [
+        "alarm active",
+        "el. active power total",
+        "el. active power consumpted",
+        "el. active power L1",
+        "el. reactive power L1",
+        "el. cos Phi L1",
+        "el. current L1",
+        "el. voltage L1",
+        "el. active power L2",
+        "el. reactive power L2",
+        "el. cos Phi L2",
+        "el. current L2",
+        "el. voltage L2",
+        "el. active power L3",
+        "el. reactive power L3",
+        "el. cos Phi L3",
+        "el. current L3",
+        "el. voltage L3",
+        ]
+    num_cols = len(data_desc)
+    data_ids = [str(42190138 + i) for i in range(num_cols)]
+
+    df_read = REST.read(df_data=data_ids,
+                        startDate='2019-08-03',
+                        endDate='2019-12-04')
     print(df_read)
     return df_read
 

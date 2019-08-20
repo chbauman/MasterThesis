@@ -4,3 +4,7 @@
 *__pycache__
 *.pyproj
 *.sln
+
+Data/*
+!Data/README.md
+
