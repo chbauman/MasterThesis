@@ -36,12 +36,12 @@ def getData():
         "el. current L3",
         "el. voltage L3",
         ]
-    num_cols = len(data_desc) - 14
+    num_cols = len(data_desc)
     data_ids = [str(42190138 + i) for i in range(num_cols)]
 
     df_read = REST.read(df_data=data_ids,
-                        startDate='2019-08-03',
-                        endDate='2019-12-04')
+                        startDate='2019-01-01',
+                        endDate='2019-12-31')
     print(df_read)
 
     REST.write_np("Test")

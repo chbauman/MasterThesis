@@ -20,12 +20,14 @@ import os
 import wx
 from pw_gui import getPW
 
+save_dir = '../Data/'
+
 
 class client(object):
     def __init__(self, username, password, 
                  domain='nest.local', 
                  url='https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/',
-                 save_dir = '../Data/'):
+                 ):
         """
         Initialize parameters and empty data containers
         and check login credentials.
@@ -44,7 +46,7 @@ class client(object):
         print(time.ctime() + ' REST client initialized')
 
 
-    def read(self, df_data=[], startDate='2016-10-01', endDate='2018-10-02'):
+    def read(self, df_data=[], startDate='2019-01-01', endDate='2019-12-31'):
 
         self.startDate = startDate
         self.endDate = endDate
@@ -76,29 +78,61 @@ class client(object):
             print(time.ctime() + ' REST client data acquired')
             return self.df_data
 
+    def get_data_folder(self, name, startDate, endDate):
+        ext = startDate + "__" + endDate + "__"
+        data_dir = os.path.join(save_dir, ext + name)
+        return data_dir
+
     def write_np(self, name, overwrite = False):
         """
         Writes the read data in numpy format
         to files.
         """
+
         # Create directory
         if self.startDate is None:
             print("Read data first!!")
             return
-        ext = "__" + self.startDate + "__" + self.endDate
-        data_dir = os.path.join(self.save_dir, name + ext)
-        os.mkdir(data_dir)
+        data_dir = self.get_data_folder(name, self.startDate, self.endDate)
+        if not os.path.isdir(data_dir):
+            os.mkdir(data_dir)
+        elif overwrite:
+            print("Not implemented, remove manually and try again.")
+        else:
+            print("Directory already exists.")
+            return
 
-        # Loop over data
+        # Loop over data and save columnwise
         for ct, data_tup in enumerate(self.np_data):
             v, t = data_tup
             v_name = os.path.join(data_dir, 'values_' + str(ct) + '.npy')
-            np.save(v_name, v)            
+            np.save(v_name, v)
             d_name = os.path.join(data_dir, 'dates_' + str(ct) + '.npy')
             np.save(d_name, t)
 
         return
 
+    def read_offline(self, name, startDate='2019-01-01', endDate='2019-12-31'):
+        """
+        Read numpy data that has already been created.
+        """
+
+        data_dir = self.get_data_folder(name, startDate, endDate)
+        val_list = []
+        ts_list = []
+
+        # Loop over files in directory
+        for f in os.listdir(folder):
+            file_path = os.path.join(folder, f)
+            nparr = np.load(file_path)
+            if f[:5] == "dates":
+                ts_list += [nparr]
+            elif f[:6] == "values":
+                val_list = [nparr]
+            else:
+                print("Unknown File Name!!!")
+
+        return val_list, ts_list
 
 
 
