@@ -25,13 +25,13 @@ class client(object):
         self.password = password
         self.domain = domain
         self.url = url
-        self.df_data = pd.DataFrame({'timestamp': []})
+        self.df_data = None
 
         self.auth = HttpNegotiateAuth(domain=self.domain, username=self.username, password=self.password)
         print(time.ctime() + ' REST client initialized')
 
 
-    def read(self, df_data=pd.DataFrame(columns=[]),startDate='2016-10-01',endDate='2018-10-02'):
+    def read(self, df_data=[], startDate='2016-10-01', endDate='2018-10-02'):
 
         s = requests.Session()
         r = s.get(url=self.url, auth=self.auth)
@@ -39,14 +39,19 @@ class client(object):
             print(r.status_code)
         else:
             print(time.ctime() + ' REST client login successfull')
-            for column in df_data:
-                try:
-                    df = pd.DataFrame(data=s.get(url=self.url + column +'/timeline?startDate='+ startDate + '&endDate=' + endDate).json())
-                    df.columns =['timestamp', column]
-                    df['timestamp'] = df['timestamp'].astype('datetime64[m]')
-                    self.df_data = pd.merge(self.df_data, df, how='outer', on='timestamp')
-                except Exception as e:
-                    print(e)
+            for ct, column in enumerate(df_data):
+                df = pd.DataFrame(data=s.get(url=self.url + column +'/timeline?startDate='+ startDate + '&endDate=' + endDate).json())
+                df.columns =['value_' + str(ct), column + "_" + str(ct)]
+                #df['timestamp'] = df['timestamp'].astype('datetime64[m]')
+                if self.df_data is None:
+                    # Initialize
+                    self.df_data = df
+                else:                        
+                    # Add column and timestamp
+                    self.df_data = pd.concat([self.df_data, df], axis=1, sort=False)
+
+                print("Added column", ct, "with ID", column)
+
             print(time.ctime() + ' REST client data acquired')
             return self.df_data
 

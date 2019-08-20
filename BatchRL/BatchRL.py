@@ -15,11 +15,10 @@ def getData():
     """
     REST = restclient.client(username='bach', password='Welc0me$2019!') # User of visualizer
 
-    df_read = REST.read(df_data=pd.DataFrame(columns=['42190140']),
+    df_read = REST.read(df_data=['42190140', '42190141'],
                                              startDate='2019-08-03',
-                                             endDate='2019-08-04')
+                                             endDate='2019-12-04')
     print(df_read)
-    print(df_read.to_string())
     return df_read
 
 
