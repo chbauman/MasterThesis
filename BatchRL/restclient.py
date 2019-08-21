@@ -7,20 +7,25 @@
 # Activities:                                   Author:                         Date:
 # Initial comment                               RK                              20190425
 # Modified timestamp                            RK                              20190529
+# Fixed conversion to datetime, added local 
+# data storage and added password GUI.          CB                              20190821
 
 ########################################################################################################################
 
 import requests
-from requests_negotiate_sspi import HttpNegotiateAuth ##https://github.com/brandond/requests-negotiate-sspi/blob/master/README.md
-import pandas as pd
-import numpy as np
 import time
 import os
+import wx
+
+##https://github.com/brandond/requests-negotiate-sspi/blob/master/README.md
+from requests_negotiate_sspi import HttpNegotiateAuth 
+
+import pandas as pd
+import numpy as np
 
 from pw_gui import getPW
 
-import wx
-
+# Where to put the local copy of the data
 save_dir = '../Data/'
 
 
@@ -65,12 +70,14 @@ class client(object):
 
         # Iterate over column IDs
         for ct, column in enumerate(df_data):
-            url = self.url + column +'/timeline?startDate='+ startDate + '&endDate=' + endDate
+            url = self.url + column 
+            url += '/timeline?startDate=' + startDate + '&endDate=' + endDate
             df = pd.DataFrame(data=s.get(url=url).json())
 
             # Convert to Numpy
             vals = df.loc[:, "value"].to_numpy()
-            ts = pd.to_datetime(df.loc[:, "timestamp"]).to_numpy(dtype=np.datetime64)
+            ts = pd.to_datetime(df.loc[:, "timestamp"])
+            ts = ts.to_numpy(dtype=np.datetime64)
             self.np_data += [(vals, ts)]
             print("Added column", ct + 1, "with ID", column)
 
@@ -127,7 +134,7 @@ class client(object):
         val_list = []
         ts_list = []
 
-        # Loop over files in directory
+        # Loop over files in directory and append data to lists
         for f in os.listdir(data_dir):
             file_path = os.path.join(data_dir, f)
             nparr = np.load(file_path)
