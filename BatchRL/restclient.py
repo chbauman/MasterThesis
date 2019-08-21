@@ -61,10 +61,16 @@ class client(object):
                                       username=self.username, 
                                       password=self.password)
         s = requests.Session()
-        r = s.get(url=self.url, auth=self.auth)
+        try:
+            # This fails if the username exists but the password
+            # is wrong, but not if the username does not exist?!!
+            r = s.get(url=self.url, auth=self.auth)
+        except TypeError as e:
+            print("Login failed, invalid password!")
+            return None
+        # Check if login valid.
         if r.status_code != requests.codes.ok:
-            print(r.status_code)
-            print("Login failed!")
+            print("Login failed, invalid username!")
             return None
         print(time.ctime() + ' REST client login successfull')
 

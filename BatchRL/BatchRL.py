@@ -5,7 +5,7 @@ from FQI import NFQI
 from LSPI import LSPI
 from simple_battery_test import SimpleBatteryTest
 
-from data import ElData, HeatingData, TestData
+from data import TestData, ElData, HeatingData, ValveData
 from visualize import plot_time_series
 
 
@@ -30,7 +30,7 @@ def simple_battery_FQI():
 
 def main():
 
-    dat = ElData.getData()
+    dat = ValveData.getData()
     plot_time_series(dat[1][1], dat[1][0])
     dat = HeatingData.getData()
     plot_time_series(dat[1][1], dat[1][0])

@@ -26,8 +26,15 @@ class DataStruct:
         self.startDate = startDate
         self.endDate = endDate
 
+        # Check if base_id is a list of ints or just an int,
+        # in that case create the list with the subsequent ints.
         self.num_cols = len(data_desc)
-        self.data_ids = [str(base_id + i) for i in range(self.num_cols)]
+        try:
+            for ct, el in enumerate(base_id):
+                base_id[ct] = str(el)
+            self.data_ids = base_id
+        except TypeError as te:
+            self.data_ids = [str(base_id + i) for i in range(self.num_cols)]
         self.client_loaded = False
 
         pass
@@ -54,6 +61,8 @@ class DataStruct:
             ret_val = self.REST.read(self.data_ids, 
                                      startDate = self.startDate, 
                                      endDate = self.endDate)
+            if ret_val is None:
+                return None
             self.REST.write_np(self.name)
         else:
             # Read locally
@@ -120,5 +129,43 @@ HeatingData = DataStruct(
             startDate='2019-01-01',
             endDate='2019-12-31'
             )
+
+# Valve data
+ValveData = DataStruct(data_desc=[
+                            "research mode approval",
+                            "research mode confirmation",
+                            "research mode status",
+                            "alarm active",
+                            "position relative",
+                            "research mode approval",
+                            "research mode confirmation",
+                            "research mode status",
+                            "alarm active",
+                            "position relative",
+                            "research mode approval",
+                            "research mode confirmation",
+                            "research mode status",
+                            "alarm active",
+                            "position relative",
+                            "research mode approval",
+                            "research mode confirmation",
+                            "research mode status",
+                            "alarm active",
+                            "position relative",
+                            "research mode approval",
+                            "research mode confirmation",
+                            "research mode status",
+                            "alarm active",
+                            "position relative",
+                            ],
+                       base_id=[421100138 + i for i in range(5)] \
+                             + [421100194 + i for i in range(5)] \
+                             + [421100143 + i for i in range(5)] \
+                             + [421100199 + i for i in range(5)] \
+                             + [421100148 + i for i in range(5)],
+                       name="Valve-U33M1,U33N1-Y720,Y721,Y750",
+                       startDate='2019-01-01',
+                       endDate='2019-12-31'    
+    )
 
 
