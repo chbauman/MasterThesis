@@ -1,3 +1,4 @@
+
 import numpy as np
 
 import keras
@@ -7,6 +8,7 @@ from keras.models import Sequential, Model
 from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, \
     Lambda, Subtract, BatchNormalization
 from keras.regularizers import l2
+
 from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput, \
     ReduceProbabilisticSoftMax2D
 
@@ -50,9 +52,11 @@ class NFQI:
         self.lr = lr
         self.max_iters = max_iters
 
+        # Params for stochastic policy update
         self.stoch_policy_imp = stoch_policy_imp
         self.stochasticity_beta = stochasticity_beta
          
+        # Create model
         self.opt_model = self.create_optimization_target()
   
         
@@ -67,8 +71,11 @@ class NFQI:
         # Add layers
         n_fc_layers = len(mlp_layers)
         for i in range(n_fc_layers):
-            a_s_t = Dense(mlp_layers[i], activation='relu', trainable=trainable, kernel_regularizer=l2(0.01))(a_s_t)
-            #a_s_t = Dense(mlp_layers[i], activation='tanh', trainable=trainable, kernel_regularizer=l2(0.01))(a_s_t)
+            a_s_t = Dense(mlp_layers[i],
+                          activation='relu', 
+                          trainable=trainable, 
+                          kernel_regularizer=l2(0.01)
+                          )(a_s_t)
             a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
             #a_s_t = Dropout(0.2)(a_s_t)
 
@@ -143,7 +150,7 @@ class NFQI:
 
     def get_policy(self):
         """
-        Returns the fitted policy.
+        Returns the fitted greedy policy.
         """
         def policy(s_t):
             s_t = np.reshape(s_t, (1, -1))

@@ -64,7 +64,20 @@ class DataStruct:
 
     pass
 
+# Test data, small part of the electricity data,
+# for testing since access is faster.
+TestData = DataStruct(
+            data_desc = [
+                "alarm active",
+                "th. power total",
+            ],
+            base_id = 421100171,
+            name = "Test",
+            startDate='2019-08-08',
+            endDate='2019-08-09'
+            )
 
+# Electricity consumption data
 ElData = DataStruct(
             data_desc = [
                 "alarm active",
@@ -92,6 +105,7 @@ ElData = DataStruct(
             endDate='2019-12-31'
             )
 
+# Heating data
 HeatingData = DataStruct(
             data_desc = [
                 "alarm active",
@@ -108,13 +122,3 @@ HeatingData = DataStruct(
             )
 
 
-TestData = DataStruct(
-            data_desc = [
-                "alarm active",
-                "th. power total",
-            ],
-            base_id = 421100171,
-            name = "Test",
-            startDate='2019-08-08',
-            endDate='2019-08-09'
-            )
