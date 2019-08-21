@@ -42,9 +42,10 @@ class client(object):
         self.save_dir = save_dir
         self.startDate = None
         self.np_data = []
+        self.meta_data = []
         pass
 
-    def read(self, df_data=[], startDate='2019-01-01', endDate='2019-12-31'):
+    def read(self, df_data=[], startDate='2019-01-01', endDate='2019-12-31', get_meta_data = False):
         """
         Reads data defined by the list of column IDs df_data
         that was acquired between startDate and endDate.
@@ -77,6 +78,8 @@ class client(object):
         # Iterate over column IDs
         for ct, column in enumerate(df_data):
             url = self.url + column 
+            meta_data = s.get(url=url).json()
+            self.meta_data += [meta_data]
             url += '/timeline?startDate=' + startDate + '&endDate=' + endDate
             df = pd.DataFrame(data=s.get(url=url).json())
 
@@ -88,6 +91,8 @@ class client(object):
             print("Added column", ct + 1, "with ID", column)
 
         print(time.ctime() + ' REST client data acquired')
+        if self.get_meta_data:
+            return self.np_data, self.meta_data
         return self.np_data
 
     def get_data_folder(self, name, startDate, endDate):

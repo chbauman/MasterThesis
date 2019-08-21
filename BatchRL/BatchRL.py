@@ -37,7 +37,7 @@ def main():
     dat = TestData.getData()
     
     print(len(dat))
-    print(dat)
+    #print(dat)
 
     #simple_battery_FQI()
 
