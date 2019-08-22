@@ -19,7 +19,6 @@ class DataStruct:
                  endDate='2019-12-31'):
 
         # Initialize values and client
-        self.base_id = base_id
         self.name = name
         self.startDate = startDate
         self.endDate = endDate
@@ -68,7 +67,7 @@ class DataStruct:
 # Test data, small part of the electricity data,
 # for testing since access is faster.
 TestData = DataStruct(
-            base_id = [421100171, 421100172],
+            id_list = [421100171, 421100172],
             name = "Test",
             startDate='2019-08-08',
             endDate='2019-08-09'
@@ -76,7 +75,7 @@ TestData = DataStruct(
 
 # Electricity consumption data
 ElData = DataStruct(
-            base_id = [42190138 + i for in range(18)],
+            id_list = [42190138 + i for i in range(18)],
             name = "Electric",
             startDate='2019-01-01',
             endDate='2019-12-31'
@@ -84,14 +83,14 @@ ElData = DataStruct(
 
 # Heating data
 HeatingData = DataStruct(
-            base_id = [421100171 + i for i in range(6)],
+            id_list = [421100171 + i for i in range(6)],
             name = "Heat-U33M1-P890",
             startDate='2019-01-01',
             endDate='2019-12-31'
             )
 
 # Valve data
-ValveData = DataStruct(base_id=[421100138 + i for i in range(5)] \
+ValveData = DataStruct(id_list=[421100138 + i for i in range(5)] \
                              + [421100194 + i for i in range(5)] \
                              + [421100143 + i for i in range(5)] \
                              + [421100199 + i for i in range(5)] \

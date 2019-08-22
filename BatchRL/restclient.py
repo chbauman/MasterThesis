@@ -16,6 +16,7 @@ import requests
 import time
 import os
 import wx
+from ast import literal_eval
 
 ##https://github.com/brandond/requests-negotiate-sspi/blob/master/README.md
 from requests_negotiate_sspi import HttpNegotiateAuth 
@@ -148,16 +149,17 @@ class client(object):
 
         # Loop over files in directory and append data to lists
         for f in os.listdir(data_dir):
-            file_path = os.path.join(data_dir, f)
-            nparr = np.load(file_path)
+            file_path = os.path.join(data_dir, f)            
             if f[:5] == "dates":
+                nparr = np.load(file_path)
                 ts_list += [nparr]
             elif f[:6] == "values":
+                nparr = np.load(file_path)
                 val_list += [nparr]
             elif f[:4] == "meta":
-                with open(meta_name, 'r') as data:
+                with open(file_path, 'r') as data:
                     contents = data.read()
-                    meta_list += [dict(meta_list)]
+                    meta_list += [literal_eval(contents)]
             else:
                 print("Unknown File Name!!!")
 
