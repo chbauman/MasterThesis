@@ -58,7 +58,7 @@ class DataStruct:
         data_folder = self.REST.get_data_folder(self.name, self.startDate, self.endDate)
         if not os.path.isdir(data_folder):
             # Read from SQL database and write for later use
-            ret_val = self.REST.read(self.data_ids, 
+            ret_val, meta_data = self.REST.read(self.data_ids, 
                                      startDate = self.startDate, 
                                      endDate = self.endDate)
             if ret_val is None:
@@ -66,10 +66,10 @@ class DataStruct:
             self.REST.write_np(self.name)
         else:
             # Read locally
-            ret_val = self.REST.read_offline(self.name,  
+            ret_val, meta_data = self.REST.read_offline(self.name,  
                                              startDate = self.startDate, 
                                              endDate = self.endDate)
-        return ret_val
+        return (ret_val, meta_data)
 
     pass
 

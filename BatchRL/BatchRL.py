@@ -30,14 +30,14 @@ def simple_battery_FQI():
 
 def main():
 
-    dat = ValveData.getData()
+    dat, m = ValveData.getData()
     plot_time_series(dat[1][1], dat[1][0])
-    dat = HeatingData.getData()
+    dat, m = HeatingData.getData()
     plot_time_series(dat[1][1], dat[1][0])
-    dat = TestData.getData()
+    dat, m = TestData.getData()
     
     print(len(dat))
-    #print(dat)
+    print(m)
 
     #simple_battery_FQI()
 

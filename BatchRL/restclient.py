@@ -32,8 +32,7 @@ save_dir = '../Data/'
 class client(object):
     def __init__(self, 
                  domain='nest.local', 
-                 url='https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/',
-                 ):
+                 url='https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/'):
         """
         Initialize parameters and empty data containers.
         """
@@ -45,7 +44,7 @@ class client(object):
         self.meta_data = []
         pass
 
-    def read(self, df_data=[], startDate='2019-01-01', endDate='2019-12-31', get_meta_data = False):
+    def read(self, df_data=[], startDate='2019-01-01', endDate='2019-12-31'):
         """
         Reads data defined by the list of column IDs df_data
         that was acquired between startDate and endDate.
@@ -91,9 +90,7 @@ class client(object):
             print("Added column", ct + 1, "with ID", column)
 
         print(time.ctime() + ' REST client data acquired')
-        if self.get_meta_data:
-            return self.np_data, self.meta_data
-        return self.np_data
+        return self.np_data, self.meta_data
 
     def get_data_folder(self, name, startDate, endDate):
         """
@@ -132,6 +129,9 @@ class client(object):
             np.save(v_name, v)
             d_name = os.path.join(data_dir, 'dates_' + str(ct) + '.npy')
             np.save(d_name, t)
+            meta_name = os.path.join(data_dir, 'meta_' + str(ct) + '.txt')
+            with open(meta_name,'w') as data:
+                data.write(str(self.meta_data[ct]))
 
         return
 
@@ -144,6 +144,7 @@ class client(object):
         data_dir = self.get_data_folder(name, startDate, endDate)
         val_list = []
         ts_list = []
+        meta_list = []
 
         # Loop over files in directory and append data to lists
         for f in os.listdir(data_dir):
@@ -153,12 +154,16 @@ class client(object):
                 ts_list += [nparr]
             elif f[:6] == "values":
                 val_list += [nparr]
+            elif f[:4] == "meta":
+                with open(meta_name, 'r') as data:
+                    contents = data.read()
+                    meta_list += [dict(meta_list)]
             else:
                 print("Unknown File Name!!!")
 
         # Transform to list of pairs and return
         list_of_tuples = list(zip(val_list, ts_list))
-        return list_of_tuples
+        return (list_of_tuples, meta_list)
 
 
 
