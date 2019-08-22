@@ -31,6 +31,12 @@ save_dir = '../Data/'
 
 
 class client(object):
+    """
+    Client for data retrieval from local disk or
+    from SQL data base of NEST. Once loaded from the
+    server, it can be stored to and reloaded from
+    the local disk.
+    """
     def __init__(self, 
                  domain='nest.local', 
                  url='https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/'):

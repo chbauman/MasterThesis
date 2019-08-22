@@ -18,16 +18,6 @@ def phi_quadratic(s, a):
     """
     return np.hstack([1, s, a, s * s, a * s, a * a])
 
-
-def phi_quadratic(s, a):
-    """
-    returns the evaluations of all the basis functions
-    in a vector.
-    Quadratic model.
-    """
-
-    return np.hstack([1, s, a, s * s, a * s, a * a])
-
 def phi_handcraft(s, a):
     """
     returns the evaluations of all the basis functions
@@ -42,7 +32,6 @@ def phi_handcraft(s, a):
     a_one_hot = np.zeros((3))
     a_one_hot[a] = 1
     return np.hstack([1, s, s * s, a_one_hot, ind1, ind2, ind3, ind4])
-
 
 def phi_state_action01(s, a):
     """

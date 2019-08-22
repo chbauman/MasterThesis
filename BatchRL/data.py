@@ -4,7 +4,6 @@ import os
 import numpy as np
 import pandas as pd
 
-
 import restclient
 
 class DataStruct:
@@ -12,8 +11,8 @@ class DataStruct:
     Base Class for different sets of data columns
     defined by successive IDs.
     """
-    def __init__(self, 
-                 id_list, 
+    def __init__(self,
+                 id_list,
                  name, 
                  startDate='2019-01-01',
                  endDate='2019-12-31'):
