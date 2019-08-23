@@ -30,6 +30,13 @@ def simple_battery_FQI():
 
 def main():
 
+    from keral_custom_optim import DDPGOpt
+
+    ddpgOpt = DDPGOpt()
+
+    print("Success!!")
+    return 0
+
     dat, m = ValveData.getData()
     dat, m = HeatingData.getData()
     dat, m = ElData.getData()

@@ -41,7 +41,7 @@ class bDDPG:
         """
 
         self.state_dim = state_dim
-        self.nb_actions = nb_actions
+        self.action_dim = action_dim
         self.mlp_layers = mlp_layers
         self.discount_factor = discount_factor
         self.use_diff_target_net = use_diff_target_net
