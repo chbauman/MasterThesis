@@ -10,7 +10,7 @@ from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVecto
 from keras.regularizers import l2
 
 from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput, \
-    ReduceProbabilisticSoftMax2D
+    ReduceProbabilisticSoftMax2D, getMLPModel
 
 
 class NFQI:
@@ -95,13 +95,18 @@ class NFQI:
 
         # Build Q-network
         a_t_one_hot = OneHot(self.nb_actions)(a_t)
-        q_out = self.create_Q_model(a_t_one_hot, s_t, self.mlp_layers, trainable = True)
-        self.Q_net = Model(inputs=[s_t, a_t], outputs=q_out)
+        a_s_t = keras.layers.concatenate([a_t_one_hot, s_t], axis=-1)
+        Q_mod = getMLPModel(self.mlp_layers, trainable = True)
+        q_out = Q_mod(a_s_t)
+        self.Q_net = Q_mod        
 
         # Target Q-network
         s_tp1_tar = RepeatVector(self.nb_actions)(s_tp1);
         a_t_tar = PrepInput(self.nb_actions)(s_tp1)
-        q_out_tar = self.create_Q_model(a_t_tar, s_tp1_tar, self.mlp_layers, trainable = False)
+        a_s_t_tar = keras.layers.concatenate([a_t_tar, s_tp1_tar], axis=-1)
+        Q_mod = getMLPModel(self.mlp_layers, trainable = False)
+        q_out_tar = Q_mod(a_s_t_tar)
+
         if self.stoch_policy_imp:
             argmax_q = ReduceProbabilisticSoftMax2D(0, self.stochasticity_beta)(q_out_tar)
         else:

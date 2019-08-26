@@ -13,6 +13,10 @@ from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput, \
     ReduceProbabilisticSoftMax2D
 
 
+
+def no_target_loss(y_true, y_pred):
+    return y_pred
+
 class bDDPG:
 
     """
@@ -59,7 +63,7 @@ class bDDPG:
         
     def create_Q_model(self, a_t, s_t, mlp_layers=[20, 20], trainable=True):
         """
-        Initialize an NFQ network.
+        Initialize a Q network.
         """
 
         a_s_t = keras.layers.concatenate([a_t, s_t], axis=-1)
@@ -79,6 +83,31 @@ class bDDPG:
         # Reduce to 1D
         out = Dense(1, activation=None, trainable=trainable)(a_s_t)
         return out
+
+    
+    def create_p_model(self, a_t, s_t, mlp_layers=[20, 20], trainable=True):
+        """
+        Initialize a policy network.
+        """
+
+        a_s_t = keras.layers.concatenate([a_t, s_t], axis=-1)
+        a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
+
+        # Add layers
+        n_fc_layers = len(mlp_layers)
+        for i in range(n_fc_layers):
+            a_s_t = Dense(mlp_layers[i],
+                          activation='relu', 
+                          trainable=trainable, 
+                          kernel_regularizer=l2(0.01)
+                          )(a_s_t)
+            a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
+            #a_s_t = Dropout(0.2)(a_s_t)
+
+        # Reduce to 1D
+        out = Dense(self.action_dim, activation=None, trainable=trainable)(a_s_t)
+        return out
+
 
     def create_optimization_target(self):
         """
@@ -117,7 +146,7 @@ class bDDPG:
         # Define model
         model = Model(inputs=[s_t, a_t, s_tp1], outputs=opt_target)
         optim = RMSprop(lr=self.lr)
-        model.compile(optimizer=optim, loss='mse')
+        model.compile(optimizer=optim, loss=no_target_loss)
         model.summary()
 
         return model
