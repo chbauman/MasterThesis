@@ -11,6 +11,8 @@ from keras.regularizers import l2
 
 from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput, \
     ReduceProbabilisticSoftMax2D, getMLPModel
+from keras_util import *
+
 
 
 class NFQI:
@@ -33,6 +35,7 @@ class NFQI:
                  discount_factor=0.9,
                  use_diff_target_net = True,
                  target_network_update_freq=3,
+                 param_updata_fac = 1.0,
                  lr=0.0001,
                  max_iters=200,
                  stoch_policy_imp = False,
@@ -49,6 +52,7 @@ class NFQI:
         self.discount_factor = discount_factor
         self.use_diff_target_net = use_diff_target_net
         self.target_network_update_freq = target_network_update_freq
+        self.param_updata_fac = param_updata_fac
         self.lr = lr
         self.max_iters = max_iters
 
@@ -118,7 +122,7 @@ class NFQI:
             
             # Copy parameters to target network
             if self.use_diff_target_net and self.use_diff_target_net:
-                self.target_Q_net.set_weights(self.Q_net.get_weights())
+                soft_update_params(self.target_Q_net, self.Q_net, self.param_updata_fac)
 
             # Fit model with constant target network
             curr_init_epoch = k * self.target_network_update_freq

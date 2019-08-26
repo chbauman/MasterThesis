@@ -11,11 +11,9 @@ from keras.regularizers import l2
 
 from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput, \
     ReduceProbabilisticSoftMax2D
+from keras_util import *
 
 
-
-def no_target_loss(y_true, y_pred):
-    return y_pred
 
 class bDDPG:
 
@@ -59,97 +57,50 @@ class bDDPG:
          
         # Create model
         self.opt_model = self.create_optimization_target()
-  
-        
-    def create_Q_model(self, a_t, s_t, mlp_layers=[20, 20], trainable=True):
+        pass
+
+   def create_optimization_target(self):
         """
-        Initialize a Q network.
-        """
-
-        a_s_t = keras.layers.concatenate([a_t, s_t], axis=-1)
-        a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
-
-        # Add layers
-        n_fc_layers = len(mlp_layers)
-        for i in range(n_fc_layers):
-            a_s_t = Dense(mlp_layers[i],
-                          activation='relu', 
-                          trainable=trainable, 
-                          kernel_regularizer=l2(0.01)
-                          )(a_s_t)
-            a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
-            #a_s_t = Dropout(0.2)(a_s_t)
-
-        # Reduce to 1D
-        out = Dense(1, activation=None, trainable=trainable)(a_s_t)
-        return out
-
-    
-    def create_p_model(self, a_t, s_t, mlp_layers=[20, 20], trainable=True):
-        """
-        Initialize a policy network.
+        Creates Q(s_t, a_t) - \gamma Q'(s_tp1, \mu'(s_tp1)) as Keras model.
+        Also: Q(s_t, \mu(s_t)) for policy updates.
         """
 
-        a_s_t = keras.layers.concatenate([a_t, s_t], axis=-1)
-        a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
-
-        # Add layers
-        n_fc_layers = len(mlp_layers)
-        for i in range(n_fc_layers):
-            a_s_t = Dense(mlp_layers[i],
-                          activation='relu', 
-                          trainable=trainable, 
-                          kernel_regularizer=l2(0.01)
-                          )(a_s_t)
-            a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
-            #a_s_t = Dropout(0.2)(a_s_t)
-
-        # Reduce to 1D
-        out = Dense(self.action_dim, activation=None, trainable=trainable)(a_s_t)
-        return out
-
-
-    def create_optimization_target(self):
-        """
-        Creates Q(s_t, a_t) - \gamma \max_a Q(s_tp1, a) as Keras model.
-        """
-
-        # State and action inputs
+        # State and action inputs, continuous actions
         s_t = Input(shape=(self.state_dim,))
         s_tp1 = Input(shape=(self.state_dim,))
-        a_t = Input(shape=(1,), dtype = np.int32)
+        a_t = Input(shape=(self.action_dim,))        
 
-        # Build Q-network
-        a_t_one_hot = OneHot(self.nb_actions)(a_t)
-        q_out = self.create_Q_model(a_t_one_hot, s_t, self.mlp_layers, trainable = True)
-        self.Q_net = Model(inputs=[s_t, a_t], outputs=q_out)
+        # Build models
+        self.Q_net = getMLPModel(self.mlp_layers, trainable = True)
+        self.const_Q_net = getMLPModel(self.mlp_layers, trainable = True)
+        self.Q_tar_net = getMLPModel(self.mlp_layers, trainable = False)
+        self.Pol_net = getMLPModel(self.mlp_layers, trainable = True)
+        self.Pol_tar_net = getMLPModel(self.mlp_layers, trainable = False)
 
-        # Target Q-network
-        s_tp1_tar = RepeatVector(self.nb_actions)(s_tp1);
-        a_t_tar = PrepInput(self.nb_actions)(s_tp1)
-        q_out_tar = self.create_Q_model(a_t_tar, s_tp1_tar, self.mlp_layers, trainable = False)
-        if self.stoch_policy_imp:
-            argmax_q = ReduceProbabilisticSoftMax2D(0, self.stochasticity_beta)(q_out_tar)
-        else:
-            argmax_q = ReduceArgMax2D(0)(q_out_tar)
-        max_q = ReduceMax2D(0)(q_out_tar)
-        self.target_Q_net = Model(inputs=s_tp1, outputs=max_q)               
+        # Get outputs
+        pol_tar_s_tp1 = self.Pol_tar_net(s_tp1)
+        q_tar_args = keras.layers.concatenate([pol_tar_s_tp1, s_tp1], axis=-1)
+        q_tar_eval = self.Q_tar_net(q_tar_args)
+        a_s_t = keras.layers.concatenate([a_t, s_t], axis=-1)
+        q_eval = self.Q_net(a_s_t)
+        pol_s_t = self.Pol_net(s_t)
+        pol_s_t_s_t = keras.layers.concatenate([pol_s_t, s_t], axis=-1)
+        q_const_eval_pol = self.const_Q_net(pol_s_t_s_t)
 
-        # Greedy Policy
-        argmax_q = ReduceArgMax2D(0)(q_out_tar)
-        self.greedy_policy = Model(inputs=s_tp1, outputs=argmax_q)
-
-        # Optimization Target
-        lam_max_q = Lambda(lambda x: x * self.discount_factor)(max_q) 
-        opt_target = Subtract()([q_out, lam_max_q])
-
-        # Define model
-        model = Model(inputs=[s_t, a_t, s_tp1], outputs=opt_target)
+        # Q-Function update
+        lam_max_q = Lambda(lambda x: x * self.discount_factor)(q_tar_eval) 
+        q_target = Subtract()([q_eval, lam_max_q])
+        q_update_model = Model(inputs=[s_t, a_t, s_tp1], outputs=q_const_eval_pol)
         optim = RMSprop(lr=self.lr)
-        model.compile(optimizer=optim, loss=no_target_loss)
-        model.summary()
+        q_update_model.compile(optimizer=optim, loss='mse')
+        q_update_model.summary()
 
-        return model
+        # Policy Improvement
+        pol_model = Model(inputs=[s_t], outputs=q_target)
+        pol_model.compile(optimizer=optim, loss=max_loss)
+        pol_model.summary()
+
+        return [q_update_model, pol_model]
 
     def fit(self, D_s, D_a, D_r, D_s_prime):
         """
@@ -158,19 +109,36 @@ class bDDPG:
                
         num_targ_net_update = self.max_iters // self.target_network_update_freq
 
+        # Initialize target networks as trainable ones
+        self.Q_tar_net.set_weights(self.Q_net.get_weights())
+        self.Pol_tar_net.set_weights(self.Pol_net.get_weights())
+
         for k in range(num_targ_net_update):   
             
             # Copy parameters to target network
             if self.use_diff_target_net:
                 self.target_Q_net.set_weights(self.Q_net.get_weights())
 
-            # Fit model with constant target network
+            # Q-update with constant target network
             curr_init_epoch = k * self.target_network_update_freq
-            self.opt_model.fit([D_s, D_a, D_s_prime], D_r, 
+            self.opt_model[0].fit([D_s, D_a, D_s_prime], D_r, 
                                epochs = curr_init_epoch + self.target_network_update_freq, 
                                initial_epoch = curr_init_epoch,
                                batch_size = 128,
                                validation_split = 0.1)
+            
+            # Copy params to const Q-net
+            self.const_Q_net.set_weights(self.Q_net.get_weights())
+
+            # Policy update
+            self.opt_model[1].fit([D_s], D_r, 
+                               epochs = curr_init_epoch + self.target_network_update_freq, 
+                               initial_epoch = curr_init_epoch,
+                               batch_size = 128,
+                               validation_split = 0.1)
+
+            # Soft parameter update
+
 
         pass
 

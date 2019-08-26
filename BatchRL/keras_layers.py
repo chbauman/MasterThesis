@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
+from keras_util import *
 from keras import backend as K
 from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, \
     Lambda, Subtract, BatchNormalization, Layer, Concatenate
@@ -108,31 +109,3 @@ class PrepInput(Layer):
     def compute_output_shape(self, input_shape):
         return (input_shape[0], self.num_classes, self.num_classes)
 
-
-from keras.models import Sequential
-from keras.regularizers import l2
-
-def getMLPModel(mlp_layers=[20, 20], out_dim = 1, trainable = True, dropout = False):
-    """
-    Returns a MLP keras model.
-    """
-    model = Sequential()
-    model.add(BatchNormalization(trainable=trainable, name = "bn0"))
-
-    # Add layers
-    n_fc_layers = len(mlp_layers)
-    for i in range(n_fc_layers):
-        next = Dense(mlp_layers[i],
-                          activation='relu', 
-                          trainable=trainable, 
-                          kernel_regularizer=l2(0.01), 
-                          name = "dense" + str(i))
-        model.add(next)
-        model.add(BatchNormalization(trainable=trainable, name = "bn" + str(i + 1)))
-        if dropout:
-            model.add(Dropout(0.2))
-
-    # Reduce to 1D
-    last = Dense(out_dim, activation=None, trainable=trainable, name = "lastdense")
-    model.add(last)
-    return model
