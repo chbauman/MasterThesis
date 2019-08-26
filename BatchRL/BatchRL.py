@@ -5,6 +5,7 @@ from FQI import NFQI
 from LSPI import LSPI
 from batchDDPG import bDDPG
 from simple_battery_test import SimpleBatteryTest
+from cart_pole import CartPole
 
 from data import TestData, ElData, HeatingData, ValveData
 from visualize import plot_time_series
@@ -15,14 +16,17 @@ from visualize import plot_time_series
 def simple_battery_FQI():
 
     sbt = SimpleBatteryTest(bidirectional = True)
+    sbt = CartPole()
+
+
     state_dim = sbt.state_dim
     nb_actions = sbt.nb_actions
 
     [s_t, a_t, r_t, s_tp1] = sbt.get_transition_tuples(n_tuples = 30000)
 
-    #print((np.c_[s_t, a_t, r_t, s_tp1])[:15])
+    print((np.c_[s_t, a_t, r_t, s_tp1])[:15])
 
-    fqi = NFQI(state_dim, nb_actions, stoch_policy_imp = True, use_diff_target_net=True, param_updata_fac=0.5)
+    fqi = NFQI(state_dim, nb_actions, stoch_policy_imp = False, use_diff_target_net=True, param_updata_fac=0.5, max_iters = 50, lr = 0.001)
     #fqi = LSPI(state_dim, nb_actions, stoch_policy_imp=True)
 
     fqi.fit(s_t, a_t, r_t, s_tp1)
