@@ -4,8 +4,11 @@ import numpy as np
 from FQI import NFQI
 from LSPI import LSPI
 from batchDDPG import bDDPG
+
+# Environments for debugging
 from simple_battery_test import SimpleBatteryTest
 from cart_pole import CartPole
+from mount_car_cont import MountCarCont
 
 from data import TestData, ElData, HeatingData, ValveData
 from visualize import plot_time_series
@@ -17,6 +20,7 @@ def simple_battery_FQI():
 
     sbt = SimpleBatteryTest(bidirectional = True)
     sbt = CartPole()
+    sbt = MountCarCont()
 
 
     state_dim = sbt.state_dim
@@ -26,7 +30,8 @@ def simple_battery_FQI():
 
     print((np.c_[s_t, a_t, r_t, s_tp1])[:50])
 
-    fqi = NFQI(state_dim, nb_actions, stoch_policy_imp = False, use_diff_target_net=False, param_updata_fac=0.5, max_iters = 20, lr = 0.001)
+    #fqi = NFQI(state_dim, nb_actions, stoch_policy_imp = False, use_diff_target_net=False, param_updata_fac=0.5, max_iters = 20, lr = 0.001)
+    fqi = bDDPG(state_dim, nb_actions)
     #fqi = LSPI(state_dim, nb_actions, stoch_policy_imp=True)
 
     fqi.fit(s_t, a_t, r_t, s_tp1)
