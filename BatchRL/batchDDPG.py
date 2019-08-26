@@ -17,14 +17,13 @@ from keras_util import *
 
 
 class bDDPG:
-
     """
     Implements the algorithm described in:
         Deterministic Policy Gradient Algorithms
         by: David Silver, Guy Lever, Nicolas Heess, Thomas Degris, Daan Wierstra, Martin Riedmiller
-        But applied offline, i.e. with the collected past data as replay memory
-        and without sampling new trajectories.
-    But using deep neural networks as function approximators
+    But applied offline, i.e. with the collected past data as replay memory
+    and without sampling new trajectories.
+    Further also using deep neural networks as function approximators
     for the policy and the action value function.
     """
 
@@ -146,7 +145,7 @@ class bDDPG:
 
     def get_policy(self):
         """
-        Returns the fitted greedy policy.
+        Returns the fitted policy.
         """
         def policy(s_t):
             s_t = np.reshape(s_t, (1, -1))
