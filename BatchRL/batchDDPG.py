@@ -6,11 +6,12 @@ from keras import backend as K
 from keras.optimizers import RMSprop
 from keras.models import Sequential, Model
 from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, \
-    Lambda, Subtract, BatchNormalization
+                Lambda, Subtract, BatchNormalization
 from keras.regularizers import l2
 
+
 from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput, \
-    ReduceProbabilisticSoftMax2D
+                ReduceProbabilisticSoftMax2D
 from keras_util import *
 
 
@@ -23,6 +24,8 @@ class bDDPG:
         by: David Silver, Guy Lever, Nicolas Heess, Thomas Degris, Daan Wierstra, Martin Riedmiller
         But applied offline, i.e. with the collected past data as replay memory
         and without sampling new trajectories.
+    But using deep neural networks as function approximators
+    for the policy and the action value function.
     """
 
     def __init__(self,
@@ -34,8 +37,7 @@ class bDDPG:
                  target_network_update_freq=3,
                  lr=0.0001,
                  max_iters=200,
-                 stoch_policy_imp = False,
-                 stochasticity_beta = 1.0
+                 tau = 0.2,
                  ):
 
         """
@@ -49,17 +51,13 @@ class bDDPG:
         self.use_diff_target_net = use_diff_target_net
         self.target_network_update_freq = target_network_update_freq
         self.lr = lr
+        self.tau = tau
         self.max_iters = max_iters
-
-        # Params for stochastic policy update
-        self.stoch_policy_imp = stoch_policy_imp
-        self.stochasticity_beta = stochasticity_beta
          
         # Create model
         self.opt_model = self.create_optimization_target()
-        pass
 
-   def create_optimization_target(self):
+    def create_optimization_target(self):
         """
         Creates Q(s_t, a_t) - \gamma Q'(s_tp1, \mu'(s_tp1)) as Keras model.
         Also: Q(s_t, \mu(s_t)) for policy updates.
@@ -100,6 +98,9 @@ class bDDPG:
         pol_model.compile(optimizer=optim, loss=max_loss)
         pol_model.summary()
 
+        # The final policy
+        self.fitted_policy = Model(inputs=s_t, outputs=pol_s_t)
+
         return [q_update_model, pol_model]
 
     def fit(self, D_s, D_a, D_r, D_s_prime):
@@ -138,7 +139,8 @@ class bDDPG:
                                validation_split = 0.1)
 
             # Soft parameter update
-
+            soft_update_params(self.Q_tar_net, self.Q_net, self.tau)
+            soft_update_params(self.Pol_tar_net, self.Pol_net, self.tau)
 
         pass
 
@@ -148,7 +150,7 @@ class bDDPG:
         """
         def policy(s_t):
             s_t = np.reshape(s_t, (1, -1))
-            action = self.greedy_policy.predict(s_t)
-            return action[0][0]
+            action = self.fitted_policy.predict(s_t)
+            return action
         
         return policy

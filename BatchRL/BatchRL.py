@@ -3,6 +3,7 @@ import numpy as np
 
 from FQI import NFQI
 from LSPI import LSPI
+from batchDDPG import bDDPG
 from simple_battery_test import SimpleBatteryTest
 
 from data import TestData, ElData, HeatingData, ValveData
