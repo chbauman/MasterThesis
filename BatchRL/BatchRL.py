@@ -24,9 +24,9 @@ def simple_battery_FQI():
 
     [s_t, a_t, r_t, s_tp1] = sbt.get_transition_tuples(n_tuples = 30000)
 
-    print((np.c_[s_t, a_t, r_t, s_tp1])[:15])
+    print((np.c_[s_t, a_t, r_t, s_tp1])[:50])
 
-    fqi = NFQI(state_dim, nb_actions, stoch_policy_imp = False, use_diff_target_net=True, param_updata_fac=0.5, max_iters = 50, lr = 0.001)
+    fqi = NFQI(state_dim, nb_actions, stoch_policy_imp = False, use_diff_target_net=False, param_updata_fac=0.5, max_iters = 20, lr = 0.001)
     #fqi = LSPI(state_dim, nb_actions, stoch_policy_imp=True)
 
     fqi.fit(s_t, a_t, r_t, s_tp1)
@@ -35,12 +35,6 @@ def simple_battery_FQI():
 
 def main():
 
-    #from keral_custom_optim import DDPGOpt
-
-    #ddpgOpt = DDPGOpt()
-
-    #print("Success!!")
-    #return 0
 
     #dat, m = ValveData.getData()
     #dat, m = HeatingData.getData()
