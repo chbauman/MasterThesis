@@ -58,30 +58,6 @@ class NFQI:
          
         # Create model
         self.opt_model = self.create_optimization_target()
-  
-        
-    def create_Q_model(self, a_t, s_t, mlp_layers=[20, 20], trainable=True):
-        """
-        Initialize an NFQ network.
-        """
-
-        a_s_t = keras.layers.concatenate([a_t, s_t], axis=-1)
-        a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
-
-        # Add layers
-        n_fc_layers = len(mlp_layers)
-        for i in range(n_fc_layers):
-            a_s_t = Dense(mlp_layers[i],
-                          activation='relu', 
-                          trainable=trainable, 
-                          kernel_regularizer=l2(0.01)
-                          )(a_s_t)
-            a_s_t = BatchNormalization(trainable=trainable)(a_s_t)
-            #a_s_t = Dropout(0.2)(a_s_t)
-
-        # Reduce to 1D
-        out = Dense(1, activation=None, trainable=trainable)(a_s_t)
-        return out
 
     def create_optimization_target(self):
         """
@@ -104,7 +80,8 @@ class NFQI:
         s_tp1_tar = RepeatVector(self.nb_actions)(s_tp1);
         a_t_tar = PrepInput(self.nb_actions)(s_tp1)
         a_s_t_tar = keras.layers.concatenate([a_t_tar, s_tp1_tar], axis=-1)
-        Q_mod = getMLPModel(self.mlp_layers, trainable = False)
+        if self.use_diff_target_net:
+            Q_mod = getMLPModel(self.mlp_layers, trainable = False)
         q_out_tar = Q_mod(a_s_t_tar)
 
         if self.stoch_policy_imp:
@@ -140,7 +117,7 @@ class NFQI:
         for k in range(num_targ_net_update):   
             
             # Copy parameters to target network
-            if self.use_diff_target_net:
+            if self.use_diff_target_net and self.use_diff_target_net:
                 self.target_Q_net.set_weights(self.Q_net.get_weights())
 
             # Fit model with constant target network
