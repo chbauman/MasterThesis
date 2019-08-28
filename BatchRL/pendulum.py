@@ -1,4 +1,5 @@
 
+
 import gym
 from gym import spaces
 
@@ -6,10 +7,10 @@ import random
 
 import numpy as np
 
-class MountCarCont:
+class Pendulum:
     def __init__(self):
 
-        self.env = gym.make('MountainCarContinuous-v0')
+        self.env = gym.make('Pendulum-v0')
         self.env.reset()
 
         a_s = self.env.action_space
@@ -19,7 +20,7 @@ class MountCarCont:
         self.nb_actions = a_s.shape[0]
         pass
 
-    def get_transition_tuples(self, n_tuples = 5000):
+    def get_transition_tuples(self, n_tuples = 50000):
         """
         Creates n_tuples tuples of the form (s_t, a_t, r_t, s_tp1)
         for training of batch RL algorithm.
@@ -38,22 +39,21 @@ class MountCarCont:
             last_obs = observation
             curr_action = self.env.action_space.sample()
             tot_rew = 0
-            for t in range(1000):
-                self.env.render()
+            for t in range(100):
+                #self.env.render()
                 if random.randint(0, 1):
                     action = self.env.action_space.sample()
                 else:
                     action = curr_action
                 curr_action = action
                 observation, reward, done, info = self.env.step(action)
-                
 
                 if ct == n_tuples:
                     break
 
                 # Save tuple
                 # Use a smooth loss here
-                r_t[ct] = reward + 0.03 * (observation[0] - 0.5) ** 6
+                r_t[ct] = reward
                 a_t[ct] = action
                 s_tp1[ct,:] = observation
                 s_t[ct,:] = last_obs

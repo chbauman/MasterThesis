@@ -9,8 +9,9 @@ from batchDDPG import bDDPG
 from simple_battery_test import SimpleBatteryTest
 from cart_pole import CartPole
 from mount_car_cont import MountCarCont
+from pendulum import Pendulum
 
-from data import TestData, ElData, HeatingData, ValveData
+from data import Room274Data, Room272Data, WeatherData, TestData
 from visualize import plot_time_series
 
 
@@ -21,12 +22,12 @@ def simple_battery_FQI():
     sbt = SimpleBatteryTest(bidirectional = True)
     sbt = CartPole()
     sbt = MountCarCont()
-
+    sbt = Pendulum()
 
     state_dim = sbt.state_dim
     nb_actions = sbt.nb_actions
 
-    [s_t, a_t, r_t, s_tp1] = sbt.get_transition_tuples(n_tuples = 30000)
+    [s_t, a_t, r_t, s_tp1] = sbt.get_transition_tuples(n_tuples = 100000)
 
     print((np.c_[s_t, a_t, r_t, s_tp1])[:50])
 
@@ -41,16 +42,17 @@ def simple_battery_FQI():
 def main():
 
 
-    #dat, m = ValveData.getData()
-    #dat, m = HeatingData.getData()
-    #dat, m = ElData.getData()
-    #plot_time_series(dat[1][1], dat[1][0])
-    #dat, m = TestData.getData()
+    dat, m = Room274Data.getData()
+    dat, m = Room272Data.getData()
+    dat, m = WeatherData.getData()
+    for ct, el in enumerate(dat):
+        plot_time_series(el[1], el[0], m[ct])
+    dat, m = TestData.getData()
     
     #print(len(dat))
     #print(m)
 
-    simple_battery_FQI()
+    #simple_battery_FQI()
 
     return 0
 

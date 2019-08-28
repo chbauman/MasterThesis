@@ -75,6 +75,11 @@ class client(object):
         except TypeError as e:
             print("Login failed, invalid password!")
             return None
+        except Exception as e:
+            print(e)
+            print("A problem ocurred")
+            return None
+
         # Check if login valid.
         if r.status_code != requests.codes.ok:
             print("Login failed, invalid username!")
