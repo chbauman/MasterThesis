@@ -124,35 +124,3 @@ WeatherData = DataStruct(
             startDate='2018-01-01',
             endDate='2019-12-31'
             )
-
-
-###########################################################################
-# DFAB Data
-# Electricity consumption data
-ElData = DataStruct(
-            id_list = [42190138 + i for i in range(18)],
-            name = "Electric",
-            startDate='2019-01-01',
-            endDate='2019-12-31'
-            )
-
-# Heating data
-HeatingData = DataStruct(
-            id_list = [421100171 + i for i in range(6)],
-            name = "Heat-U33M1-P890",
-            startDate='2019-01-01',
-            endDate='2019-12-31'
-            )
-
-# Valve data
-ValveData = DataStruct(id_list=[421100138 + i for i in range(5)] \
-                             + [421100194 + i for i in range(5)] \
-                             + [421100143 + i for i in range(5)] \
-                             + [421100199 + i for i in range(5)] \
-                             + [421100148 + i for i in range(5)],
-                       name="Valve-U33M1,U33N1-Y720,Y721,Y750",
-                       startDate='2019-01-01',
-                       endDate='2019-12-31'    
-                       )
-
-
