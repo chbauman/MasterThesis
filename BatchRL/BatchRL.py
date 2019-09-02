@@ -11,7 +11,7 @@ from cart_pole import CartPole
 from mount_car_cont import MountCarCont
 from pendulum import Pendulum
 
-from data import Room274Data, Room272Data, WeatherData, TestData
+from data import Room274Data, Room272Data, WeatherData, TestData, analyze_data
 from visualize import plot_time_series
 
 
@@ -45,6 +45,7 @@ def main():
     dat, m = Room274Data.getData()
     dat, m = Room272Data.getData()
     dat, m = WeatherData.getData()
+    analyze_data(dat[0])
     for ct, el in enumerate(dat):
         plot_time_series(el[1], el[0], m[ct])
     dat, m = TestData.getData()
