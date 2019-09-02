@@ -228,6 +228,41 @@ def interpolate_time_series(dat, dt_mins):
     return [new_vals, start_dt]
 
     
+def get_all_relevant_data(dt_mins = 15):
+    """
+    Load and interpolate all the necessary data.
+    """
+    interv = np.timedelta64(dt_mins, 'm')
+
+    # Weather data
+    dat, m = WeatherData.getData()
+    [amb_temp, dt_init] = interpolate_time_series(dat[0], dt_mins)
+    n_data = amb_temp.shape[0]
+    print(n_data, "total data points.")
+
+    # Initialize np array for compact storage
+    all_data = np.empty((n_data, 5), dtype = np.float32)
+    all_data.fill(np.nan)
+    all_data[:,0] = amb_temp
+
+    # Irradiance data
+    [irradiance, dt_irr_init] = interpolate_time_series(dat[2], dt_mins)
+    len_irr_dat = np.minimum(irradiance.shape[0], n_data)
+    offset = int(np.round((dt_irr_init - dt_init) / interv))
+    if offset < 0:
+        all_data[:(len_irr_dat - offset), 1] = irradiance[offset:]
+    else:
+        all_data[offset:(offset + len_irr_dat), 1] = irradiance
+
+    # Room data
+    dat, m = Room274Data.getData()
+    dat, m = Room272Data.getData()
+
+    return all_data
+
+
+
+
 
 
 
