@@ -133,8 +133,6 @@ def analyze_data(dat):
     Analyzes the provided data.
     """
 
-    interpolate_time_series(dat, 15)
-
     vals, dates = dat
     n_data_p = len(vals)
 
@@ -206,11 +204,12 @@ def interpolate_time_series(dat, dt_mins):
                 count += 1
                 curr_val = (curr_dt - curr_upper_lim) / interv * v
             else:
-                # Data missing!
-                print("Missing data")
+                # Data missing!                
                 curr_val += (curr_upper_lim - last_dt) / interv * last_val
+                new_vals[count] = curr_val
                 count += 1
                 n_data_missing = (curr_dt - curr_upper_lim) // interv
+                print("Missing", n_data_missing, "data points :(")
                 for k in range(n_data_missing):
                     new_vals[count] = np.nan
                     count += 1

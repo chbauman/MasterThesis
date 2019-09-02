@@ -11,8 +11,8 @@ from cart_pole import CartPole
 from mount_car_cont import MountCarCont
 from pendulum import Pendulum
 
-from data import Room274Data, Room272Data, WeatherData, TestData, analyze_data
-from visualize import plot_time_series
+from data import Room274Data, Room272Data, WeatherData, TestData, analyze_data, interpolate_time_series
+from visualize import plot_time_series, plot_ip_time_series
 
 
 
@@ -46,6 +46,10 @@ def main():
     dat, m = Room272Data.getData()
     dat, m = WeatherData.getData()
     analyze_data(dat[0])
+
+    [y, dt] = interpolate_time_series(dat[0], 15)
+    plot_ip_time_series(y, m[0], show = False)
+
     for ct, el in enumerate(dat):
         plot_time_series(el[1], el[0], m[ct])
     dat, m = TestData.getData()
