@@ -11,7 +11,7 @@ from cart_pole import CartPole
 from mount_car_cont import MountCarCont
 from pendulum import Pendulum
 
-from data import Room274Data, Room272Data, WeatherData, TestData, analyze_data, get_all_relevant_data
+from data import Room274Data, Room272Data, WeatherData, TestData, analyze_data, get_all_relevant_data, get_data_test
 from visualize import plot_time_series, plot_ip_time_series
 
 
@@ -40,12 +40,15 @@ def simple_battery_FQI():
     sbt.eval_policy(fqi.get_policy())
 
 def main():
-    dat, m = WeatherData.getData()
-    dat = get_all_relevant_data()
+    
+    #dat = get_all_relevant_data()
+    dat, m = get_data_test()
+ 
     plot_ip_time_series(dat[:,0], m[0], show = False)
-    plot_ip_time_series(dat[:,1], m[2], show = True)
+    plot_ip_time_series(dat[:,1], m[1], show = True)
     return 0
-
+   
+    dat, m = WeatherData.getData()
     dat, m = Room274Data.getData()
     dat, m = Room272Data.getData()
     dat, m = WeatherData.getData()

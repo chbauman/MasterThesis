@@ -27,8 +27,8 @@ def plot_time_series(x, y, m, show = True):
     plt.title(m['description'])
     plt.ylabel(m['unit'])
     plt.xlabel('Time')
-    ax.xaxis.set_major_formatter(formatter)
-    ax.xaxis.set_tick_params(rotation=30, labelsize=10)
+    #ax.xaxis.set_major_formatter(formatter)
+    #ax.xaxis.set_tick_params(rotation=30, labelsize=10)
 
     # Show plot
     if show:
@@ -42,7 +42,7 @@ def plot_ip_time_series(y, m, show = True):
 
     # Define plot
     fig, ax = plt.subplots()
-    plt.plot(y, ls = '-', ms = 0.1)
+    plt.plot(y, 'ro')
     plt.title(m['description'])
     plt.ylabel(m['unit'])
     plt.xlabel('Time')

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from datetime import datetime
-
+from visualize import plot_time_series
 import restclient
 
 class DataStruct:
@@ -44,6 +44,7 @@ class DataStruct:
         If the data is not found locally it is 
         retrieved from the SQL database, otherwise 
         the local data is read and returned.
+        Returns (list((np.array(vals), np.array(timestamps))), list(dict()))
         """
 
         self.load_client()
@@ -65,6 +66,10 @@ class DataStruct:
 
     pass
 
+###########################################################################
+# Test Data for debugging
+
+
 # Test data, small part of the electricity data,
 # for testing since access is faster.
 TestData = DataStruct(
@@ -73,7 +78,43 @@ TestData = DataStruct(
             startDate='2019-08-08',
             endDate='2019-08-09'
             )
+class TestDataSynth:
 
+     def getData(self):
+         """
+         Synthetic and short dataset to be used for debugging.
+         """
+
+         # First Time series
+         dict1 = {}
+         dict1['description'] = "Synthetic Data Series 1"
+         dict1['unit'] = "Test Unit 1"
+         vals1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
+         dats1 = np.array([
+                np.datetime64('2005-02-25T03:31'),
+                np.datetime64('2005-02-25T03:39'),
+                np.datetime64('2005-02-25T03:48'),
+                np.datetime64('2005-02-25T04:20'),
+                np.datetime64('2005-02-25T04:25'),
+                np.datetime64('2005-02-25T04:30'),
+             ], dtype = 'datetime64')
+
+         # Second Time series
+         dict2 = {}
+         dict2['description'] = "Synthetic Data Series 2"
+         dict2['unit'] = "Test Unit 2"
+         vals2 = np.array([1.0, 1.4, 2.1, 1.5, 3.3, 1.8, 2.5])
+         dats2 = np.array([
+                np.datetime64('2005-02-25T03:51'),
+                np.datetime64('2005-02-25T03:59'),
+                np.datetime64('2005-02-25T04:17'),
+                np.datetime64('2005-02-25T04:21'),
+                np.datetime64('2005-02-25T04:34'),
+                np.datetime64('2005-02-25T04:55'),
+                np.datetime64('2005-02-25T05:01'),
+             ], dtype = 'datetime64')
+         return ([(vals1, dats1), (vals2, dats2)], [dict1, dict2])
+TestData2 = TestDataSynth()
 
 
 ###########################################################################
@@ -126,6 +167,7 @@ WeatherData = DataStruct(
             startDate='2018-01-01',
             endDate='2019-12-31'
             )
+
 
 
 def analyze_data(dat):
@@ -186,17 +228,18 @@ def interpolate_time_series(dat, dt_mins):
 
     # Initialize
     new_vals = np.empty((n_ts,), dtype = np.float32)
+    new_vals.fill(np.nan)
     count = 0
     curr_val = 0
     last_dt = dates[0]
     last_val = vals[0]
     curr_val = (last_dt - start_dt) / interv * last_val
 
-    for ct, v in enumerate(vals):
-
-        curr_dt = dates[ct]
-        curr_upper_lim = start_dt + count * interv
-        if curr_dt > curr_upper_lim:
+    # Loop over data points
+    for ct, v in enumerate(vals[1:]):
+        curr_dt = dates[ct + 1]
+        curr_upper_lim = start_dt + (count + 1) * interv
+        if curr_dt >= curr_upper_lim:
             if curr_dt <= curr_upper_lim + interv:
                 # Next datetime in next interval
                 curr_val += (curr_upper_lim - last_dt) / interv * v
@@ -224,15 +267,63 @@ def interpolate_time_series(dat, dt_mins):
         last_dt = curr_dt
         last_val = v
 
+    # Add last one
+    curr_val += (end_dt + interv - curr_dt) / interv * v
+    new_vals[count] = curr_val
 
+    # Return
     return [new_vals, start_dt]
 
     
+def add_col(full_dat_array, data, dt_init, dt_init_new, col_ind, dt_mins = 15):
+    """
+    Add time series as columd to data array at the right index.
+    If the second time series exceeds the datatime range of the 
+    first one it is cut to fit the first one. If it is too short
+    the missing values are filled with NaNs.
+    """
+    
+    n_data = full_dat_array.shape[0]
+    n_data_new = data.shape[0]
+
+    # Compute indices
+    interv = np.timedelta64(dt_mins, 'm')
+    offset_before = int(np.round((dt_init_new - dt_init) / interv))
+    offset_after = n_data_new - n_data + offset_before
+    dat_inds = [np.maximum(0, offset_before), n_data + np.minimum(0, offset_after)]
+    new_inds = [np.maximum(0, -offset_before), n_data_new + np.minimum(0, -offset_after)]
+
+    # Add to column
+    full_dat_array[dat_inds[0]:dat_inds[1], col_ind] = data[new_inds[0]:new_inds[1]]
+    return
+
+
+
+def get_data_test():
+    dt_mins = 15
+    dat, m = TestData2.getData()
+    plot_time_series(dat[0][1], dat[0][0], m[0], show = False)
+    plot_time_series(dat[1][1], dat[1][0], m[1], show = False)
+
+    [data1, dt_init1] = interpolate_time_series(dat[0], dt_mins)
+    n_data = data1.shape[0]
+    print(n_data, "total data points.")
+
+    # Initialize np array for compact storage
+    all_data = np.empty((n_data, 2), dtype = np.float32)
+    all_data.fill(np.nan)
+    all_data[:,0] = data1
+
+    # Add data
+    [data2, dt_init2] = interpolate_time_series(dat[1], dt_mins)
+    add_col(all_data, data2, dt_init1, dt_init2, 1, dt_mins)
+
+    return all_data, m
+
 def get_all_relevant_data(dt_mins = 15):
     """
     Load and interpolate all the necessary data.
     """
-    interv = np.timedelta64(dt_mins, 'm')
 
     # Weather data
     dat, m = WeatherData.getData()
@@ -247,15 +338,13 @@ def get_all_relevant_data(dt_mins = 15):
 
     # Irradiance data
     [irradiance, dt_irr_init] = interpolate_time_series(dat[2], dt_mins)
-    len_irr_dat = np.minimum(irradiance.shape[0], n_data)
-    offset = int(np.round((dt_irr_init - dt_init) / interv))
-    if offset < 0:
-        all_data[:(len_irr_dat - offset), 1] = irradiance[offset:]
-    else:
-        all_data[offset:(offset + len_irr_dat), 1] = irradiance
+    add_col(all_data, irradiance, dt_init, dt_irr_init, 1, dt_mins)
 
     # Room data
     dat, m = Room274Data.getData()
+    [temp, dt_temp_init] = interpolate_time_series(dat[1], dt_mins)
+    add_col(all_data, temp, dt_init, dt_temp_init, 2, dt_mins)
+
     dat, m = Room272Data.getData()
 
     return all_data
