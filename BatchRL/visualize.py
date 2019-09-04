@@ -23,7 +23,7 @@ def plot_time_series(x, y, m, show = True):
 
     # Define plot
     fig, ax = plt.subplots()
-    plt.plot_date(x, y, ls = '-', ms = 0.1)
+    plt.plot_date(x, y, linestyle=':', marker='^', color='red', markersize=5, mfc = 'blue', mec = 'blue')
     plt.title(m['description'])
     plt.ylabel(m['unit'])
     plt.xlabel('Time')
@@ -42,7 +42,7 @@ def plot_ip_time_series(y, m, show = True):
 
     # Define plot
     fig, ax = plt.subplots()
-    plt.plot(y, 'ro')
+    plt.plot(y, 'ro', markersize=1)
     plt.title(m['description'])
     plt.ylabel(m['unit'])
     plt.xlabel('Time')

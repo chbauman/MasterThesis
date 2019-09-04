@@ -87,7 +87,7 @@ class TestDataSynth:
 
          # First Time series
          dict1 = {}
-         dict1['description'] = "Synthetic Data Series 1"
+         dict1['description'] = "Synthetic Data Series 1: Base Series"
          dict1['unit'] = "Test Unit 1"
          vals1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
          dats1 = np.array([
@@ -101,7 +101,7 @@ class TestDataSynth:
 
          # Second Time series
          dict2 = {}
-         dict2['description'] = "Synthetic Data Series 2"
+         dict2['description'] = "Synthetic Data Series 2: Delayed and longer"
          dict2['unit'] = "Test Unit 2"
          vals2 = np.array([1.0, 1.4, 2.1, 1.5, 3.3, 1.8, 2.5])
          dats2 = np.array([
@@ -113,7 +113,26 @@ class TestDataSynth:
                 np.datetime64('2005-02-25T04:55'),
                 np.datetime64('2005-02-25T05:01'),
              ], dtype = 'datetime64')
-         return ([(vals1, dats1), (vals2, dats2)], [dict1, dict2])
+
+         # Third Time series
+         dict3 = {}
+         dict3['description'] = "Synthetic Data Series 3: Repeating Values"
+         dict3['unit'] = "Test Unit 3"
+         vals3 = np.array([0.0, 1.4, 1.4, 0.0, 3.3, 3.3, 3.3, 3.3, 0.0, 3.3, 2.5])
+         dats3 = np.array([
+                np.datetime64('2005-02-25T03:45'),
+                np.datetime64('2005-02-25T03:53'),
+                np.datetime64('2005-02-25T03:59'),
+                np.datetime64('2005-02-25T04:21'),
+                np.datetime64('2005-02-25T04:23'),
+                np.datetime64('2005-02-25T04:25'),
+                np.datetime64('2005-02-25T04:34'),
+                np.datetime64('2005-02-25T04:37'),
+                np.datetime64('2005-02-25T04:45'),
+                np.datetime64('2005-02-25T04:55'),
+                np.datetime64('2005-02-25T05:01'),
+             ], dtype = 'datetime64')
+         return ([(vals1, dats1), (vals2, dats2), (vals3, dats3)], [dict1, dict2, dict3])
 TestData2 = TestDataSynth()
 
 
@@ -298,25 +317,105 @@ def add_col(full_dat_array, data, dt_init, dt_init_new, col_ind, dt_mins = 15):
     return
 
 
+def add_time(all_data, dt_init1, col_ind = 0, dt_mins = 15):
+    """
+    Adds the time as indices to the data,
+    periodic with period one day.
+    """
+
+    n_data = all_data.shape[0]
+    interv = np.timedelta64(dt_mins, 'm')
+    n_ts_per_day = 24 * 60 / dt_mins
+    t_temp_round = np.datetime64(dt_init1, 'D')
+    start_t = (dt_init1 - t_temp_round) / interv
+    for k in range(n_data):
+        all_data[k, 0] = (start_t + k) % n_ts_per_day
+    return
+
+
+def clean_data(dat, rem_vals = [], n_cons_least = 2, const_excepts = []):
+    """
+    Removes all values with a specified value 'rem_val'
+    and removes all sequences where there are at 
+    least 'n_cons_least' consecutive
+    values having the exact same value. If the value 
+    occurring multiple times is in 'const_excepts' then
+    it is not removed.
+    """
+
+    vals, dates = dat
+    tot_dat = vals.shape[0]
+
+    # Make copy
+    new_vals = np.copy(vals)
+    new_dates = np.copy(dates)
+
+    # Initialize
+    prev_val = np.nan
+    count = 0
+    num_occ = 1
+    consec_streak = False
+
+    # Add cleaned values and dates
+    for (v, d) in zip(vals, dates):
+
+        if v not in rem_vals:
+
+            # Monitor how many times the same value occurred
+            if v == prev_val and v not in const_excepts:
+
+                num_occ += 1
+                if num_occ == n_cons_least:
+                    consec_streak = True
+                    count -= n_cons_least - 1
+            else:
+                consec_streak = False
+                num_occ = 1
+
+            # Add value if it has not occurred too many times
+            if consec_streak == False:
+            
+                new_vals[count] = v
+                new_dates[count] = d
+                count += 1
+                prev_val = v
+
+        else:
+            # Reset streak
+            consec_streak = False
+            num_occ = 1
+
+    # Return clean data
+    #count -= 1
+    print(tot_dat - count, "data points removed.")
+    return [new_vals[:count], new_dates[:count]]
+
 
 def get_data_test():
+
     dt_mins = 15
     dat, m = TestData2.getData()
     plot_time_series(dat[0][1], dat[0][0], m[0], show = False)
     plot_time_series(dat[1][1], dat[1][0], m[1], show = False)
+    plot_time_series(dat[2][1], dat[2][0], m[2], show = False)
+
+    mod_dat = clean_data(dat[2], [0.0], 4, [3.3])
+    plot_time_series(mod_dat[1], mod_dat[0], m[2], show = True)
+
 
     [data1, dt_init1] = interpolate_time_series(dat[0], dt_mins)
     n_data = data1.shape[0]
     print(n_data, "total data points.")
 
     # Initialize np array for compact storage
-    all_data = np.empty((n_data, 2), dtype = np.float32)
+    all_data = np.empty((n_data, 3), dtype = np.float32)
     all_data.fill(np.nan)
-    all_data[:,0] = data1
 
     # Add data
+    add_time(all_data, dt_init1, 0, dt_mins)
+    all_data[:,1] = data1
     [data2, dt_init2] = interpolate_time_series(dat[1], dt_mins)
-    add_col(all_data, data2, dt_init1, dt_init2, 1, dt_mins)
+    add_col(all_data, data2, dt_init1, dt_init2, 2, dt_mins)
 
     return all_data, m
 
@@ -324,6 +423,8 @@ def get_all_relevant_data(dt_mins = 15):
     """
     Load and interpolate all the necessary data.
     """
+    # Initialize meta data dict list
+    m_out = []
 
     # Weather data
     dat, m = WeatherData.getData()
@@ -334,20 +435,27 @@ def get_all_relevant_data(dt_mins = 15):
     # Initialize np array for compact storage
     all_data = np.empty((n_data, 5), dtype = np.float32)
     all_data.fill(np.nan)
-    all_data[:,0] = amb_temp
+
+    # Add time and weather
+    add_time(all_data, dt_init, 0, dt_mins)
+    m_out += [{'description': 'time of day', 'unit': str(dt_mins) + ' minutes'}]
+    all_data[:, 1] = amb_temp
+    m_out += [m[0]]
 
     # Irradiance data
     [irradiance, dt_irr_init] = interpolate_time_series(dat[2], dt_mins)
-    add_col(all_data, irradiance, dt_init, dt_irr_init, 1, dt_mins)
+    add_col(all_data, irradiance, dt_init, dt_irr_init, 2, dt_mins)
+    m_out += [m[2]]
 
     # Room data
     dat, m = Room274Data.getData()
     [temp, dt_temp_init] = interpolate_time_series(dat[1], dt_mins)
-    add_col(all_data, temp, dt_init, dt_temp_init, 2, dt_mins)
+    add_col(all_data, temp, dt_init, dt_temp_init, 3, dt_mins)
+    m_out += [m[1]]
 
-    dat, m = Room272Data.getData()
+    #dat, m = Room272Data.getData()
 
-    return all_data
+    return all_data, m_out
 
 
 

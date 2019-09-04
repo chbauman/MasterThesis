@@ -41,11 +41,13 @@ def simple_battery_FQI():
 
 def main():
     
-    #dat = get_all_relevant_data()
     dat, m = get_data_test()
+    return 0
+    dat, m = get_all_relevant_data()
  
     plot_ip_time_series(dat[:,0], m[0], show = False)
-    plot_ip_time_series(dat[:,1], m[1], show = True)
+    plot_ip_time_series(dat[:,1], m[1], show = False)
+    plot_ip_time_series(dat[:,2], m[2], show = True)
     return 0
    
     dat, m = WeatherData.getData()
