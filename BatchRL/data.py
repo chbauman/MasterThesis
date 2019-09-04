@@ -146,11 +146,69 @@ def analyze_data(dat):
     print("Mean gap:", np.timedelta64(mean_t_diff, 'm'), "or", np.timedelta64(mean_t_diff, 's'))
     
     print("Positive differences:", np.all(t_diffs > np.timedelta64(0, 'ns')))
+    return
 
+def clean_data(dat, rem_vals = [], n_cons_least = 2, const_excepts = []):
+    """
+    Removes all values with a specified value 'rem_val'
+    and removes all sequences where there are at 
+    least 'n_cons_least' consecutive
+    values having the exact same value. If the value 
+    occurring multiple times is in 'const_excepts' then
+    it is not removed.
+    """
+
+    vals, dates = dat
+    tot_dat = vals.shape[0]
+
+    # Make copy
+    new_vals = np.copy(vals)
+    new_dates = np.copy(dates)
+
+    # Initialize
+    prev_val = np.nan
+    count = 0
+    num_occ = 1
+    consec_streak = False
+
+    # Add cleaned values and dates
+    for (v, d) in zip(vals, dates):
+
+        if v not in rem_vals:
+
+            # Monitor how many times the same value occurred
+            if v == prev_val and v not in const_excepts:
+
+                num_occ += 1
+                if num_occ == n_cons_least:
+                    consec_streak = True
+                    count -= n_cons_least - 1
+            else:
+                consec_streak = False
+                num_occ = 1
+
+            # Add value if it has not occurred too many times
+            if consec_streak == False:
+            
+                new_vals[count] = v
+                new_dates[count] = d
+                count += 1
+                prev_val = v
+
+        else:
+            # Reset streak
+            consec_streak = False
+            num_occ = 1
+
+    # Return clean data
+    #count -= 1
+    print(tot_dat - count, "data points removed.")
+    return [new_vals[:count], new_dates[:count]]
 
 def floor_datetime_to_min(dt, mt):
     """
     Rounds deltatime64 dt down to mt minutes.
+    In a really fucking cumbersome way.
     """
     assert 60 % mt == 0
 
@@ -164,7 +222,6 @@ def floor_datetime_to_min(dt, mt):
     dt -= np.timedelta64(secs, 's')
     dt -= np.timedelta64(mins, 'm')
     return dt
-
 
 def interpolate_time_series(dat, dt_mins):
     """
@@ -230,8 +287,7 @@ def interpolate_time_series(dat, dt_mins):
 
     # Return
     return [new_vals, start_dt]
-
-    
+ 
 def add_col(full_dat_array, data, dt_init, dt_init_new, col_ind, dt_mins = 15):
     """
     Add time series as columd to data array at the right index.
@@ -254,7 +310,6 @@ def add_col(full_dat_array, data, dt_init, dt_init_new, col_ind, dt_mins = 15):
     full_dat_array[dat_inds[0]:dat_inds[1], col_ind] = data[new_inds[0]:new_inds[1]]
     return
 
-
 def add_time(all_data, dt_init1, col_ind = 0, dt_mins = 15):
     """
     Adds the time as indices to the data,
@@ -270,69 +325,64 @@ def add_time(all_data, dt_init1, col_ind = 0, dt_mins = 15):
         all_data[k, 0] = (start_t + k) % n_ts_per_day
     return
 
-
-def clean_data(dat, rem_vals = [], n_cons_least = 2, const_excepts = []):
+def fill_holes_linear_interpolate(time_series, max_width = 1):
     """
-    Removes all values with a specified value 'rem_val'
-    and removes all sequences where there are at 
-    least 'n_cons_least' consecutive
-    values having the exact same value. If the value 
-    occurring multiple times is in 'const_excepts' then
-    it is not removed.
+    Fills the holes of a equispaced time series
+    with a width up to 'max_width' 
+    by linearly interpolating between the previous and
+    next data point.
     """
 
-    vals, dates = dat
-    tot_dat = vals.shape[0]
+    n = time_series.shape[0]
+    nan_bool = np.isnan(time_series)    
 
-    # Make copy
-    new_vals = np.copy(vals)
-    new_dates = np.copy(dates)
+    # Return if there are no NaNs
+    if np.sum(nan_bool) == 0:
+        return
 
-    # Initialize
-    prev_val = np.nan
-    count = 0
-    num_occ = 1
-    consec_streak = False
+    # Neglect NaNs at beginning and end
+    non_nans = np.where(nan_bool == False)[0]
+    print(non_nans)
+    first_non_nan = non_nans[0]
+    nan_bool[:non_nans[0]] = False
+    nan_bool[non_nans[-1]:] = False
 
-    # Add cleaned values and dates
-    for (v, d) in zip(vals, dates):
+    # Find all indices with NaNs
+    all_nans = np.argwhere(nan_bool)
 
-        if v not in rem_vals:
+    # Initialize itarators
+    n_nans = all_nans.shape[0]
+    ind_ind = 0
+    s_ind = all_nans[ind_ind][0]
 
-            # Monitor how many times the same value occurred
-            if v == prev_val and v not in const_excepts:
+    while ind_ind < all_nans.shape[0]:
+        s_ind = all_nans[ind_ind][0]
+        streak_len = np.where(nan_bool[s_ind:] == False)[0][0]
+        if streak_len <= max_width:
 
-                num_occ += 1
-                if num_occ == n_cons_least:
-                    consec_streak = True
-                    count -= n_cons_least - 1
-            else:
-                consec_streak = False
-                num_occ = 1
+            # Interpolate values
+            low_val = time_series[s_ind - 1]
+            high_val = time_series[s_ind + streak_len]
+            for k in range(streak_len):
+                curr_val = low_val * (k + 1) + high_val * (streak_len - k)
+                curr_val /= streak_len + 1
+                time_series[s_ind + k] = curr_val
 
-            # Add value if it has not occurred too many times
-            if consec_streak == False:
-            
-                new_vals[count] = v
-                new_dates[count] = d
-                count += 1
-                prev_val = v
+        ind_ind += streak_len
 
-        else:
-            # Reset streak
-            consec_streak = False
-            num_occ = 1
-
-    # Return clean data
-    #count -= 1
-    print(tot_dat - count, "data points removed.")
-    return [new_vals[:count], new_dates[:count]]
-
+    return
 
 
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
 def get_data_test():
+
+    test_ts = np.array([np.nan, np.nan, 1, 2, 3.5, np.nan, 4.5, np.nan])
+    test_ts2 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, np.nan, 7.0])
+    fill_holes_linear_interpolate(test_ts, 1)
+    fill_holes_linear_interpolate(test_ts2, 2)
+    print(test_ts)
+    print(test_ts2)
 
     dt_mins = 15
     dat, m = TestData2.getData()

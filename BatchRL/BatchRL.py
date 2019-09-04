@@ -41,8 +41,8 @@ def simple_battery_FQI():
 
 def main():
     
-    #dat, m = get_data_test()
-    #return 0
+    dat, m = get_data_test()
+    return 0
     dat, m = get_all_relevant_data()
  
     plot_ip_time_series(dat[:,0], m[0], show = False)
