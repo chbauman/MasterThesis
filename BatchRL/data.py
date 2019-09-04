@@ -6,78 +6,17 @@ import pandas as pd
 
 from datetime import datetime
 from visualize import plot_time_series
-import restclient
+from restclient import DataStruct
 
-class DataStruct:
-    """
-    Base Class for different sets of data columns
-    defined by successive IDs.
-    """
-    def __init__(self,
-                 id_list,
-                 name, 
-                 startDate='2019-01-01',
-                 endDate='2019-12-31'):
-
-        # Initialize values and client
-        self.name = name
-        self.startDate = startDate
-        self.endDate = endDate
-
-        # Convert elements of id_list to strings.
-        for ct, el in enumerate(id_list):
-            id_list[ct] = str(el)
-        self.data_ids = id_list
-        self.client_loaded = False
-        pass
-
-    def load_client(self):
-        """
-        Loads the REST client if not yet loaded.
-        """
-        if not self.client_loaded:
-            self.REST = restclient.client()
-            self.client_loaded = True
-
-    def getData(self):
-        """
-        If the data is not found locally it is 
-        retrieved from the SQL database, otherwise 
-        the local data is read and returned.
-        Returns (list((np.array(vals), np.array(timestamps))), list(dict()))
-        """
-
-        self.load_client()
-        data_folder = self.REST.get_data_folder(self.name, self.startDate, self.endDate)
-        if not os.path.isdir(data_folder):
-            # Read from SQL database and write for later use
-            ret_val, meta_data = self.REST.read(self.data_ids, 
-                                     startDate = self.startDate, 
-                                     endDate = self.endDate)
-            if ret_val is None:
-                return None
-            self.REST.write_np(self.name)
-        else:
-            # Read locally
-            ret_val, meta_data = self.REST.read_offline(self.name,  
-                                             startDate = self.startDate, 
-                                             endDate = self.endDate)
-        return (ret_val, meta_data)
-
-    pass
-
-###########################################################################
-# Test Data for debugging
-
-
-# Test data, small part of the electricity data,
-# for testing since access is faster.
+# Example data.
 TestData = DataStruct(
-            id_list = [421100171, 421100172],
-            name = "Test",
-            startDate='2019-08-08',
-            endDate='2019-08-09'
-            )
+                id_list = [421100171, 421100172],
+                name = "Test",
+                startDate='2019-08-08',
+                endDate='2019-08-09'
+                )
+
+
 class TestDataSynth:
 
      def getData(self):
@@ -399,6 +338,7 @@ def get_data_test():
     plot_time_series(dat[1][1], dat[1][0], m[1], show = False)
     plot_time_series(dat[2][1], dat[2][0], m[2], show = False)
 
+    # Clean data
     mod_dat = clean_data(dat[2], [0.0], 4, [3.3])
     plot_time_series(mod_dat[1], mod_dat[0], m[2], show = True)
 
@@ -428,7 +368,8 @@ def get_all_relevant_data(dt_mins = 15):
 
     # Weather data
     dat, m = WeatherData.getData()
-    [amb_temp, dt_init] = interpolate_time_series(dat[0], dt_mins)
+    clean_temp = clean_data(dat[0], [], 30, [])
+    [amb_temp, dt_init] = interpolate_time_series(clean_temp, dt_mins)
     n_data = amb_temp.shape[0]
     print(n_data, "total data points.")
 
@@ -443,6 +384,7 @@ def get_all_relevant_data(dt_mins = 15):
     m_out += [m[0]]
 
     # Irradiance data
+    clean_irr = clean_data(dat[2], [], 3, [1300.0, 0.0])
     [irradiance, dt_irr_init] = interpolate_time_series(dat[2], dt_mins)
     add_col(all_data, irradiance, dt_init, dt_irr_init, 2, dt_mins)
     m_out += [m[2]]

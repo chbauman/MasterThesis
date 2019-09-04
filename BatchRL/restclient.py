@@ -9,6 +9,7 @@
 # Modified timestamp                            RK                              20190529
 # Fixed conversion to datetime, added local 
 # data storage and added password GUI.          CB                              20190821
+# Added meta data retrieval                     CB                              20190904
 
 ########################################################################################################################
 
@@ -180,4 +181,82 @@ class client(object):
 
 
 
+class DataStruct:
+    """
+    Base Class for different sets of data columns
+    defined by successive IDs.
+    """
+    def __init__(self,
+                 id_list,
+                 name, 
+                 startDate='2019-01-01',
+                 endDate='2019-12-31'):
+
+        # Initialize values and client
+        self.name = name
+        self.startDate = startDate
+        self.endDate = endDate
+
+        # Convert elements of id_list to strings.
+        for ct, el in enumerate(id_list):
+            id_list[ct] = str(el)
+        self.data_ids = id_list
+        self.client_loaded = False
+        pass
+
+    def load_client(self):
+        """
+        Loads the REST client if not yet loaded.
+        """
+        if not self.client_loaded:
+            self.REST = client()
+            self.client_loaded = True
+
+    def getData(self):
+        """
+        If the data is not found locally it is 
+        retrieved from the SQL database, otherwise 
+        the local data is read and returned.
+        Returns (list((np.array(vals), np.array(timestamps))), list(dict()))
+        """
+
+        self.load_client()
+        data_folder = self.REST.get_data_folder(self.name, self.startDate, self.endDate)
+        if not os.path.isdir(data_folder):
+            # Read from SQL database and write for later use
+            ret_val, meta_data = self.REST.read(self.data_ids, 
+                                     startDate = self.startDate, 
+                                     endDate = self.endDate)
+            if ret_val is None:
+                return None
+            self.REST.write_np(self.name)
+        else:
+            # Read locally
+            ret_val, meta_data = self.REST.read_offline(self.name,  
+                                             startDate = self.startDate, 
+                                             endDate = self.endDate)
+        return (ret_val, meta_data)
+
+    pass
+
+
+def example():
+
+    ###########################################################################
+    # Example data.
+    TestData = DataStruct(
+                id_list = [421100171, 421100172],
+                name = "Test",
+                startDate='2019-08-08',
+                endDate='2019-08-09'
+                )
+
+    # Get data from SQL 
+    data, metadata = TestData.getData()
+
+    # Get data corresponding to first ID
+    vals, timestamps = data[0]
+
+    # Do something with the data
+    # Add your code here...
 
