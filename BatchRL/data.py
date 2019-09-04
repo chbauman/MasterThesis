@@ -342,7 +342,6 @@ def fill_holes_linear_interpolate(time_series, max_width = 1):
 
     # Neglect NaNs at beginning and end
     non_nans = np.where(nan_bool == False)[0]
-    print(non_nans)
     first_non_nan = non_nans[0]
     nan_bool[:non_nans[0]] = False
     nan_bool[non_nans[-1]:] = False
@@ -369,7 +368,6 @@ def fill_holes_linear_interpolate(time_series, max_width = 1):
                 time_series[s_ind + k] = curr_val
 
         ind_ind += streak_len
-
     return
 
 
@@ -377,6 +375,7 @@ def fill_holes_linear_interpolate(time_series, max_width = 1):
 # Full Data Retrieval and Preprocessing
 def get_data_test():
 
+    # Test hole filling by interpolation
     test_ts = np.array([np.nan, np.nan, 1, 2, 3.5, np.nan, 4.5, np.nan])
     test_ts2 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, np.nan, 7.0])
     fill_holes_linear_interpolate(test_ts, 1)
@@ -394,7 +393,6 @@ def get_data_test():
     mod_dat = clean_data(dat[2], [0.0], 4, [3.3])
     plot_time_series(mod_dat[1], mod_dat[0], m[2], show = True)
 
-
     [data1, dt_init1] = interpolate_time_series(dat[0], dt_mins)
     n_data = data1.shape[0]
     print(n_data, "total data points.")
@@ -411,7 +409,7 @@ def get_data_test():
 
     return all_data, m
 
-def get_all_relevant_data(dt_mins = 15):
+def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
     """
     Load and interpolate all the necessary data.
     """
@@ -422,6 +420,7 @@ def get_all_relevant_data(dt_mins = 15):
     dat, m = WeatherData.getData()
     clean_temp = clean_data(dat[0], [], 30, [])
     [amb_temp, dt_init] = interpolate_time_series(clean_temp, dt_mins)
+    fill_holes_linear_interpolate(amb_temp, fill_by_ip_max)
     n_data = amb_temp.shape[0]
     print(n_data, "total data points.")
 
@@ -437,13 +436,16 @@ def get_all_relevant_data(dt_mins = 15):
 
     # Irradiance data
     clean_irr = clean_data(dat[2], [], 3, [1300.0, 0.0])
-    [irradiance, dt_irr_init] = interpolate_time_series(dat[2], dt_mins)
+    clean_irr = clean_data(dat[2], [], 60 * 20)
+    [irradiance, dt_irr_init] = interpolate_time_series(clean_irr, dt_mins)
+    fill_holes_linear_interpolate(irradiance, fill_by_ip_max)
     add_col(all_data, irradiance, dt_init, dt_irr_init, 2, dt_mins)
     m_out += [m[2]]
 
     # Room data
     dat, m = Room274Data.getData()
     [temp, dt_temp_init] = interpolate_time_series(dat[1], dt_mins)
+    fill_holes_linear_interpolate(temp, fill_by_ip_max)
     add_col(all_data, temp, dt_init, dt_temp_init, 3, dt_mins)
     m_out += [m[1]]
 
