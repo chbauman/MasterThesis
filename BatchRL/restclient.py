@@ -254,9 +254,9 @@ def example():
     # Get data from SQL 
     data, metadata = TestData.getData()
 
-    # Get data corresponding to first ID
+    # Get data corresponding to first ID (421100171)
     vals, timestamps = data[0]
 
     # Do something with the data
     # Add your code here...
-
+    pass

@@ -8,14 +8,12 @@ from datetime import datetime
 from visualize import plot_time_series
 from restclient import DataStruct
 
-# Example data.
-TestData = DataStruct(
-                id_list = [421100171, 421100172],
-                name = "Test",
-                startDate='2019-08-08',
-                endDate='2019-08-09'
-                )
-
+#######################################################################################################
+# Test Data
+TestData = DataStruct(id_list = [421100171, 421100172],
+                      name = "Test",
+                      startDate='2019-08-08',
+                      endDate='2019-08-09')
 
 class TestDataSynth:
 
@@ -75,7 +73,7 @@ class TestDataSynth:
 TestData2 = TestDataSynth()
 
 
-###########################################################################
+#######################################################################################################
 # UMAR Data
 Room272Data = DataStruct(
             id_list = [42150280,
@@ -127,7 +125,8 @@ WeatherData = DataStruct(
             )
 
 
-
+#######################################################################################################
+# Time Series Processing
 def analyze_data(dat):
     """
     Analyzes the provided data.
@@ -330,6 +329,9 @@ def clean_data(dat, rem_vals = [], n_cons_least = 2, const_excepts = []):
     return [new_vals[:count], new_dates[:count]]
 
 
+
+#######################################################################################################
+# Full Data Retrieval and Preprocessing
 def get_data_test():
 
     dt_mins = 15
