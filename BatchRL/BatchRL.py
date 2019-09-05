@@ -41,8 +41,8 @@ def simple_battery_FQI():
 
 def main():
     
-    #dat, m = get_data_test()
-    #return 0
+    get_data_test()
+    return 0
     dat, m = get_all_relevant_data()
  
     plot_ip_time_series(dat[:,0], m[0], show = False)
@@ -52,22 +52,6 @@ def main():
     plot_ip_time_series(dat[:,4], m[4], show = False)
     plot_ip_time_series(dat[:,5], m[5], show = True)
     return 0
-   
-    dat, m = WeatherData.getData()
-    dat, m = Room274Data.getData()
-    dat, m = Room272Data.getData()
-    dat, m = WeatherData.getData()
-    analyze_data(dat[0])
-
-    [y, dt] = interpolate_time_series(dat[0], 15)
-    plot_ip_time_series(y, m[0], show = False)
-
-    for ct, el in enumerate(dat):
-        plot_time_series(el[1], el[0], m[ct])
-    dat, m = TestData.getData()
-    
-    #print(len(dat))
-    #print(m)
 
     #simple_battery_FQI()
 

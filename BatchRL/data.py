@@ -10,13 +10,13 @@ from restclient import DataStruct
 
 #######################################################################################################
 # Test Data
+
 TestData = DataStruct(id_list = [421100171, 421100172],
                       name = "Test",
                       startDate='2019-08-08',
                       endDate='2019-08-09')
 
 class TestDataSynth:
-
      def getData(self):
          """
          Synthetic and short dataset to be used for debugging.
@@ -72,61 +72,55 @@ class TestDataSynth:
          return ([(vals1, dats1), (vals2, dats2), (vals3, dats3)], [dict1, dict2, dict3])
 TestData2 = TestDataSynth()
 
-
 #######################################################################################################
-# UMAR Data
-Room272Data = DataStruct(
-            id_list = [42150280,
-                        42150288,
-                        42150289,
-                        42150290,
-                        42150291,
-                        42150292,
-                        42150293,
-                        42150294,
-                        42150295,
-                        42150483,
-                        42150484,
-                        42150284,
-                        42150270],
-            name = "Room272",
-            startDate='2017-01-01',
-            endDate='2019-12-31'
-            )
+# NEST Data
 
+# UMAR Room Data
+Room272Data = DataStruct(id_list = [42150280,
+                                    42150288,
+                                    42150289,
+                                    42150290,
+                                    42150291,
+                                    42150292,
+                                    42150293,
+                                    42150294,
+                                    42150295,
+                                    42150483,
+                                    42150484,
+                                    42150284,
+                                    42150270],
+                        name = "Room272",
+                        startDate='2017-01-01',
+                        endDate='2019-12-31')
 
-Room274Data = DataStruct(
-            id_list = [42150281,
-                        42150312,
-                        42150313,
-                        42150314,
-                        42150315,
-                        42150316,
-                        42150317,
-                        42150318,
-                        42150319,
-                        42150491,
-                        42150492,
-                        42150287,
-                        42150274],
-            name = "Room274",
-            startDate='2017-01-01',
-            endDate='2019-12-31'
-            )
+Room274Data = DataStruct(id_list = [42150281,
+                                    42150312,
+                                    42150313,
+                                    42150314,
+                                    42150315,
+                                    42150316,
+                                    42150317,
+                                    42150318,
+                                    42150319,
+                                    42150491,
+                                    42150492,
+                                    42150287,
+                                    42150274],
+                        name = "Room274",
+                        startDate='2017-01-01',
+                        endDate='2019-12-31')
 
-WeatherData = DataStruct(
-            id_list = [3200000,
-                       3200002,
-                       3200008
-                       ],
-            name = "Weather",
-            startDate='2018-01-01',
-            endDate='2019-12-31'
-            )
-
+# Weather Data
+WeatherData = DataStruct(id_list = [3200000,
+                                    3200002,
+                                    3200008],
+                        name = "Weather",
+                        startDate='2018-01-01',
+                        endDate='2019-12-31')
 
 #######################################################################################################
 # Time Series Processing
+
 def analyze_data(dat):
     """
     Analyzes the provided data.
@@ -379,19 +373,17 @@ def remove_outliers(time_series, grad_clip = 100, clip_interv = None):
 
     # Helper functions
     def grad_fd(x1, x2):
-        if np.isnan(x1) or np.isnan(x2):
-            return np.nan
         if x2 is None or x1 is None:
             return np.nan
+        if np.isnan(x1) or np.isnan(x2):
+            return np.nan        
         return x2 - x1
 
     def is_outlier(x, x_tm1, x_tp1 = None):
-        if x_tp1 is None:
-            return grad_fd(x, x_tm1) > 1.5 * grad_clip
         g1 = grad_fd(x_tm1, x)
         g2 = grad_fd(x, x_tp1)
         if np.isnan(g1):            
-            return True if np.absolute(g2) > 1.5 * grad_clip else False
+            return True if np.absolute(g2) > 1.5 * grad_clip else False   
         if np.isnan(g2):            
             return True if np.absolute(g1) > 1.5 * grad_clip else False
         rej = np.absolute(g1) > grad_clip and np.absolute(g2) > grad_clip
@@ -426,7 +418,7 @@ def pipeline_preps(orig_dat,
                    dt_mins,
                    all_data = None,
                    dt_init = None,
-                   col_ind = None,
+                   row_ind = None,
                    clean_args = None,
                    rem_out_args = None,
                    hole_fill_args = None,
@@ -454,11 +446,11 @@ def pipeline_preps(orig_dat,
         fill_holes_linear_interpolate(modif_data, hole_fill_args)
 
     if all_data is not None:
-        if dt_init is None or col_ind is None:
+        if dt_init is None or row_ind is None:
             print("Need to provide the initial time of the first series and the column index!")
             return
         # Add to rest of data
-        add_col(all_data, modif_data, dt_init, dt_init_new, col_ind, dt_mins)
+        add_col(all_data, modif_data, dt_init, dt_init_new, row_ind, dt_mins)
     else:
         if n_tot_cols is None:
             print("Need to know the total number of columns!")
@@ -471,11 +463,86 @@ def pipeline_preps(orig_dat,
         all_data[:, 0] = modif_data
     return all_data, dt_init_new
 
+#######################################################################################################
+# Preparing Data for model fitting
 
+def find_rows_with_nans(all_data):
+    """
+    Returns a boolean vector indicating which
+    rows of 'all_dat' contain NaNs.
+    """
+
+    n = all_data.shape[0]
+    m = all_data.shape[1]
+    col_has_nan = np.empty((n, ), dtype = np.bool)
+    col_has_nan.fill(False)
+
+    for k in range(m):
+        col_has_nan = np.logical_or(col_has_nan, np.isnan(all_data[:,k]))
+
+    return col_has_nan
+
+def cut_into_fixed_len(all_data, seq_len = 20, interleave = False):
+    """
+    Cuts the time series into pieces of length 'seq_len'
+    for training of RNN.
+    """
+
+
+    if interleave:
+        print("Not yet implemented!")
+
+    n = all_data.shape[0]
+    indices = np.arange(0, n)
+    col_has_nan = find_rows_with_nans(all_data)
+
+    # Initialize and find first non-NaN
+    seqs = np.empty((seq_len, n // seq_len), dtype = np.float32)
+    ct = np.where(col_has_nan == False)[0][0]
+    seq_count = 0
+
+    while True:
+        # Find next NaN
+        zers = np.where(col_has_nan[ct:] == True)[0]
+        curr_seq_len = n - ct if zers.shape[0] == 0 else zers[0]
+        n_seq_curr = curr_seq_len // seq_len
+
+        # Add sequences
+        for k in range(n_seq_curr):
+            seqs[:, seq_count] = indices[(ct + k * seq_len):(ct + (k + 1) * seq_len)]
+            seq_count += 1
+
+        # Find next True
+        ct += curr_seq_len
+        nonzs = np.where(col_has_nan[ct:] == False)[0]
+
+        # Break if none found
+        if nonzs.shape[0] == 0:
+            break
+        ct += nonzs[0]
+
+    # Return all found sequences
+    return seqs[:, :seq_count]
 
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
+
+# Testing
 def get_data_test():
+
+    # Test Sequence Cutting
+    seq1 = np.array([1,2, np.nan, 1, 2, np.nan, 3, 2, 1, 3, 4, np.nan, np.nan, 3, 2, 3, 1, 3, np.nan, 1, 2])
+    seq2 = np.array([3,4, np.nan, np.nan, 2, np.nan, 3, 2, 1, 3, 4, 7, np.nan, 3, 2, 3, 1, np.nan, np.nan, 3, 4])
+    n = seq1.shape[0]
+    all_dat = np.empty((n, 2), dtype = np.float32)
+    all_dat[:,0] = seq1
+    all_dat[:,1] = seq2
+    print(all_dat)
+    c = find_rows_with_nans(all_dat)    
+    print(c)
+    seq_inds = cut_into_fixed_len(all_dat, 2)
+    print(seq_inds)
+    return "Fuck"
 
     # Test hole filling by interpolation
     test_ts = np.array([np.nan, np.nan, 1, 2, 3.5, np.nan, 4.5, np.nan])
@@ -484,12 +551,14 @@ def get_data_test():
     fill_holes_linear_interpolate(test_ts2, 2)
     print(test_ts)
     print(test_ts2)
+
+    # Test Outlier Removal
     test_ts3 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, 17.0, 5.0, 2.0, -1.0, np.nan, 7.0, 7.0, 17.0, np.nan, 20.0, 5.0, 6.0])
     print(test_ts3)
     remove_outliers(test_ts3, 5.0, [0.0, 100.0])
     print(test_ts3)
 
-    # 
+    # Show plots
     dt_mins = 15
     dat, m = TestData2.getData()
     plot_time_series(dat[0][1], dat[0][0], m[0], show = False)
@@ -516,6 +585,7 @@ def get_data_test():
 
     return all_data, m
 
+# Real Data, takes some time to run
 def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
     """
     Load and interpolate all the necessary data.
@@ -544,7 +614,7 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
                                dt_mins,
                                all_data = all_data,
                                dt_init = dt_init,
-                               col_ind = 2,
+                               row_ind = 2,
                                clean_args = [([], 3, [1300.0, 0.0]), ([], 60 * 20)],
                                rem_out_args = None,
                                hole_fill_args = fill_by_ip_max)
@@ -559,7 +629,7 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
                                dt_mins,
                                all_data = all_data,
                                dt_init = dt_init,
-                               col_ind = 3,
+                               row_ind = 3,
                                clean_args = [([0.0], 10 * 60)],
                                rem_out_args = (4.5, [10, 100]),
                                hole_fill_args = fill_by_ip_max)
@@ -571,7 +641,7 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
                                dt_mins,
                                all_data = all_data,
                                dt_init = dt_init,
-                               col_ind = 4,
+                               row_ind = 4,
                                hole_fill_args = fill_by_ip_max)
  
     # Valve
@@ -581,7 +651,7 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
                                dt_mins,
                                all_data = all_data,
                                dt_init = dt_init,
-                               col_ind = 5,
+                               row_ind = 5,
                                hole_fill_args = 3)
 
     #dat, m = Room272Data.getData()
