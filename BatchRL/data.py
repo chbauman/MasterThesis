@@ -518,18 +518,20 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
     m_out += [m[1]]
 
     # Windows
-    win_dat = dat[11]
-
-    for k in range(13):
-        print(k)
-        plot_time_series(dat[k][1], dat[k][0], m[k], show = True)
-
+    win_dat, m_win = dat[11], m[11]
+    [win, dt_w_init] = interpolate_time_series(win_dat, dt_mins)
+    #fill_holes_linear_interpolate(win, 3)
+    plot_ip_time_series(win, m_win, show = True)
 
     # Valve
     valve_dat, m_dat = dat[12], m[12]
-    plot_time_series(valve_dat[1], valve_dat[0], m_dat, show = False)
+    #analyze_data([valve_dat[0][:100], valve_dat[1][:100]])
+    #plot_time_series(valve_dat[1], valve_dat[0], m_dat, show = False)
     [valve, dt_v_init] = interpolate_time_series(valve_dat, dt_mins)
-    plot_time_series(valve_dat[1], valve_dat[0], m_dat, show = False)
+    fill_holes_linear_interpolate(valve, 3)
+    #plot_ip_time_series(valve, m_dat, show = True)
+    add_col(all_data, temp, dt_init, dt_temp_init, 3, dt_mins)
+    m_out += [m_dat]
 
     #dat, m = Room272Data.getData()
 
