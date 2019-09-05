@@ -422,7 +422,7 @@ def remove_outliers(time_series, grad_clip = 100, clip_interv = None):
 
     return 
 
-def pipeline_preps(orig_dat,                    
+def pipeline_preps(orig_dat,
                    dt_mins,
                    all_data = None,
                    dt_init = None,
@@ -430,8 +430,7 @@ def pipeline_preps(orig_dat,
                    clean_args = None,
                    rem_out_args = None,
                    hole_fill_args = None,
-                   n_tot_cols = None
-                   ):
+                   n_tot_cols = None):
     """
     Applies all the specified preprocessings to the
     given data.
@@ -555,6 +554,7 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
     dat, m = Room274Data.getData()
 
     # Room Temperature
+    m_out += [m[1]]
     all_data, _ = pipeline_preps(dat[1], 
                                dt_mins,
                                all_data = all_data,
@@ -563,8 +563,7 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
                                clean_args = [([0.0], 10 * 60)],
                                rem_out_args = (4.5, [10, 100]),
                                hole_fill_args = fill_by_ip_max)
-    m_out += [m[1]]
-
+    
     # Windows
     win_dat, m_win = dat[11], m[11]
     m_out += [m_win]
@@ -575,7 +574,6 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
                                col_ind = 4,
                                hole_fill_args = fill_by_ip_max)
  
- 
     # Valve
     valve_dat, m_dat = dat[12], m[12]
     m_out += [m_dat]
@@ -585,7 +583,6 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
                                dt_init = dt_init,
                                col_ind = 5,
                                hole_fill_args = 3)
-
 
     #dat, m = Room272Data.getData()
 
