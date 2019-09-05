@@ -482,19 +482,18 @@ def find_rows_with_nans(all_data):
 
     return col_has_nan
 
-def cut_into_fixed_len(all_data, seq_len = 20, interleave = False):
+def cut_into_fixed_len(col_has_nan, seq_len = 20, interleave = False):
     """
     Cuts the time series into pieces of length 'seq_len'
     for training of RNN.
     """
 
-    n = all_data.shape[0]
+    n = col_has_nan.shape[0]
     indices = np.arange(0, n)
-    col_has_nan = find_rows_with_nans(all_data)
 
     # Initialize and find first non-NaN
     max_n_seq = n if interleave else n // seq_len
-    seqs = np.empty((seq_len, max_n_seq), dtype = np.float32)
+    seqs = np.empty((seq_len, max_n_seq), dtype = np.int32)
     ct = np.where(col_has_nan == False)[0][0]
     seq_count = 0
 
@@ -527,6 +526,29 @@ def cut_into_fixed_len(all_data, seq_len = 20, interleave = False):
     # Return all found sequences
     return seqs[:, :seq_count]
 
+def cut_data_into_sequences(all_data, seq_len, interleave = False):
+    """
+    Use the two functions above to cut the data into
+    sequences for RNN training.
+    """
+
+    # Use helper functions
+    nans = find_rows_with_nans(all_data)
+    seq_inds = cut_into_fixed_len(nans, seq_len, interleave)
+
+    # Get shapes
+    n = all_data.shape[0]
+    n_feat = all_data.shape[1]
+    n_seqs = seq_inds.shape[1]
+
+    # Initialize empty data
+    out_dat = np.empty((n_seqs, seq_len, n_feat), dtype = np.float32)
+
+    # Fill and return
+    for k in range(n_seqs):
+        out_dat[k, :, :] = all_data[seq_inds[:, k], :] 
+    return out_dat
+
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
 
@@ -543,8 +565,10 @@ def get_data_test():
     print(all_dat)
     c = find_rows_with_nans(all_dat)    
     print(c)
-    seq_inds = cut_into_fixed_len(all_dat, 2, interleave = True)
+    seq_inds = cut_into_fixed_len(c, 2, interleave = True)
     print(seq_inds)
+    od = cut_data_into_sequences(all_dat, 2, interleave = True)
+    print(od)
     return "Fuck"
 
     # Test hole filling by interpolation
