@@ -153,27 +153,26 @@ class client(object):
         Read numpy data that has already been created.
         """
 
-        # Get folder name and initialize lists of np.arrays
+        # Get folder name
         data_dir = self.get_data_folder(name, startDate, endDate)
-        val_list = []
-        ts_list = []
-        meta_list = []
 
-        # Loop over files in directory and append data to lists
+        # Count files
+        ct = 0
         for f in os.listdir(data_dir):
-            file_path = os.path.join(data_dir, f)            
+            file_path = os.path.join(data_dir, f) 
             if f[:5] == "dates":
-                nparr = np.load(file_path)
-                ts_list += [nparr]
-            elif f[:6] == "values":
-                nparr = np.load(file_path)
-                val_list += [nparr]
-            elif f[:4] == "meta":
-                with open(file_path, 'r') as data:
-                    contents = data.read()
-                    meta_list += [literal_eval(contents)]
-            else:
-                print("Unknown File Name!!!")
+                ct += 1
+
+        # Loop over files in directory and insert data into lists
+        val_list = [None] * ct
+        ts_list = [None] * ct
+        meta_list = [None] * ct
+        for k in range(ct):
+            val_list[k] = np.load(os.path.join(data_dir, "values_" + str(k) + ".npy"))
+            ts_list[k] = np.load(os.path.join(data_dir, "dates_" + str(k) + ".npy"))
+            with open(os.path.join(data_dir, "meta_" + str(k) + ".txt"), 'r') as data:
+                contents = data.read()
+                meta_list[k] = literal_eval(contents)
 
         # Transform to list of pairs and return
         list_of_tuples = list(zip(val_list, ts_list))

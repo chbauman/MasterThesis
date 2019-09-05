@@ -503,17 +503,33 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
 
     # Room data
     dat, m = Room274Data.getData()
-    plot_time_series(dat[1][1], dat[1][0], m[1], show = False)
+
+    # Temperature
+    #plot_time_series(dat[1][1], dat[1][0], m[1], show = False)
     clean_r_temp = clean_data(dat[1], [0.0], 10 * 60)
-    plot_time_series(clean_r_temp[1], clean_r_temp[0], m[1], show = False)
+    #plot_time_series(clean_r_temp[1], clean_r_temp[0], m[1], show = False)
     [temp, dt_temp_init] = interpolate_time_series(clean_r_temp, dt_mins)
-    plot_ip_time_series(temp, m[1], show = False)
+    #plot_ip_time_series(temp, m[1], show = False)
     remove_outliers(temp, 4.5, [10, 100])    
-    plot_ip_time_series(temp, m[1], show = False)
+    #plot_ip_time_series(temp, m[1], show = False)
     fill_holes_linear_interpolate(temp, fill_by_ip_max)
-    plot_ip_time_series(temp, m[1], show = True)
+    #plot_ip_time_series(temp, m[1], show = True)
     add_col(all_data, temp, dt_init, dt_temp_init, 3, dt_mins)
     m_out += [m[1]]
+
+    # Windows
+    win_dat = dat[11]
+
+    for k in range(13):
+        print(k)
+        plot_time_series(dat[k][1], dat[k][0], m[k], show = True)
+
+
+    # Valve
+    valve_dat, m_dat = dat[12], m[12]
+    plot_time_series(valve_dat[1], valve_dat[0], m_dat, show = False)
+    [valve, dt_v_init] = interpolate_time_series(valve_dat, dt_mins)
+    plot_time_series(valve_dat[1], valve_dat[0], m_dat, show = False)
 
     #dat, m = Room272Data.getData()
 
