@@ -148,7 +148,7 @@ def analyze_data(dat):
     print("Positive differences:", np.all(t_diffs > np.timedelta64(0, 'ns')))
     return
 
-def clean_data(dat, rem_vals = [], n_cons_least = 2, const_excepts = []):
+def clean_data(dat, rem_vals = [], n_cons_least = 60, const_excepts = []):
     """
     Removes all values with a specified value 'rem_val'
     and removes all sequences where there are at 
@@ -322,7 +322,7 @@ def add_time(all_data, dt_init1, col_ind = 0, dt_mins = 15):
     t_temp_round = np.datetime64(dt_init1, 'D')
     start_t = (dt_init1 - t_temp_round) / interv
     for k in range(n_data):
-        all_data[k, 0] = (start_t + k) % n_ts_per_day
+        all_data[k, col_ind] = (start_t + k) % n_ts_per_day
     return
 
 def fill_holes_linear_interpolate(time_series, max_width = 1):
@@ -422,6 +422,55 @@ def remove_outliers(time_series, grad_clip = 100, clip_interv = None):
 
     return 
 
+def pipeline_preps(orig_dat,                    
+                   dt_mins,
+                   all_data = None,
+                   dt_init = None,
+                   col_ind = None,
+                   clean_args = None,
+                   rem_out_args = None,
+                   hole_fill_args = None,
+                   n_tot_cols = None
+                   ):
+    """
+    Applies all the specified preprocessings to the
+    given data.
+    """
+    modif_data = orig_dat
+
+    # Clean Data
+    if clean_args is not None:
+        for k in clean_args:
+            modif_data = clean_data(orig_dat, *k)
+
+    # Interpolate / Subsample
+    [modif_data, dt_init_new] = interpolate_time_series(modif_data, dt_mins)
+
+    # Remove Outliers
+    if rem_out_args is not None:
+        remove_outliers(modif_data, *rem_out_args)
+
+    # Fill holes
+    if hole_fill_args is not None:
+        fill_holes_linear_interpolate(modif_data, hole_fill_args)
+
+    if all_data is not None:
+        if dt_init is None or col_ind is None:
+            print("Need to provide the initial time of the first series and the column index!")
+            return
+        # Add to rest of data
+        add_col(all_data, modif_data, dt_init, dt_init_new, col_ind, dt_mins)
+    else:
+        if n_tot_cols is None:
+            print("Need to know the total number of columns!")
+            return
+
+        # Initialize np array for compact storage
+        n_data = modif_data.shape[0]
+        all_data = np.empty((n_data, n_tot_cols), dtype = np.float32)
+        all_data.fill(np.nan)
+        all_data[:, 0] = modif_data
+    return all_data, dt_init_new
 
 
 
@@ -477,61 +526,66 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
 
     # Weather data
     dat, m = WeatherData.getData()
-    clean_temp = clean_data(dat[0], [], 30, [])
-    [amb_temp, dt_init] = interpolate_time_series(clean_temp, dt_mins)
-    fill_holes_linear_interpolate(amb_temp, fill_by_ip_max)
-    n_data = amb_temp.shape[0]
-    print(n_data, "total data points.")
 
-    # Initialize np array for compact storage
-    all_data = np.empty((n_data, 5), dtype = np.float32)
-    all_data.fill(np.nan)
-
-    # Add time and weather
-    add_time(all_data, dt_init, 0, dt_mins)
-    m_out += [{'description': 'time of day', 'unit': str(dt_mins) + ' minutes'}]
-    all_data[:, 1] = amb_temp
+    # Add Temperature
+    all_data, dt_init = pipeline_preps(dat[0], 
+                               dt_mins,
+                               clean_args = [([], 30, [])],
+                               rem_out_args = None,
+                               hole_fill_args = fill_by_ip_max,
+                               n_tot_cols = 6)
     m_out += [m[0]]
 
-    # Irradiance data
-    clean_irr = clean_data(dat[2], [], 3, [1300.0, 0.0])
-    clean_irr = clean_data(dat[2], [], 60 * 20)
-    [irradiance, dt_irr_init] = interpolate_time_series(clean_irr, dt_mins)
-    fill_holes_linear_interpolate(irradiance, fill_by_ip_max)
-    add_col(all_data, irradiance, dt_init, dt_irr_init, 2, dt_mins)
+    # Add time
+    add_time(all_data, dt_init, 1, dt_mins)
+    m_out += [{'description': 'time of day', 'unit': str(dt_mins) + ' minutes'}]
+
+    # Add Irradiance Data
+    all_data, _ = pipeline_preps(dat[2], 
+                               dt_mins,
+                               all_data = all_data,
+                               dt_init = dt_init,
+                               col_ind = 2,
+                               clean_args = [([], 3, [1300.0, 0.0]), ([], 60 * 20)],
+                               rem_out_args = None,
+                               hole_fill_args = fill_by_ip_max)
     m_out += [m[2]]
 
-    # Room data
+    # Room Data
     dat, m = Room274Data.getData()
 
-    # Temperature
-    #plot_time_series(dat[1][1], dat[1][0], m[1], show = False)
-    clean_r_temp = clean_data(dat[1], [0.0], 10 * 60)
-    #plot_time_series(clean_r_temp[1], clean_r_temp[0], m[1], show = False)
-    [temp, dt_temp_init] = interpolate_time_series(clean_r_temp, dt_mins)
-    #plot_ip_time_series(temp, m[1], show = False)
-    remove_outliers(temp, 4.5, [10, 100])    
-    #plot_ip_time_series(temp, m[1], show = False)
-    fill_holes_linear_interpolate(temp, fill_by_ip_max)
-    #plot_ip_time_series(temp, m[1], show = True)
-    add_col(all_data, temp, dt_init, dt_temp_init, 3, dt_mins)
+    # Room Temperature
+    all_data, _ = pipeline_preps(dat[1], 
+                               dt_mins,
+                               all_data = all_data,
+                               dt_init = dt_init,
+                               col_ind = 3,
+                               clean_args = [([0.0], 10 * 60)],
+                               rem_out_args = (4.5, [10, 100]),
+                               hole_fill_args = fill_by_ip_max)
     m_out += [m[1]]
 
     # Windows
     win_dat, m_win = dat[11], m[11]
-    [win, dt_w_init] = interpolate_time_series(win_dat, dt_mins)
-    #fill_holes_linear_interpolate(win, 3)
-    plot_ip_time_series(win, m_win, show = True)
-
+    m_out += [m_win]
+    all_data, _ = pipeline_preps(win_dat, 
+                               dt_mins,
+                               all_data = all_data,
+                               dt_init = dt_init,
+                               col_ind = 4,
+                               hole_fill_args = fill_by_ip_max)
+ 
+ 
     # Valve
     valve_dat, m_dat = dat[12], m[12]
-    #analyze_data([valve_dat[0][:100], valve_dat[1][:100]])
-    #plot_time_series(valve_dat[1], valve_dat[0], m_dat, show = False)
-    [valve, dt_v_init] = interpolate_time_series(valve_dat, dt_mins)
-    fill_holes_linear_interpolate(valve, 3)
-    #plot_ip_time_series(valve, m_dat, show = True)
-    add_col(all_data, temp, dt_init, dt_temp_init, 3, dt_mins)
     m_out += [m_dat]
+    all_data, _ = pipeline_preps(valve_dat, 
+                               dt_mins,
+                               all_data = all_data,
+                               dt_init = dt_init,
+                               col_ind = 5,
+                               hole_fill_args = 3)
+
 
     #dat, m = Room272Data.getData()
 
