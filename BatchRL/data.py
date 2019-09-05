@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from datetime import datetime
-from visualize import plot_time_series
+from visualize import plot_time_series, plot_ip_time_series
 from restclient import DataStruct
 
 #######################################################################################################
@@ -370,6 +370,60 @@ def fill_holes_linear_interpolate(time_series, max_width = 1):
         ind_ind += streak_len
     return
 
+def remove_outliers(time_series, grad_clip = 100, clip_interv = None):
+    """
+    Removes data points that lie outside 
+    the specified interval 'clip_int' and ones 
+    with a large gradient.
+    """
+
+    # Helper functions
+    def grad_fd(x1, x2):
+        if np.isnan(x1) or np.isnan(x2):
+            return np.nan
+        if x2 is None or x1 is None:
+            return np.nan
+        return x2 - x1
+
+    def is_outlier(x, x_tm1, x_tp1 = None):
+        if x_tp1 is None:
+            return grad_fd(x, x_tm1) > 1.5 * grad_clip
+        g1 = grad_fd(x_tm1, x)
+        g2 = grad_fd(x, x_tp1)
+        if np.isnan(g1):            
+            return True if np.absolute(g2) > 1.5 * grad_clip else False
+        if np.isnan(g2):            
+            return True if np.absolute(g1) > 1.5 * grad_clip else False
+        rej = np.absolute(g1) > grad_clip and np.absolute(g2) > grad_clip
+        rej = rej and g1 * g2 < 0
+        return rej
+
+    def reject_outls(x, x_tm1, x_tp1 = None):
+        if is_outlier(x, x_tm1, x_tp1):
+            return np.nan
+        return x
+
+    # First and last values
+    time_series[0] = reject_outls(time_series[0], time_series[1])
+    time_series[-1] = reject_outls(time_series[-1], time_series[-2])
+    
+    # Iterate
+    for ct, el in enumerate(time_series[1:-1]):
+        if el != np.nan:
+            # Remove large gradient outliers
+            time_series[ct + 1] = reject_outls(el, 
+                                          time_series[ct + 2], 
+                                          time_series[ct])
+            
+            # Clip to interval
+            if clip_interv is not None:
+                if el < clip_interv[0] or el > clip_interv[1]:
+                    time_series[ct + 1] = np.nan
+
+    return 
+
+
+
 
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
@@ -382,7 +436,12 @@ def get_data_test():
     fill_holes_linear_interpolate(test_ts2, 2)
     print(test_ts)
     print(test_ts2)
+    test_ts3 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, 17.0, 5.0, 2.0, -1.0, np.nan, 7.0, 7.0, 17.0, np.nan, 20.0, 5.0, 6.0])
+    print(test_ts3)
+    remove_outliers(test_ts3, 5.0, [0.0, 100.0])
+    print(test_ts3)
 
+    # 
     dt_mins = 15
     dat, m = TestData2.getData()
     plot_time_series(dat[0][1], dat[0][0], m[0], show = False)
@@ -444,8 +503,15 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
 
     # Room data
     dat, m = Room274Data.getData()
-    [temp, dt_temp_init] = interpolate_time_series(dat[1], dt_mins)
+    plot_time_series(dat[1][1], dat[1][0], m[1], show = False)
+    clean_r_temp = clean_data(dat[1], [0.0], 10 * 60)
+    plot_time_series(clean_r_temp[1], clean_r_temp[0], m[1], show = False)
+    [temp, dt_temp_init] = interpolate_time_series(clean_r_temp, dt_mins)
+    plot_ip_time_series(temp, m[1], show = False)
+    remove_outliers(temp, 4.5, [10, 100])    
+    plot_ip_time_series(temp, m[1], show = False)
     fill_holes_linear_interpolate(temp, fill_by_ip_max)
+    plot_ip_time_series(temp, m[1], show = True)
     add_col(all_data, temp, dt_init, dt_temp_init, 3, dt_mins)
     m_out += [m[1]]
 

@@ -47,7 +47,8 @@ def main():
  
     plot_ip_time_series(dat[:,0], m[0], show = False)
     plot_ip_time_series(dat[:,1], m[1], show = False)
-    plot_ip_time_series(dat[:,2], m[2], show = True)
+    plot_ip_time_series(dat[:,2], m[2], show = False)
+    plot_ip_time_series(dat[:,3], m[3], show = True)
     return 0
    
     dat, m = WeatherData.getData()
