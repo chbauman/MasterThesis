@@ -488,16 +488,13 @@ def cut_into_fixed_len(all_data, seq_len = 20, interleave = False):
     for training of RNN.
     """
 
-
-    if interleave:
-        print("Not yet implemented!")
-
     n = all_data.shape[0]
     indices = np.arange(0, n)
     col_has_nan = find_rows_with_nans(all_data)
 
     # Initialize and find first non-NaN
-    seqs = np.empty((seq_len, n // seq_len), dtype = np.float32)
+    max_n_seq = n if interleave else n // seq_len
+    seqs = np.empty((seq_len, max_n_seq), dtype = np.float32)
     ct = np.where(col_has_nan == False)[0][0]
     seq_count = 0
 
@@ -505,12 +502,18 @@ def cut_into_fixed_len(all_data, seq_len = 20, interleave = False):
         # Find next NaN
         zers = np.where(col_has_nan[ct:] == True)[0]
         curr_seq_len = n - ct if zers.shape[0] == 0 else zers[0]
-        n_seq_curr = curr_seq_len // seq_len
 
         # Add sequences
-        for k in range(n_seq_curr):
-            seqs[:, seq_count] = indices[(ct + k * seq_len):(ct + (k + 1) * seq_len)]
-            seq_count += 1
+        if interleave:
+            n_seq_curr = curr_seq_len - seq_len + 1
+            for k in range(n_seq_curr):
+                seqs[:, seq_count] = indices[(ct + k):(ct + k + seq_len)]
+                seq_count += 1
+        else:
+            n_seq_curr = curr_seq_len // seq_len
+            for k in range(n_seq_curr):
+                seqs[:, seq_count] = indices[(ct + k * seq_len):(ct + (k + 1) * seq_len)]
+                seq_count += 1
 
         # Find next True
         ct += curr_seq_len
@@ -540,7 +543,7 @@ def get_data_test():
     print(all_dat)
     c = find_rows_with_nans(all_dat)    
     print(c)
-    seq_inds = cut_into_fixed_len(all_dat, 2)
+    seq_inds = cut_into_fixed_len(all_dat, 2, interleave = True)
     print(seq_inds)
     return "Fuck"
 
