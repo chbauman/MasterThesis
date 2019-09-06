@@ -13,3 +13,7 @@ class BaseDynamicsModel(ABC):
     @abstractmethod
     def predict(self, data):
         pass
+
+    @abstractmethod
+    def analyze(self):
+        pass

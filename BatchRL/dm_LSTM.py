@@ -5,16 +5,16 @@ import keras
 
 from keras import backend as K
 from keras.models import Sequential
-from keras.layers import LSTM, TimeDistributed, Dense
+from keras.layers import GRU, LSTM, TimeDistributed, Dense
 
 from base_dynamics_model import BaseDynamicsModel
 
 
-class LSTM_DM(BaseDynamicsModel):
+class BaseRNN_DM(BaseDynamicsModel):
     """
     Simple LSTM used for training a dynamics model.
     """
-    def __init__(self, train_seq_len, n_feats, hidden_sizes = [20, 20], n_iter_max = 10000, out_dim = 1):
+    def __init__(self, train_seq_len, n_feats, hidden_sizes = [20, 20], n_iter_max = 10000, out_dim = 1, gru = False):
 
         # Store parameters
         self.train_seq_len = train_seq_len
@@ -22,6 +22,7 @@ class LSTM_DM(BaseDynamicsModel):
         self.hidden_sizes = np.array(hidden_sizes, dtype = np.int32)
         self.n_iter_max = n_iter_max
         self.out_dim = out_dim
+        self.gru = gru
 
         # Build model
         self.build_model()
@@ -36,10 +37,11 @@ class LSTM_DM(BaseDynamicsModel):
         model = Sequential()
 
         # Add layers
+        rnn = GRU if self.gru else LSTM
         for k in range(n_lstm):
             in_sh = (self.train_seq_len, self.n_feats) if k == 0 else (-1, -1)
             ret_seq = k != n_lstm - 1
-            model.add(LSTM(self.hidden_sizes[k],
+            model.add(rnn(self.hidden_sizes[k],
                            input_shape=in_sh,
                            return_sequences=ret_seq))
         
@@ -72,6 +74,9 @@ class LSTM_DM(BaseDynamicsModel):
                    validation_split = 0.1)
 
     def predict(self, data):
+        pass
+
+    def analyze(self):
         pass
 
     pass

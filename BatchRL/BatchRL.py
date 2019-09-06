@@ -5,7 +5,7 @@ from FQI import NFQI
 from LSPI import LSPI
 from batchDDPG import bDDPG
 
-from dm_LSTM import LSTM_DM
+from dm_LSTM import BaseRNN_DM
 from dm_GPR import GPR_DM
 
 # Environments for debugging
@@ -56,13 +56,13 @@ def main():
     print(seq_len * cut_dat.shape[0])
     n_feats = cut_dat.shape[-1]
 
-    #mod = LSTM_DM(seq_len - 1, n_feats, n_iter_max=500)
+    #mod = BaseRNN_DM(seq_len - 1, n_feats, n_iter_max=500)
     #mod.fit(cut_dat)
 
-    cut_dat_5 = cut_data_into_sequences(dat, 5, interleave = False)
+    cut_dat_5 = cut_data_into_sequences(dat, 5, interleave = True)
     m_gp = GPR_DM()
     m_gp.fit(cut_dat_5)
-    print(m_gp.analyze())
+    m_gp.analyze()
 
     #plot_ip_time_series(dat[:,0], m[0], show = False)
     #plot_ip_time_series(dat[:,1], m[1], show = False)

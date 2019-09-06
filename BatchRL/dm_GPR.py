@@ -38,11 +38,11 @@ class GPR_DM(BaseDynamicsModel):
         self.n_val = self.n - self.n_train
         self.out_train = self.output_data[:self.n_train]
         self.out_val = self.output_data[self.n_train:]
-        self.in_train = self.input_data[:self.n_train]
-        self.in_val = self.input_data[self.n_train:]
+        self.in_train = self.input_data[:self.n_train, :]
+        self.in_val = self.input_data[self.n_train:, :]
 
         # Init and fit GP
-        self.gpr = GaussianProcessRegressor(n_restarts_optimizer = 10)
+        self.gpr = GaussianProcessRegressor(alpha = 1.0, n_restarts_optimizer = 10)
         self.gpr.fit(self.in_train, self.out_train)
 
     def predict(self, data):
@@ -60,7 +60,9 @@ class GPR_DM(BaseDynamicsModel):
         return np.mean((y - self.gpr.predict(X)) ** 2)
 
     def analyze(self):
-
+        """
+        Analyze generalization performance.
+        """
         print("Training Error")
         print(self.mse_error_pred(self.in_train, self.out_train))
         print("Validation Error")
