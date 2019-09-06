@@ -4,9 +4,11 @@ import os
 import numpy as np
 import pandas as pd
 
+from ast import literal_eval
 from datetime import datetime
+
 from visualize import plot_time_series, plot_ip_time_series
-from restclient import DataStruct
+from restclient import DataStruct, save_dir
 
 #######################################################################################################
 # Test Data
@@ -549,11 +551,60 @@ def cut_data_into_sequences(all_data, seq_len, interleave = False):
         out_dat[k, :, :] = all_data[seq_inds[:, k], :] 
     return out_dat
 
+def create_dir(dirname):
+    """
+    Creates directory if it doesn't exist already.
+    """
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    return
+
+def save_processed_data(all_data, m, name):
+    """
+    Saves the processed data in numpy format.
+    """
+
+    proc_data_folder = os.path.join(save_dir, "ProcessedSeries")
+    create_dir(proc_data_folder)
+
+    # Get filename
+    data_name = os.path.join(proc_data_folder, name + "_data.npy")
+    meat_data_name = os.path.join(proc_data_folder, name + "_mdat.txt")
+    np.save(data_name, all_data)
+    with open(meat_data_name,'w') as data:
+        data.write(str(m))
+
+    return
+
+
+def load_processed_data(name):
+    """
+    Loades the processed data in numpy format.
+    """
+
+    proc_data_folder = os.path.join(save_dir, "ProcessedSeries")
+    data_name = os.path.join(proc_data_folder, name + "_data.npy")
+    meat_data_name = os.path.join(proc_data_folder, name + "_mdat.txt")
+
+    if os.path.isfile(data_name) and os.path.isfile(meat_data_name):
+        all_data = np.load(data_name)
+        with open(meat_data_name, 'r') as data:
+            contents = data.read()
+            m = literal_eval(contents)
+        return all_data, m
+    else:
+        print("Requested files do not exist!")
+        return
+
+
+
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
 
 # Testing
 def get_data_test():
+
+    name = "Test"
 
     # Test Sequence Cutting
     seq1 = np.array([1,2, np.nan, 1, 2, np.nan, 3, 2, 1, 3, 4, np.nan, np.nan, 3, 2, 3, 1, 3, np.nan, 1, 2])
@@ -569,7 +620,6 @@ def get_data_test():
     print(seq_inds)
     od = cut_data_into_sequences(all_dat, 2, interleave = True)
     print(od)
-    return "Fuck"
 
     # Test hole filling by interpolation
     test_ts = np.array([np.nan, np.nan, 1, 2, 3.5, np.nan, 4.5, np.nan])
@@ -588,13 +638,13 @@ def get_data_test():
     # Show plots
     dt_mins = 15
     dat, m = TestData2.getData()
-    plot_time_series(dat[0][1], dat[0][0], m[0], show = False)
-    plot_time_series(dat[1][1], dat[1][0], m[1], show = False)
-    plot_time_series(dat[2][1], dat[2][0], m[2], show = False)
+    #plot_time_series(dat[0][1], dat[0][0], m[0], show = False)
+    #plot_time_series(dat[1][1], dat[1][0], m[1], show = False)
+    #plot_time_series(dat[2][1], dat[2][0], m[2], show = False)
 
     # Clean data
     mod_dat = clean_data(dat[2], [0.0], 4, [3.3])
-    plot_time_series(mod_dat[1], mod_dat[0], m[2], show = True)
+    #plot_time_series(mod_dat[1], mod_dat[0], m[2], show = True)
 
     [data1, dt_init1] = interpolate_time_series(dat[0], dt_mins)
     n_data = data1.shape[0]
@@ -610,6 +660,9 @@ def get_data_test():
     [data2, dt_init2] = interpolate_time_series(dat[1], dt_mins)
     add_col(all_data, data2, dt_init1, dt_init2, 2, dt_mins)
 
+    save_processed_data(all_data, m, name)
+    d, m_new = load_processed_data(name)
+    print(m_new[0])
     return all_data, m
 
 # Real Data, takes some time to run
@@ -617,6 +670,14 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
     """
     Load and interpolate all the necessary data.
     """
+
+    name = "Room274AndWeather"
+
+    # Try loading data
+    loaded = load_processed_data(name)
+    if loaded is not None:
+        return loaded
+
     # Initialize meta data dict list
     m_out = []
 
@@ -683,6 +744,8 @@ def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
 
     #dat, m = Room272Data.getData()
 
+    # Save and return
+    save_processed_data(all_data, m_out, name)
     return all_data, m_out
 
 
