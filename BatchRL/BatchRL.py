@@ -5,6 +5,8 @@ from FQI import NFQI
 from LSPI import LSPI
 from batchDDPG import bDDPG
 
+from dm_LSTM import LSTM_DM
+
 # Environments for debugging
 from simple_battery_test import SimpleBatteryTest
 from cart_pole import CartPole
@@ -51,6 +53,10 @@ def main():
     cut_dat = cut_data_into_sequences(dat, seq_len, interleave = False)
     print(cut_dat.shape)
     print(seq_len * cut_dat.shape[0])
+    n_feats = cut_dat.shape[-1]
+
+    mod = LSTM_DM(seq_len - 1, n_feats, n_iter_max=500)
+    mod.fit(cut_dat)
 
     #plot_ip_time_series(dat[:,0], m[0], show = False)
     #plot_ip_time_series(dat[:,1], m[1], show = False)

@@ -14,12 +14,13 @@ class LSTM_DM(BaseDynamicsModel):
     """
     Simple LSTM used for training a dynamics model.
     """
-    def __init__(self, seq_len, n_feats, hidden_sizes = [20], out_dim = 1):
+    def __init__(self, train_seq_len, n_feats, hidden_sizes = [20, 20], n_iter_max = 10000, out_dim = 1):
 
         # Store parameters
-        self.seq_len = seq_len
+        self.train_seq_len = train_seq_len
         self.n_feats = n_feats
-        self.hidden_sizes = hidden_sizes
+        self.hidden_sizes = np.array(hidden_sizes, dtype = np.int32)
+        self.n_iter_max = n_iter_max
         self.out_dim = out_dim
 
         # Build model
@@ -35,8 +36,8 @@ class LSTM_DM(BaseDynamicsModel):
         model = Sequential()        
 
         # Add layers
-        for k in range(n_lstm - 1):
-            in_sh = (self.seq_len, self.n_feats) if k == 0 else None
+        for k in range(n_lstm):
+            in_sh = (self.train_seq_len, self.n_feats) if k == 0 else (-1, -1)
             ret_seq = k != n_lstm - 1
             model.add(LSTM(self.hidden_sizes[k],  
                            input_shape=in_sh, 
@@ -51,7 +52,24 @@ class LSTM_DM(BaseDynamicsModel):
         self.m = model
 
     def fit(self, data):
-        pass
+        """
+        Fit the model.
+        """
+               
+        # Prepare the data
+        d_shape = data.shape
+        seq_len_data = d_shape[1]
+        input_data = data[:, :-1, :]
+        #output_data = data[:, 1:, 3]
+        #output_data.reshape((d_shape[0], seq_len_data - 1, 1))
+        output_data = data[:, -1, 3]
+
+        # Fit model
+        self.m.fit(input_data, output_data, 
+                   epochs = self.n_iter_max, 
+                   initial_epoch = 0,
+                   batch_size = 128,
+                   validation_split = 0.1)
 
     def predict(self, data):
         pass

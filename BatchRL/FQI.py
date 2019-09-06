@@ -13,8 +13,6 @@ from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput, \
     ReduceProbabilisticSoftMax2D, getMLPModel
 from keras_util import *
 
-
-
 class NFQI:
 
     """
