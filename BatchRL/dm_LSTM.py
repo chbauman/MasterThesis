@@ -33,16 +33,16 @@ class LSTM_DM(BaseDynamicsModel):
 
         # Initialize
         n_lstm = len(self.hidden_sizes)
-        model = Sequential()        
+        model = Sequential()
 
         # Add layers
         for k in range(n_lstm):
             in_sh = (self.train_seq_len, self.n_feats) if k == 0 else (-1, -1)
             ret_seq = k != n_lstm - 1
-            model.add(LSTM(self.hidden_sizes[k],  
-                           input_shape=in_sh, 
+            model.add(LSTM(self.hidden_sizes[k],
+                           input_shape=in_sh,
                            return_sequences=ret_seq))
-
+        
         # Output layer
         #model.add(TimeDistributed(Dense(self.out_dim, activation=None)))
         model.add(Dense(self.out_dim, activation=None))
