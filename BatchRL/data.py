@@ -551,6 +551,9 @@ def cut_data_into_sequences(all_data, seq_len, interleave = False):
         out_dat[k, :, :] = all_data[seq_inds[:, k], :] 
     return out_dat
 
+#######################################################################################################
+# Saving and Loading Processed Data
+
 def create_dir(dirname):
     """
     Creates directory if it doesn't exist already.
@@ -576,7 +579,6 @@ def save_processed_data(all_data, m, name):
 
     return
 
-
 def load_processed_data(name):
     """
     Loades the processed data in numpy format.
@@ -595,8 +597,6 @@ def load_processed_data(name):
     else:
         print("Requested files do not exist!")
         return
-
-
 
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
@@ -666,11 +666,14 @@ def get_data_test():
     return all_data, m
 
 # Real Data, takes some time to run
-def get_all_relevant_data(dt_mins = 15, fill_by_ip_max = 2):
+def get_all_relevant_data():
     """
     Load and interpolate all the necessary data.
     """
 
+    # Constants
+    dt_mins = 15
+    fill_by_ip_max = 2
     name = "Room274AndWeather"
 
     # Try loading data

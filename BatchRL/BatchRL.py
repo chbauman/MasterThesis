@@ -11,7 +11,7 @@ from cart_pole import CartPole
 from mount_car_cont import MountCarCont
 from pendulum import Pendulum
 
-from data import Room274Data, Room272Data, WeatherData, TestData, analyze_data, get_all_relevant_data, get_data_test
+from data import Room274Data, Room272Data, WeatherData, TestData, analyze_data, get_all_relevant_data, get_data_test, cut_data_into_sequences
 from visualize import plot_time_series, plot_ip_time_series
 
 
@@ -43,9 +43,15 @@ def main():
     
     #get_data_test()
     #return 0
+    seq_len = 20
     dat, m = get_all_relevant_data()
     print(dat.shape)
- 
+    cut_dat_i = cut_data_into_sequences(dat, seq_len, interleave = True)
+    print(cut_dat_i.shape)
+    cut_dat = cut_data_into_sequences(dat, seq_len, interleave = False)
+    print(cut_dat.shape)
+    print(seq_len * cut_dat.shape[0])
+
     #plot_ip_time_series(dat[:,0], m[0], show = False)
     #plot_ip_time_series(dat[:,1], m[1], show = False)
     #plot_ip_time_series(dat[:,2], m[2], show = False)

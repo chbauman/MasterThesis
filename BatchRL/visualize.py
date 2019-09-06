@@ -1,15 +1,13 @@
 
-
 import datetime
 
 import numpy as np
-
 import matplotlib.pyplot as plt
+
 from matplotlib.dates import DateFormatter
-
 from pandas.plotting import register_matplotlib_converters
-register_matplotlib_converters()
 
+register_matplotlib_converters()
 
 
 def plot_time_series(x, y, m, show = True):
@@ -33,6 +31,7 @@ def plot_time_series(x, y, m, show = True):
     # Show plot
     if show:
         plt.show()
+    return
 
 def plot_ip_time_series(y, m, show = True):
     """
@@ -50,5 +49,7 @@ def plot_ip_time_series(y, m, show = True):
     # Show plot
     if show:
         plt.show()
+    return
+
 
 
