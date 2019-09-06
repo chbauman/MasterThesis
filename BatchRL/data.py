@@ -468,6 +468,25 @@ def pipeline_preps(orig_dat,
 #######################################################################################################
 # Preparing Data for model fitting
 
+def standardize(data, m):
+    """
+    Removes mean and scales std to 1.0.
+    Stores the parameters in the meta information.
+    """
+    s = data.shape
+    n_feat = s[1]
+
+    # Compute Mean and StD ignoring NaNs
+    f_mean = np.nanmean(data, axis = 0).reshape((1, n_feat))
+    f_std = np.nanstd(data, axis = 0).reshape((1, n_feat))
+
+    # Process and store info 
+    proc_data = (data - f_mean) / f_std
+    for k in range(n_feat):
+        m[k]['mean_and_std'] = [f_mean[0, k], f_std[0, k]]
+
+    return proc_data, m
+
 def find_rows_with_nans(all_data):
     """
     Returns a boolean vector indicating which
@@ -516,7 +535,7 @@ def cut_into_fixed_len(col_has_nan, seq_len = 20, interleave = False):
                 seqs[:, seq_count] = indices[(ct + k * seq_len):(ct + (k + 1) * seq_len)]
                 seq_count += 1
 
-        # Find next True
+        # Find next non-NaN
         ct += curr_seq_len
         nonzs = np.where(col_has_nan[ct:] == False)[0]
 
@@ -614,6 +633,14 @@ def get_data_test():
     all_dat[:,0] = seq1
     all_dat[:,1] = seq2
     print(all_dat)
+
+    # Test Standardizing
+    m = [{}, {}]
+    all_dat, m = standardize(all_dat, m)
+    print(all_dat)
+    print(m)
+
+    # Test Sequence Cutting
     c = find_rows_with_nans(all_dat)    
     print(c)
     seq_inds = cut_into_fixed_len(c, 2, interleave = True)

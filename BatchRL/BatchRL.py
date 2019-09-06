@@ -44,8 +44,8 @@ def simple_battery_FQI():
 
 def main():
     
-    #get_data_test()
-    #return 0
+    get_data_test()
+    return 0
     seq_len = 20
     dat, m = get_all_relevant_data()
     print(dat.shape)
