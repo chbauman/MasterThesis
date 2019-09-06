@@ -641,7 +641,7 @@ def get_data_test():
     print(m)
 
     # Test Sequence Cutting
-    c = find_rows_with_nans(all_dat)    
+    c = find_rows_with_nans(all_dat)
     print(c)
     seq_inds = cut_into_fixed_len(c, 2, interleave = True)
     print(seq_inds)
@@ -774,7 +774,8 @@ def get_all_relevant_data():
 
     #dat, m = Room272Data.getData()
 
-    # Save and return
+    # Standardize, save and return
+    all_data, m_out = standardize(all_data, m_out)
     save_processed_data(all_data, m_out, name)
     return all_data, m_out
 

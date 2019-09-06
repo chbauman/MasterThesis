@@ -5,16 +5,24 @@ import keras
 
 from keras import backend as K
 from keras.models import Sequential
-from keras.layers import GRU, LSTM, TimeDistributed, Dense
+from keras.layers import GRU, LSTM, TimeDistributed, Dense, GaussianNoise
 
 from base_dynamics_model import BaseDynamicsModel
-
+from keras_layers import Input
 
 class BaseRNN_DM(BaseDynamicsModel):
     """
     Simple LSTM used for training a dynamics model.
     """
-    def __init__(self, train_seq_len, n_feats, hidden_sizes = [20, 20], n_iter_max = 10000, out_dim = 1, gru = False):
+    def __init__(self, 
+                 train_seq_len, 
+                 n_feats, 
+                 hidden_sizes = [20, 20], 
+                 n_iter_max = 10000, 
+                 out_dim = 1,
+                 *,
+                 gru = False, 
+                 input_noise_std = None):
 
         # Store parameters
         self.train_seq_len = train_seq_len
@@ -23,6 +31,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         self.n_iter_max = n_iter_max
         self.out_dim = out_dim
         self.gru = gru
+        self.input_noise_std = input_noise_std
 
         # Build model
         self.build_model()
@@ -35,14 +44,17 @@ class BaseRNN_DM(BaseDynamicsModel):
         # Initialize
         n_lstm = len(self.hidden_sizes)
         model = Sequential()
+        model.add(Input(input_shape=(self.train_seq_len, self.n_feats)))
+
+        # Add noise layer
+        if self.input_noise_std is not None:
+            model.add(GaussianNoise(self.input_noise_std))
 
         # Add layers
         rnn = GRU if self.gru else LSTM
         for k in range(n_lstm):
-            in_sh = (self.train_seq_len, self.n_feats) if k == 0 else (-1, -1)
             ret_seq = k != n_lstm - 1
             model.add(rnn(self.hidden_sizes[k],
-                           input_shape=in_sh,
                            return_sequences=ret_seq))
         
         # Output layer

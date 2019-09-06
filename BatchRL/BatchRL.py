@@ -44,8 +44,8 @@ def simple_battery_FQI():
 
 def main():
     
-    get_data_test()
-    return 0
+    #get_data_test()
+    #return 0
     seq_len = 20
     dat, m = get_all_relevant_data()
     print(dat.shape)
@@ -56,8 +56,8 @@ def main():
     print(seq_len * cut_dat.shape[0])
     n_feats = cut_dat.shape[-1]
 
-    #mod = BaseRNN_DM(seq_len - 1, n_feats, n_iter_max=500)
-    #mod.fit(cut_dat)
+    mod = BaseRNN_DM(seq_len - 1, n_feats, n_iter_max=500, input_noise_std = 0.05)
+    mod.fit(cut_dat)
 
     cut_dat_5 = cut_data_into_sequences(dat, 5, interleave = True)
     m_gp = GPR_DM()

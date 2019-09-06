@@ -87,7 +87,6 @@ class OneHot(Layer):
     def compute_output_shape(self, input_shape):
         return (input_shape[0], self.num_classes)
 
-
 class PrepInput(Layer):
     """
     Uses the states input only for matching the size.
@@ -109,3 +108,18 @@ class PrepInput(Layer):
     def compute_output_shape(self, input_shape):
         return (input_shape[0], self.num_classes, self.num_classes)
 
+class Input(Layer):
+    """
+    Dummy Layer.
+    """
+    def __init__(self, **kwargs):
+        super(Input, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        pass
+
+    def call(self, x):
+        return x
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
