@@ -33,6 +33,19 @@ class BaseDynamicsModel(ABC):
 
         return input_data, output_data
 
+    def n_step_predict(self, data, n):
+        """
+        Applies the model n times and returns the 
+        predictions.
+        """
+
+        s = data.shape
+        seq_len = s[1]
+        n_data = s[0]
+        n_out = n_data - n
+        input_data, output_data = self.prepare_data(data)
+
+
     def analyze(self, week_data):
         """
         Analyzes the trained model
@@ -43,13 +56,11 @@ class BaseDynamicsModel(ABC):
 
         # One step predictions
         preds = self.predict(week_data).reshape((-1,))
-        print(preds.shape)
         er = preds - output_data
 
-        print(er)
         print(er.shape)
-
-        plot_ip_time_series([preds, output_data], lab = ['predictions', 'truth'], show = True)        
+        m = {'description': '15-Min Ahead Predictions', 'unit': 'Scaled Temperature'}
+        plot_ip_time_series([preds, output_data], lab = ['predictions', 'truth'], m = m, show = True)        
 
         # One-week prediction
         pass
