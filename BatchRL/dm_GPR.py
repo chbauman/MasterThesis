@@ -41,16 +41,18 @@ class GPR_DM(BaseDynamicsModel):
         self.in_val = self.input_data[self.n_train:, :]
 
         # Init and fit GP
-        #print("Train Input Shape", self.in_train.shape)
-        #print("Train Output Shape", self.out_train.shape)
+        self.deb("Train Input Shape", self.in_train.shape)
+        self.deb("Train Output Shape", self.out_train.shape)
         self.gpr = GaussianProcessRegressor(alpha = 1.0, n_restarts_optimizer = 10)
         self.gpr.fit(self.in_train, self.out_train)
         self.analyze_gp()
 
-    def predict(self, data, prepared = False):
+    def predict(self, data, prepared = False, disturb = False):
         """
         Predict outcome for new data.
         """
+        if disturb:
+            print("Not implemented")
         n = data.shape[0]
         in_d = None
         if not prepared:
@@ -75,5 +77,11 @@ class GPR_DM(BaseDynamicsModel):
         print(self.mse_error_pred(self.in_train, self.out_train))
         print("Validation Error")
         print(self.mse_error_pred(self.in_val, self.out_val))
+
+    def disturb(self, n):
+        """
+        Returns a sample of noise of length n.
+        """
+        return np.random.normal(0, self.res_std, n)
 
     pass

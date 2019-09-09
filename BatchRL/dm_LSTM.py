@@ -69,6 +69,8 @@ class BaseRNN_DM(BaseDynamicsModel):
         """
         Fit the model.
         """
+
+        self.deb("Fitting Model...")
                
         # Prepare the data
         input_data, output_data = self.prepare_data(data)
@@ -79,6 +81,10 @@ class BaseRNN_DM(BaseDynamicsModel):
                    initial_epoch = 0,
                    batch_size = 128,
                    validation_split = 0.1)
+
+        # Save disturbance parameters
+        reds = self.get_residuals(data)
+        self.res_std = np.std(reds)
 
     def predict(self, data, prepared = False):
         """
@@ -92,6 +98,14 @@ class BaseRNN_DM(BaseDynamicsModel):
             input_data, _ = self.prepare_data(data)
 
         # Predict
-        return self.m.predict(input_data)
+        preds = self.m.predict(input_data)
+        preds = preds.reshape((-1,))        
+        return preds
+
+    def disturb(self, n):
+        """
+        Returns a sample of noise of length n.
+        """
+        return np.random.normal(0, self.res_std, n)
 
     pass

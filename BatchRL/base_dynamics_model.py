@@ -21,6 +21,13 @@ class BaseDynamicsModel(ABC):
     def predict(self, data, prepared = False):
         pass
 
+    @abstractmethod
+    def disturb(self, n):
+        """
+        Returns a sample of noise of length n.
+        """
+        pass
+
     def prepare_data(self, data):
         """ 
         Prepare the data
@@ -39,7 +46,7 @@ class BaseDynamicsModel(ABC):
 
         return input_data, output_data
 
-    def n_step_predict(self, data, n, return_all_preds = False):
+    def n_step_predict(self, data, n, return_all_preds = False, disturb_pred = False):
         """
         Applies the model n times and returns the 
         predictions.
@@ -60,7 +67,9 @@ class BaseDynamicsModel(ABC):
         for k in range(n):
 
             # Predict
-            curr_preds = self.predict(curr_in_data, prepared = True).reshape((-1,))
+            curr_preds = self.predict(curr_in_data, prepared = True)
+            if disturb_pred:
+                curr_preds += self.disturb(curr_preds.shape[0])
             if return_all_preds:
                 all_preds[:, k] = curr_preds
 
@@ -85,7 +94,6 @@ class BaseDynamicsModel(ABC):
         # One step predictions
         preds = self.predict(week_data).reshape((-1,))
         er = preds - output_data
-
         m = {'description': '15-Min Ahead Predictions', 'unit': 'Scaled Temperature'}
         plot_ip_time_series([preds, output_data], lab = ['predictions', 'truth'], m = m, show = True)        
 
@@ -96,10 +104,25 @@ class BaseDynamicsModel(ABC):
 
         # One-week prediction
         full_pred = self.n_step_predict(week_data, s[0], return_all_preds=True)
+        full_pred_noise = self.n_step_predict(week_data, s[0], return_all_preds=True, disturb = True)
         print(full_pred.shape)
         full_pred = np.reshape(full_pred, (-1,))
         m['description'] = 'Evolution'
-        plot_ip_time_series([full_pred, output_data], lab = ['predictions', 'truth'], m = m, show = True)
+        plot_ip_time_series([full_pred, output_data, full_pred_noise], lab = ['predictions', 'truth', 'noisy prediction'], m = m, show = True)
 
         pass
 
+    def get_residuals(self, data):
+        """
+        Computes the residuals using the fitted model.
+        """
+        input_data, output_data = self.prepare_data(data)
+        preds = self.predict(input_data, prepared = True)
+        return output_data - preds
+
+    def deb(self, *args):
+        """
+        Prints Debug Info to console.
+        """
+        if self.debug:
+            print(*args)

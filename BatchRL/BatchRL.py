@@ -50,7 +50,7 @@ def main():
     #return 0
 
     # Parameters
-    seq_len = 5
+    seq_len = 20
 
     # Prepare data
     dat, m = get_all_relevant_data()
@@ -64,8 +64,8 @@ def main():
     print("Train data shape:", train_shape)
     print("Analysis data shape:", cut_test_dat.shape)
 
-    #mod = BaseRNN_DM(seq_len - 1, n_feats, n_iter_max=20, input_noise_std = 0.05)
-    mod = GPR_DM()
+    mod = BaseRNN_DM(seq_len - 1, n_feats, n_iter_max=20, input_noise_std = 0.05)
+    #mod = GPR_DM()
     mod.fit(cut_train_dat)
     mod.analyze(cut_test_dat)
     return
