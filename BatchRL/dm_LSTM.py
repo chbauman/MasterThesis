@@ -80,13 +80,16 @@ class BaseRNN_DM(BaseDynamicsModel):
                    batch_size = 128,
                    validation_split = 0.1)
 
-    def predict(self, data):
+    def predict(self, data, prepared = False):
         """
         Predicts a batch of sequences.
         """
 
+        input_data = data
+
         # Prepare the data
-        input_data, _ = self.prepare_data(data)
+        if not prepared:
+            input_data, _ = self.prepare_data(data)
 
         # Predict
         return self.m.predict(input_data)

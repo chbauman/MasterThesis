@@ -64,7 +64,7 @@ def main():
     print(train_shape)
     print(cut_test_dat.shape)
 
-    mod = BaseRNN_DM(seq_len - 1, n_feats, n_iter_max=5, input_noise_std = 0.05)
+    mod = BaseRNN_DM(seq_len - 1, n_feats, n_iter_max=20, input_noise_std = 0.05)
     mod.fit(cut_train_dat)
     mod.analyze(cut_test_dat)
     return
