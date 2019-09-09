@@ -14,6 +14,8 @@ class BaseDynamicsModel(ABC):
     def predict(self, data):
         pass
 
-    @abstractmethod
     def analyze(self):
-        pass
+        """
+        Analyzes the trained model
+        """
+        print("Analyzing model")

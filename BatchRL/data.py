@@ -570,6 +570,29 @@ def cut_data_into_sequences(all_data, seq_len, interleave = False):
         out_dat[k, :, :] = all_data[seq_inds[:, k], :] 
     return out_dat
 
+def extract_streak(all_data, s_len, lag):
+    """
+    Finds the last sequence where all data is available
+    for at least s_len + lag timesteps.
+    """
+
+    tot_s_len = s_len + lag
+    rwn = np.int32(np.logical_not(find_rows_with_nans(all_data)))
+    true_seq = np.empty((tot_s_len, ), dtype = np.int32)
+    true_seq.fill(1)
+
+    # Find sequences of length tot_s_len
+    tmp = np.convolve(rwn, true_seq, 'valid')
+    inds = np.where(tmp == tot_s_len)[0]
+    last_seq_start = inds[-1]
+
+    # Extract
+    first_dat = all_data[:last_seq_start, :]
+    streak_dat = all_data[last_seq_start:(last_seq_start + tot_s_len), :]
+    return first_dat, streak_dat
+
+
+
 #######################################################################################################
 # Saving and Loading Processed Data
 
@@ -633,6 +656,10 @@ def get_data_test():
     all_dat[:,0] = seq1
     all_dat[:,1] = seq2
     print(all_dat)
+
+    # Test
+    strk = extract_streak(all_dat, 2, 2)
+    print(strk)
 
     # Test Standardizing
     m = [{}, {}]

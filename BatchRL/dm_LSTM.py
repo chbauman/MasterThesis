@@ -79,8 +79,8 @@ class BaseRNN_DM(BaseDynamicsModel):
         output_data = data[:, -1, 3]
 
         # Fit model
-        self.m.fit(input_data, output_data, 
-                   epochs = self.n_iter_max, 
+        self.m.fit(input_data, output_data,
+                   epochs = self.n_iter_max,
                    initial_epoch = 0,
                    batch_size = 128,
                    validation_split = 0.1)
