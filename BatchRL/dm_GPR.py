@@ -12,15 +12,14 @@ class GPR_DM(BaseDynamicsModel):
         self.val = validation
         pass
 
-    def prepare_data(self, data):
+    def prepare_data_gp(self, data):
         """
         Prepares the data for usage with the estimator.
         """
-        d_shape = data.shape
-        n = d_shape[0]
-        out_data = data[:, -1, 3]
-        in_data = np.reshape(data, (n, -1))
-        return in_data, out_data
+        i, o = self.prepare_data(data)
+        n = data.shape[0]
+        in_data = np.reshape(i, (n, -1))
+        return in_data, o
 
     def fit(self, data):
         """
@@ -29,7 +28,7 @@ class GPR_DM(BaseDynamicsModel):
         # Prepare the data
         d_shape = data.shape
         self.n = d_shape[0]
-        i, o = self.prepare_data(data)
+        i, o = self.prepare_data_gp(data)
         self.output_data = o
         self.input_data = i
 
@@ -42,14 +41,23 @@ class GPR_DM(BaseDynamicsModel):
         self.in_val = self.input_data[self.n_train:, :]
 
         # Init and fit GP
+        #print("Train Input Shape", self.in_train.shape)
+        #print("Train Output Shape", self.out_train.shape)
         self.gpr = GaussianProcessRegressor(alpha = 1.0, n_restarts_optimizer = 10)
         self.gpr.fit(self.in_train, self.out_train)
+        self.analyze_gp()
 
-    def predict(self, data):
+    def predict(self, data, prepared = False):
         """
         Predict outcome for new data.
         """
-        in_d, out_d = self.prepare_data(data)
+        n = data.shape[0]
+        in_d = None
+        if not prepared:
+            in_d, _ = self.prepare_data_gp(data)
+        else:
+            in_d = data.reshape((n, -1))
+        #print("Predict Input Shape", in_d.shape)
         return self.gpr.predict(in_d)
 
     def mse_error_pred(self, X, y):
@@ -59,7 +67,7 @@ class GPR_DM(BaseDynamicsModel):
         """
         return np.mean((y - self.gpr.predict(X)) ** 2)
 
-    def analyze(self):
+    def analyze_gp(self):
         """
         Analyze generalization performance.
         """

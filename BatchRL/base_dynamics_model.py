@@ -11,6 +11,7 @@ class BaseDynamicsModel(ABC):
     """
 
     out_indx = 3
+    debug = True
     
     @abstractmethod
     def fit(self, data):
@@ -32,8 +33,9 @@ class BaseDynamicsModel(ABC):
         #output_data.reshape((d_shape[0], seq_len_data - 1, 1))
         output_data = data[:, -1, self.out_indx]
 
-        print("Input shape", input_data.shape)
-        print("Output shape", output_data.shape)
+        if self.debug:
+            print("Input shape", input_data.shape)
+            print("Output shape", output_data.shape)
 
         return input_data, output_data
 
@@ -84,20 +86,20 @@ class BaseDynamicsModel(ABC):
         preds = self.predict(week_data).reshape((-1,))
         er = preds - output_data
 
-        print(er.shape)
         m = {'description': '15-Min Ahead Predictions', 'unit': 'Scaled Temperature'}
         plot_ip_time_series([preds, output_data], lab = ['predictions', 'truth'], m = m, show = True)        
 
         # One hour predictions (4 steps)
         one_h_pred = self.n_step_predict(week_data, 4)
         m['description'] = '1h Ahead Predictions'
-        plot_ip_time_series([one_h_pred, output_data[3:]], lab = ['predictions', 'truth'], m = m, show = True)        
+        plot_ip_time_series([one_h_pred, output_data[3:]], lab = ['predictions', 'truth'], m = m, show = True)
 
         # One-week prediction
         full_pred = self.n_step_predict(week_data, s[0], return_all_preds=True)
         print(full_pred.shape)
         full_pred = np.reshape(full_pred, (-1,))
         m['description'] = 'Evolution'
-        plot_ip_time_series([full_pred, output_data], lab = ['predictions', 'truth'], m = m, show = True)        
+        plot_ip_time_series([full_pred, output_data], lab = ['predictions', 'truth'], m = m, show = True)
+
         pass
 
