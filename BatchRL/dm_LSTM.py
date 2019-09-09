@@ -99,7 +99,7 @@ class BaseRNN_DM(BaseDynamicsModel):
 
         # Predict
         preds = self.m.predict(input_data)
-        preds = preds.reshape((-1,))        
+        preds = preds.reshape((-1,))
         return preds
 
     def disturb(self, n):

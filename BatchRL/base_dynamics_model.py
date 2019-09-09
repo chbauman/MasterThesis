@@ -104,9 +104,10 @@ class BaseDynamicsModel(ABC):
 
         # One-week prediction
         full_pred = self.n_step_predict(week_data, s[0], return_all_preds=True)
-        full_pred_noise = self.n_step_predict(week_data, s[0], return_all_preds=True, disturb = True)
+        full_pred_noise = self.n_step_predict(week_data, s[0], return_all_preds=True, disturb_pred = True)
         print(full_pred.shape)
         full_pred = np.reshape(full_pred, (-1,))
+        full_pred_noise = np.reshape(full_pred_noise, (-1,))
         m['description'] = 'Evolution'
         plot_ip_time_series([full_pred, output_data, full_pred_noise], lab = ['predictions', 'truth', 'noisy prediction'], m = m, show = True)
 
