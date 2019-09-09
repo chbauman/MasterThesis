@@ -1,6 +1,10 @@
-from abc import ABC, abstractmethod
+
+import os
 
 import numpy as np
+
+from keras.models import load_model
+from abc import ABC, abstractmethod
 
 from visualize import plot_ip_time_series
  
@@ -12,7 +16,8 @@ class BaseDynamicsModel(ABC):
 
     out_indx = 3
     debug = True
-    
+    model_path = "../Models/Dynamics/"
+
     @abstractmethod
     def fit(self, data):
         pass
@@ -28,6 +33,21 @@ class BaseDynamicsModel(ABC):
         """
         pass
 
+    def get_path(self, name):
+        return self.model_path + name + ".h5"
+
+    def load_if_exists(self, m, name):
+        """
+        Loads a keras model if it exists.
+        Returns true if it could be loaded, else False.
+        """
+        full_path = self.get_path(name)
+
+        if os.path.isfile(full_path):
+            m.load_weights(full_path)
+            return True
+        return False
+    
     def prepare_data(self, data):
         """ 
         Prepare the data

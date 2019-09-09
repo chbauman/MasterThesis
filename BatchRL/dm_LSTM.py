@@ -19,7 +19,8 @@ class BaseRNN_DM(BaseDynamicsModel):
                  n_feats, 
                  hidden_sizes = [20, 20], 
                  n_iter_max = 10000, 
-                 out_dim = 1,
+                 out_dim = 1, 
+                 name = 'baseRNN',
                  *,
                  gru = False, 
                  input_noise_std = None):
@@ -29,6 +30,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         self.n_feats = n_feats
         self.hidden_sizes = np.array(hidden_sizes, dtype = np.int32)
         self.n_iter_max = n_iter_max
+        self.name = name
         self.out_dim = out_dim
         self.gru = gru
         self.input_noise_std = input_noise_std
@@ -67,24 +69,31 @@ class BaseRNN_DM(BaseDynamicsModel):
 
     def fit(self, data):
         """
-        Fit the model.
+        Fit the model if it hasn't been fitted before.
+        Otherwise load the trained model.
         """
 
-        self.deb("Fitting Model...")
+        loaded = self.load_if_exists(self.m, self.name)
+        if not loaded:
+            self.deb("Fitting Model...")
                
-        # Prepare the data
-        input_data, output_data = self.prepare_data(data)
+            # Prepare the data
+            input_data, output_data = self.prepare_data(data)
 
-        # Fit model
-        self.m.fit(input_data, output_data,
-                   epochs = self.n_iter_max,
-                   initial_epoch = 0,
-                   batch_size = 128,
-                   validation_split = 0.1)
+            # Fit model
+            self.m.fit(input_data, output_data,
+                       epochs = self.n_iter_max,
+                       initial_epoch = 0,
+                       batch_size = 128,
+                       validation_split = 0.1)
 
-        # Save disturbance parameters
-        reds = self.get_residuals(data)
-        self.res_std = np.std(reds)
+            # Save disturbance parameters
+            reds = self.get_residuals(data)
+            self.res_std = np.std(reds)
+
+            self.m.save_weights(self.get_path(self.name))
+        else:
+            print("Restored trained model")
 
     def predict(self, data, prepared = False):
         """
