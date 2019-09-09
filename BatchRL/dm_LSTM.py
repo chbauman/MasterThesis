@@ -71,12 +71,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         """
                
         # Prepare the data
-        d_shape = data.shape
-        seq_len_data = d_shape[1]
-        input_data = data[:, :-1, :]
-        #output_data = data[:, 1:, 3]
-        #output_data.reshape((d_shape[0], seq_len_data - 1, 1))
-        output_data = data[:, -1, 3]
+        input_data, output_data = self.prepare_data(data)
 
         # Fit model
         self.m.fit(input_data, output_data,
@@ -86,9 +81,14 @@ class BaseRNN_DM(BaseDynamicsModel):
                    validation_split = 0.1)
 
     def predict(self, data):
-        pass
+        """
+        Predicts a batch of sequences.
+        """
 
-    def analyze(self):
-        pass
+        # Prepare the data
+        input_data, _ = self.prepare_data(data)
+
+        # Predict
+        return self.m.predict(input_data)
 
     pass

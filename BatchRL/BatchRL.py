@@ -14,7 +14,9 @@ from cart_pole import CartPole
 from mount_car_cont import MountCarCont
 from pendulum import Pendulum
 
-from data import Room274Data, Room272Data, WeatherData, TestData, analyze_data, get_all_relevant_data, get_data_test, cut_data_into_sequences
+from data import Room274Data, Room272Data, WeatherData, TestData, \
+    analyze_data, get_all_relevant_data, get_data_test, \
+    cut_data_into_sequences, extract_streak
 from visualize import plot_time_series, plot_ip_time_series
 
 
@@ -44,21 +46,30 @@ def simple_battery_FQI():
 
 def main():
     
-    get_data_test()
-    return 0
+    #get_data_test()
+    #return 0
+
+    # Parameters
     seq_len = 20
+
+    # Prepare data
     dat, m = get_all_relevant_data()
-    print(dat.shape)
-    cut_dat_i = cut_data_into_sequences(dat, seq_len, interleave = True)
-    print(cut_dat_i.shape)
-    cut_dat = cut_data_into_sequences(dat, seq_len, interleave = False)
-    print(cut_dat.shape)
-    print(seq_len * cut_dat.shape[0])
-    n_feats = cut_dat.shape[-1]
+    dat_train, dat_test = extract_streak(dat, 96 * 7, seq_len - 1)
+    cut_train_dat = cut_data_into_sequences(dat_train, seq_len, interleave = True)
+    cut_test_dat = cut_data_into_sequences(dat_test, seq_len, interleave = True)
 
-    mod = BaseRNN_DM(seq_len - 1, n_feats, n_iter_max=500, input_noise_std = 0.05)
-    mod.fit(cut_dat)
+    train_shape = cut_train_dat.shape
+    n_feats = train_shape[-1]
 
+    print(train_shape)
+    print(cut_test_dat.shape)
+
+    mod = BaseRNN_DM(seq_len - 1, n_feats, n_iter_max=5, input_noise_std = 0.05)
+    mod.fit(cut_train_dat)
+    mod.analyze(cut_test_dat)
+    return
+
+    # GP model
     cut_dat_5 = cut_data_into_sequences(dat, 5, interleave = True)
     m_gp = GPR_DM()
     m_gp.fit(cut_dat_5)

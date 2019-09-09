@@ -9,6 +9,9 @@ from pandas.plotting import register_matplotlib_converters
 
 register_matplotlib_converters()
 
+clr_map = ['blue', 'green', 'c', 'k']
+n_cols = len(clr_map)
+
 
 def plot_time_series(x, y, m, show = True):
     """
@@ -33,7 +36,7 @@ def plot_time_series(x, y, m, show = True):
         plt.show()
     return
 
-def plot_ip_time_series(y, m, show = True):
+def plot_ip_time_series(y, lab = None, m = None, show = True):
     """
     Plots an interpolated time series
     where x is assumed to be uniform.
@@ -41,10 +44,22 @@ def plot_ip_time_series(y, m, show = True):
 
     # Define plot
     fig, ax = plt.subplots()
-    plt.plot(y, linestyle=':', marker='^', color='red', markersize=5, mfc = 'blue', mec = 'blue')
-    plt.title(m['description'])
-    plt.ylabel(m['unit'])
-    plt.xlabel('Time')
+    if isinstance(y, list):
+        n = y[0].shape[0]
+        x = [15 * i for i in range(n)]
+        for ct, ts in enumerate(y):
+            clr = clr_map[ct % n_cols]
+            curr_lab = None if lab is None else lab[ct]
+            plt.plot(x, ts, linestyle=':', marker='^', color='red', label = curr_lab, markersize=5, mfc = clr, mec = clr)
+    else:
+        plt.plot(y, linestyle=':', marker='^', color='red', label = lab, markersize=5, mfc = 'blue', mec = 'blue')
+
+    if m is not None:
+        plt.title(m['description'])
+        plt.ylabel(m['unit'])
+
+    plt.xlabel('Time [15 min.]')
+    plt.legend()
 
     # Show plot
     if show:

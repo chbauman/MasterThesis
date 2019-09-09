@@ -591,8 +591,6 @@ def extract_streak(all_data, s_len, lag):
     streak_dat = all_data[last_seq_start:(last_seq_start + tot_s_len), :]
     return first_dat, streak_dat
 
-
-
 #######################################################################################################
 # Saving and Loading Processed Data
 
