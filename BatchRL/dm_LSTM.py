@@ -87,13 +87,15 @@ class BaseRNN_DM(BaseDynamicsModel):
                        batch_size = 128,
                        validation_split = 0.1)
 
-            # Save disturbance parameters
-            reds = self.get_residuals(data)
-            self.res_std = np.std(reds)
+            
 
             self.m.save_weights(self.get_path(self.name))
         else:
-            print("Restored trained model")
+            self.deb("Restored trained model")
+
+        # Save disturbance parameters
+        reds = self.get_residuals(data)
+        self.res_std = np.std(reds)
 
     def predict(self, data, prepared = False):
         """
