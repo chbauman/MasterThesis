@@ -9,6 +9,7 @@ from keras.layers import GRU, LSTM, TimeDistributed, Dense, GaussianNoise
 
 from base_dynamics_model import BaseDynamicsModel
 from keras_layers import Input
+from time_series import AR_Model
 
 class BaseRNN_DM(BaseDynamicsModel):
     """
@@ -23,7 +24,8 @@ class BaseRNN_DM(BaseDynamicsModel):
                  name = 'baseRNN',
                  *,
                  gru = False, 
-                 input_noise_std = None):
+                 input_noise_std = None,
+                 use_AR = False):
 
         # Store parameters
         self.train_seq_len = train_seq_len
@@ -34,6 +36,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         self.out_dim = out_dim
         self.gru = gru
         self.input_noise_std = input_noise_std
+        self.use_AR = use_AR
 
         # Build model
         self.build_model()
@@ -93,8 +96,12 @@ class BaseRNN_DM(BaseDynamicsModel):
 
         # Save disturbance parameters
         reds = self.get_residuals(data)
-
+        if self.use_AR:
+            self.dist_mod = AR_Model(lag = 4)
+            self.dist_mod.fit(reds)
+            self.init_pred = np.zeros((4,))
         self.res_std = np.std(reds)
+        
 
     def predict(self, data, prepared = False):
         """
@@ -116,6 +123,12 @@ class BaseRNN_DM(BaseDynamicsModel):
         """
         Returns a sample of noise of length n.
         """
+        if self.use_AR:
+            next = self.dist_mod.predict(self.init_pred)
+            self.init_pred[:-1] = self.init_pred[1:]
+            self.init_pred[-1] = next
+            return next
+
         return np.random.normal(0, self.res_std, n)
 
     pass

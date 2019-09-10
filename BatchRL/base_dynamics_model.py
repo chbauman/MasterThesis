@@ -89,7 +89,9 @@ class BaseDynamicsModel(ABC):
             # Predict
             curr_preds = self.predict(curr_in_data, prepared = True)
             if disturb_pred:
+                print(curr_preds.shape[0])
                 curr_preds += self.disturb(curr_preds.shape[0])
+
             if return_all_preds:
                 all_preds[:, k] = curr_preds
 
