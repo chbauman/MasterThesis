@@ -108,11 +108,6 @@ class BaseDynamicsModel(ABC):
         Analyzes the trained model
         """
 
-        print(week_data.shape)
-        plot_ip_time_series(week_data[:, 0, self.out_indx], show = False, m = {'description': '0', 'unit': 'Fucks'})
-        plot_ip_time_series(week_data[:, -1, self.out_indx], show = False, m = {'description': '-1', 'unit': 'Fucks'})
-        plot_ip_time_series(week_data[:, 9, self.out_indx], show = True, m = {'description': '9', 'unit': 'Fucks'})
-
         print("Analyzing model")
         s = week_data.shape
         input_data, output_data = self.prepare_data(week_data)
@@ -134,9 +129,6 @@ class BaseDynamicsModel(ABC):
         m['description'] = '5h Ahead Predictions'
         plot_ip_time_series([one_h_pred, output_data[19:]], lab = ['predictions', 'truth'], m = m, show = True)
 
-
-        
-
         # One-week prediction
         full_pred = self.n_step_predict(week_data, s[0], return_all_preds=True)
         full_pred_noise = self.n_step_predict(week_data, s[0], return_all_preds=True, disturb_pred = True)
@@ -147,11 +139,6 @@ class BaseDynamicsModel(ABC):
         m['description'] = 'Evolution'
         plot_ip_time_series([full_pred, output_data, full_pred_noise], lab = ['predictions', 'truth', 'noisy prediction'], m = m, show = True, init = init_data)
 
-
-        print(week_data.shape)
-        plot_ip_time_series(week_data[:, 0, self.out_indx], show = False, m = {'description': '0', 'unit': 'Fucks'})
-        plot_ip_time_series(week_data[:, -1, self.out_indx], show = False, m = {'description': '-1', 'unit': 'Fucks'})
-        plot_ip_time_series(week_data[:, 9, self.out_indx], show = True, m = {'description': '9', 'unit': 'Fucks'})
         pass
 
     def get_residuals(self, data):

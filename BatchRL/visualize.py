@@ -63,7 +63,7 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None):
         plt.title(m['description'])
         plt.ylabel(m['unit'])
 
-    plt.xlabel('Time [15 min.]')
+    plt.xlabel('Time [min.]')
     plt.legend()
 
     # Show plot
