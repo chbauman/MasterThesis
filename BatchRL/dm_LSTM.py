@@ -87,8 +87,6 @@ class BaseRNN_DM(BaseDynamicsModel):
                        batch_size = 128,
                        validation_split = 0.1)
 
-            
-
             self.m.save_weights(self.get_path(self.name))
         else:
             self.deb("Restored trained model")

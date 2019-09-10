@@ -1,5 +1,6 @@
 
 import os
+import scipy
 
 import numpy as np
 import pandas as pd
@@ -416,6 +417,25 @@ def remove_outliers(time_series, grad_clip = 100, clip_interv = None):
 
     return 
 
+def gaussian_filter_ignoring_nans(time_series, sigma = 2.0):
+    """
+    1-dimensional Gaussian Filtering ignoring 
+    occurrences of NaNs. From:
+    https://stackoverflow.com/questions/18697532/gaussian-filtering-a-image-with-nan-in-python
+    """
+
+    V = time_series.copy()
+    V[np.isnan(time_series)] = 0
+    VV = scipy.ndimage.filters.gaussian_filter1d(V, sigma=sigma)
+
+    W = 0 * time_series.copy() + 1
+    W[np.isnan(time_series)] = 0
+    WW = scipy.ndimage.filters.gaussian_filter1d(W, sigma=sigma)
+
+    Z = VV / WW
+    Z[np.isnan(time_series)] = np.nan
+    return Z
+
 def pipeline_preps(orig_dat,
                    dt_mins,
                    all_data = None,
@@ -424,7 +444,8 @@ def pipeline_preps(orig_dat,
                    clean_args = None,
                    rem_out_args = None,
                    hole_fill_args = None,
-                   n_tot_cols = None):
+                   n_tot_cols = None,
+                   gauss_sigma = None):
     """
     Applies all the specified preprocessings to the
     given data.
@@ -447,6 +468,10 @@ def pipeline_preps(orig_dat,
     if hole_fill_args is not None:
         fill_holes_linear_interpolate(modif_data, hole_fill_args)
 
+    # Gaussian Filtering
+    if gauss_sigma is not None:
+        modif_data = gaussian_filter_ignoring_nans(modif_data, gauss_sigma)
+
     if all_data is not None:
         if dt_init is None or row_ind is None:
             print("Need to provide the initial time of the first series and the column index!")
@@ -463,6 +488,7 @@ def pipeline_preps(orig_dat,
         all_data = np.empty((n_data, n_tot_cols), dtype = np.float32)
         all_data.fill(np.nan)
         all_data[:, 0] = modif_data
+
     return all_data, dt_init_new
 
 #######################################################################################################
@@ -710,6 +736,13 @@ def get_data_test():
     add_time(all_data, dt_init1, 0, dt_mins)
     all_data[:,1] = data1
     [data2, dt_init2] = interpolate_time_series(dat[1], dt_mins)
+
+    print(data2)
+    plot_ip_time_series(data2, show = False)
+    data2 = gaussian_filter_ignoring_nans(data2)
+    print(data2)
+    plot_ip_time_series(data2, show = True)
+
     add_col(all_data, data2, dt_init1, dt_init2, 2, dt_mins)
 
     save_processed_data(all_data, m, name)
@@ -718,7 +751,7 @@ def get_data_test():
     return all_data, m
 
 # Real Data, takes some time to run
-def get_all_relevant_data():
+def get_all_relevant_data(filter_sigma = None):
     """
     Load and interpolate all the necessary data.
     """
@@ -727,6 +760,7 @@ def get_all_relevant_data():
     dt_mins = 15
     fill_by_ip_max = 2
     name = "Room274AndWeather"
+    name +=  "" if filter_sigma is None else str(filter_sigma)
 
     # Try loading data
     loaded = load_processed_data(name)
@@ -745,7 +779,8 @@ def get_all_relevant_data():
                                clean_args = [([], 30, [])],
                                rem_out_args = None,
                                hole_fill_args = fill_by_ip_max,
-                               n_tot_cols = 6)
+                               n_tot_cols = 6,
+                               gauss_sigma = filter_sigma)
     m_out += [m[0]]
 
     # Add time
@@ -760,7 +795,8 @@ def get_all_relevant_data():
                                row_ind = 2,
                                clean_args = [([], 3, [1300.0, 0.0]), ([], 60 * 20)],
                                rem_out_args = None,
-                               hole_fill_args = fill_by_ip_max)
+                               hole_fill_args = fill_by_ip_max,
+                               gauss_sigma = filter_sigma)
     m_out += [m[2]]
 
     # Room Data
@@ -775,7 +811,8 @@ def get_all_relevant_data():
                                row_ind = 3,
                                clean_args = [([0.0], 10 * 60)],
                                rem_out_args = (4.5, [10, 100]),
-                               hole_fill_args = fill_by_ip_max)
+                               hole_fill_args = fill_by_ip_max,
+                               gauss_sigma = filter_sigma)
     
     # Windows
     win_dat, m_win = dat[11], m[11]
@@ -785,7 +822,8 @@ def get_all_relevant_data():
                                all_data = all_data,
                                dt_init = dt_init,
                                row_ind = 4,
-                               hole_fill_args = fill_by_ip_max)
+                               hole_fill_args = fill_by_ip_max,
+                               gauss_sigma = filter_sigma)
  
     # Valve
     valve_dat, m_dat = dat[12], m[12]
@@ -795,14 +833,15 @@ def get_all_relevant_data():
                                all_data = all_data,
                                dt_init = dt_init,
                                row_ind = 5,
-                               hole_fill_args = 3)
+                               hole_fill_args = 3,
+                               gauss_sigma = filter_sigma)
 
     #dat, m = Room272Data.getData()
 
     # Standardize, save and return
     all_data, m_out = standardize(all_data, m_out)
     save_processed_data(all_data, m_out, name)
-    return all_data, m_out
+    return all_data, m_out, name
 
 
 

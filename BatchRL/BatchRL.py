@@ -53,7 +53,10 @@ def main():
     seq_len = 20
 
     # Prepare data
-    dat, m = get_all_relevant_data()
+    dat, m, name = get_all_relevant_data(2.0)
+    dat_s = dat.shape
+    for k in range(dat_s[1]):
+        plot_ip_time_series(dat[:,k], m = m[k], show = k == 5)
     dat_train, dat_test = extract_streak(dat, 96 * 7, seq_len - 1)
     cut_train_dat = cut_data_into_sequences(dat_train, seq_len, interleave = True)
     cut_test_dat = cut_data_into_sequences(dat_test, seq_len, interleave = True)
@@ -64,7 +67,7 @@ def main():
     print("Train data shape:", train_shape)
     print("Analysis data shape:", cut_test_dat.shape)
 
-    mod = BaseRNN_DM(seq_len - 1, n_feats, n_iter_max=50, input_noise_std = 0.05, name = "Train50")
+    mod = BaseRNN_DM(seq_len - 1, n_feats, n_iter_max=50, input_noise_std = 0.05, name = "Train50_" + name)
     #mod = GPR_DM()
     mod.fit(cut_train_dat)
     mod.analyze(cut_test_dat)
