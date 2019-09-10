@@ -93,6 +93,7 @@ class BaseRNN_DM(BaseDynamicsModel):
 
         # Save disturbance parameters
         reds = self.get_residuals(data)
+
         self.res_std = np.std(reds)
 
     def predict(self, data, prepared = False):

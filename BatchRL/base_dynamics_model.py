@@ -122,6 +122,11 @@ class BaseDynamicsModel(ABC):
         m['description'] = '1h Ahead Predictions'
         plot_ip_time_series([one_h_pred, output_data[3:]], lab = ['predictions', 'truth'], m = m, show = True)
 
+        # 5 hour predictions (20 steps)
+        one_h_pred = self.n_step_predict(week_data, 20)
+        m['description'] = '5h Ahead Predictions'
+        plot_ip_time_series([one_h_pred, output_data[19:]], lab = ['predictions', 'truth'], m = m, show = True)
+
         # One-week prediction
         full_pred = self.n_step_predict(week_data, s[0], return_all_preds=True)
         full_pred_noise = self.n_step_predict(week_data, s[0], return_all_preds=True, disturb_pred = True)
