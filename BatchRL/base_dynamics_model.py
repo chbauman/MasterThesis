@@ -55,10 +55,10 @@ class BaseDynamicsModel(ABC):
 
         d_shape = data.shape
         seq_len_data = d_shape[1]
-        input_data = data[:, :-1, :]
+        input_data = np.copy(data[:, :-1, :])
         #output_data = data[:, 1:, 3]
         #output_data.reshape((d_shape[0], seq_len_data - 1, 1))
-        output_data = data[:, -1, self.out_indx]
+        output_data = np.copy(data[:, -1, self.out_indx])
 
         if self.debug:
             print("Input shape", input_data.shape)
@@ -81,7 +81,7 @@ class BaseDynamicsModel(ABC):
         if return_all_preds:
             all_preds = np.empty((n_out, n))
 
-        input_data, output_data = self.prepare_data(data)
+        input_data, output_data = self.prepare_data(np.copy(data))
         curr_in_data = input_data[:n_out]
         curr_out_data = output_data[:n_out]
         for k in range(n):
@@ -89,7 +89,6 @@ class BaseDynamicsModel(ABC):
             # Predict
             curr_preds = self.predict(curr_in_data, prepared = True)
             if disturb_pred:
-                print(curr_preds.shape[0])
                 curr_preds += self.disturb(curr_preds.shape[0])
 
             if return_all_preds:
@@ -109,12 +108,18 @@ class BaseDynamicsModel(ABC):
         Analyzes the trained model
         """
 
+        print(week_data.shape)
+        plot_ip_time_series(week_data[:, 0, self.out_indx], show = False, m = {'description': '0', 'unit': 'Fucks'})
+        plot_ip_time_series(week_data[:, -1, self.out_indx], show = False, m = {'description': '-1', 'unit': 'Fucks'})
+        plot_ip_time_series(week_data[:, 9, self.out_indx], show = True, m = {'description': '9', 'unit': 'Fucks'})
+
         print("Analyzing model")
         s = week_data.shape
         input_data, output_data = self.prepare_data(week_data)
 
         # One step predictions
-        preds = self.predict(week_data).reshape((-1,))
+        preds = self.predict(week_data)
+        preds = preds.reshape((-1,))
         er = preds - output_data
         m = {'description': '15-Min Ahead Predictions', 'unit': 'Scaled Temperature'}
         plot_ip_time_series([preds, output_data], lab = ['predictions', 'truth'], m = m, show = True)        
@@ -129,15 +134,24 @@ class BaseDynamicsModel(ABC):
         m['description'] = '5h Ahead Predictions'
         plot_ip_time_series([one_h_pred, output_data[19:]], lab = ['predictions', 'truth'], m = m, show = True)
 
+
+        
+
         # One-week prediction
         full_pred = self.n_step_predict(week_data, s[0], return_all_preds=True)
         full_pred_noise = self.n_step_predict(week_data, s[0], return_all_preds=True, disturb_pred = True)
-        print(full_pred.shape)
+        print("Prediction Shape", full_pred.shape)
         full_pred = np.reshape(full_pred, (-1,))
         full_pred_noise = np.reshape(full_pred_noise, (-1,))
+        init_data = week_data[0, :-1, self.out_indx]
         m['description'] = 'Evolution'
-        plot_ip_time_series([full_pred, output_data, full_pred_noise], lab = ['predictions', 'truth', 'noisy prediction'], m = m, show = True)
+        plot_ip_time_series([full_pred, output_data, full_pred_noise], lab = ['predictions', 'truth', 'noisy prediction'], m = m, show = True, init = init_data)
 
+
+        print(week_data.shape)
+        plot_ip_time_series(week_data[:, 0, self.out_indx], show = False, m = {'description': '0', 'unit': 'Fucks'})
+        plot_ip_time_series(week_data[:, -1, self.out_indx], show = False, m = {'description': '-1', 'unit': 'Fucks'})
+        plot_ip_time_series(week_data[:, 9, self.out_indx], show = True, m = {'description': '9', 'unit': 'Fucks'})
         pass
 
     def get_residuals(self, data):

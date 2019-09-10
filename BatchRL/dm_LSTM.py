@@ -108,7 +108,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         Predicts a batch of sequences.
         """
 
-        input_data = data
+        input_data = np.copy(data)
 
         # Prepare the data
         if not prepared:

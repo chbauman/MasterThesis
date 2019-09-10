@@ -9,7 +9,7 @@ from pandas.plotting import register_matplotlib_converters
 
 register_matplotlib_converters()
 
-clr_map = ['blue', 'green', 'c', 'k']
+clr_map = ['blue', 'green', 'c']
 n_cols = len(clr_map)
 
 
@@ -36,7 +36,7 @@ def plot_time_series(x, y, m, show = True):
         plt.show()
     return
 
-def plot_ip_time_series(y, lab = None, m = None, show = True):
+def plot_ip_time_series(y, lab = None, m = None, show = True, init = None):
     """
     Plots an interpolated time series
     where x is assumed to be uniform.
@@ -46,7 +46,12 @@ def plot_ip_time_series(y, lab = None, m = None, show = True):
     fig, ax = plt.subplots()
     if isinstance(y, list):
         n = y[0].shape[0]
-        x = [15 * i for i in range(n)]
+        n_init = 0 if init is None else init.shape[0]
+        if init is not None:
+            x_init = [15 * i for i in range(n_init)]
+            plt.plot(x_init, init, linestyle=':', marker='^', color='red', markersize=5, mfc = 'k', mec = 'k')
+
+        x = [15 * i for i in range(n_init, n_init + n)]
         for ct, ts in enumerate(y):
             clr = clr_map[ct % n_cols]
             curr_lab = None if lab is None else lab[ct]
