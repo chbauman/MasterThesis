@@ -659,7 +659,7 @@ def load_processed_data(name):
         with open(meat_data_name, 'r') as data:
             contents = data.read()
             m = literal_eval(contents)
-        return all_data, m
+        return all_data, m, name
     else:
         print("Requested files do not exist!")
         return
