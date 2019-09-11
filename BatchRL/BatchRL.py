@@ -16,7 +16,7 @@ from pendulum import Pendulum
 
 from data import Room274Data, Room272Data, WeatherData, TestData, \
     analyze_data, get_heating_data, get_data_test, \
-    cut_data_into_sequences, extract_streak
+    cut_data_into_sequences, extract_streak, get_battery_data
 from visualize import plot_time_series, plot_ip_time_series
 
 def simple_battery_FQI():
@@ -45,6 +45,8 @@ def main():
     
     #get_data_test()
     #return 0
+    get_battery_data()
+    return
 
     # Parameters
     seq_len = 5

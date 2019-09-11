@@ -788,6 +788,40 @@ def get_data_test():
     print(m_new[0])
     return all_data, m
 
+def get_battery_data():
+    """
+    Load and interpolate the battery data.
+    """
+    # Constants
+    dt_mins = 15
+    name = "Battery"
+
+    # Try loading data
+    loaded = load_processed_data(name)
+    if loaded is not None:
+        return loaded
+
+    # Get data
+    dat, m = BatteryData.getData()
+
+    inds = [5, 17, 19, 20, 21, 22, 23, 28, 29, 30]
+    soh = [20, 30]
+    max_min_charge = [21, 22]
+    inds_soc = [19, 23] # SoC and kWh, essentially the same
+    soc_max_min = [28, 29] # Also kind of SoC, max and min, shorter time
+
+    inds = soh
+    for k in inds:
+        print(k)
+        d = dat[k]
+        m_curr = m[k]
+        intp, _ = interpolate_time_series(d, dt_mins)
+        remove_outliers(intp, 1000, clip_interv=[-1000,1000])
+        plot_ip_time_series(intp, m = m_curr, show = k == inds[-1])
+
+
+
+
 # Real Data, takes some time to run
 def get_heating_data(filter_sigma = None):
     """
