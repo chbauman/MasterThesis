@@ -121,6 +121,44 @@ WeatherData = DataStruct(id_list = [3200000,
                         startDate='2018-01-01',
                         endDate='2019-12-31')
 
+# Battery Data
+BatteryData = DataStruct(id_list = [40200000,
+                                    40200001,
+                                    40200002,
+                                    40200003,
+                                    40200004,
+                                    40200005,
+                                    40200006,
+                                    40200007,
+                                    40200008,
+                                    40200009,
+                                    40200010,
+                                    40200011,
+                                    40200012,
+                                    40200013,
+                                    40200014,
+                                    40200015,
+                                    40200016,
+                                    40200017,
+                                    40200018,
+                                    40200019,
+                                    40200087,
+                                    40200088,
+                                    40200089,
+                                    40200090,
+                                    40200098,
+                                    40200099,
+                                    40200102,
+                                    40200103,
+                                    40200104,
+                                    40200105,
+                                    40200106,
+                                    40200107,
+                                    40200108],
+                        name = "Battery",
+                        startDate='2018-01-01',
+                        endDate='2019-12-31')
+
 #######################################################################################################
 # Time Series Processing
 
@@ -751,7 +789,7 @@ def get_data_test():
     return all_data, m
 
 # Real Data, takes some time to run
-def get_all_relevant_data(filter_sigma = None):
+def get_heating_data(filter_sigma = None):
     """
     Load and interpolate all the necessary data.
     """

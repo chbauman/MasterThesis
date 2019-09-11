@@ -48,7 +48,7 @@ class BaseDynamicsModel(ABC):
             return True
         return False
     
-    def prepare_data(self, data):
+    def prepare_data(self, data, diff = False):
         """ 
         Prepare the data
         """
@@ -59,6 +59,8 @@ class BaseDynamicsModel(ABC):
         #output_data = data[:, 1:, 3]
         #output_data.reshape((d_shape[0], seq_len_data - 1, 1))
         output_data = np.copy(data[:, -1, self.out_indx])
+        if diff:
+            output_data -= np.copy(data[:, -2, self.out_indx])
 
         if self.debug:
             print("Input shape", input_data.shape)
@@ -66,7 +68,7 @@ class BaseDynamicsModel(ABC):
 
         return input_data, output_data
 
-    def n_step_predict(self, data, n, return_all_preds = False, disturb_pred = False):
+    def n_step_predict(self, data, n, return_all_preds = False, disturb_pred = False, diff = False):
         """
         Applies the model n times and returns the 
         predictions.
@@ -81,7 +83,7 @@ class BaseDynamicsModel(ABC):
         if return_all_preds:
             all_preds = np.empty((n_out, n))
 
-        input_data, output_data = self.prepare_data(np.copy(data))
+        input_data, output_data = self.prepare_data(np.copy(data), diff=diff)
         curr_in_data = input_data[:n_out]
         curr_out_data = output_data[:n_out]
         for k in range(n):
@@ -103,7 +105,7 @@ class BaseDynamicsModel(ABC):
             return all_preds
         return curr_preds
 
-    def analyze(self, week_data):
+    def analyze(self, week_data, diff = False):
         """
         Analyzes the trained model
         """
@@ -120,17 +122,17 @@ class BaseDynamicsModel(ABC):
         plot_ip_time_series([preds, output_data], lab = ['predictions', 'truth'], m = m, show = True)        
 
         # One hour predictions (4 steps)
-        one_h_pred = self.n_step_predict(week_data, 4)
+        one_h_pred = self.n_step_predict(week_data, 4, diff=diff)
         m['description'] = '1h Ahead Predictions'
         plot_ip_time_series([one_h_pred, output_data[3:]], lab = ['predictions', 'truth'], m = m, show = True)
 
         # 5 hour predictions (20 steps)
-        one_h_pred = self.n_step_predict(week_data, 20)
+        one_h_pred = self.n_step_predict(week_data, 20, diff=diff)
         m['description'] = '5h Ahead Predictions'
         plot_ip_time_series([one_h_pred, output_data[19:]], lab = ['predictions', 'truth'], m = m, show = True)
 
         # One-week prediction
-        full_pred = self.n_step_predict(week_data, s[0], return_all_preds=True)
+        full_pred = self.n_step_predict(week_data, s[0], return_all_preds=True, diff=diff)
         full_pred_noise = self.n_step_predict(week_data, s[0], return_all_preds=True, disturb_pred = True)
         print("Prediction Shape", full_pred.shape)
         full_pred = np.reshape(full_pred, (-1,))

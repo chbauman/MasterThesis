@@ -15,12 +15,9 @@ from mount_car_cont import MountCarCont
 from pendulum import Pendulum
 
 from data import Room274Data, Room272Data, WeatherData, TestData, \
-    analyze_data, get_all_relevant_data, get_data_test, \
+    analyze_data, get_heating_data, get_data_test, \
     cut_data_into_sequences, extract_streak
 from visualize import plot_time_series, plot_ip_time_series
-
-
-
 
 def simple_battery_FQI():
 
@@ -50,10 +47,10 @@ def main():
     #return 0
 
     # Parameters
-    seq_len = 20
+    seq_len = 5
 
     # Prepare data
-    dat, m, name = get_all_relevant_data(2.0)
+    dat, m, name = get_heating_data(2.0)
     dat_s = dat.shape
     if False:
         for k in range(dat_s[1]):
@@ -68,8 +65,8 @@ def main():
     print("Train data shape:", train_shape)
     print("Analysis data shape:", cut_test_dat.shape)
 
-    mod = BaseRNN_DM(seq_len - 1, n_feats, hidden_sizes=[50, 50], n_iter_max=50, input_noise_std = 0.01, name = "Train50_50-50" + name)
-    #mod = GPR_DM()
+    #mod = BaseRNN_DM(seq_len - 1, n_feats, hidden_sizes=[50, 50], n_iter_max=50, input_noise_std = 0.01, name = "Train50_50-50" + name)
+    mod = GPR_DM(alpha = 2.0)
     mod.fit(cut_train_dat)
     mod.analyze(cut_test_dat)
     return

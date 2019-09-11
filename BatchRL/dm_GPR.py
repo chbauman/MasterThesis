@@ -8,15 +8,20 @@ from base_dynamics_model import BaseDynamicsModel
 
 class GPR_DM(BaseDynamicsModel):
 
-    def __init__(self, validation = 0.1):
+    def __init__(self,
+                 alpha = 2.0,
+                 validation = 0.1,
+                 use_diff_data = True):
+        self.alpha = alpha
         self.val = validation
+        self.use_diff_data = use_diff_data
         pass
 
     def prepare_data_gp(self, data):
         """
         Prepares the data for usage with the estimator.
         """
-        i, o = self.prepare_data(data)
+        i, o = self.prepare_data(data, diff = self.use_diff_data)
         n = data.shape[0]
         in_data = np.reshape(i, (n, -1))
         return in_data, o
@@ -28,6 +33,7 @@ class GPR_DM(BaseDynamicsModel):
         # Prepare the data
         d_shape = data.shape
         self.n = d_shape[0]
+        self.seq_len = d_shape[1]
         i, o = self.prepare_data_gp(data)
         self.output_data = o
         self.input_data = i
@@ -43,9 +49,13 @@ class GPR_DM(BaseDynamicsModel):
         # Init and fit GP
         self.deb("Train Input Shape", self.in_train.shape)
         self.deb("Train Output Shape", self.out_train.shape)
-        self.gpr = GaussianProcessRegressor(alpha = 1.0, n_restarts_optimizer = 10)
+        self.gpr = GaussianProcessRegressor(alpha = self.alpha, n_restarts_optimizer = 10)
         self.gpr.fit(self.in_train, self.out_train)
         self.analyze_gp()
+
+        # Save disturbance parameters
+        reds = self.get_residuals(data)
+        self.res_std = np.std(reds)
 
     def predict(self, data, prepared = False, disturb = False):
         """
@@ -60,7 +70,11 @@ class GPR_DM(BaseDynamicsModel):
         else:
             in_d = data.reshape((n, -1))
         #print("Predict Input Shape", in_d.shape)
-        return self.gpr.predict(in_d)
+        res = self.gpr.predict(in_d)
+        if self.use_diff_data:
+            ind_resh = np.reshape(in_d, (n, self.seq_len - 1, -1))
+            res += ind_resh[:, -1, self.out_indx]
+        return res
 
     def mse_error_pred(self, X, y):
         """
