@@ -844,13 +844,15 @@ def get_battery_data():
     # Metadata
     m_out = [m[19], m[17]]
 
+    # Standardize
+    all_data, m_out = standardize(all_data, m_out)
+
     # Plot
     m_plot = {'description': 'Battery Data', 'unit': 'kW / kWh'}
     labs = [m_out[0]['description'], m_out[1]['description']]
     plot_ip_time_series([all_data[:, 0], all_data[:, 1]], m = m_plot, lab=labs, show = True)
 
-    # Standardize, save and return
-    all_data, m_out = standardize(all_data, m_out)
+    # Save and return
     save_processed_data(all_data, m_out, name)
     return all_data, m_out, name
 

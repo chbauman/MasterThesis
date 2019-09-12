@@ -71,5 +71,10 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None):
         plt.show()
     return
 
+def scatter_plot(x, y, show = True):
+
+    plt.scatter(x, y,  marker='^', c='red')
+    if show:
+        plt.show()
 
 

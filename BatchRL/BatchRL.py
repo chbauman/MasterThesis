@@ -8,6 +8,8 @@ from batchDDPG import bDDPG
 from dm_LSTM import BaseRNN_DM
 from dm_GPR import GPR_DM
 
+from battery_model import BatteryModel
+
 # Environments for debugging
 from simple_battery_test import SimpleBatteryTest
 from cart_pole import CartPole
@@ -45,7 +47,14 @@ def main():
     
     #get_data_test()
     #return 0
-    get_battery_data()
+
+    # Battery data
+    dat_bat, m_bat, name_bat = get_battery_data()
+    train_bat, test_bat = cut_and_split(dat_bat, 2, 96 * 7)
+    bat_mod = BatteryModel()
+    bat_mod.fit(train_bat)
+    print("Fuck")
+    mod.analyze(test_bat)
     return
 
     # Parameters
@@ -69,9 +78,7 @@ def main():
     #mod.fit(train_heat)
     #mod.analyze(test_heat)
 
-    # Battery data
-    dat_bat, m_bat, name_bat = get_battery_data()
-    train_bat, test_bat = cut_and_split(dat_bat, 2, 96 * 7)
+    
 
 
     return

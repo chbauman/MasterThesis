@@ -12,6 +12,9 @@ class GPR_DM(BaseDynamicsModel):
                  alpha = 2.0,
                  validation = 0.1,
                  use_diff_data = True):
+
+        super(GPR_DM, self).__init__()
+
         self.alpha = alpha
         self.val = validation
         self.use_diff_data = use_diff_data

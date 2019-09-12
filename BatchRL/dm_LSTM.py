@@ -27,6 +27,9 @@ class BaseRNN_DM(BaseDynamicsModel):
                  input_noise_std = None,
                  use_AR = False):
 
+
+        super(BaseRNN_DM, self).__init__()
+
         # Store parameters
         self.train_seq_len = train_seq_len
         self.n_feats = n_feats

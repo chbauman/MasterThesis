@@ -14,7 +14,10 @@ class BaseDynamicsModel(ABC):
     dynamics model.
     """
 
-    out_indx = 3
+    def __init__(self, out_ind = 3):
+
+        self.out_indx = out_ind
+
     debug = True
     model_path = "../Models/Dynamics/"
 
