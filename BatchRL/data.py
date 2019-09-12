@@ -488,7 +488,7 @@ def pipeline_preps(orig_dat,
                    rem_out_args = None,
                    hole_fill_args = None,
                    n_tot_cols = None,
-                   gauss_sigma = None, 
+                   gauss_sigma = None,
                    lin_ip = False):
     """
     Applies all the specified preprocessings to the
@@ -660,6 +660,12 @@ def extract_streak(all_data, s_len, lag):
     first_dat = all_data[:last_seq_start, :]
     streak_dat = all_data[last_seq_start:(last_seq_start + tot_s_len), :]
     return first_dat, streak_dat
+
+def cut_and_split(dat, seq_len, streak_len):
+    dat_train, dat_test = extract_streak(dat, streak_len, seq_len - 1)
+    cut_train_dat = cut_data_into_sequences(dat_train, seq_len, interleave = True)
+    cut_test_dat = cut_data_into_sequences(dat_test, seq_len, interleave = True)
+    return cut_train_dat, cut_test_dat
 
 #######################################################################################################
 # Saving and Loading Processed Data

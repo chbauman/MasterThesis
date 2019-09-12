@@ -51,7 +51,7 @@ def main():
     # Parameters
     seq_len = 5
 
-    # Heating data    
+    # Heating data
     dat_heat, m_heat, name_heat = get_heating_data(2.0)
     dat_s = dat_heat.shape
     if False:
