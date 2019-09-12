@@ -108,12 +108,12 @@ class PrepInput(Layer):
     def compute_output_shape(self, input_shape):
         return (input_shape[0], self.num_classes, self.num_classes)
 
-class Input(Layer):
+class SeqInput(Layer):
     """
     Dummy Layer.
     """
     def __init__(self, **kwargs):
-        super(Input, self).__init__(**kwargs)
+        super(SeqInput, self).__init__(**kwargs)
 
     def build(self, input_shape):
         pass

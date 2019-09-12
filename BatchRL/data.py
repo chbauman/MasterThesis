@@ -257,7 +257,7 @@ def floor_datetime_to_min(dt, mt):
     dt -= np.timedelta64(mins, 'm')
     return dt
 
-def interpolate_time_series(dat, dt_mins):
+def interpolate_time_series(dat, dt_mins, lin_ip = False):
     """
     Interpolates the given time series
     to produce another one with equidistant timesteps
@@ -291,13 +291,19 @@ def interpolate_time_series(dat, dt_mins):
             if curr_dt <= curr_upper_lim + interv:
                 # Next datetime in next interval
                 curr_val += (curr_upper_lim - last_dt) / interv * v
-                new_vals[count] = curr_val
+                if not lin_ip:
+                    new_vals[count] = curr_val
+                else:
+                    new_vals[count] = last_val + (v - last_val) * (curr_upper_lim - last_dt) / (curr_dt - last_dt)
                 count += 1
                 curr_val = (curr_dt - curr_upper_lim) / interv * v
             else:
                 # Data missing!                
                 curr_val += (curr_upper_lim - last_dt) / interv * last_val
-                new_vals[count] = curr_val
+                if not lin_ip:
+                    new_vals[count] = curr_val
+                else:
+                    new_vals[count] = last_val
                 count += 1
                 n_data_missing = (curr_dt - curr_upper_lim) // interv
                 print("Missing", n_data_missing, "data points :(")
@@ -482,7 +488,8 @@ def pipeline_preps(orig_dat,
                    rem_out_args = None,
                    hole_fill_args = None,
                    n_tot_cols = None,
-                   gauss_sigma = None):
+                   gauss_sigma = None, 
+                   lin_ip = False):
     """
     Applies all the specified preprocessings to the
     given data.
@@ -495,7 +502,7 @@ def pipeline_preps(orig_dat,
             modif_data = clean_data(orig_dat, *k)
 
     # Interpolate / Subsample
-    [modif_data, dt_init_new] = interpolate_time_series(modif_data, dt_mins)
+    [modif_data, dt_init_new] = interpolate_time_series(modif_data, dt_mins, lin_ip=lin_ip)
 
     # Remove Outliers
     if rem_out_args is not None:
@@ -817,7 +824,8 @@ def get_battery_data():
                                   dt_mins, 
                                   n_tot_cols = n_feats,
                                   clean_args=[([0.0], 24 * 60, [])],
-                                  rem_out_args=(100, [0.0, 100.0]))
+                                  rem_out_args=(100, [0.0, 100.0]),
+                                  lin_ip = True)
 
     # Active Power
     all_data, dt_init = pipeline_preps(dat[17], 
@@ -829,10 +837,10 @@ def get_battery_data():
 
     # Metadata
     m_out = [m[19], m[17]]
-    m_plot = {'description': 'Battery Data', 'unit': 'kW / kWh'}
-    labs = [m_out[0]['description'], m_out[1]['description']]
 
     # Plot
+    m_plot = {'description': 'Battery Data', 'unit': 'kW / kWh'}
+    labs = [m_out[0]['description'], m_out[1]['description']]
     plot_ip_time_series([all_data[:, 0], all_data[:, 1]], m = m_plot, lab=labs, show = True)
 
     # Standardize, save and return

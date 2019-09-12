@@ -35,12 +35,13 @@ def max_loss(y_true, y_pred):
     return -y_pred
 
 
-def getMLPModel(mlp_layers=[20, 20], out_dim = 1, trainable = True, dropout = False):
+def getMLPModel(mlp_layers=[20, 20], out_dim = 1, trainable = True, dropout = False, bn = False, ker_reg = 0.01):
     """
     Returns a sequential MLP keras model.
     """
     model = Sequential()
-    model.add(BatchNormalization(trainable=trainable, name = "bn0"))
+    if bn:
+        model.add(BatchNormalization(trainable=trainable, name = "bn0"))
 
     # Add layers
     n_fc_layers = len(mlp_layers)
@@ -48,10 +49,11 @@ def getMLPModel(mlp_layers=[20, 20], out_dim = 1, trainable = True, dropout = Fa
         next = Dense(mlp_layers[i],
                           activation='relu', 
                           trainable=trainable, 
-                          kernel_regularizer=l2(0.01), 
+                          kernel_regularizer=l2(ker_reg), 
                           name = "dense" + str(i))
         model.add(next)
-        model.add(BatchNormalization(trainable=trainable, name = "bn" + str(i + 1)))
+        if bn:
+            model.add(BatchNormalization(trainable=trainable, name = "bn" + str(i + 1)))
         if dropout:
             model.add(Dropout(0.2))
 

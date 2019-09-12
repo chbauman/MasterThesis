@@ -8,7 +8,7 @@ from keras.models import Sequential
 from keras.layers import GRU, LSTM, TimeDistributed, Dense, GaussianNoise
 
 from base_dynamics_model import BaseDynamicsModel
-from keras_layers import Input
+from keras_layers import SeqInput
 from time_series import AR_Model
 
 class BaseRNN_DM(BaseDynamicsModel):
@@ -49,7 +49,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         # Initialize
         n_lstm = len(self.hidden_sizes)
         model = Sequential()
-        model.add(Input(input_shape=(self.train_seq_len, self.n_feats)))
+        model.add(SeqInput(input_shape=(self.train_seq_len, self.n_feats)))
 
         # Add noise layer
         if self.input_noise_std is not None:

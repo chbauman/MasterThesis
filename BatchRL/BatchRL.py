@@ -16,7 +16,7 @@ from pendulum import Pendulum
 
 from data import Room274Data, Room272Data, WeatherData, TestData, \
     analyze_data, get_heating_data, get_data_test, \
-    cut_data_into_sequences, extract_streak, get_battery_data
+    cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split
 from visualize import plot_time_series, plot_ip_time_series
 
 def simple_battery_FQI():
@@ -51,40 +51,37 @@ def main():
     # Parameters
     seq_len = 5
 
-    # Prepare data
-    dat, m, name = get_heating_data(2.0)
-    dat_s = dat.shape
+    # Heating data    
+    dat_heat, m_heat, name_heat = get_heating_data(2.0)
+    dat_s = dat_heat.shape
     if False:
         for k in range(dat_s[1]):
-            plot_ip_time_series(dat[:,k], m = m[k], show = k == 5)
-    dat_train, dat_test = extract_streak(dat, 96 * 7, seq_len - 1)
-    cut_train_dat = cut_data_into_sequences(dat_train, seq_len, interleave = True)
-    cut_test_dat = cut_data_into_sequences(dat_test, seq_len, interleave = True)
-
-    train_shape = cut_train_dat.shape
+            plot_ip_time_series(dat_heat[:,k], m = m_heat[k], show = k == 5)
+    train_heat, test_heat = cut_and_split(dat_heat, seq_len, 96 * 7)
+    train_shape = train_heat.shape
     n_feats = train_shape[-1]
-
     print("Train data shape:", train_shape)
-    print("Analysis data shape:", cut_test_dat.shape)
+    print("Analysis data shape:", test_heat.shape)
 
-    #mod = BaseRNN_DM(seq_len - 1, n_feats, hidden_sizes=[50, 50], n_iter_max=50, input_noise_std = 0.01, name = "Train50_50-50" + name)
-    mod = GPR_DM(alpha = 2.0)
-    mod.fit(cut_train_dat)
-    mod.analyze(cut_test_dat)
+    # Train Heating model
+    ##mod = BaseRNN_DM(seq_len - 1, n_feats, hidden_sizes=[50, 50], n_iter_max=50, input_noise_std = 0.01, name = "Train50_50-50" + name)
+    #mod = GPR_DM(alpha = 2.0)
+    #mod.fit(train_heat)
+    #mod.analyze(test_heat)
+
+    # Battery data
+    dat_bat, m_bat, name_bat = get_battery_data()
+    train_bat, test_bat = cut_and_split(dat_bat, 2, 96 * 7)
+
+
     return
 
     # GP model
-    cut_dat_5 = cut_data_into_sequences(dat, 5, interleave = True)
+    cut_dat_5 = cut_data_into_sequences(dat_heat, 5, interleave = True)
     m_gp = GPR_DM()
     m_gp.fit(cut_dat_5)
     m_gp.analyze()
 
-    #plot_ip_time_series(dat[:,0], m[0], show = False)
-    #plot_ip_time_series(dat[:,1], m[1], show = False)
-    #plot_ip_time_series(dat[:,2], m[2], show = False)
-    #plot_ip_time_series(dat[:,3], m[3], show = False)
-    #plot_ip_time_series(dat[:,4], m[4], show = False)
-    #plot_ip_time_series(dat[:,5], m[5], show = True)
     return 0
 
     #simple_battery_FQI()
