@@ -816,22 +816,24 @@ def get_battery_data():
     all_data, dt_init = pipeline_preps(dat[19], 
                                   dt_mins, 
                                   n_tot_cols = n_feats,
-                                  clean_args=[([0.0], 24 * 4, [])],
-                                  )
+                                  clean_args=[([0.0], 24 * 60, [])],
+                                  rem_out_args=(100, [0.0, 100.0]))
 
     # Active Power
     all_data, dt_init = pipeline_preps(dat[17], 
                                   dt_mins, 
+                                  clean_args=[([], 6 * 60, [])],
                                   all_data=all_data,
                                   dt_init=dt_init,
-                                  row_ind=1
-                                  )
+                                  row_ind=1)
 
     # Metadata
     m_out = [m[19], m[17]]
-    
+    m_plot = {'description': 'Battery Data', 'unit': 'kW / kWh'}
+    labs = [m_out[0]['description'], m_out[1]['description']]
+
     # Plot
-    plot_ip_time_series([all_data[:, 0], all_data[:, 1]], m = m_out, show = True)
+    plot_ip_time_series([all_data[:, 0], all_data[:, 1]], m = m_plot, lab=labs, show = True)
 
     # Standardize, save and return
     all_data, m_out = standardize(all_data, m_out)
