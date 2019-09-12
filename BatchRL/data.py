@@ -236,7 +236,6 @@ def clean_data(dat, rem_vals = [], n_cons_least = 60, const_excepts = []):
             num_occ = 1
 
     # Return clean data
-    #count -= 1
     print(tot_dat - count, "data points removed.")
     return [new_vals[:count], new_dates[:count]]
 
@@ -512,14 +511,14 @@ def pipeline_preps(orig_dat,
 
     if all_data is not None:
         if dt_init is None or row_ind is None:
-            print("Need to provide the initial time of the first series and the column index!")
-            return
+            raise ValueError("Need to provide the initial time of the first series and the column index!")
+            
         # Add to rest of data
         add_col(all_data, modif_data, dt_init, dt_init_new, row_ind, dt_mins)
     else:
         if n_tot_cols is None:
             print("Need to know the total number of columns!")
-            return
+            raise ValueError("Need to know the total number of columns!")
 
         # Initialize np array for compact storage
         n_data = modif_data.shape[0]
@@ -805,20 +804,39 @@ def get_battery_data():
     dat, m = BatteryData.getData()
 
     inds = [5, 17, 19, 20, 21, 22, 23, 28, 29, 30]
-    soh = [20, 30]
-    max_min_charge = [21, 22]
+
+    soh = [20, 30] # Twice
+    max_min_charge = [21, 22] # Idk, in kW
     inds_soc = [19, 23] # SoC and kWh, essentially the same
     soc_max_min = [28, 29] # Also kind of SoC, max and min, shorter time
 
-    inds = soh
-    for k in inds:
-        print(k)
-        d = dat[k]
-        m_curr = m[k]
-        intp, _ = interpolate_time_series(d, dt_mins)
-        remove_outliers(intp, 1000, clip_interv=[-1000,1000])
-        plot_ip_time_series(intp, m = m_curr, show = k == inds[-1])
+    n_feats = 2
 
+    # SoC
+    all_data, dt_init = pipeline_preps(dat[19], 
+                                  dt_mins, 
+                                  n_tot_cols = n_feats,
+                                  clean_args=[([0.0], 24 * 4, [])],
+                                  )
+
+    # Active Power
+    all_data, dt_init = pipeline_preps(dat[17], 
+                                  dt_mins, 
+                                  all_data=all_data,
+                                  dt_init=dt_init,
+                                  row_ind=1
+                                  )
+
+    # Metadata
+    m_out = [m[19], m[17]]
+    
+    # Plot
+    plot_ip_time_series([all_data[:, 0], all_data[:, 1]], m = m_out, show = True)
+
+    # Standardize, save and return
+    all_data, m_out = standardize(all_data, m_out)
+    save_processed_data(all_data, m_out, name)
+    return all_data, m_out, name
 
 
 
