@@ -74,10 +74,23 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None):
         plt.show()
     return
 
-def scatter_plot(x, y, show = True, lab_dict = None):
+def scatter_plot(x, y, *, show = True, lab_dict = None, m_and_std_x = None, m_and_std_y = None):
+    """
+    Scatter Plot. 
+    """
 
+    # Transform data back to original mean and std.
+    x_curr = x
+    if m_and_std_x is not None:
+        x_curr = m_and_std_x[1] * x + m_and_std_x[0]
+    y_curr = y
+    if m_and_std_y is not None:
+        y_curr = m_and_std_y[1] * y + m_and_std_y[0]
+
+    # Plot
     plt.scatter(x, y,  marker='^', c='red')
     
+    # Add Labels
     if lab_dict is not None:
         plt.title(lab_dict['title'])
         plt.ylabel(lab_dict['ylab'])

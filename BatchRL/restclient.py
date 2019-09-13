@@ -16,7 +16,7 @@
 import requests
 import time
 import os
-import wx
+
 from ast import literal_eval
 
 ##https://github.com/brandond/requests-negotiate-sspi/blob/master/README.md
@@ -25,7 +25,11 @@ from requests_negotiate_sspi import HttpNegotiateAuth
 import pandas as pd
 import numpy as np
 
-from pw_gui import getPW
+use_cl = True
+if not use_cl:
+    from pw_gui import getPW
+else:
+    from pw_cl import getPW
 
 # Where to put the local copy of the data
 save_dir = '../Data/'

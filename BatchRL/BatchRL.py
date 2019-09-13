@@ -44,9 +44,9 @@ def simple_battery_FQI():
     sbt.eval_policy(fqi.get_policy())
 
 def main():
-    
+    TestData.getData()
     #get_data_test()
-    #return 0
+    return 0
 
     # Battery data
     dat_bat, m_bat, name_bat = get_battery_data()
@@ -74,10 +74,11 @@ def main():
     print("Analysis data shape:", test_heat.shape)
 
     # Train Heating model
-    #mod = BaseRNN_DM(seq_len - 1, n_feats, hidden_sizes=[50, 50], n_iter_max=50, input_noise_std = 0.01, name = "Train50_50-50_" + name_heat)
-    #mod.fit(train_heat)
-    #mod.analyze(test_heat)
+    mod = BaseRNN_DM(seq_len - 1, n_feats, hidden_sizes=[50, 50], n_iter_max=50, input_noise_std = 0.01, name = "Train50_50-50_" + name_heat)
+    mod.fit(train_heat)
+    mod.analyze(test_heat)
     
+    # GP Model
     seq_len_gp = 4
     train_heat, test_heat = cut_and_split(dat_heat, seq_len_gp, 96 * 7)
     mod = GPR_DM(alpha = 5.0)

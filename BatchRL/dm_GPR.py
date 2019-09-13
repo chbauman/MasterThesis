@@ -63,7 +63,7 @@ class GPR_DM(BaseDynamicsModel):
 
         # Define space and find best hyperparameters
         space = hp.loguniform('alpha', -2, 5)
-        self.best = fmin(gpr_fit_fun, space, algo=rand.suggest, max_evals = 5)['alpha']
+        self.best = fmin(gpr_fit_fun, space, algo=rand.suggest, max_evals = 2)['alpha']
         print("Best alpha: ", self.best)
 
         # Fit again with best
