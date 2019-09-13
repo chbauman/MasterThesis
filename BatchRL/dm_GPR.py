@@ -3,6 +3,8 @@ import numpy as np
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 
+from hyperopt import hp, fmin, rand, tpe, space_eval
+
 from base_dynamics_model import BaseDynamicsModel
 
 
@@ -52,7 +54,20 @@ class GPR_DM(BaseDynamicsModel):
         # Init and fit GP
         self.deb("Train Input Shape", self.in_train.shape)
         self.deb("Train Output Shape", self.out_train.shape)
-        self.gpr = GaussianProcessRegressor(alpha = self.alpha, n_restarts_optimizer = 10)
+
+        # Fitness function for the hyperparameter optimization
+        def gpr_fit_fun(alpha):
+            self.gpr = GaussianProcessRegressor(alpha = alpha, n_restarts_optimizer = 10)
+            self.gpr.fit(self.in_train, self.out_train)
+            return self.mse_error_pred(self.in_val, self.out_val)
+
+        # Define space and find best hyperparameters
+        space = hp.loguniform('alpha', -2, 5)
+        self.best = fmin(gpr_fit_fun, space, algo=rand.suggest, max_evals = 5)['alpha']
+        print("Best alpha: ", self.best)
+
+        # Fit again with best
+        self.gpr = GaussianProcessRegressor(alpha = self.best, n_restarts_optimizer = 10)
         self.gpr.fit(self.in_train, self.out_train)
         self.analyze_gp()
 

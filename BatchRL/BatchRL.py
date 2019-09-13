@@ -74,26 +74,17 @@ def main():
     print("Analysis data shape:", test_heat.shape)
 
     # Train Heating model
-    mod = BaseRNN_DM(seq_len - 1, n_feats, hidden_sizes=[50, 50], n_iter_max=50, input_noise_std = 0.01, name = "Train50_50-50_" + name_heat)
-    #mod = GPR_DM(alpha = 2.0)
-    mod.fit(train_heat)
-    mod.analyze(test_heat)    
+    #mod = BaseRNN_DM(seq_len - 1, n_feats, hidden_sizes=[50, 50], n_iter_max=50, input_noise_std = 0.01, name = "Train50_50-50_" + name_heat)
+    #mod.fit(train_heat)
+    #mod.analyze(test_heat)
     
     seq_len_gp = 4
     train_heat, test_heat = cut_and_split(dat_heat, seq_len_gp, 96 * 7)
-    mod = GPR_DM(alpha = 2.0)
+    mod = GPR_DM(alpha = 5.0)
     mod.fit(train_heat)
     mod.analyze(test_heat)
 
     return
-
-    # GP model
-    cut_dat_5 = cut_data_into_sequences(dat_heat, 5, interleave = True)
-    m_gp = GPR_DM()
-    m_gp.fit(cut_dat_5)
-    m_gp.analyze()
-
-    return 0
 
     #simple_battery_FQI()
 
