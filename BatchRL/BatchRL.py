@@ -52,13 +52,14 @@ def main():
     dat_bat, m_bat, name_bat = get_battery_data()
     train_bat, test_bat = cut_and_split(dat_bat, 2, 96 * 7)
     bat_mod = BatteryModel()
-    bat_mod.fit(train_bat)
-    print("Fuck")
-    mod.analyze(test_bat)
-    return
+    #bat_mod.fit(train_bat)
+
+    # This crashes:
+    #mod.analyze(test_bat)
+    #return
 
     # Parameters
-    seq_len = 5
+    seq_len = 20
 
     # Heating data
     dat_heat, m_heat, name_heat = get_heating_data(2.0)
@@ -73,13 +74,16 @@ def main():
     print("Analysis data shape:", test_heat.shape)
 
     # Train Heating model
-    ##mod = BaseRNN_DM(seq_len - 1, n_feats, hidden_sizes=[50, 50], n_iter_max=50, input_noise_std = 0.01, name = "Train50_50-50" + name)
+    mod = BaseRNN_DM(seq_len - 1, n_feats, hidden_sizes=[50, 50], n_iter_max=50, input_noise_std = 0.01, name = "Train50_50-50_" + name_heat)
     #mod = GPR_DM(alpha = 2.0)
-    #mod.fit(train_heat)
-    #mod.analyze(test_heat)
-
+    mod.fit(train_heat)
+    mod.analyze(test_heat)    
     
-
+    seq_len_gp = 4
+    train_heat, test_heat = cut_and_split(dat_heat, seq_len_gp, 96 * 7)
+    mod = GPR_DM(alpha = 2.0)
+    mod.fit(train_heat)
+    mod.analyze(test_heat)
 
     return
 

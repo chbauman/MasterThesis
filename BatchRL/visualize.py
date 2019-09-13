@@ -9,6 +9,9 @@ from pandas.plotting import register_matplotlib_converters
 
 register_matplotlib_converters()
 
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+
 clr_map = ['blue', 'green', 'c']
 n_cols = len(clr_map)
 
@@ -71,10 +74,14 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None):
         plt.show()
     return
 
-def scatter_plot(x, y, show = True):
+def scatter_plot(x, y, show = True, lab_dict = None):
 
     plt.scatter(x, y,  marker='^', c='red')
+    
+    if lab_dict is not None:
+        plt.title(lab_dict['title'])
+        plt.ylabel(lab_dict['ylab'])
+        plt.xlabel(lab_dict['xlab'])
+
     if show:
         plt.show()
-
-

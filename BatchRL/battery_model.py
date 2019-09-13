@@ -79,7 +79,7 @@ class BatteryModel(BaseDynamicsModel):
 
         ds = data[:, 1, 0] - data[:, 0, 0]
         p = data[:, 1, 1]
-
-        scatter_plot(p, ds)
+        labs = {'title': 'Battery Model Data', 'xlab': 'Active Power', 'ylab': r'$\Delta$ SoC'}
+        scatter_plot(p, ds, lab_dict = labs)
 
     pass
