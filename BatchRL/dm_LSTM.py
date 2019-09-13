@@ -73,11 +73,12 @@ class BaseRNN_DM(BaseDynamicsModel):
         model.summary()
         self.m = model
 
-    def fit(self, data):
+    def fit(self, data, m = None):
         """
         Fit the model if it hasn't been fitted before.
         Otherwise load the trained model.
         """
+        self.m_dat = m
 
         loaded = self.load_if_exists(self.m, self.name)
         if not loaded:

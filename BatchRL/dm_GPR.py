@@ -31,10 +31,12 @@ class GPR_DM(BaseDynamicsModel):
         in_data = np.reshape(i, (n, -1))
         return in_data, o
 
-    def fit(self, data):
+    def fit(self, data, m = None):
         """
         Fit the model.
         """
+        self.m_dat = m
+
         # Prepare the data
         d_shape = data.shape
         self.n = d_shape[0]

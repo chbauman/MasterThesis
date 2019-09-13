@@ -44,15 +44,15 @@ def simple_battery_FQI():
     sbt.eval_policy(fqi.get_policy())
 
 def main():
-    TestData.getData()
-    #get_data_test()
-    return 0
+    #TestData.getData()
+    ##get_data_test()
+    #return 0
 
     # Battery data
     dat_bat, m_bat, name_bat = get_battery_data()
     train_bat, test_bat = cut_and_split(dat_bat, 2, 96 * 7)
     bat_mod = BatteryModel()
-    #bat_mod.fit(train_bat)
+    bat_mod.fit(train_bat, m_bat)
 
     # This crashes:
     #mod.analyze(test_bat)

@@ -88,7 +88,7 @@ def scatter_plot(x, y, *, show = True, lab_dict = None, m_and_std_x = None, m_an
         y_curr = m_and_std_y[1] * y + m_and_std_y[0]
 
     # Plot
-    plt.scatter(x, y,  marker='^', c='red')
+    plt.scatter(x_curr, y_curr,  marker='^', c='red')
     
     # Add Labels
     if lab_dict is not None:

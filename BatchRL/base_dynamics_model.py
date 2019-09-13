@@ -22,7 +22,7 @@ class BaseDynamicsModel(ABC):
     model_path = "../Models/Dynamics/"
 
     @abstractmethod
-    def fit(self, data):
+    def fit(self, data, m = None):
         pass
 
     @abstractmethod

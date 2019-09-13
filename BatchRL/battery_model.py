@@ -51,7 +51,9 @@ class BatteryModel(BaseDynamicsModel):
 
         return inp, outdat[:-1]
 
-    def fit(self, data):
+    def fit(self, data, m = None):
+
+        self.m_dat = m
 
         i, o = self.prepare_data(data)
         i, o = self.prepare_dat_bat(i, o)
@@ -80,6 +82,11 @@ class BatteryModel(BaseDynamicsModel):
         ds = data[:, 1, 0] - data[:, 0, 0]
         p = data[:, 1, 1]
         labs = {'title': 'Battery Model Data', 'xlab': 'Active Power', 'ylab': r'$\Delta$ SoC'}
-        scatter_plot(p, ds, lab_dict = labs)
+
+        d_soc_std = self.m_dat[0]['mean_and_std'][1]
+
+        scatter_plot(p, ds, lab_dict = labs, 
+                     m_and_std_x = self.m_dat[1]['mean_and_std'],
+                     m_and_std_y = [0.0, d_soc_std])
 
     pass
