@@ -160,6 +160,31 @@ BatteryData = DataStruct(id_list = [40200000,
                         endDate='2019-12-31')
 
 #######################################################################################################
+# Util
+
+def create_dir(dirname):
+    """
+    Creates directory if it doesn't exist already.
+    """
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    return
+
+def npdatetime_to_datetime(npdt):
+    """
+    Convert from numpy datetime to datetime.
+    """
+    ts = (npdt - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
+    dt = datetime.utcfromtimestamp(ts)
+    return dt
+
+def datetime_to_npdatetime(dt):
+    """
+    Convert from datetime to numpy datetime.
+    """
+    return np.datetime64(dt)
+
+#######################################################################################################
 # Time Series Processing
 
 def analyze_data(dat):
@@ -669,14 +694,6 @@ def cut_and_split(dat, seq_len, streak_len):
 
 #######################################################################################################
 # Saving and Loading Processed Data
-
-def create_dir(dirname):
-    """
-    Creates directory if it doesn't exist already.
-    """
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-    return
 
 def save_processed_data(all_data, m, name):
     """
