@@ -10,6 +10,7 @@ from datetime import datetime
 
 from visualize import plot_time_series, plot_ip_time_series
 from restclient import DataStruct, save_dir
+from util import *
 
 #######################################################################################################
 # Test Data
@@ -158,31 +159,6 @@ BatteryData = DataStruct(id_list = [40200000,
                         name = "Battery",
                         startDate='2018-01-01',
                         endDate='2019-12-31')
-
-#######################################################################################################
-# Util
-
-def create_dir(dirname):
-    """
-    Creates directory if it doesn't exist already.
-    """
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-    return
-
-def npdatetime_to_datetime(npdt):
-    """
-    Convert from numpy datetime to datetime.
-    """
-    ts = (npdt - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
-    dt = datetime.utcfromtimestamp(ts)
-    return dt
-
-def datetime_to_npdatetime(dt):
-    """
-    Convert from datetime to numpy datetime.
-    """
-    return np.datetime64(dt)
 
 #######################################################################################################
 # Time Series Processing
@@ -861,7 +837,7 @@ def get_battery_data():
     # Metadata
     m_out = [m[19], m[17]]
     for ct, e in enumerate(m_out):
-        m_out[ct]['t_init'] = dt_init
+        m_out[ct]['t_init'] = dt_to_string(npdatetime_to_datetime(dt_init))
         m_out[ct]['dt'] = dt_mins
 
     # Standardize
@@ -875,8 +851,6 @@ def get_battery_data():
     # Save and return
     save_processed_data(all_data, m_out, name)
     return all_data, m_out, name
-
-
 
 # Real Data, takes some time to run
 def get_heating_data(filter_sigma = None):

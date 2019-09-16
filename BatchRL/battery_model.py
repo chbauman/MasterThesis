@@ -80,7 +80,7 @@ class BatteryModel(BaseDynamicsModel):
     def analyze_bat_model(self, data):
 
         n = data.shape[0]
-        start_ind = n // 2
+        start_ind = 0 # n // 2
         end_ind = n
         ds = data[start_ind:end_ind, 1, 0] - data[start_ind:end_ind, 0, 0]
         p = data[start_ind:end_ind, 1, 1]
@@ -98,6 +98,8 @@ class BatteryModel(BaseDynamicsModel):
         plot_ip_time_series([ds, p], 
                             lab = ['SoC', 'Active Power'], 
                             show = True, 
-                            mean_and_stds = [mas_ds, mas_p])
+                            m = self.m_dat,
+                            mean_and_stds = [mas_ds, mas_p],
+                            use_time = True)
 
     pass

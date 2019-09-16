@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
 from pandas.plotting import register_matplotlib_converters
 
+from util import *
+
 register_matplotlib_converters()
 
 plt.rc('text', usetex=True)
@@ -14,7 +16,6 @@ plt.rc('font', family='serif')
 
 clr_map = ['blue', 'green', 'c']
 n_cols = len(clr_map)
-
 
 def plot_time_series(x, y, m, show = True):
     """
@@ -39,9 +40,7 @@ def plot_time_series(x, y, m, show = True):
         plt.show()
     return
 
-
 def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
-
     """
     Basic plot style for all plots.
     """
@@ -57,7 +56,7 @@ def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
         plt.plot(x, y, **kwargs)
 
 
-def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_and_stds = None):
+def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_and_stds = None, use_time = False):
     """
     Plots an interpolated time series
     where x is assumed to be uniform.
@@ -73,13 +72,20 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_
             plot_helper(x_init, init, m_col = 'k')
             #plt.plot(x_init, init, linestyle=':', marker='^', color='red', markersize=5, mfc = 'k', mec = 'k')
 
-        x = [15 * i for i in range(n_init, n_init + n)]
+        if use_time:
+            mins = m[0]['dt']
+            interv = np.timedelta64(mins, 'm')
+            dt_init = datetime_to_npdatetime(string_to_dt(m[0]['t_init']))
+            x = [dt_init + i * interv for i in range(n)]
+        else:
+            x = [15 * i for i in range(n_init, n_init + n)]
+
         for ct, ts in enumerate(y):
             if mean_and_stds is not None:
                 ts = mean_and_stds[ct][1] * ts + mean_and_stds[ct][0]
             clr = clr_map[ct % n_cols]
             curr_lab = None if lab is None else lab[ct]
-            plot_helper(x, ts, m_col = clr, label = curr_lab)
+            plot_helper(x, ts, m_col = clr, label = curr_lab, dates = use_time)
     else:
         y_curr = y
         if mean_and_stds is not None:
@@ -87,9 +93,9 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_
         x = range(len(y_curr))
         plt.plot(y_curr, linestyle=':', marker='^', color='red', label = lab, markersize=5, mfc = 'blue', mec = 'blue')
 
-    if m is not None:
-        plt.title(m['description'])
-        plt.ylabel(m['unit'])
+        if m is not None:
+            plt.title(m['description'])
+            plt.ylabel(m['unit'])
 
     plt.xlabel('Time [min.]')
     plt.legend()

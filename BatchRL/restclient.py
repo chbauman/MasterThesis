@@ -19,8 +19,6 @@ import os
 
 from ast import literal_eval
 
-##https://github.com/brandond/requests-negotiate-sspi/blob/master/README.md
-from requests_negotiate_sspi import HttpNegotiateAuth 
 
 import pandas as pd
 import numpy as np
@@ -61,6 +59,10 @@ class client(object):
         Reads data defined by the list of column IDs df_data
         that was acquired between startDate and endDate.
         """
+
+        
+        ##https://github.com/brandond/requests-negotiate-sspi/blob/master/README.md
+        from requests_negotiate_sspi import HttpNegotiateAuth 
 
         self.startDate = startDate
         self.endDate = endDate
