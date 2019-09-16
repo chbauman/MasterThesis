@@ -39,6 +39,24 @@ def plot_time_series(x, y, m, show = True):
         plt.show()
     return
 
+
+def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
+
+    """
+    Basic plot style for all plots.
+    """
+    ls = ':'
+    color = 'red'
+    marker = '^'
+    ms = 5
+    kwargs = {'marker': marker, 'c':color, 'linestyle': ls, 'label': label, 'markersize': ms, 'mfc': m_col, 'mec': m_col}
+
+    if dates:
+        plt.plot_date(x, y, **kwargs)
+    else:
+        plt.plot(x, y, **kwargs)
+
+
 def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_and_stds = None):
     """
     Plots an interpolated time series
@@ -52,7 +70,8 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_
         n_init = 0 if init is None else init.shape[0]
         if init is not None:
             x_init = [15 * i for i in range(n_init)]
-            plt.plot(x_init, init, linestyle=':', marker='^', color='red', markersize=5, mfc = 'k', mec = 'k')
+            plot_helper(x_init, init, m_col = 'k')
+            #plt.plot(x_init, init, linestyle=':', marker='^', color='red', markersize=5, mfc = 'k', mec = 'k')
 
         x = [15 * i for i in range(n_init, n_init + n)]
         for ct, ts in enumerate(y):
@@ -60,11 +79,12 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_
                 ts = mean_and_stds[ct][1] * ts + mean_and_stds[ct][0]
             clr = clr_map[ct % n_cols]
             curr_lab = None if lab is None else lab[ct]
-            plt.plot(x, ts, linestyle=':', marker='^', color='red', label = curr_lab, markersize=5, mfc = clr, mec = clr)
+            plot_helper(x, ts, m_col = clr, label = curr_lab)
     else:
         y_curr = y
         if mean_and_stds is not None:
             y_curr = mean_and_stds[1] * y + mean_and_stds[0]
+        x = range(len(y_curr))
         plt.plot(y_curr, linestyle=':', marker='^', color='red', label = lab, markersize=5, mfc = 'blue', mec = 'blue')
 
     if m is not None:

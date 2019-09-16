@@ -84,14 +84,20 @@ class BatteryModel(BaseDynamicsModel):
         end_ind = n
         ds = data[start_ind:end_ind, 1, 0] - data[start_ind:end_ind, 0, 0]
         p = data[start_ind:end_ind, 1, 1]
+
+        mas_ds = self.m_dat[0]['mean_and_std']
+        mas_p = self.m_dat[1]['mean_and_std']
         labs = {'title': 'Battery Model Data', 'xlab': 'Active Power', 'ylab': r'$\Delta$ SoC'}
 
-        d_soc_std = self.m_dat[0]['mean_and_std'][1]
+        d_soc_std = mas_ds[1]
 
         scatter_plot(p, ds, lab_dict = labs, 
-                     m_and_std_x = self.m_dat[1]['mean_and_std'],
+                     m_and_std_x = mas_p,
                      m_and_std_y = [0.0, d_soc_std])
 
-        plot_ip_time_series([ds, p], lab = ['SoC', 'Active Power'], show = True, mean_and_stds = [self.m_dat[0]['mean_and_std'], self.m_dat[1]['mean_and_std']])
+        plot_ip_time_series([ds, p], 
+                            lab = ['SoC', 'Active Power'], 
+                            show = True, 
+                            mean_and_stds = [mas_ds, mas_p])
 
     pass

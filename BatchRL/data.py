@@ -834,7 +834,7 @@ def get_battery_data():
                                   lin_ip = True)
 
     # Active Power
-    all_data, dt_init = pipeline_preps(dat[17], 
+    all_data, _ = pipeline_preps(dat[17], 
                                   dt_mins, 
                                   clean_args=[([], 6 * 60, [])],
                                   all_data=all_data,
@@ -843,6 +843,9 @@ def get_battery_data():
 
     # Metadata
     m_out = [m[19], m[17]]
+    for ct, e in enumerate(m_out):
+        m_out[ct]['t_init'] = dt_init
+        m_out[ct]['dt'] = dt_mins
 
     # Standardize
     all_data, m_out = standardize(all_data, m_out)
@@ -850,7 +853,7 @@ def get_battery_data():
     # Plot
     m_plot = {'description': 'Battery Data', 'unit': 'kW / kWh'}
     labs = [m_out[0]['description'], m_out[1]['description']]
-    plot_ip_time_series([all_data[:, 0], all_data[:, 1]], m = m_plot, lab=labs, show = True)
+    #plot_ip_time_series([all_data[:, 0], all_data[:, 1]], m = m_plot, lab=labs, show = True)
 
     # Save and return
     save_processed_data(all_data, m_out, name)
@@ -945,6 +948,10 @@ def get_heating_data(filter_sigma = None):
                                gauss_sigma = filter_sigma)
 
     #dat, m = Room272Data.getData()
+
+    for ct, e in enumerate(m_out):
+        m_out[ct]['t_init'] = dt_init
+        m_out[ct]['dt'] = dt_mins
 
     # Standardize, save and return
     all_data, m_out = standardize(all_data, m_out)
