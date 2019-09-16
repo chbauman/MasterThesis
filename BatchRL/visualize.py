@@ -11,7 +11,7 @@ from util import *
 
 register_matplotlib_converters()
 
-plt.rc('text', usetex=True)
+
 plt.rc('font', family='serif')
 
 clr_map = ['blue', 'green', 'c']
@@ -22,6 +22,8 @@ def plot_time_series(x, y, m, show = True):
     Plots a time-series where x are the dates and
     y are the values.
     """
+
+    plt.rc('text', usetex=False)
 
     # Format the date
     formatter = DateFormatter('%d/%m/%y')
@@ -44,6 +46,9 @@ def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
     """
     Basic plot style for all plots.
     """
+
+    plt.rc('text', usetex=True)
+
     ls = ':'
     color = 'red'
     marker = '^'
@@ -91,7 +96,7 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_
         if mean_and_stds is not None:
             y_curr = mean_and_stds[1] * y + mean_and_stds[0]
         x = range(len(y_curr))
-        plt.plot(y_curr, linestyle=':', marker='^', color='red', label = lab, markersize=5, mfc = 'blue', mec = 'blue')
+        plot_helper(x, y_curr, m_col = 'blue', label = lab, dates = use_time)
 
         if m is not None:
             plt.title(m['description'])

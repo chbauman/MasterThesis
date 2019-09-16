@@ -997,11 +997,39 @@ def get_heating_data(filter_sigma = None):
     save_processed_data(all_data, m_out, name)
     return all_data, m_out, name
 
-def get_DFAB_heating_data():
+def process_DFAB_heating_data():
+    dt_mins = 15
 
+    for e in rooms[:1]:
+        name = e.name
+        data, metadata = e.getData()
+        n_cols = len(data)
 
-    for e in rooms:
-        e.getData()
+        # Plot before
+        for k in range(n_cols):
+            plot_time_series(data[k][1], data[k][0], m = metadata[k])
+
+        # Temperature
+        all_data, dt_init = pipeline_preps(data[0], 
+                                           dt_mins, 
+                                           n_tot_cols = n_cols,
+                                           clean_args = [([0.0], 24 * 60, [])],)
+
+        # Valves
+        for i in range(3):
+            all_data, _ = pipeline_preps(data[i + 1], dt_mins, all_data = all_data, dt_init = dt_init, row_ind = i + 1)
+
+        # Blinds
+        if n_cols == 5:
+            all_data, _ = pipeline_preps(data[4], dt_mins, dt_init = dt_init, all_data = all_data, row_ind = 4)
+
+        # Standardize and save
+        all_data, metadata = standardize(all_data, metadata)
+        save_processed_data(all_data, metadata, name)
+
+        # Plot
+        for k in range(n_cols):
+            plot_ip_time_series(all_data[:, k], lab = '')
 
     DFAB_AddData.getData()
 
