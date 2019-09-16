@@ -114,6 +114,54 @@ Room274Data = DataStruct(id_list = [42150281,
                         startDate='2017-01-01',
                         endDate='2019-12-31')
 
+# DFAB Room Data
+Room4BlueData = DataStruct(id_list = [421110054, # Temp
+                                    421110023, # Valves
+                                    421110024,
+                                    421110029,
+                                    421110209 # Blinds
+                                    ],
+                        name = "DFAB_Room41",
+                        startDate='2017-01-01',
+                        endDate='2019-12-31')
+
+Room5BlueData = DataStruct(id_list = [421110072, # Temp
+                                    421110038, # Valves
+                                    421110043,
+                                    421110044,
+                                    421110219 # Blinds
+                                    ],
+                        name = "DFAB_Room51",
+                        startDate='2017-01-01',
+                        endDate='2019-12-31')
+
+Room4RedData = DataStruct(id_list = [421110066, # Temp
+                                    421110026, # Valves
+                                    421110027,
+                                    421110028, 
+                                    ],
+                        name = "DFAB_Room43",
+                        startDate='2017-01-01',
+                        endDate='2019-12-31')
+
+Room5RedData = DataStruct(id_list = [421110084, # Temp
+                                    421110039, # Valves
+                                    421110040,
+                                    421110041,
+                                    ],
+                        name = "DFAB_Room53",
+                        startDate='2017-01-01',
+                        endDate='2019-12-31')
+
+DFAB_AddData = DataStruct(id_list = [421100168, # Vorlauf Temp
+                                    421100170, # Rücklauf Temp
+                                    ],
+                        name = "DFAB_Extra",
+                        startDate='2017-01-01',
+                        endDate='2019-12-31')
+
+rooms = [Room4BlueData, Room5BlueData, Room4RedData, Room5RedData]
+
 # Weather Data
 WeatherData = DataStruct(id_list = [3200000,
                                     3200002,
@@ -948,6 +996,16 @@ def get_heating_data(filter_sigma = None):
     all_data, m_out = standardize(all_data, m_out)
     save_processed_data(all_data, m_out, name)
     return all_data, m_out, name
+
+def get_DFAB_heating_data():
+
+
+    for e in rooms:
+        e.getData()
+
+    DFAB_AddData.getData()
+
+
 
 
 
