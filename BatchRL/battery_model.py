@@ -7,7 +7,7 @@ from keras.layers import Dense, Multiply, Add, Input
 from base_dynamics_model import BaseDynamicsModel
 from keras_layers import SeqInput
 from keras_util import getMLPModel
-from visualize import scatter_plot
+from visualize import scatter_plot, plot_ip_time_series
 
 class BatteryModel(BaseDynamicsModel):
     """
@@ -18,7 +18,7 @@ class BatteryModel(BaseDynamicsModel):
     """
 
 
-    def __init__(self, mlp_layers = [10, 10, 10], n_iter = 10):
+    def __init__(self, mlp_layers = [10, 10, 10], n_iter = 2):
         
         
         super(BatteryModel, self).__init__(0)
@@ -79,8 +79,11 @@ class BatteryModel(BaseDynamicsModel):
 
     def analyze_bat_model(self, data):
 
-        ds = data[:, 1, 0] - data[:, 0, 0]
-        p = data[:, 1, 1]
+        n = data.shape[0]
+        start_ind = n // 2
+        end_ind = n
+        ds = data[start_ind:end_ind, 1, 0] - data[start_ind:end_ind, 0, 0]
+        p = data[start_ind:end_ind, 1, 1]
         labs = {'title': 'Battery Model Data', 'xlab': 'Active Power', 'ylab': r'$\Delta$ SoC'}
 
         d_soc_std = self.m_dat[0]['mean_and_std'][1]
@@ -88,5 +91,7 @@ class BatteryModel(BaseDynamicsModel):
         scatter_plot(p, ds, lab_dict = labs, 
                      m_and_std_x = self.m_dat[1]['mean_and_std'],
                      m_and_std_y = [0.0, d_soc_std])
+
+        plot_ip_time_series([ds, p], lab = ['SoC', 'Active Power'], show = True, mean_and_stds = [self.m_dat[0]['mean_and_std'], self.m_dat[1]['mean_and_std']])
 
     pass

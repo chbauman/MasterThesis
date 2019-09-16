@@ -39,7 +39,7 @@ def plot_time_series(x, y, m, show = True):
         plt.show()
     return
 
-def plot_ip_time_series(y, lab = None, m = None, show = True, init = None):
+def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_and_stds = None):
     """
     Plots an interpolated time series
     where x is assumed to be uniform.
@@ -56,11 +56,16 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None):
 
         x = [15 * i for i in range(n_init, n_init + n)]
         for ct, ts in enumerate(y):
+            if mean_and_stds is not None:
+                ts = mean_and_stds[ct][1] * ts + mean_and_stds[ct][0]
             clr = clr_map[ct % n_cols]
             curr_lab = None if lab is None else lab[ct]
             plt.plot(x, ts, linestyle=':', marker='^', color='red', label = curr_lab, markersize=5, mfc = clr, mec = clr)
     else:
-        plt.plot(y, linestyle=':', marker='^', color='red', label = lab, markersize=5, mfc = 'blue', mec = 'blue')
+        y_curr = y
+        if mean_and_stds is not None:
+            y_curr = mean_and_stds[1] * y + mean_and_stds[0]
+        plt.plot(y_curr, linestyle=':', marker='^', color='red', label = lab, markersize=5, mfc = 'blue', mec = 'blue')
 
     if m is not None:
         plt.title(m['description'])
