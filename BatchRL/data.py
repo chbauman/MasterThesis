@@ -8,7 +8,7 @@ import pandas as pd
 from ast import literal_eval
 from datetime import datetime
 
-from visualize import plot_time_series, plot_ip_time_series
+from visualize import plot_time_series, plot_ip_time_series, plot_ip_ts
 from restclient import DataStruct, save_dir
 from util import *
 
@@ -1030,10 +1030,20 @@ def get_heating_data(filter_sigma = None):
 
 def process_DFAB_heating_data():
 
+    data_list = []
+
     dt_mins = 15
 
     for e in rooms:
+        # Get name
         name = e.name
+
+        # Try loading data
+        loaded = load_processed_data(name)
+        if loaded is not None:
+            data_list += [loaded]
+            continue
+
         data, metadata = e.getData()
         n_cols = len(data)
 
@@ -1080,28 +1090,37 @@ def process_DFAB_heating_data():
         # Standardize and save
         all_data, metadata = standardize(all_data, metadata)
         save_processed_data(all_data, metadata, name, dt_mins = dt_mins, dt_init = dt_init)
+        data_list += [all_data, metadata, name]
 
         # Plot
         #for k in range(n_cols):
         #    plot_ip_time_series(all_data[:, k], lab = '')
 
 
+    # Get name
     name = DFAB_AddData.name
+
+    # Try loading data
+    loaded = load_processed_data(name)
+    if loaded is not None:
+        data_list += [loaded]
+        return data_list
+
     data, metadata = DFAB_AddData.getData()
     n_cols = len(data)
 
     # Temperature
     ind = 0
-    plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+    #plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
     all_data, dt_init = pipeline_preps(data[ind], 
                                        dt_mins, 
                                        n_tot_cols = n_cols,
                                        remove_out_int_args = [10, 50],
                                        gauss_sigma = 5.0)
-    plot_ip_time_series(all_data[:, ind], lab = 'In Water Temp')
+    #plot_ip_time_series(all_data[:, ind], lab = 'In Water Temp')
 
     ind = 1
-    plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = True)
+    #plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
     all_data, _ = pipeline_preps(data[ind], 
                                  dt_mins, 
                                  all_data = all_data,
@@ -1109,11 +1128,38 @@ def process_DFAB_heating_data():
                                  row_ind = 1,
                                  remove_out_int_args = [10, 50],
                                  gauss_sigma = 5.0)
-    plot_ip_time_series(all_data[:, ind], lab = 'Out Water Temp')
+    #plot_ip_time_series(all_data[:, ind], lab = 'Out Water Temp')
 
     # Standardize and save
     all_data, metadata = standardize(all_data, metadata)
     save_processed_data(all_data, metadata, name, dt_mins = dt_mins, dt_init = dt_init)
+    data_list += [all_data, metadata, name]
+
+    return data_list
+
+def test_plotting_withDFAB_data():
+
+    data_list = process_DFAB_heating_data()
+    all_data, metadata, name = data_list[-1]
+    data, m = DFAB_AddData.getData()
+
+    # Plot test
+    ind = 0
+    plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+    plot_ip_time_series(all_data[:, ind], lab = 'Out Water Temp', show = False)
+
+    plot_ip_ts(all_data[:, ind], 
+               lab = 'Out Water Temp', 
+               show = False, 
+               mean_and_std = metadata[ind]['mean_and_std'], 
+               use_time = False, 
+               title_and_ylab = ['Single TS Plot Test', metadata[ind]['unit']],
+               dt_mins = metadata[ind]['dt']
+               )
+
+    plot_ip_time_series([all_data[:, 0], all_data[:, 1]], show = True)
+
+    
 
 
 

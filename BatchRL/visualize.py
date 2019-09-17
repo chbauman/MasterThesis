@@ -3,16 +3,18 @@ import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 from matplotlib.dates import DateFormatter
 from pandas.plotting import register_matplotlib_converters
 
 from util import *
 
+#mpl.use("pgf")
 register_matplotlib_converters()
 
-
 plt.rc('font', family='serif')
+#plt.rc('text', usetex=True)
 
 clr_map = ['blue', 'green', 'c']
 n_cols = len(clr_map)
@@ -23,19 +25,15 @@ def plot_time_series(x, y, m, show = True):
     y are the values.
     """
 
-    plt.rc('text', usetex=False)
-
-    # Format the date
-    formatter = DateFormatter('%d/%m/%y')
-
     # Define plot
     fig, ax = plt.subplots()
-    plt.plot_date(x, y, linestyle=':', marker='^', color='red', markersize=5, mfc = 'blue', mec = 'blue')
-    plt.title(m['description'])
+    plot_helper(x, y, 'blue', dates = True)
+    title = m['description']
+    if title[:4] == "65NT":
+        title = title.split(" ", 1)[1]
+    plt.title(title)
     plt.ylabel(m['unit'])
     plt.xlabel('Time')
-    #ax.xaxis.set_major_formatter(formatter)
-    #ax.xaxis.set_tick_params(rotation=30, labelsize=10)
 
     # Show plot
     if show:
@@ -47,8 +45,6 @@ def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
     Basic plot style for all plots.
     """
 
-    plt.rc('text', usetex=True)
-
     ls = ':'
     color = 'red'
     marker = '^'
@@ -59,7 +55,6 @@ def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
         plt.plot_date(x, y, **kwargs)
     else:
         plt.plot(x, y, **kwargs)
-
 
 def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_and_stds = None, use_time = False):
     """
@@ -109,6 +104,64 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_
     if show:
         plt.show()
     return
+
+def plot_ip_ts(y,
+               lab = None,
+               show = True, 
+               mean_and_std = None, 
+               use_time = False, 
+               series_index = 0, 
+               last_series = True, 
+               title_and_ylab = None, 
+               dt_mins = 15, 
+               dt_init_str = None, 
+               timestep_offset = 0):
+    """
+    Plots an interpolated time series
+    where x is assumed to be uniform.
+    """
+
+    # Define plot
+    fig, ax = plt.subplots()
+    y_curr = y
+
+    # Add std and mean back
+    if mean_and_std is not None:        
+        y_curr = mean_and_std[1] * y + mean_and_std[0]
+
+    # Use datetimes for x values
+    if use_time:
+        if dt_init_str is None:
+            raise ValueError("Need to know the initial time of the time series when plotting with dates!")
+
+        mins = dt_mins
+        interv = np.timedelta64(mins, 'm')
+        dt_init = datetime_to_npdatetime(string_to_dt(dt_init_str))
+        x = [dt_init + (timestep_offset + i) * interv for i in range(n)]
+    else:
+        x = range(len(y_curr))
+
+    plot_helper(x, y_curr, m_col = clr_map[series_index], label = lab, dates = use_time)
+
+    if last_series:
+        if title_and_ylab is not None:
+            plt.title(title_and_ylab[0])
+            plt.ylabel(title_and_ylab[1])
+
+        x_lab = 'Time' if use_time else 'Time [' + str(dt_mins) + ' min.]'
+        plt.xlabel(x_lab)
+        plt.legend()
+
+        # Show plot
+        if show:
+            plt.show()
+    return
+
+def plot_multiple_ip_ts(y_list, lab_list = None, mean_and_std = None, use_time = False, show_last = True, title_and_ylab = None):
+
+
+
+    pass
 
 def scatter_plot(x, y, *, show = True, lab_dict = None, m_and_std_x = None, m_and_std_y = None):
     """
