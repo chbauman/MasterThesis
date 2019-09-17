@@ -1,13 +1,12 @@
 
 import numpy as np
 
-from keras.models import Sequential, Model
-from keras.layers import Dense, Multiply, Add, Input
+from keras.models import Model
+from keras.layers import Multiply, Add, Input
 
 from base_dynamics_model import BaseDynamicsModel
-from keras_layers import SeqInput
 from keras_util import getMLPModel
-from visualize import scatter_plot, plot_ip_time_series
+from visualize import scatter_plot
 
 class BatteryModel(BaseDynamicsModel):
     """
@@ -91,15 +90,42 @@ class BatteryModel(BaseDynamicsModel):
 
         d_soc_std = mas_ds[1]
 
-        scatter_plot(p, ds, lab_dict = labs, 
-                     m_and_std_x = mas_p,
-                     m_and_std_y = [0.0, d_soc_std])
+        # Fit linear Model
+        ls_mat = np.empty((n, 2), dtype = np.float32)
+        ls_mat[:, 0] = 1
+        ls_mat[:, 1] = p
+        m, c = np.linalg.lstsq(ls_mat, ds, rcond=None)[0]
+        mask = np.logical_or(ds > m + c * p - 0.35, p < 0)
+        print(np.sum(mask), "Sum")
+        masked_p = p[mask]
+        masked_ds = ds[mask]
+        n_mask = masked_p.shape[0]
 
-        plot_ip_time_series([ds, p], 
-                            lab = ['SoC', 'Active Power'], 
-                            show = True, 
-                            m = self.m_dat,
-                            mean_and_stds = [mas_ds, mas_p],
-                            use_time = True)
+        # Fit pw. linear model: y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x) 
+        ls_mat = np.empty((n_mask, 3), dtype = np.float32)
+        ls_mat[:, 0] = 1
+        ls_mat[:, 1] = masked_p
+        ls_mat[:, 2] = masked_p
+        ls_mat[:, 2][ls_mat[:, 2] < 0] = 0
+        a1, a2, a3 = np.linalg.lstsq(ls_mat, masked_ds, rcond=None)[0]
+        x_pw_line = np.array([np.min(p), 0, np.max(p)], dtype = np.float32)
+        y_pw_line = a1 + a2 * x_pw_line + a3 * np.maximum(0, x_pw_line)
+
+        scatter_plot(p[mask], ds[mask], lab_dict = labs, 
+                     m_and_std_x = mas_p,
+                     m_and_std_y = [0.0, d_soc_std],
+                     show = True, 
+                     add_line = True, 
+                     custom_line = [x_pw_line, y_pw_line],
+                     custom_label = 'PW Linear Fit')
+
+        #scatter_plot(p[mask], ds[mask], lab_dict = labs, 
+        #             m_and_std_x = None,
+        #             m_and_std_y = None,
+        #             show = True, 
+        #             add_line = True)
+
+
+        #plot_all()
 
     pass

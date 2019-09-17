@@ -8,7 +8,7 @@ import pandas as pd
 from ast import literal_eval
 from datetime import datetime
 
-from visualize import plot_time_series, plot_ip_time_series, plot_single_ip_ts, plot_multiple_ip_ts, plot_all
+from visualize import plot_time_series, plot_ip_time_series, plot_single_ip_ts, plot_multiple_ip_ts, plot_all, plot_single
 from restclient import DataStruct, save_dir
 from util import *
 
@@ -747,19 +747,13 @@ def cut_and_split(dat, seq_len, streak_len):
 #######################################################################################################
 # Saving and Loading Processed Data
 
-def save_processed_data(all_data, m, name, dt_mins = None, dt_init = None):
+def save_processed_data(all_data, m, name):
     """
     Saves the processed data in numpy format.
     """
 
     proc_data_folder = os.path.join(save_dir, "ProcessedSeries")
     create_dir(proc_data_folder)
-
-    # Add initial time and time delta to metadata
-    if dt_mins is not None and dt_init is not None:
-        for ct, e in enumerate(m):
-            m[ct]['t_init'] = dt_to_string(npdatetime_to_datetime(dt_init))
-            m[ct]['dt'] = dt_mins
 
     # Get filename
     data_name = os.path.join(proc_data_folder, name + "_data.npy")
@@ -875,7 +869,7 @@ def get_data_test():
     print(m_new[0])
     return all_data, m
 
-def get_battery_data():
+def get_battery_data(show_plot = False, show = True):
     """
     Load and interpolate the battery data.
     """
@@ -886,6 +880,16 @@ def get_battery_data():
     # Try loading data
     loaded = load_processed_data(name)
     if loaded is not None:
+        if show_plot:
+            all_data, m_out, name = loaded
+            # Plot
+            plot_all(all_data, 
+                     m_out, 
+                     use_time = True, 
+                     show = show, 
+                     title_and_ylab = ['Battery Data: ' + name, 'kW / kWh'], 
+                     scale_back = False)
+
         return loaded
 
     # Get data
@@ -908,6 +912,7 @@ def get_battery_data():
                                   rem_out_args=(100, [0.0, 100.0]),
                                   lin_ip = True)
 
+
     # Active Power
     all_data, _ = pipeline_preps(dat[17], 
                                   dt_mins, 
@@ -915,17 +920,22 @@ def get_battery_data():
                                   all_data=all_data,
                                   dt_init=dt_init,
                                   row_ind=1)
-
+    
     # Metadata
     m_out = [m[19], m[17]]
+    add_dt_and_tinit(m_out, dt_mins, dt_init)
 
     # Standardize
     all_data, m_out = standardize(all_data, m_out)
 
-    # Plot
-    m_plot = {'description': 'Battery Data', 'unit': 'kW / kWh'}
-    labs = [m_out[0]['description'], m_out[1]['description']]
-    #plot_ip_time_series([all_data[:, 0], all_data[:, 1]], m = m_plot, lab=labs, show = True)
+    if show_plot:
+        # Plot
+        plot_all(all_data, 
+                 m_out, 
+                 use_time = True, 
+                 show = show, 
+                 title_and_ylab = ['Battery Data', 'kW / kWh'], 
+                 scale_back = False)
 
     # Save and return
     save_processed_data(all_data, m_out, name, dt_mins = dt_mins, dt_init = dt_init)
@@ -1028,12 +1038,13 @@ def get_heating_data(filter_sigma = None):
     save_processed_data(all_data, m_out, name)
     return all_data, m_out, name
 
-def process_DFAB_heating_data():
+def process_DFAB_heating_data(show_plots = False):
 
     data_list = []
-
     dt_mins = 15
 
+    ################################
+    # Single Rooms
     for e in rooms:
         # Get name
         name = e.name
@@ -1044,40 +1055,49 @@ def process_DFAB_heating_data():
             data_list += [loaded]
             continue
 
-        data, metadata = e.getData()
+        data, m = e.getData()
         n_cols = len(data)
 
-        # Plot before
-        #for k in range(n_cols):
-        #    plot_time_series(data[k][1], data[k][0], m = metadata[k])
-
         # Temperature
-        #plot_time_series(data[0][1], data[0][0], m = metadata[0])
+        if show_plots:
+            plot_time_series(data[0][1], data[0][0], m = m[0], show = False)
         all_data, dt_init = pipeline_preps(data[0], 
                                            dt_mins, 
                                            n_tot_cols = n_cols,
                                            clean_args = [([0.0], 24 * 60, [])],
                                            rem_out_args = (1.5, None),
                                            gauss_sigma = 5.0)
-        #plot_ip_time_series(all_data[:, 0], lab = 'Room Temp')
+        add_dt_and_tinit(m, dt_mins, dt_init)
+        if show_plots:
+            plot_single(all_data[:, 0], 
+                        m[0], 
+                        use_time = True, 
+                        show = True, 
+                        title_and_ylab = ['Temperature Interpolated', m[0]['unit']])
 
         # Valves
         for i in range(3):
             ind = i + 1
-            #plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+            if show_plots:
+                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False)
             all_data, _ = pipeline_preps(data[ind], 
                                          dt_mins, 
                                          all_data = all_data,
                                          dt_init = dt_init,
                                          row_ind = ind,
-                                         clean_args = [([], 2 * 24 * 60, [])],
-                                         )
-            #plot_ip_time_series(all_data[:, ind], lab = 'Valve ' + str(ind))
+                                         clean_args = [([], 7 * 24 * 60, [])])
+            if show_plots:
+                plot_single(all_data[:, ind], 
+                            m[ind], 
+                            use_time = True, 
+                            show = True, 
+                            title_and_ylab = ['Valve ' + str(ind) + ' Interpolated', m[ind]['unit']])
 
         # Blinds
         if n_cols == 5:
             ind = 4
-            #plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+            if show_plots:
+                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False)
             all_data, _ = pipeline_preps(data[ind],
                                          dt_mins,
                                          dt_init = dt_init,
@@ -1085,17 +1105,20 @@ def process_DFAB_heating_data():
                                          clip_to_int_args = [0.0, 100.0],
                                          clean_args = [([], 3 * 24 * 60, [])],
                                          row_ind = ind)
-            #plot_ip_time_series(all_data[:, ind], lab = 'Blinds')
+            if show_plots:
+                plot_single(all_data[:, ind], 
+                            m[ind], 
+                            use_time = True, 
+                            show = True, 
+                            title_and_ylab = ['Blinds Interpolated', m[ind]['unit']])
 
         # Standardize and save
-        all_data, metadata = standardize(all_data, metadata)
-        save_processed_data(all_data, metadata, name, dt_mins = dt_mins, dt_init = dt_init)
-        data_list += [all_data, metadata, name]
+        all_data, m = standardize(all_data, m)
+        save_processed_data(all_data, m, name)
+        data_list += [all_data, m, name]
 
-        # Plot
-        #for k in range(n_cols):
-        #    plot_ip_time_series(all_data[:, k], lab = '')
-
+    ################################
+    # General Heating Data
 
     # Get name
     name = DFAB_AddData.name
@@ -1106,21 +1129,29 @@ def process_DFAB_heating_data():
         data_list += [loaded]
         return data_list
 
-    data, metadata = DFAB_AddData.getData()
+    data, m = DFAB_AddData.getData()
     n_cols = len(data)
 
     # Temperature
     ind = 0
-    #plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+    if show_plots:
+        plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False)
     all_data, dt_init = pipeline_preps(data[ind], 
                                        dt_mins, 
                                        n_tot_cols = n_cols,
                                        remove_out_int_args = [10, 50],
                                        gauss_sigma = 5.0)
-    #plot_ip_time_series(all_data[:, ind], lab = 'In Water Temp')
+    add_dt_and_tinit(m, dt_mins, dt_init)
+    if show_plots:
+        plot_single(all_data[:, ind], 
+                        m[ind], 
+                        use_time = True, 
+                        show = True, 
+                        title_and_ylab = ['In Water Temperature Interpolated', m[ind]['unit']])
 
     ind = 1
-    #plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+    if show_plots:
+        plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
     all_data, _ = pipeline_preps(data[ind], 
                                  dt_mins, 
                                  all_data = all_data,
@@ -1128,12 +1159,17 @@ def process_DFAB_heating_data():
                                  row_ind = 1,
                                  remove_out_int_args = [10, 50],
                                  gauss_sigma = 5.0)
-    #plot_ip_time_series(all_data[:, ind], lab = 'Out Water Temp')
+    if show_plots:
+        plot_single(all_data[:, ind], 
+                        m[ind], 
+                        use_time = True,
+                        show = True, 
+                        title_and_ylab = ['Out Water Temperature Interpolated', m[ind]['unit']])
 
     # Standardize and save
-    all_data, metadata = standardize(all_data, metadata)
-    save_processed_data(all_data, metadata, name, dt_mins = dt_mins, dt_init = dt_init)
-    data_list += [[all_data, metadata, name]]
+    all_data, m = standardize(all_data, m)
+    save_processed_data(all_data, m, name)
+    data_list += [[all_data, m, name]]
 
     return data_list
 

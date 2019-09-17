@@ -49,10 +49,10 @@ def main():
     ##get_data_test()
     #return 0
 
-    test_plotting_withDFAB_data()
+    #test_plotting_withDFAB_data()
 
     # Battery data
-    dat_bat, m_bat, name_bat = get_battery_data()
+    dat_bat, m_bat, name_bat = get_battery_data(show_plot = True, show = False)
     train_bat, test_bat = cut_and_split(dat_bat, 2, 96 * 7)
     bat_mod = BatteryModel()
     bat_mod.fit(train_bat, m_bat)

@@ -27,6 +27,14 @@ def cleas_desc(nest_desc):
         return nest_desc.split(" ", 1)[1]
     return nest_desc
 
+def add_dt_and_tinit(m, dt_mins, dt_init):
+    """
+    Adds dt and t_init to the metadata dictionnary m.
+    """
+    for ct, e in enumerate(m):
+        m[ct]['t_init'] = dt_to_string(npdatetime_to_datetime(dt_init))
+        m[ct]['dt'] = dt_mins
+
 #######################################################################################################
 # Os functions
 

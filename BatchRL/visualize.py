@@ -209,6 +209,20 @@ def plot_multiple_ip_ts(y_list, lab_list = None, mean_and_std_list = None, use_t
                dt_init_str = dt_init_str, 
                timestep_offset = ts_offset)
 
+def plot_single(time_series, m, use_time = True, show = True, title_and_ylab = None, scale_back = True):
+    """
+    Higher level plot function for single time series.
+    """
+    m_a_s = m.get('mean_and_std') if scale_back else None
+    plot_single_ip_ts(time_series,
+                       lab = m.get('description'),
+                       show = show,
+                       mean_and_std = m_a_s,
+                       use_time = use_time,
+                       title_and_ylab = title_and_ylab, 
+                       dt_mins = m.get('dt'), 
+                       dt_init_str = m.get('t_init'))
+
 def plot_all(all_data, m, use_time = True, show = True, title_and_ylab = None, scale_back = True):
     """
     Higher level plot funciton for multiple time series
@@ -230,11 +244,13 @@ def plot_all(all_data, m, use_time = True, show = True, title_and_ylab = None, s
                         show_last = show, 
                         title_and_ylab = title_and_ylab)
 
-def scatter_plot(x, y, *, show = True, lab_dict = None, m_and_std_x = None, m_and_std_y = None):
+def scatter_plot(x, y, *, show = True, lab_dict = None, lab = 'Measurements', m_and_std_x = None, m_and_std_y = None, add_line = False, custom_line = None, custom_label = None):
     """
     Scatter Plot. 
     """
 
+    fig, ax = plt.subplots()
+        
     # Transform data back to original mean and std.
     x_curr = x
     if m_and_std_x is not None:
@@ -243,14 +259,38 @@ def scatter_plot(x, y, *, show = True, lab_dict = None, m_and_std_x = None, m_an
     if m_and_std_y is not None:
         y_curr = m_and_std_y[1] * y + m_and_std_y[0]
 
+    if add_line:
+        # Fit a line with Least Squares
+        n = x_curr.shape[0]
+        ls_mat = np.empty((n, 2), dtype = np.float32)
+        ls_mat[:, 0] = 1
+        ls_mat[:, 1] = x_curr
+        m, c = np.linalg.lstsq(ls_mat, y_curr, rcond=None)[0]
+
+        max_x = np.max(x_curr)
+        min_x = np.min(x_curr)
+        x = np.linspace(min_x, max_x, 5)
+        y = m + c * x
+        plt.plot(x, y, label = 'Linear Fit')
+
+    if custom_line:
+        # Add a custom line to plot
+        x, y = custom_line
+        if m_and_std_y is not None:
+            y = m_and_std_y[1] * y + m_and_std_y[0]
+        if m_and_std_x is not None:
+            x = m_and_std_x[1] * x + m_and_std_x[0]
+        plt.plot(x, y, label = custom_label)
+
     # Plot
-    plt.scatter(x_curr, y_curr,  marker='^', c='red')
+    plt.scatter(x_curr, y_curr,  marker='^', c='red', label = lab)
     
     # Add Labels
     if lab_dict is not None:
         plt.title(lab_dict['title'])
         plt.ylabel(lab_dict['ylab'])
         plt.xlabel(lab_dict['xlab'])
+    plt.legend()
 
     if show:
         plt.show()
