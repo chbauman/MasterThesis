@@ -16,6 +16,27 @@ def get_if_nnone(lst, indx, default = None):
     return default if lst is None else lst[indx]
 
 #######################################################################################################
+# Numerical stuff
+
+def fit_linear(x, y, x_new = None):
+    """
+    Fit a linear model y = c * x + m.
+    Returns coefficients m and c. If x_new
+    is not None, returns the evaluated linear
+    fit at x_new.
+    """
+
+    n = x.shape[0]
+    ls_mat = np.empty((n, 2), dtype = np.float32)
+    ls_mat[:, 0] = 1
+    ls_mat[:, 1] = x
+    m, c = np.linalg.lstsq(ls_mat, y, rcond=None)[0]
+    if x_new is None:
+        return [m, c]
+    else:
+        return c * x_new + m
+
+#######################################################################################################
 # NEST stuff
 
 def cleas_desc(nest_desc):

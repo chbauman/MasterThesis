@@ -7,6 +7,7 @@ from keras.layers import Multiply, Add, Input
 from base_dynamics_model import BaseDynamicsModel
 from keras_util import getMLPModel
 from visualize import scatter_plot
+from util import *
 
 class BatteryModel(BaseDynamicsModel):
     """
@@ -79,24 +80,19 @@ class BatteryModel(BaseDynamicsModel):
     def analyze_bat_model(self, data):
 
         n = data.shape[0]
-        start_ind = 0 # n // 2
+        start_ind = 0 
         end_ind = n
         ds = data[start_ind:end_ind, 1, 0] - data[start_ind:end_ind, 0, 0]
         p = data[start_ind:end_ind, 1, 1]
 
         mas_ds = self.m_dat[0]['mean_and_std']
         mas_p = self.m_dat[1]['mean_and_std']
-        labs = {'title': 'Battery Model Data', 'xlab': 'Active Power', 'ylab': r'$\Delta$ SoC'}
-
+        labs = {'title': 'Battery Model', 'xlab': 'Active Power [kW]', 'ylab': r'$\Delta$ SoC [%]'}
         d_soc_std = mas_ds[1]
 
         # Fit linear Model
-        ls_mat = np.empty((n, 2), dtype = np.float32)
-        ls_mat[:, 0] = 1
-        ls_mat[:, 1] = p
-        m, c = np.linalg.lstsq(ls_mat, ds, rcond=None)[0]
-        mask = np.logical_or(ds > m + c * p - 0.35, p < 0)
-        print(np.sum(mask), "Sum")
+        fitted_ds = fit_linear(p, ds, p)
+        mask = np.logical_or(ds > fitted_ds - 0.35, p < 0)
         masked_p = p[mask]
         masked_ds = ds[mask]
         n_mask = masked_p.shape[0]
@@ -111,6 +107,7 @@ class BatteryModel(BaseDynamicsModel):
         x_pw_line = np.array([np.min(p), 0, np.max(p)], dtype = np.float32)
         y_pw_line = a1 + a2 * x_pw_line + a3 * np.maximum(0, x_pw_line)
 
+        # Plot 
         scatter_plot(p[mask], ds[mask], lab_dict = labs, 
                      m_and_std_x = mas_p,
                      m_and_std_y = [0.0, d_soc_std],
@@ -119,13 +116,3 @@ class BatteryModel(BaseDynamicsModel):
                      custom_line = [x_pw_line, y_pw_line],
                      custom_label = 'PW Linear Fit')
 
-        #scatter_plot(p[mask], ds[mask], lab_dict = labs, 
-        #             m_and_std_x = None,
-        #             m_and_std_y = None,
-        #             show = True, 
-        #             add_line = True)
-
-
-        #plot_all()
-
-    pass
