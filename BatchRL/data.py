@@ -288,6 +288,23 @@ def clean_data(dat, rem_vals = [], n_cons_least = 60, const_excepts = []):
     print(tot_dat - count, "data points removed.")
     return [new_vals[:count], new_dates[:count]]
 
+def remove_out_interval(dat, interval = [0.0, 100]):
+    """
+    Removes values that do not lie within the interval.
+    """    
+    vals, dates = dat
+    vals[vals > interval[1]] = np.nan
+    vals[vals < interval[0]] = np.nan
+
+def clip_to_interval(dat, interval = [0.0, 100]):
+    """
+    Clips the values of the time_series that are
+    out of the interval to lie within.
+    """
+    vals, dates = dat
+    vals[vals > interval[1]] = interval[1]
+    vals[vals < interval[0]] = interval[0]
+
 def floor_datetime_to_min(dt, mt):
     """
     Rounds deltatime64 dt down to mt minutes.
@@ -531,9 +548,12 @@ def gaussian_filter_ignoring_nans(time_series, sigma = 2.0):
 def pipeline_preps(orig_dat,
                    dt_mins,
                    all_data = None,
+                   *,
                    dt_init = None,
-                   row_ind = None,
+                   row_ind = None,                   
                    clean_args = None,
+                   clip_to_int_args = None,
+                   remove_out_int_args = None,
                    rem_out_args = None,
                    hole_fill_args = None,
                    n_tot_cols = None,
@@ -548,7 +568,15 @@ def pipeline_preps(orig_dat,
     # Clean Data
     if clean_args is not None:
         for k in clean_args:
-            modif_data = clean_data(orig_dat, *k)
+            modif_data = clean_data(orig_dat, *k)            
+
+    # Clip to interval
+    if remove_out_int_args is not None:
+        remove_out_interval(modif_data, remove_out_int_args)
+            
+    # Clip to interval
+    if clip_to_int_args is not None:
+        clip_to_interval(modif_data, clip_to_int_args)
 
     # Interpolate / Subsample
     [modif_data, dt_init_new] = interpolate_time_series(modif_data, dt_mins, lin_ip=lin_ip)
@@ -1000,38 +1028,75 @@ def get_heating_data(filter_sigma = None):
 def process_DFAB_heating_data():
     dt_mins = 15
 
-    for e in rooms[:1]:
+    for e in rooms[:0]:
         name = e.name
         data, metadata = e.getData()
         n_cols = len(data)
 
         # Plot before
-        for k in range(n_cols):
-            plot_time_series(data[k][1], data[k][0], m = metadata[k])
+        #for k in range(n_cols):
+        #    plot_time_series(data[k][1], data[k][0], m = metadata[k])
 
         # Temperature
+        #plot_time_series(data[0][1], data[0][0], m = metadata[0])
         all_data, dt_init = pipeline_preps(data[0], 
                                            dt_mins, 
                                            n_tot_cols = n_cols,
-                                           clean_args = [([0.0], 24 * 60, [])],)
+                                           clean_args = [([0.0], 24 * 60, [])],
+                                           rem_out_args = (1.5, None),
+                                           gauss_sigma = 5.0)
+        #plot_ip_time_series(all_data[:, 0], lab = 'Room Temp')
 
         # Valves
         for i in range(3):
-            all_data, _ = pipeline_preps(data[i + 1], dt_mins, all_data = all_data, dt_init = dt_init, row_ind = i + 1)
+            ind = i + 1
+            #plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+            all_data, _ = pipeline_preps(data[ind], 
+                                         dt_mins, 
+                                         all_data = all_data,
+                                         dt_init = dt_init,
+                                         row_ind = ind,
+                                         clean_args = [([], 2 * 24 * 60, [])],
+                                         )
+            #plot_ip_time_series(all_data[:, ind], lab = 'Valve ' + str(ind))
 
         # Blinds
         if n_cols == 5:
-            all_data, _ = pipeline_preps(data[4], dt_mins, dt_init = dt_init, all_data = all_data, row_ind = 4)
+            ind = 4
+            #plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+            all_data, _ = pipeline_preps(data[ind],
+                                         dt_mins,
+                                         dt_init = dt_init,
+                                         all_data = all_data,
+                                         clip_to_int_args = [0.0, 100.0],
+                                         clean_args = [([], 3 * 24 * 60, [])],
+                                         row_ind = ind)
+            #plot_ip_time_series(all_data[:, ind], lab = 'Blinds')
 
         # Standardize and save
         all_data, metadata = standardize(all_data, metadata)
         save_processed_data(all_data, metadata, name)
 
         # Plot
-        for k in range(n_cols):
-            plot_ip_time_series(all_data[:, k], lab = '')
+        #for k in range(n_cols):
+        #    plot_ip_time_series(all_data[:, k], lab = '')
 
-    DFAB_AddData.getData()
+
+    name = DFAB_AddData.name
+    data, metadata = DFAB_AddData.getData()
+    n_cols = len(data)
+
+    # Temperature
+    ind = 0
+    plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+    all_data, dt_init = pipeline_preps(data[ind], 
+                                       dt_mins, 
+                                       n_tot_cols = n_cols,
+                                       remove_out_int_args = [10, 50],
+                                       )
+    plot_ip_time_series(all_data[:, ind], lab = 'Inlet Temp')
+
+
 
 
 
