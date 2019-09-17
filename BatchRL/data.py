@@ -114,7 +114,7 @@ Room274Data = DataStruct(id_list = [42150281,
                         startDate='2017-01-01',
                         endDate='2019-12-31')
 
-# DFAB Room Data
+# DFAB Data
 Room4BlueData = DataStruct(id_list = [421110054, # Temp
                                     421110023, # Valves
                                     421110024,
@@ -747,13 +747,19 @@ def cut_and_split(dat, seq_len, streak_len):
 #######################################################################################################
 # Saving and Loading Processed Data
 
-def save_processed_data(all_data, m, name):
+def save_processed_data(all_data, m, name, dt_mins = None, dt_init = None):
     """
     Saves the processed data in numpy format.
     """
 
     proc_data_folder = os.path.join(save_dir, "ProcessedSeries")
     create_dir(proc_data_folder)
+
+    # Add initial time and time delta to metadata
+    if dt_mins is not None and dt_init is not None:
+        for ct, e in enumerate(m):
+            m[ct]['t_init'] = dt_to_string(npdatetime_to_datetime(dt_init))
+            m[ct]['dt'] = dt_mins
 
     # Get filename
     data_name = os.path.join(proc_data_folder, name + "_data.npy")
@@ -912,9 +918,6 @@ def get_battery_data():
 
     # Metadata
     m_out = [m[19], m[17]]
-    for ct, e in enumerate(m_out):
-        m_out[ct]['t_init'] = dt_to_string(npdatetime_to_datetime(dt_init))
-        m_out[ct]['dt'] = dt_mins
 
     # Standardize
     all_data, m_out = standardize(all_data, m_out)
@@ -925,7 +928,7 @@ def get_battery_data():
     #plot_ip_time_series([all_data[:, 0], all_data[:, 1]], m = m_plot, lab=labs, show = True)
 
     # Save and return
-    save_processed_data(all_data, m_out, name)
+    save_processed_data(all_data, m_out, name, dt_mins = dt_mins, dt_init = dt_init)
     return all_data, m_out, name
 
 # Real Data, takes some time to run
@@ -1026,9 +1029,10 @@ def get_heating_data(filter_sigma = None):
     return all_data, m_out, name
 
 def process_DFAB_heating_data():
+
     dt_mins = 15
 
-    for e in rooms[:0]:
+    for e in rooms:
         name = e.name
         data, metadata = e.getData()
         n_cols = len(data)
@@ -1075,7 +1079,7 @@ def process_DFAB_heating_data():
 
         # Standardize and save
         all_data, metadata = standardize(all_data, metadata)
-        save_processed_data(all_data, metadata, name)
+        save_processed_data(all_data, metadata, name, dt_mins = dt_mins, dt_init = dt_init)
 
         # Plot
         #for k in range(n_cols):
@@ -1093,9 +1097,23 @@ def process_DFAB_heating_data():
                                        dt_mins, 
                                        n_tot_cols = n_cols,
                                        remove_out_int_args = [10, 50],
-                                       )
-    plot_ip_time_series(all_data[:, ind], lab = 'Inlet Temp')
+                                       gauss_sigma = 5.0)
+    plot_ip_time_series(all_data[:, ind], lab = 'In Water Temp')
 
+    ind = 1
+    plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = True)
+    all_data, _ = pipeline_preps(data[ind], 
+                                 dt_mins, 
+                                 all_data = all_data,
+                                 dt_init = dt_init,
+                                 row_ind = 1,
+                                 remove_out_int_args = [10, 50],
+                                 gauss_sigma = 5.0)
+    plot_ip_time_series(all_data[:, ind], lab = 'Out Water Temp')
+
+    # Standardize and save
+    all_data, metadata = standardize(all_data, metadata)
+    save_processed_data(all_data, metadata, name, dt_mins = dt_mins, dt_init = dt_init)
 
 
 
