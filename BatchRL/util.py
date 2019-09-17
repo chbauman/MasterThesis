@@ -6,6 +6,28 @@ import numpy as np
 from datetime import datetime
 
 #######################################################################################################
+# Python stuff
+
+def get_if_nnone(lst, indx, default = None):
+    """
+    Returns a list element if list is not None, 
+    else the default value.
+    """
+    return default if lst is None else lst[indx]
+
+#######################################################################################################
+# NEST stuff
+
+def cleas_desc(nest_desc):
+    """
+    Removes the measurement code from the string containing
+    the description of the measurement series.
+    """
+    if nest_desc[:4] == "65NT":
+        return nest_desc.split(" ", 1)[1]
+    return nest_desc
+
+#######################################################################################################
 # Os functions
 
 def create_dir(dirname):

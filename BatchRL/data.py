@@ -8,7 +8,7 @@ import pandas as pd
 from ast import literal_eval
 from datetime import datetime
 
-from visualize import plot_time_series, plot_ip_time_series, plot_ip_ts
+from visualize import plot_time_series, plot_ip_time_series, plot_single_ip_ts, plot_multiple_ip_ts, plot_all
 from restclient import DataStruct, save_dir
 from util import *
 
@@ -1133,7 +1133,7 @@ def process_DFAB_heating_data():
     # Standardize and save
     all_data, metadata = standardize(all_data, metadata)
     save_processed_data(all_data, metadata, name, dt_mins = dt_mins, dt_init = dt_init)
-    data_list += [all_data, metadata, name]
+    data_list += [[all_data, metadata, name]]
 
     return data_list
 
@@ -1146,18 +1146,38 @@ def test_plotting_withDFAB_data():
     # Plot test
     ind = 0
     plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
-    plot_ip_time_series(all_data[:, ind], lab = 'Out Water Temp', show = False)
 
-    plot_ip_ts(all_data[:, ind], 
-               lab = 'Out Water Temp', 
-               show = False, 
+    plot_single_ip_ts(all_data[:, ind], 
+               lab = 'Out Water Temp',
+               show = False,
                mean_and_std = metadata[ind]['mean_and_std'], 
                use_time = False, 
                title_and_ylab = ['Single TS Plot Test', metadata[ind]['unit']],
                dt_mins = metadata[ind]['dt']
                )
+    
+    plot_single_ip_ts(all_data[:, ind], 
+               lab = 'Out Water Temp', 
+               show = False, 
+               mean_and_std = metadata[ind]['mean_and_std'], 
+               use_time = True,               
+               title_and_ylab = ['Single TS with Dates Plot Test', metadata[ind]['unit']],
+               dt_mins = metadata[ind]['dt'],
+               dt_init_str = metadata[ind]['t_init']
+               )
 
-    plot_ip_time_series([all_data[:, 0], all_data[:, 1]], show = True)
+    m = metadata
+    plot_multiple_ip_ts([all_data[:, 0], all_data[:, 1]],
+                        lab_list = [m[i]['description'] for i in range(2)],
+                        mean_and_std_list = [m[i]['mean_and_std'] for i in range(2)],
+                        use_time = True,
+                        timestep_offset_list = [-1, 1],
+                        dt_init_str_list = [m[i]['t_init'] for i in range(2)],
+                        show_last = False, 
+                        title_and_ylab = ['Two TS with Dates Plot Test', m[ind]['unit']],
+        )
+
+    plot_all(all_data, m, show = True, title_and_ylab = ['Two TS with Dates High Level Plot Test', m[ind]['unit']])
 
     
 

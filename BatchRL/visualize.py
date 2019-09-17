@@ -14,10 +14,11 @@ from util import *
 register_matplotlib_converters()
 
 plt.rc('font', family='serif')
-#plt.rc('text', usetex=True)
+#plt.rc('text', usetex=True) # Makes Problems with the Celsius sign
 
 clr_map = ['blue', 'green', 'c']
 n_cols = len(clr_map)
+
 
 def plot_time_series(x, y, m, show = True):
     """
@@ -28,9 +29,7 @@ def plot_time_series(x, y, m, show = True):
     # Define plot
     fig, ax = plt.subplots()
     plot_helper(x, y, 'blue', dates = True)
-    title = m['description']
-    if title[:4] == "65NT":
-        title = title.split(" ", 1)[1]
+    title = cleas_desc(m['description'])
     plt.title(title)
     plt.ylabel(m['unit'])
     plt.xlabel('Time')
@@ -60,6 +59,7 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_
     """
     Plots an interpolated time series
     where x is assumed to be uniform.
+    DEPRECATED!!!!!
     """
 
     # Define plot
@@ -105,12 +105,37 @@ def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_
         plt.show()
     return
 
+def plot_single_ip_ts(y,
+                       lab = None,
+                       show = True,
+                       *,
+                       mean_and_std = None,
+                       use_time = False,
+                       title_and_ylab = None, 
+                       dt_mins = 15, 
+                       dt_init_str = None):
+    """
+    Wrapper function with fewer arguments for single
+    time series plotting.
+    """
+    plot_ip_ts(y,
+               lab = lab,
+               show = show,
+               mean_and_std = mean_and_std,
+               title_and_ylab = title_and_ylab, 
+               dt_mins = dt_mins, 
+               dt_init_str = dt_init_str, 
+               use_time = use_time,
+               last_series = True, 
+               series_index = 0,
+               timestep_offset = 0)
+
 def plot_ip_ts(y,
                lab = None,
-               show = True, 
-               mean_and_std = None, 
-               use_time = False, 
-               series_index = 0, 
+               show = True,
+               mean_and_std = None,
+               use_time = False,
+               series_index = 0,
                last_series = True, 
                title_and_ylab = None, 
                dt_mins = 15, 
@@ -121,12 +146,15 @@ def plot_ip_ts(y,
     where x is assumed to be uniform.
     """
 
-    # Define plot
-    fig, ax = plt.subplots()
-    y_curr = y
+    if series_index == 0:
+        # Define plot
+        fig, ax = plt.subplots()
+
+    n = len(y)
+    y_curr = y    
 
     # Add std and mean back
-    if mean_and_std is not None:        
+    if mean_and_std is not None:
         y_curr = mean_and_std[1] * y + mean_and_std[0]
 
     # Use datetimes for x values
@@ -139,9 +167,9 @@ def plot_ip_ts(y,
         dt_init = datetime_to_npdatetime(string_to_dt(dt_init_str))
         x = [dt_init + (timestep_offset + i) * interv for i in range(n)]
     else:
-        x = range(len(y_curr))
+        x = range(n)
 
-    plot_helper(x, y_curr, m_col = clr_map[series_index], label = lab, dates = use_time)
+    plot_helper(x, y_curr, m_col = clr_map[series_index], label = cleas_desc(lab), dates = use_time)
 
     if last_series:
         if title_and_ylab is not None:
@@ -157,11 +185,50 @@ def plot_ip_ts(y,
             plt.show()
     return
 
-def plot_multiple_ip_ts(y_list, lab_list = None, mean_and_std = None, use_time = False, show_last = True, title_and_ylab = None):
+def plot_multiple_ip_ts(y_list, lab_list = None, mean_and_std_list = None, use_time = False, timestep_offset_list = None, dt_init_str_list = None, show_last = True, title_and_ylab = None):
+    """
+    Plotting function for multiple time series.
+    """
+    n = len(y_list)
+    for k, y in enumerate(y_list):
+        ts_offset = get_if_nnone(timestep_offset_list, k, 0)
+        lab = get_if_nnone(lab_list, k)
+        m_a_s = get_if_nnone(mean_and_std_list, k)
+        dt_init_str = get_if_nnone(dt_init_str_list, k)
 
+        last_series = k == n - 1
+        plot_ip_ts(y,
+               lab = lab,
+               show = last_series and show_last,
+               mean_and_std = m_a_s,
+               use_time = use_time,
+               series_index = k,
+               last_series = last_series, 
+               title_and_ylab = title_and_ylab, 
+               dt_mins = 15, 
+               dt_init_str = dt_init_str, 
+               timestep_offset = ts_offset)
 
+def plot_all(all_data, m, use_time = True, show = True, title_and_ylab = None, scale_back = True):
+    """
+    Higher level plot funciton for multiple time series
+    stored in the matrix 'all_data'
+    as they are e.g. saved in processed form.
+    """
 
-    pass
+    n_series = all_data.shape[1]
+    all_series = [all_data[:, i] for i in range(n_series)]
+
+    mean_and_std_list = [m[i].get('mean_and_std') for i in range(n_series)] if scale_back else None
+
+    plot_multiple_ip_ts(all_series,
+                        lab_list = [m[i].get('description') for i in range(n_series)],
+                        mean_and_std_list = [m[i].get('mean_and_std') for i in range(n_series)],
+                        use_time = use_time,
+                        timestep_offset_list = [0 for i in range(n_series)],
+                        dt_init_str_list = [m[i].get('t_init') for i in range(n_series)],
+                        show_last = show, 
+                        title_and_ylab = title_and_ylab)
 
 def scatter_plot(x, y, *, show = True, lab_dict = None, m_and_std_x = None, m_and_std_y = None):
     """
