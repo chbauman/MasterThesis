@@ -13,11 +13,9 @@ from visualize import plot_time_series, plot_ip_time_series, plot_single_ip_ts, 
 from restclient import DataStruct, save_dir
 from util import *
 
-# Create directories if not existing
+# Data directories
 processed_data_path = os.path.join(save_dir, "ProcessedSeries")
 dataset_data_path = os.path.join(save_dir, "Datasets")
-create_dir(processed_data_path)
-create_dir(dataset_data_path)
 
 #######################################################################################################
 # NEST Data
@@ -100,6 +98,32 @@ DFAB_AddData = DataStruct(id_list = [421100168, # Vorlauf Temp
                                     421100170, # Rücklauf Temp
                                     ],
                         name = "DFAB_Extra",
+                        startDate='2017-01-01',
+                        endDate='2019-12-31')
+
+DFAB_AllValves = DataStruct(id_list = [421110008, # First Floor
+                                    421110009,
+                                    421110010,
+                                    421110011,
+                                    421110012,
+                                    421110013,
+                                    421110014,
+                                    421110023, # Second Floor,
+                                    421110024,
+                                    421110025,
+                                    421110026,
+                                    421110027,
+                                    421110028,
+                                    421110029,
+                                    421110038, # Third Floor
+                                    421110039, 
+                                    421110040,
+                                    421110041,
+                                    421110042,
+                                    421110043,
+                                    421110044,
+                                    ],
+                        name = "DFAB_Valves",
                         startDate='2017-01-01',
                         endDate='2019-12-31')
 
@@ -593,7 +617,7 @@ def find_rows_with_nans(all_data):
 
     return col_has_nan
 
-def cut_into_fixed_len(col_has_nan, seq_len = 20, interleave = False):
+def cut_into_fixed_len(col_has_nan, seq_len = 20, interleave = True):
     """
     Cuts the time series into pieces of length 'seq_len'
     for training of RNN.
@@ -637,7 +661,7 @@ def cut_into_fixed_len(col_has_nan, seq_len = 20, interleave = False):
     # Return all found sequences
     return seqs[:, :seq_count]
 
-def cut_data_into_sequences(all_data, seq_len, interleave = False):
+def cut_data_into_sequences(all_data, seq_len, interleave = True):
     """
     Use the two functions above to cut the data into
     sequences for RNN training.
@@ -694,16 +718,14 @@ def save_processed_data(all_data, m, name):
     """
     Saves the processed data in numpy format.
     """
-
     create_dir(processed_data_path)
 
     # Get filename
-    data_name = os.path.join(proc_data_folder, name + "_data.npy")
-    meat_data_name = os.path.join(proc_data_folder, name + "_mdat.txt")
+    data_name = os.path.join(processed_data_path, name + "_data.npy")
+    meat_data_name = os.path.join(processed_data_path, name + "_mdat.txt")
     np.save(data_name, all_data)
     with open(meat_data_name,'w') as data:
         data.write(str(m))
-
     return
 
 def load_processed_data(name):
@@ -723,6 +745,18 @@ def load_processed_data(name):
     else:
         print("Requested files do not exist!")
         return
+
+def load_processed(Data):
+    """
+    Loads the processed data with the same name if 
+    if exists, otherwise raises
+    an Exception.
+    """
+    name = Data.name
+    data = load_processed_data(name)
+    if data is None:
+        raise FileNotFoundError("Water temperature data could not be found.")
+    return data
 
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
@@ -943,7 +977,7 @@ def process_DFAB_heating_data(show_plots = False):
                                          all_data = all_data,
                                          dt_init = dt_init,
                                          row_ind = ind,
-                                         clean_args = [([], 7 * 24 * 60, [])])
+                                         clean_args = [([], 30 * 24 * 60, [])])
             if show_plots:
                 plot_single(all_data[:, ind], 
                             m[ind], 
@@ -961,7 +995,7 @@ def process_DFAB_heating_data(show_plots = False):
                                          dt_init = dt_init,
                                          all_data = all_data,
                                          clip_to_int_args = [0.0, 100.0],
-                                         clean_args = [([], 3 * 24 * 60, [])],
+                                         clean_args = [([], 7 * 24 * 60, [])],
                                          row_ind = ind)
             if show_plots:
                 plot_single(all_data[:, ind], 
@@ -985,51 +1019,174 @@ def process_DFAB_heating_data(show_plots = False):
     loaded = load_processed_data(name)
     if loaded is not None:
         data_list += [loaded]
-        return data_list
+        
+    else:
+        data, m = DFAB_AddData.getData()
+        n_cols = len(data)
 
-    data, m = DFAB_AddData.getData()
-    n_cols = len(data)
+        # Temperature
+        ind = 0
+        if show_plots:
+            plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False)
+        all_data, dt_init = pipeline_preps(data[ind], 
+                                           dt_mins, 
+                                           n_tot_cols = n_cols,
+                                           remove_out_int_args = [10, 50],
+                                           gauss_sigma = 5.0)
+        add_dt_and_tinit(m, dt_mins, dt_init)
+        if show_plots:
+            plot_single(all_data[:, ind], 
+                            m[ind], 
+                            use_time = True, 
+                            show = True, 
+                            title_and_ylab = ['In Water Temperature Interpolated', m[ind]['unit']])
 
-    # Temperature
-    ind = 0
-    if show_plots:
-        plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False)
-    all_data, dt_init = pipeline_preps(data[ind], 
-                                       dt_mins, 
-                                       n_tot_cols = n_cols,
-                                       remove_out_int_args = [10, 50],
-                                       gauss_sigma = 5.0)
-    add_dt_and_tinit(m, dt_mins, dt_init)
-    if show_plots:
-        plot_single(all_data[:, ind], 
-                        m[ind], 
-                        use_time = True, 
-                        show = True, 
-                        title_and_ylab = ['In Water Temperature Interpolated', m[ind]['unit']])
+        ind = 1
+        if show_plots:
+            plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+        all_data, _ = pipeline_preps(data[ind], 
+                                     dt_mins, 
+                                     all_data = all_data,
+                                     dt_init = dt_init,
+                                     row_ind = 1,
+                                     remove_out_int_args = [10, 50],
+                                     gauss_sigma = 5.0)
+        if show_plots:
+            plot_single(all_data[:, ind], 
+                            m[ind], 
+                            use_time = True,
+                            show = True, 
+                            title_and_ylab = ['Out Water Temperature Interpolated', m[ind]['unit']])
 
-    ind = 1
-    if show_plots:
-        plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
-    all_data, _ = pipeline_preps(data[ind], 
-                                 dt_mins, 
-                                 all_data = all_data,
-                                 dt_init = dt_init,
-                                 row_ind = 1,
-                                 remove_out_int_args = [10, 50],
-                                 gauss_sigma = 5.0)
-    if show_plots:
-        plot_single(all_data[:, ind], 
-                        m[ind], 
-                        use_time = True,
-                        show = True, 
-                        title_and_ylab = ['Out Water Temperature Interpolated', m[ind]['unit']])
+        # Standardize and save
+        all_data, m = standardize(all_data, m)
+        save_processed_data(all_data, m, name)
+        data_list += [[all_data, m, name]]
 
-    # Standardize and save
-    all_data, m = standardize(all_data, m)
-    save_processed_data(all_data, m, name)
-    data_list += [[all_data, m, name]]
+    
+    ################################
+    # All Valves Together
+
+    # Get name
+    name = DFAB_AllValves.name
+
+    # Try loading data
+    loaded = load_processed_data(name)
+    if loaded is not None:
+        data_list += [loaded]
+        
+    else:
+        data, m = DFAB_AllValves.getData()
+        n_cols = len(data)
+
+        # Valves
+        for i in range(n_cols):
+            ind = i
+            if show_plots:
+                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False)
+            if i == 0:
+                all_data, dt_init = pipeline_preps(data[ind], 
+                                                   dt_mins, 
+                                                   n_tot_cols = n_cols,
+                                                   clean_args = [([], 30 * 24 * 60, [])])
+                add_dt_and_tinit(m, dt_mins, dt_init)
+            else:
+                all_data, _ = pipeline_preps(data[ind], 
+                                             dt_mins, 
+                                             all_data = all_data,
+                                             dt_init = dt_init,
+                                             row_ind = ind,
+                                             clean_args = [([], 30 * 24 * 60, [])])
+            if show_plots:
+                plot_single(all_data[:, ind], 
+                            m[ind], 
+                            use_time = True, 
+                            show = True, 
+                            title_and_ylab = ['Valve ' + str(ind) + ' Interpolated', m[ind]['unit']])
+
+        # Save
+        save_processed_data(all_data, m, name)
+        data_list += [[all_data, m, name]]
 
     return data_list
+
+def compute_DFAB_energy_usage(show_plots = True):
+    """
+    Computes the energy usage for every room at DFAB
+    using the valves data and the inlet and outlet water
+    temperature difference.
+    """
+    
+    # Load data
+    w_dat, w_m, w_name = load_processed(DFAB_AddData)
+    v_dat, v_m, v_name = load_processed(DFAB_AllValves)
+
+    # Align data
+    dt = w_m[0]['dt']
+    t_init_w = w_m[0]['t_init']
+    t_init_v = v_m[0]['t_init']
+
+    w_dat[:,0] = add_mean_and_std(w_dat[:,0], w_m[0]['mean_and_std'])
+    w_dat[:,1] = add_mean_and_std(w_dat[:,1], w_m[1]['mean_and_std'])    
+
+    aligned_data, t_init_new = align_ts(v_dat, w_dat, t_init_v, t_init_w, dt)
+    aligned_len = aligned_data.shape[0]
+    w_dat = aligned_data[:, -2:]
+    v_dat = aligned_data[:, :-2]
+
+    # Room info
+    room_dict = {0: "31", 1: "41", 2: "42", 3: "43", 4:"51", 5: "52", 6: "53"}
+    valve_room_allocation = np.array(["31", "31", "31", "31", "31", "31", "31", # 3rd Floor
+                                     "41", "41", "42", "43", "43", "43", "41", # 4th Floor
+                                     "51", "51", "53", "53", "53", "52", "51", # 5th Floor
+                                     ])
+    n_rooms = len(room_dict)
+
+    tot_n_vals_open = np.sum(v_dat, axis = 1)
+    dTemp = w_dat[:, 0] - w_dat[:, 1]
+
+    # Prepare output
+    out_dat = np.empty((aligned_len, n_rooms), dtype = np.float32)
+    m_list = []
+
+    m_room = {'description': 'Energy consumption room',
+                  'unit': 'TBD',
+                  'dt': dt,
+                  't_init': t_init_new}
+    if show_plots:
+        plot_all(w_dat, w_m, use_time = True, show = False, scale_back = False, title_and_ylab = ["Water Temps", "Temperature"])
+        plot_single(dTemp, m_room, use_time = True, show = True, title_and_ylab = ["Temperature Difference", "DT"], scale_back = False)
+
+    # Loop over rooms and compute energy
+    for id, room_nr in room_dict.items():
+        room_valves = v_dat[:, valve_room_allocation == room_nr]
+        room_sum_valves = np.sum(room_valves, axis = 1)
+
+        # Divide ignoring division by zero
+        room_energy = dTemp * np.divide(room_sum_valves, 
+                                tot_n_vals_open, 
+                                out = np.zeros_like(room_sum_valves), 
+                                where = tot_n_vals_open != 0)
+
+        m_room['description'] = 'Room ' + room_nr
+        if show_plots:
+            plot_single(room_energy,
+                        m_room, 
+                        use_time = True, 
+                        show = False,
+                        title_and_ylab = ['Energy Consumption', 'Energy'])
+            plot_single(room_sum_valves,
+                        m_room, 
+                        use_time = True, 
+                        show = True,
+                        title_and_ylab = ['Sum All Valves', '0/1'])
+
+        # Add data to output
+        out_dat[:, id] = room_energy
+        m_list += [m_room]
+
+    pass
+
 
 #######################################################################################################
 # Dataset definition and generation
@@ -1076,6 +1233,8 @@ class Dataset():
         """
         Save the class object to a file.
         """
+        create_dir(dataset_data_path)
+
         file_name = self.get_filename(self.name)
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
@@ -1087,15 +1246,16 @@ class Dataset():
 
     @staticmethod
     def loadDataset(name):
+        """
+        Load a saved Dataset object.
+        """
         f_name = Dataset.get_filename(name)
         if not os.path.isfile(f_name):
-            raise FileNotFoundError("Dataset with name " + f_name + " does not exist.")
+            raise FileNotFoundError("Dataset " + f_name + " does not exist.")
         with open(f_name, 'rb') as f:
             ds = pickle.load(f)
             return ds
-
     pass
-
 
 #######################################################################################################
 # Testing
@@ -1282,7 +1442,6 @@ def test_plotting_withDFAB_data():
 
     plot_all(all_data, m, show = True, title_and_ylab = ['Two TS with Dates High Level Plot Test', m[ind]['unit']])
 
-
 def test_dataset_with_DFAB():
     name = 'Test'
 
@@ -1293,7 +1452,9 @@ def test_dataset_with_DFAB():
     s = all_data.shape
     c_inds = np.array([s[1] - 1])
     ds = Dataset(all_data, metadata, name, c_inds)
-    #ds.save()
+    ds.save()
 
     ds_new = Dataset.loadDataset(name)
+
+    compute_DFAB_energy_usage()
 

@@ -52,6 +52,64 @@ def fit_linear_bf_1d(x, y, b_fun):
     """
     raise NotImplementedError("Implement this fucking function!")
 
+def get_shape1(arr):
+    """
+    Returns the shape of the second dimension
+    of a matrix. If it is a vector returns 1.
+    """
+    s = arr.shape
+    if len(s) < 2:
+        return 1
+    else:
+        return s[1]
+    return 0
+
+def align_ts(ts_1, ts_2, t_init1, t_init2, dt):
+    """
+    Aligns the two timeseries with given initial time
+    and constant timestep by padding by np.nan.
+    """
+
+    # Get shapes
+    n_1 = ts_1.shape[0]
+    n_2 = ts_2.shape[0]
+    d_1 = get_shape1(ts_1)
+    d_2 = get_shape1(ts_2)
+
+    # Compute relative offset
+    interv = np.timedelta64(dt, 'm')
+    ti1 = datetime_to_npdatetime(string_to_dt(t_init1))
+    ti2 = datetime_to_npdatetime(string_to_dt(t_init2))
+    offset = np.int(np.round((ti2 - ti1) / interv))
+
+    # Compute length
+    out_len = np.maximum(n_2 - offset, n_1) 
+    start_s = offset <= 0
+    out_len += offset if not start_s else 0
+    out = np.empty((out_len, d_1 + d_2), dtype = ts_1.dtype)
+    out.fill(np.nan)
+
+    # Copy over
+    t1_res = np.reshape(ts_1, (n_1, d_1))
+    t2_res = np.reshape(ts_2, (n_2, d_2))
+    if not start_s:
+        out[:n_2, :d_2] = t2_res
+        out[offset:(offset + n_1), d_2:] = t1_res
+        t_init_out = t_init1
+    else:
+        out[:n_1, :d_1] = t1_res
+        out[-offset:(-offset + n_2), d_1:] = t2_res
+        t_init_out = t_init2
+
+    return out, t_init_out
+
+def add_mean_and_std(ts, mean_and_std):
+    """
+    Transforms the data back to having mean
+    and std as specified.
+    """
+    return ts * mean_and_std[1] + mean_and_std[0]
+
 #######################################################################################################
 # NEST stuff
 

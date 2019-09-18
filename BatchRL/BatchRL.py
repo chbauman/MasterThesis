@@ -46,12 +46,13 @@ def simple_battery_FQI():
 
 def main():
 
-    test_dataset_with_DFAB()
-    return
+    #test_dataset_with_DFAB()
+    #return
     #TestData.getData()
     ##get_data_test()
     #return 0
 
+    process_DFAB_heating_data(show_plots = True)
     #test_plotting_withDFAB_data()
 
     # Battery data
@@ -59,6 +60,7 @@ def main():
     train_bat, test_bat = cut_and_split(dat_bat, 2, 96 * 7)
     bat_mod = BatteryModel()
     bat_mod.fit(train_bat, m_bat)
+    return
 
     # This crashes:
     #mod.analyze(test_bat)

@@ -151,7 +151,7 @@ def plot_ip_ts(y,
         fig, ax = plt.subplots()
 
     n = len(y)
-    y_curr = y    
+    y_curr = np.copy(y)    
 
     # Add std and mean back
     if mean_and_std is not None:
@@ -237,7 +237,7 @@ def plot_all(all_data, m, use_time = True, show = True, title_and_ylab = None, s
 
     plot_multiple_ip_ts(all_series,
                         lab_list = [m[i].get('description') for i in range(n_series)],
-                        mean_and_std_list = [m[i].get('mean_and_std') for i in range(n_series)],
+                        mean_and_std_list = mean_and_std_list,
                         use_time = use_time,
                         timestep_offset_list = [0 for i in range(n_series)],
                         dt_init_str_list = [m[i].get('t_init') for i in range(n_series)],
