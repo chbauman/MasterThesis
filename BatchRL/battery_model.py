@@ -17,7 +17,6 @@ class BatteryModel(BaseDynamicsModel):
     p_{t+1}: average charging power from time t to t+1 (cotrol input)
     """
 
-
     def __init__(self, mlp_layers = [10, 10, 10], n_iter = 2):
         
         
@@ -108,7 +107,7 @@ class BatteryModel(BaseDynamicsModel):
         y_pw_line = a1 + a2 * x_pw_line + a3 * np.maximum(0, x_pw_line)
 
         # Plot 
-        scatter_plot(p[mask], ds[mask], lab_dict = labs, 
+        scatter_plot(p, ds, lab_dict = labs, 
                      m_and_std_x = mas_p,
                      m_and_std_y = [0.0, d_soc_std],
                      show = True, 
