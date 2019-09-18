@@ -91,7 +91,7 @@ class BatteryModel(BaseDynamicsModel):
         d_soc_std = mas_ds[1]
 
         # Fit linear Model
-        fitted_ds = fit_linear(p, ds, p)
+        fitted_ds = fit_linear_1d(p, ds, p)
         mask = np.logical_or(ds > fitted_ds - 0.35, p < 0)
         masked_p = p[mask]
         masked_ds = ds[mask]

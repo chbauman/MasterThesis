@@ -1,6 +1,7 @@
 
 import os
 import scipy
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -12,69 +13,11 @@ from visualize import plot_time_series, plot_ip_time_series, plot_single_ip_ts, 
 from restclient import DataStruct, save_dir
 from util import *
 
-#######################################################################################################
-# Test Data
-
-TestData = DataStruct(id_list = [421100171, 421100172],
-                      name = "Test",
-                      startDate='2019-08-08',
-                      endDate='2019-08-09')
-
-class TestDataSynth:
-     def getData(self):
-         """
-         Synthetic and short dataset to be used for debugging.
-         """
-
-         # First Time series
-         dict1 = {}
-         dict1['description'] = "Synthetic Data Series 1: Base Series"
-         dict1['unit'] = "Test Unit 1"
-         vals1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
-         dats1 = np.array([
-                np.datetime64('2005-02-25T03:31'),
-                np.datetime64('2005-02-25T03:39'),
-                np.datetime64('2005-02-25T03:48'),
-                np.datetime64('2005-02-25T04:20'),
-                np.datetime64('2005-02-25T04:25'),
-                np.datetime64('2005-02-25T04:30'),
-             ], dtype = 'datetime64')
-
-         # Second Time series
-         dict2 = {}
-         dict2['description'] = "Synthetic Data Series 2: Delayed and longer"
-         dict2['unit'] = "Test Unit 2"
-         vals2 = np.array([1.0, 1.4, 2.1, 1.5, 3.3, 1.8, 2.5])
-         dats2 = np.array([
-                np.datetime64('2005-02-25T03:51'),
-                np.datetime64('2005-02-25T03:59'),
-                np.datetime64('2005-02-25T04:17'),
-                np.datetime64('2005-02-25T04:21'),
-                np.datetime64('2005-02-25T04:34'),
-                np.datetime64('2005-02-25T04:55'),
-                np.datetime64('2005-02-25T05:01'),
-             ], dtype = 'datetime64')
-
-         # Third Time series
-         dict3 = {}
-         dict3['description'] = "Synthetic Data Series 3: Repeating Values"
-         dict3['unit'] = "Test Unit 3"
-         vals3 = np.array([0.0, 1.4, 1.4, 0.0, 3.3, 3.3, 3.3, 3.3, 0.0, 3.3, 2.5])
-         dats3 = np.array([
-                np.datetime64('2005-02-25T03:45'),
-                np.datetime64('2005-02-25T03:53'),
-                np.datetime64('2005-02-25T03:59'),
-                np.datetime64('2005-02-25T04:21'),
-                np.datetime64('2005-02-25T04:23'),
-                np.datetime64('2005-02-25T04:25'),
-                np.datetime64('2005-02-25T04:34'),
-                np.datetime64('2005-02-25T04:37'),
-                np.datetime64('2005-02-25T04:45'),
-                np.datetime64('2005-02-25T04:55'),
-                np.datetime64('2005-02-25T05:01'),
-             ], dtype = 'datetime64')
-         return ([(vals1, dats1), (vals2, dats2), (vals3, dats3)], [dict1, dict2, dict3])
-TestData2 = TestDataSynth()
+# Create directories if not existing
+processed_data_path = os.path.join(save_dir, "ProcessedSeries")
+dataset_data_path = os.path.join(save_dir, "Datasets")
+create_dir(processed_data_path)
+create_dir(dataset_data_path)
 
 #######################################################################################################
 # NEST Data
@@ -752,8 +695,7 @@ def save_processed_data(all_data, m, name):
     Saves the processed data in numpy format.
     """
 
-    proc_data_folder = os.path.join(save_dir, "ProcessedSeries")
-    create_dir(proc_data_folder)
+    create_dir(processed_data_path)
 
     # Get filename
     data_name = os.path.join(proc_data_folder, name + "_data.npy")
@@ -769,9 +711,8 @@ def load_processed_data(name):
     Loades the processed data in numpy format.
     """
 
-    proc_data_folder = os.path.join(save_dir, "ProcessedSeries")
-    data_name = os.path.join(proc_data_folder, name + "_data.npy")
-    meat_data_name = os.path.join(proc_data_folder, name + "_mdat.txt")
+    data_name = os.path.join(processed_data_path, name + "_data.npy")
+    meat_data_name = os.path.join(processed_data_path, name + "_mdat.txt")
 
     if os.path.isfile(data_name) and os.path.isfile(meat_data_name):
         all_data = np.load(data_name)
@@ -785,89 +726,6 @@ def load_processed_data(name):
 
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
-
-# Testing
-def get_data_test():
-
-    name = "Test"
-
-    # Test Sequence Cutting
-    seq1 = np.array([1,2, np.nan, 1, 2, np.nan, 3, 2, 1, 3, 4, np.nan, np.nan, 3, 2, 3, 1, 3, np.nan, 1, 2])
-    seq2 = np.array([3,4, np.nan, np.nan, 2, np.nan, 3, 2, 1, 3, 4, 7, np.nan, 3, 2, 3, 1, np.nan, np.nan, 3, 4])
-    n = seq1.shape[0]
-    all_dat = np.empty((n, 2), dtype = np.float32)
-    all_dat[:,0] = seq1
-    all_dat[:,1] = seq2
-    print(all_dat)
-
-    # Test
-    strk = extract_streak(all_dat, 2, 2)
-    print(strk)
-
-    # Test Standardizing
-    m = [{}, {}]
-    all_dat, m = standardize(all_dat, m)
-    print(all_dat)
-    print(m)
-
-    # Test Sequence Cutting
-    c = find_rows_with_nans(all_dat)
-    print(c)
-    seq_inds = cut_into_fixed_len(c, 2, interleave = True)
-    print(seq_inds)
-    od = cut_data_into_sequences(all_dat, 2, interleave = True)
-    print(od)
-
-    # Test hole filling by interpolation
-    test_ts = np.array([np.nan, np.nan, 1, 2, 3.5, np.nan, 4.5, np.nan])
-    test_ts2 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, np.nan, 7.0])
-    fill_holes_linear_interpolate(test_ts, 1)
-    fill_holes_linear_interpolate(test_ts2, 2)
-    print(test_ts)
-    print(test_ts2)
-
-    # Test Outlier Removal
-    test_ts3 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, 17.0, 5.0, 2.0, -1.0, np.nan, 7.0, 7.0, 17.0, np.nan, 20.0, 5.0, 6.0])
-    print(test_ts3)
-    remove_outliers(test_ts3, 5.0, [0.0, 100.0])
-    print(test_ts3)
-
-    # Show plots
-    dt_mins = 15
-    dat, m = TestData2.getData()
-    #plot_time_series(dat[0][1], dat[0][0], m[0], show = False)
-    #plot_time_series(dat[1][1], dat[1][0], m[1], show = False)
-    #plot_time_series(dat[2][1], dat[2][0], m[2], show = False)
-
-    # Clean data
-    mod_dat = clean_data(dat[2], [0.0], 4, [3.3])
-    #plot_time_series(mod_dat[1], mod_dat[0], m[2], show = True)
-
-    [data1, dt_init1] = interpolate_time_series(dat[0], dt_mins)
-    n_data = data1.shape[0]
-    print(n_data, "total data points.")
-
-    # Initialize np array for compact storage
-    all_data = np.empty((n_data, 3), dtype = np.float32)
-    all_data.fill(np.nan)
-
-    # Add data
-    add_time(all_data, dt_init1, 0, dt_mins)
-    all_data[:,1] = data1
-    [data2, dt_init2] = interpolate_time_series(dat[1], dt_mins)
-
-    print(data2)
-    plot_ip_time_series(data2, show = False)
-    data2 = gaussian_filter_ignoring_nans(data2)
-    print(data2)
-    plot_ip_time_series(data2, show = True)
-
-    add_col(all_data, data2, dt_init1, dt_init2, 2, dt_mins)
-
-    save_processed_data(all_data, m, name)
-    d, m_new = load_processed_data(name)
-    print(m_new[0])
-    return all_data, m
 
 def get_battery_data(show_plot = False, show = True):
     """
@@ -1173,6 +1031,215 @@ def process_DFAB_heating_data(show_plots = False):
 
     return data_list
 
+#######################################################################################################
+# Dataset definition and generation
+
+class Dataset():
+    """
+    This class contains all infos about a given dataset.
+    """
+
+    def __init__(self, all_data, m, name, c_inds):
+        """
+        Constructor: Puts the important metadata from the
+        dict m into member variables.
+        """
+
+        self.name = name
+
+        # Dimensions
+        self.n = all_data.shape[0]
+        self.d = all_data.shape[1]
+        self.n_c = c_inds.shape[0]
+
+        # Metadata
+        self.dt = m[0]['dt']
+        self.t_init = m[0]['t_init']
+        self.is_scaled = True
+        self.scaling = np.empty((self.d, 2), dtype = np.float32)
+        self.descriptions = np.empty((self.d,), dtype = "U100")
+        for ct, el in enumerate(m):
+            desc = el['description']
+            self.descriptions[ct] = desc
+            m_a_s = el.get('mean_and_std')
+            if m_a_s is not None:
+                self.scaling[ct, 0] = m_a_s[0]
+                self.scaling[ct, 1] = m_a_s[1]
+            else:
+                self.is_scaled = False
+
+        # Actual data
+        self.data = all_data
+        self.c_inds = c_inds
+
+    def save(self):
+        """
+        Save the class object to a file.
+        """
+        file_name = self.get_filename(self.name)
+        with open(file_name, 'wb') as f:
+            pickle.dump(self, f)
+        pass
+
+    @staticmethod
+    def get_filename(name):
+        return os.path.join(dataset_data_path, name) + '.pkl'
+
+    @staticmethod
+    def loadDataset(name):
+        f_name = Dataset.get_filename(name)
+        if not os.path.isfile(f_name):
+            raise FileNotFoundError("Dataset with name " + f_name + " does not exist.")
+        with open(f_name, 'rb') as f:
+            ds = pickle.load(f)
+            return ds
+
+    pass
+
+
+#######################################################################################################
+# Testing
+
+# Test Data
+TestData = DataStruct(id_list = [421100171, 421100172],
+                      name = "Test",
+                      startDate='2019-08-08',
+                      endDate='2019-08-09')
+
+class TestDataSynth:
+     def getData(self):
+         """
+         Synthetic and short dataset to be used for debugging.
+         """
+
+         # First Time series
+         dict1 = {}
+         dict1['description'] = "Synthetic Data Series 1: Base Series"
+         dict1['unit'] = "Test Unit 1"
+         vals1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
+         dats1 = np.array([
+                np.datetime64('2005-02-25T03:31'),
+                np.datetime64('2005-02-25T03:39'),
+                np.datetime64('2005-02-25T03:48'),
+                np.datetime64('2005-02-25T04:20'),
+                np.datetime64('2005-02-25T04:25'),
+                np.datetime64('2005-02-25T04:30'),
+             ], dtype = 'datetime64')
+
+         # Second Time series
+         dict2 = {}
+         dict2['description'] = "Synthetic Data Series 2: Delayed and longer"
+         dict2['unit'] = "Test Unit 2"
+         vals2 = np.array([1.0, 1.4, 2.1, 1.5, 3.3, 1.8, 2.5])
+         dats2 = np.array([
+                np.datetime64('2005-02-25T03:51'),
+                np.datetime64('2005-02-25T03:59'),
+                np.datetime64('2005-02-25T04:17'),
+                np.datetime64('2005-02-25T04:21'),
+                np.datetime64('2005-02-25T04:34'),
+                np.datetime64('2005-02-25T04:55'),
+                np.datetime64('2005-02-25T05:01'),
+             ], dtype = 'datetime64')
+
+         # Third Time series
+         dict3 = {}
+         dict3['description'] = "Synthetic Data Series 3: Repeating Values"
+         dict3['unit'] = "Test Unit 3"
+         vals3 = np.array([0.0, 1.4, 1.4, 0.0, 3.3, 3.3, 3.3, 3.3, 0.0, 3.3, 2.5])
+         dats3 = np.array([
+                np.datetime64('2005-02-25T03:45'),
+                np.datetime64('2005-02-25T03:53'),
+                np.datetime64('2005-02-25T03:59'),
+                np.datetime64('2005-02-25T04:21'),
+                np.datetime64('2005-02-25T04:23'),
+                np.datetime64('2005-02-25T04:25'),
+                np.datetime64('2005-02-25T04:34'),
+                np.datetime64('2005-02-25T04:37'),
+                np.datetime64('2005-02-25T04:45'),
+                np.datetime64('2005-02-25T04:55'),
+                np.datetime64('2005-02-25T05:01'),
+             ], dtype = 'datetime64')
+         return ([(vals1, dats1), (vals2, dats2), (vals3, dats3)], [dict1, dict2, dict3])
+TestData2 = TestDataSynth()
+
+# Tests
+def get_data_test():
+
+    name = "Test"
+
+    # Test Sequence Cutting
+    seq1 = np.array([1,2, np.nan, 1, 2, np.nan, 3, 2, 1, 3, 4, np.nan, np.nan, 3, 2, 3, 1, 3, np.nan, 1, 2])
+    seq2 = np.array([3,4, np.nan, np.nan, 2, np.nan, 3, 2, 1, 3, 4, 7, np.nan, 3, 2, 3, 1, np.nan, np.nan, 3, 4])
+    n = seq1.shape[0]
+    all_dat = np.empty((n, 2), dtype = np.float32)
+    all_dat[:,0] = seq1
+    all_dat[:,1] = seq2
+    print(all_dat)
+
+    # Test
+    strk = extract_streak(all_dat, 2, 2)
+    print(strk)
+
+    # Test Standardizing
+    m = [{}, {}]
+    all_dat, m = standardize(all_dat, m)
+    print(all_dat)
+    print(m)
+
+    # Test Sequence Cutting
+    c = find_rows_with_nans(all_dat)
+    print(c)
+    seq_inds = cut_into_fixed_len(c, 2, interleave = True)
+    print(seq_inds)
+    od = cut_data_into_sequences(all_dat, 2, interleave = True)
+    print(od)
+
+    # Test hole filling by interpolation
+    test_ts = np.array([np.nan, np.nan, 1, 2, 3.5, np.nan, 4.5, np.nan])
+    test_ts2 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, np.nan, 7.0])
+    fill_holes_linear_interpolate(test_ts, 1)
+    fill_holes_linear_interpolate(test_ts2, 2)
+    print(test_ts)
+    print(test_ts2)
+
+    # Test Outlier Removal
+    test_ts3 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, 17.0, 5.0, 2.0, -1.0, np.nan, 7.0, 7.0, 17.0, np.nan, 20.0, 5.0, 6.0])
+    print(test_ts3)
+    remove_outliers(test_ts3, 5.0, [0.0, 100.0])
+    print(test_ts3)
+
+    # Show plots
+    dt_mins = 15
+    dat, m = TestData2.getData()
+
+    # Clean data
+    mod_dat = clean_data(dat[2], [0.0], 4, [3.3])
+
+    # Interpolate
+    [data1, dt_init1] = interpolate_time_series(dat[0], dt_mins)
+    n_data = data1.shape[0]
+    print(n_data, "total data points.")
+
+    # Initialize np array for compact storage
+    all_data = np.empty((n_data, 3), dtype = np.float32)
+    all_data.fill(np.nan)
+
+    # Add data
+    add_time(all_data, dt_init1, 0, dt_mins)
+    all_data[:,1] = data1
+    [data2, dt_init2] = interpolate_time_series(dat[1], dt_mins)
+
+    print(data2)
+    data2 = gaussian_filter_ignoring_nans(data2)
+    print(data2)
+
+    add_col(all_data, data2, dt_init1, dt_init2, 2, dt_mins)
+
+    save_processed_data(all_data, m, name)
+    d, m_new, name = load_processed_data(name)
+    print(m_new[0])
+    return all_data, m, name
+
 def test_plotting_withDFAB_data():
 
     data_list = process_DFAB_heating_data()
@@ -1215,15 +1282,18 @@ def test_plotting_withDFAB_data():
 
     plot_all(all_data, m, show = True, title_and_ylab = ['Two TS with Dates High Level Plot Test', m[ind]['unit']])
 
-    
 
+def test_dataset_with_DFAB():
+    name = 'Test'
 
+    # Get part of DFAB data
+    data_list = process_DFAB_heating_data()
+    all_data, metadata, _ = data_list[-1]
 
+    s = all_data.shape
+    c_inds = np.array([s[1] - 1])
+    ds = Dataset(all_data, metadata, name, c_inds)
+    #ds.save()
 
+    ds_new = Dataset.loadDataset(name)
 
-
-
-
-
-
-    

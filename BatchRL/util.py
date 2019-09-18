@@ -15,10 +15,20 @@ def get_if_nnone(lst, indx, default = None):
     """
     return default if lst is None else lst[indx]
 
+def apply(list_or_el, fun):
+    """
+    Applies the function fun to each element of list_or_el
+    if it is a list, else it is applied directly to list_or_el.
+    """
+    if isinstance(list_or_el, list):
+        return [fun(k) for k in list_or_el]
+    else:
+        return fun(list_or_el)
+
 #######################################################################################################
 # Numerical stuff
 
-def fit_linear(x, y, x_new = None):
+def fit_linear_1d(x, y, x_new = None):
     """
     Fit a linear model y = c * x + m.
     Returns coefficients m and c. If x_new
@@ -35,6 +45,12 @@ def fit_linear(x, y, x_new = None):
         return [m, c]
     else:
         return c * x_new + m
+
+def fit_linear_bf_1d(x, y, b_fun):
+    """
+    Fits a linear model y = \alpha^T f(x).
+    """
+    raise NotImplementedError("Implement this fucking function!")
 
 #######################################################################################################
 # NEST stuff
