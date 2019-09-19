@@ -300,7 +300,6 @@ def plot_all(all_data, m, use_time = True, show = True, title_and_ylab = None, s
                         title_and_ylab = title_and_ylab)
     save_figure(save_name, show)
 
-
 def scatter_plot(x, y, *, 
                  show = True, 
                  lab_dict = None, 

@@ -137,7 +137,7 @@ WeatherData = DataStruct(id_list = [3200000,
                                     3200002,
                                     3200008],
                         name = "Weather",
-                        startDate='2018-01-01',
+                        startDate='2019-01-01',
                         endDate='2019-12-31')
 
 # Battery Data
@@ -780,7 +780,7 @@ def load_processed(Data):
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
 
-def get_battery_data(save_plot = False, show = True):
+def get_battery_data(save_plot = False, show = True, use_dataset = False):
     """
     Load and interpolate the battery data.
     """
@@ -796,7 +796,13 @@ def get_battery_data(save_plot = False, show = True):
     plot_name_after = os.path.join(prep_plot_dir, "processed")
 
     # Try loading data
-    loaded = load_processed_data(name)
+    if use_dataset:
+        try:
+            loaded = Dataset.loadDataset(name)
+        except FileNotFoundError:
+            loaded = None
+    else:
+        loaded = load_processed_data(name)
     if loaded is not None:
         return loaded
 
@@ -867,6 +873,10 @@ def get_battery_data(save_plot = False, show = True):
                  save_name = plot_name_after)
 
     # Save and return
+    if use_dataset:
+        bat_dataset = Dataset(all_data, m_out, name, c_inds = np.array([1]), p_inds = np.array([0]))
+        bat_dataset.save()
+        return bat_dataset
     save_processed_data(all_data, m_out, name)
     return all_data, m_out, name
 
@@ -891,9 +901,11 @@ def get_weather_data(save_plots = True):
     plot_name_irrad_raw = os.path.join(prep_plot_dir, "Raw Irradiance")
 
     # Try loading data
-    loaded = load_processed_data(name)
-    if loaded is not None:
+    try:
+        loaded = Dataset.loadDataset(name)
         return loaded
+    except FileNotFoundError:
+        loaded = None
 
     # Initialize meta data dict list
     m_out = []
@@ -945,10 +957,13 @@ def get_weather_data(save_plots = True):
     m_out += [m[2]]
 
     # Save and return
-    save_processed_data(all_data, m_out, name)
-    return all_data, m_out, name
+    no_inds = np.array([], dtype = np.int32)
+    w_dataset = Dataset(all_data, m_out, name, c_inds = no_inds, p_inds = no_inds)
+    w_dataset.save()
+    return w_dataset
 
 # Real Data, takes some time to run
+# DEPRECATED
 def get_heating_data(filter_sigma = None):
     """
     Load and interpolate all the necessary data.
@@ -1045,7 +1060,7 @@ def get_heating_data(filter_sigma = None):
     save_processed_data(all_data, m_out, name)
     return all_data, m_out, name
 
-def process_DFAB_heating_data(show_plots = False):
+def get_DFAB_heating_data(show_plots = False, use_dataset = False):
 
     data_list = []
     dt_mins = 15
@@ -1059,10 +1074,19 @@ def process_DFAB_heating_data(show_plots = False):
         name = e.name
 
         # Try loading data
-        loaded = load_processed_data(name)
-        if loaded is not None:
-            data_list += [loaded]
-            continue
+        if use_dataset:
+            try:
+                loaded = Dataset.loadDataset(name)
+                data_list += [loaded]
+                continue
+            except FileNotFoundError:
+                loaded = None
+        else:
+            # Try loading data
+            loaded = load_processed_data(name)
+            if loaded is not None:
+                data_list += [loaded]
+                continue
 
         data, m = e.getData()
         n_cols = len(data)
@@ -1131,6 +1155,11 @@ def process_DFAB_heating_data(show_plots = False):
                             save_name = plot_file_name)
 
         # Standardize and save
+        if use_dataset:
+            dataset = Dataset(all_data, m, name, c_inds = np.array([1]), p_inds = np.array([0]))
+            dataset.save()
+            data_list += [dataset]
+            continue
         all_data, m = standardize(all_data, m)
         save_processed_data(all_data, m, name)
         data_list += [all_data, m, name]
@@ -1142,10 +1171,16 @@ def process_DFAB_heating_data(show_plots = False):
     name = DFAB_AddData.name
 
     # Try loading data
-    loaded = load_processed_data(name)
+    if use_dataset:
+        try:
+            loaded = Dataset.loadDataset(name)
+        except FileNotFoundError:
+            loaded = None
+    else:
+        loaded = load_processed_data(name)
+
     if loaded is not None:
         data_list += [loaded]
-        
     else:
         data, m = DFAB_AddData.getData()
         n_cols = len(data)
@@ -1191,9 +1226,16 @@ def process_DFAB_heating_data(show_plots = False):
                             save_name = plot_file_name)
 
         # Standardize and save
-        all_data, m = standardize(all_data, m)
-        save_processed_data(all_data, m, name)
-        data_list += [[all_data, m, name]]
+        if use_dataset:
+            all_data, m = standardize(all_data, m)
+            no_inds = np.array([], dtype = np.int32)
+            dataset = Dataset(all_data, m, name, c_inds = no_inds , p_inds = no_inds)
+            dataset.save()
+            data_list += [dataset]
+        else:
+            all_data, m = standardize(all_data, m)
+            save_processed_data(all_data, m, name)
+            data_list += [[all_data, m, name]]
 
     
     ################################
@@ -1203,10 +1245,16 @@ def process_DFAB_heating_data(show_plots = False):
     name = DFAB_AllValves.name
 
     # Try loading data
-    loaded = load_processed_data(name)
+    if use_dataset:
+        try:
+            loaded = Dataset.loadDataset(name)
+        except FileNotFoundError:
+            loaded = None
+    else:
+        loaded = load_processed_data(name)
+
     if loaded is not None:
-        data_list += [loaded]
-        
+        data_list += [loaded]        
     else:
         data, m = DFAB_AllValves.getData()
         n_cols = len(data)
@@ -1241,8 +1289,15 @@ def process_DFAB_heating_data(show_plots = False):
                             title_and_ylab = ['Valve ' + str(ind) + ' Interpolated', m[ind]['unit']], save_name = plot_path)
 
         # Save
-        save_processed_data(all_data, m, name)
-        data_list += [[all_data, m, name]]
+        if use_dataset:
+            no_inds = np.array([], dtype = np.int32)
+            c_inds = np.array(range(n_cols))
+            dataset = Dataset(all_data, m, name, c_inds = c_inds , p_inds = no_inds)
+            dataset.save()
+            data_list += [dataset]
+        else:
+            save_processed_data(all_data, m, name)
+            data_list += [[all_data, m, name]]
 
     return data_list
 
@@ -1263,7 +1318,7 @@ def compute_DFAB_energy_usage(show_plots = True):
     t_init_v = v_m[0]['t_init']
 
     w_dat[:,0] = add_mean_and_std(w_dat[:,0], w_m[0]['mean_and_std'])
-    w_dat[:,1] = add_mean_and_std(w_dat[:,1], w_m[1]['mean_and_std'])    
+    w_dat[:,1] = add_mean_and_std(w_dat[:,1], w_m[1]['mean_and_std'])
 
     aligned_data, t_init_new = align_ts(v_dat, w_dat, t_init_v, t_init_w, dt)
     aligned_len = aligned_data.shape[0]
@@ -1343,7 +1398,7 @@ class Dataset():
     This class contains all infos about a given dataset.
     """
 
-    def __init__(self, all_data, m, name, c_inds):
+    def __init__(self, all_data, m, name, c_inds, p_inds):
         """
         Constructor: Puts the important metadata from the
         dict m into member variables.
@@ -1355,11 +1410,13 @@ class Dataset():
         self.n = all_data.shape[0]
         self.d = all_data.shape[1]
         self.n_c = c_inds.shape[0]
+        self.n_p = p_inds.shape[0]
 
         # Metadata
         self.dt = m[0]['dt']
         self.t_init = m[0]['t_init']
-        self.is_scaled = True
+        self.is_scaled = np.empty((self.d,), dtype = np.bool)
+        self.is_scaled.fill(True)
         self.scaling = np.empty((self.d, 2), dtype = np.float32)
         self.descriptions = np.empty((self.d,), dtype = "U100")
         for ct, el in enumerate(m):
@@ -1370,11 +1427,12 @@ class Dataset():
                 self.scaling[ct, 0] = m_a_s[0]
                 self.scaling[ct, 1] = m_a_s[1]
             else:
-                self.is_scaled = False
+                self.is_scaled[ct] = False
 
         # Actual data
         self.data = all_data
         self.c_inds = c_inds
+        self.p_inds = p_inds
 
     def save(self):
         """
@@ -1406,10 +1464,55 @@ class Dataset():
 
 def generateRoomDatasets():
     """
-    Gather the right data and put it togeter 
+    Gather the right data and put it togeter
     """
 
-    raise NotImplementedError("Implement this please!")
+    # Get weather
+    w_dat, w_m, w_name = get_weather_data()
+    w_tinit = w_m[0]['t_init']
+    dt = w_m[0]['dt']
+
+    # Get room data
+    dfab_data = get_DFAB_heating_data()
+    n_rooms = len(rooms)
+    dfab_room_data_list = [dfab_data[i] for i in range(n_rooms)]
+
+    # Heating water temperature
+    dfab_water_temp = dfab_data[n_rooms]
+    wt_dat, wt_m, wt_name = dfab_water_temp
+    w_in_dat = wt_dat[:, 0]
+    wt_tinit = wt_m[0]['t_init']
+
+    # Single room datasets
+    for ct, dat in enumerate(dfab_room_data_list):
+        dat_room, m_room, name_room = dat
+        n_cols = dat_room.shape[1]
+        n = dat_room.shape[0]
+        t_init = m_room[0]['t_init']
+
+        # initialize
+        dat_res = np.empty((n, n_cols - 2), dtype = dat_room.dtype)
+
+        # Copy temp and blinds and average valve data
+        dat_res[:, 0] = dat_room[:,0]
+        dat_res[:, 1] = np.mean(dat_room[:, 1:4], axis = 1)
+        if n_cols == 5:
+            dat_res[:, 2] = dat_room[:, -1]
+
+        # Add inlet water temperature and weather data
+        dat_res, t_init_curr = align_ts(dat_res, w_in_dat, t_init, wt_tinit, dt)
+        dat_res, t_init_curr = align_ts(dat_res, w_dat, t_init_curr, w_tinit, dt)
+
+        # Add weather data
+        m_out = [] + w_m
+        m_out[0]['t_init'] = t_init_curr
+
+
+        print(name_room)
+        print(name_room)
+
+
+    raise NotImplementedError("This still sucks, implement this shit already!")
 
 
 #######################################################################################################
@@ -1557,7 +1660,7 @@ def get_data_test():
 
 def test_plotting_withDFAB_data():
 
-    data_list = process_DFAB_heating_data()
+    data_list = get_DFAB_heating_data()
     all_data, metadata, name = data_list[-1]
     data, m = DFAB_AddData.getData()
 
@@ -1601,12 +1704,13 @@ def test_dataset_with_DFAB():
     name = 'Test'
 
     # Get part of DFAB data
-    data_list = process_DFAB_heating_data()
+    data_list = get_DFAB_heating_data()
     all_data, metadata, _ = data_list[-1]
 
     s = all_data.shape
     c_inds = np.array([s[1] - 1])
-    ds = Dataset(all_data, metadata, name, c_inds)
+    p_inds = np.array([s[1] - 2])
+    ds = Dataset(all_data, metadata, name, c_inds, p_inds)
     ds.save()
 
     ds_new = Dataset.loadDataset(name)

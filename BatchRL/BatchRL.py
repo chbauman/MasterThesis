@@ -19,8 +19,8 @@ from pendulum import Pendulum
 from data import Room274Data, Room272Data, WeatherData, TestData, \
     analyze_data, get_heating_data, get_data_test, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
-    process_DFAB_heating_data, test_plotting_withDFAB_data, test_dataset_with_DFAB, \
-    compute_DFAB_energy_usage, get_weather_data
+    get_DFAB_heating_data, test_plotting_withDFAB_data, test_dataset_with_DFAB, \
+    compute_DFAB_energy_usage, get_weather_data, generateRoomDatasets
 from visualize import plot_time_series, plot_ip_time_series
 
 def simple_battery_FQI():
@@ -46,6 +46,13 @@ def simple_battery_FQI():
     sbt.eval_policy(fqi.get_policy())
 
 def main():
+    get_DFAB_heating_data(use_dataset = True)
+    return
+    get_weather_data()
+    get_battery_data(use_dataset = True)
+    return
+    generateRoomDatasets()
+    return
 
     #test_dataset_with_DFAB()
     #return
@@ -56,7 +63,7 @@ def main():
     return
     compute_DFAB_energy_usage()
     return
-    process_DFAB_heating_data(show_plots = True)
+    get_DFAB_heating_data(show_plots = True)
     #test_plotting_withDFAB_data()
 
     # Battery data
