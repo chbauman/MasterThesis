@@ -181,6 +181,22 @@ BatteryData = DataStruct(id_list = [40200000,
 #######################################################################################################
 # Time Series Processing
 
+def extract_date_interval(dates, vals, d1, d2):
+    """
+    Extracts all data that lies within the dates d1 and d2.
+    Returns None if there are no such points.
+    """
+    if d1 >= d2:
+        raise ValueError("Invalid date interval passed.")
+    mask = np.logical_and(dates < d2, dates > d1)
+    if np.sum(mask) == 0:
+        print("No values in provided date interval.")
+        return None
+    dates_new = dates[mask]
+    vals_new = vals[mask]
+    dt_init_new = dates_new[0]
+    return dates_new, vals_new, dt_init_new
+
 def analyze_data(dat):
     """
     Analyzes the provided data.
@@ -776,9 +792,8 @@ def get_battery_data(show_plot = False, show = True):
     prep_plot_dir = os.path.join(preprocess_plot_path, name)
     create_dir(prep_plot_dir)
     plot_name_before = os.path.join(prep_plot_dir, "raw")
+    plot_name_roi = os.path.join(prep_plot_dir, "strange")
     plot_name_after = os.path.join(prep_plot_dir, "processed")
-    print(plot_name_before)
-    print(plot_name_after)
 
     # Try loading data
     loaded = load_processed_data(name)
@@ -799,11 +814,24 @@ def get_battery_data(show_plot = False, show = True):
     n_feats = len(use_inds)
 
     # Plot
-    x = [dat[i][1] for i in range(n_feats)]
-    y = [dat[i][0] for i in range(n_feats)]
-    m_used = [m[i] for i in range(n_feats)]
+    x = [dat[i][1] for i in use_inds]
+    y = [dat[i][0] for i in use_inds]
+    m_used = [m[i] for i in use_inds]
+    y_lab = '% / kW'
+    t = "Raw Battery Data"
     if show_plot:
-        plot_multiple_time_series(x, y, m_used, False, plot_name_before)
+        plot_multiple_time_series(x, y, m_used, show = False, title_and_ylab = [t, y_lab], save_name = plot_name_before)
+
+    # Extract ROI of data where it behaves strangely
+    d1 = np.datetime64('2019-05-24T12:00')
+    d2 = np.datetime64('2019-05-25T12:00')
+    x_ext, y_ext = [[extract_date_interval(x[i], y[i], d1, d2)[k] for i in range(n_feats)] for k in range(2)]
+
+    if show_plot:
+        plot_multiple_time_series(x_ext, y_ext, m_used, 
+                                  show = False, 
+                                  title_and_ylab = ["Strange Battery Behavior", y_lab], 
+                                  save_name = plot_name_roi)
 
     # SoC
     all_data, dt_init = pipeline_preps(dat[19], 
@@ -834,7 +862,7 @@ def get_battery_data(show_plot = False, show = True):
                  m_out, 
                  use_time = True, 
                  show = show, 
-                 title_and_ylab = ['Processed Battery Data', 'kW / %'], 
+                 title_and_ylab = ['Processed Battery Data', y_lab], 
                  scale_back = True,
                  save_name = plot_name_after)
 
@@ -1195,7 +1223,6 @@ def compute_DFAB_energy_usage(show_plots = True):
         m_list += [m_room]
 
     pass
-
 
 #######################################################################################################
 # Dataset definition and generation

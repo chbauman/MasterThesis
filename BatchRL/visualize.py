@@ -25,7 +25,7 @@ plot_dir = '../Plots'
 preprocess_plot_path = os.path.join(plot_dir, "Preprocessing")
 create_dir(preprocess_plot_path)
 
-def save_figure(save_name, show = False):
+def save_figure(save_name, show = False, vector_format = True):
     """
     Saves the current figure.
     """
@@ -34,14 +34,14 @@ def save_figure(save_name, show = False):
         fig = plt.gcf()
         fig.set_size_inches(16, 9)
 
-        # Save
+        # Save and clear
         save_format = '.svg'
-        save_format = '.pdf'
+        save_format = '.pdf' if vector_format else '.png'
         save_kwargs = {'bbox_inches': 'tight', 'dpi': 500}
+        save_kwargs = {'bbox_inches': 'tight'}
         plt.savefig(save_name + save_format, **save_kwargs)
+        plt.close()
     return
-
-
 
 # Base plot function defining the style
 def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
@@ -61,35 +61,44 @@ def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
         plt.plot(x, y, **kwargs)
 
 # Plotting raw data series
-def plot_time_series(x, y, m, show = True, first_series = True):
+def plot_time_series(x, y, m, show = True, lab = None, series_index = 0, title = None):
     """
     Plots a time-series where x are the dates and
     y are the values.
     """
 
     # Define plot
-    if first_series:
+    lab = cleas_desc(m['description'])
+    if series_index == 0:
         fig, ax = plt.subplots()
-    plot_helper(x, y, 'blue', dates = True)
-    title = cleas_desc(m['description'])
-    plt.title(title)
+    plot_helper(x, y, clr_map[series_index], label = lab, dates = True)    
+    if title:
+        plt.title(title)
     plt.ylabel(m['unit'])
     plt.xlabel('Time')
+    plt.legend()
 
     # Show plot
     if show:
         plt.show()
     return
 
-def plot_multiple_time_series(x_list, y_list, m_list, show = True, save_name = None):
+def plot_multiple_time_series(x_list, y_list, m_list, *, show = True, title_and_ylab = None, save_name = None):
     """
     Plots multiple raw time series.
     """
     n = len(x_list)
     for ct, x in enumerate(x_list):
-        plot_time_series(x, y_list[ct], m_list[ct], show = show and ct == n - 1, first_series = ct == 0)
+        plot_time_series(x, y_list[ct], m_list[ct], show = show and ct == n - 1, series_index = ct)
 
-    save_figure(save_name, show)
+    # Set title
+    if title_and_ylab is not None:
+        plt.title(title_and_ylab[0])
+        plt.ylabel(title_and_ylab[1])
+    plt.legend()
+
+    # Sate to raster image since vector image would be too large
+    save_figure(save_name, show, vector_format = False)
 
 def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_and_stds = None, use_time = False):
     """
