@@ -10,3 +10,6 @@ Data/*
 
 Models/*
 !Models/README.md
+
+Plots/*
+!Plots/README.md

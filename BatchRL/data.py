@@ -9,7 +9,10 @@ import pandas as pd
 from ast import literal_eval
 from datetime import datetime
 
-from visualize import plot_time_series, plot_ip_time_series, plot_single_ip_ts, plot_multiple_ip_ts, plot_all, plot_single
+from visualize import plot_time_series, plot_ip_time_series, \
+    plot_single_ip_ts, plot_multiple_ip_ts, \
+    plot_all, plot_single, preprocess_plot_path, \
+    plot_multiple_time_series
 from restclient import DataStruct, save_dir
 from util import *
 
@@ -769,19 +772,17 @@ def get_battery_data(show_plot = False, show = True):
     dt_mins = 15
     name = "Battery"
 
+    # Plot files
+    prep_plot_dir = os.path.join(preprocess_plot_path, name)
+    create_dir(prep_plot_dir)
+    plot_name_before = os.path.join(prep_plot_dir, "raw")
+    plot_name_after = os.path.join(prep_plot_dir, "processed")
+    print(plot_name_before)
+    print(plot_name_after)
+
     # Try loading data
     loaded = load_processed_data(name)
     if loaded is not None:
-        if show_plot:
-            all_data, m_out, name = loaded
-            # Plot
-            plot_all(all_data, 
-                     m_out, 
-                     use_time = True, 
-                     show = show, 
-                     title_and_ylab = ['Battery Data: ' + name, 'kW / kWh'], 
-                     scale_back = False)
-
         return loaded
 
     # Get data
@@ -794,7 +795,15 @@ def get_battery_data(show_plot = False, show = True):
     inds_soc = [19, 23] # SoC and kWh, essentially the same
     soc_max_min = [28, 29] # Also kind of SoC, max and min, shorter time
 
-    n_feats = 2
+    use_inds = [19, 17]
+    n_feats = len(use_inds)
+
+    # Plot
+    x = [dat[i][1] for i in range(n_feats)]
+    y = [dat[i][0] for i in range(n_feats)]
+    m_used = [m[i] for i in range(n_feats)]
+    if show_plot:
+        plot_multiple_time_series(x, y, m_used, False, plot_name_before)
 
     # SoC
     all_data, dt_init = pipeline_preps(dat[19], 
@@ -803,7 +812,6 @@ def get_battery_data(show_plot = False, show = True):
                                   clean_args=[([0.0], 24 * 60, [])],
                                   rem_out_args=(100, [0.0, 100.0]),
                                   lin_ip = True)
-
 
     # Active Power
     all_data, _ = pipeline_preps(dat[17], 
@@ -826,11 +834,12 @@ def get_battery_data(show_plot = False, show = True):
                  m_out, 
                  use_time = True, 
                  show = show, 
-                 title_and_ylab = ['Battery Data', 'kW / kWh'], 
-                 scale_back = False)
+                 title_and_ylab = ['Processed Battery Data', 'kW / %'], 
+                 scale_back = True,
+                 save_name = plot_name_after)
 
     # Save and return
-    save_processed_data(all_data, m_out, name, dt_mins = dt_mins, dt_init = dt_init)
+    save_processed_data(all_data, m_out, name)
     return all_data, m_out, name
 
 # Real Data, takes some time to run

@@ -16,18 +16,60 @@ register_matplotlib_converters()
 plt.rc('font', family='serif')
 #plt.rc('text', usetex=True) # Makes Problems with the Celsius sign
 
+# Plotting colors
 clr_map = ['blue', 'green', 'c']
 n_cols = len(clr_map)
 
+# Saving
+plot_dir = '../Plots'
+preprocess_plot_path = os.path.join(plot_dir, "Preprocessing")
+create_dir(preprocess_plot_path)
 
-def plot_time_series(x, y, m, show = True):
+def save_figure(save_name, show = False):
+    """
+    Saves the current figure.
+    """
+    if save_name is not None and not show:
+        # Set figure size
+        fig = plt.gcf()
+        fig.set_size_inches(16, 9)
+
+        # Save
+        save_format = '.svg'
+        save_format = '.pdf'
+        save_kwargs = {'bbox_inches': 'tight', 'dpi': 500}
+        plt.savefig(save_name + save_format, **save_kwargs)
+    return
+
+
+
+# Base plot function defining the style
+def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
+    """
+    Basic plot style for all plots.
+    """
+
+    ls = ':'
+    color = 'red'
+    marker = '^'
+    ms = 2
+    kwargs = {'marker': marker, 'c':color, 'linestyle': ls, 'label': label, 'markersize': ms, 'mfc': m_col, 'mec': m_col}
+
+    if dates:
+        plt.plot_date(x, y, **kwargs)
+    else:
+        plt.plot(x, y, **kwargs)
+
+# Plotting raw data series
+def plot_time_series(x, y, m, show = True, first_series = True):
     """
     Plots a time-series where x are the dates and
     y are the values.
     """
 
     # Define plot
-    fig, ax = plt.subplots()
+    if first_series:
+        fig, ax = plt.subplots()
     plot_helper(x, y, 'blue', dates = True)
     title = cleas_desc(m['description'])
     plt.title(title)
@@ -39,21 +81,15 @@ def plot_time_series(x, y, m, show = True):
         plt.show()
     return
 
-def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
+def plot_multiple_time_series(x_list, y_list, m_list, show = True, save_name = None):
     """
-    Basic plot style for all plots.
+    Plots multiple raw time series.
     """
+    n = len(x_list)
+    for ct, x in enumerate(x_list):
+        plot_time_series(x, y_list[ct], m_list[ct], show = show and ct == n - 1, first_series = ct == 0)
 
-    ls = ':'
-    color = 'red'
-    marker = '^'
-    ms = 5
-    kwargs = {'marker': marker, 'c':color, 'linestyle': ls, 'label': label, 'markersize': ms, 'mfc': m_col, 'mec': m_col}
-
-    if dates:
-        plt.plot_date(x, y, **kwargs)
-    else:
-        plt.plot(x, y, **kwargs)
+    save_figure(save_name, show)
 
 def plot_ip_time_series(y, lab = None, m = None, show = True, init = None, mean_and_stds = None, use_time = False):
     """
@@ -185,7 +221,14 @@ def plot_ip_ts(y,
             plt.show()
     return
 
-def plot_multiple_ip_ts(y_list, lab_list = None, mean_and_std_list = None, use_time = False, timestep_offset_list = None, dt_init_str_list = None, show_last = True, title_and_ylab = None):
+def plot_multiple_ip_ts(y_list, 
+                        lab_list = None, 
+                        mean_and_std_list = None, 
+                        use_time = False, 
+                        timestep_offset_list = None, 
+                        dt_init_str_list = None, 
+                        show_last = True, 
+                        title_and_ylab = None):
     """
     Plotting function for multiple time series.
     """
@@ -209,7 +252,7 @@ def plot_multiple_ip_ts(y_list, lab_list = None, mean_and_std_list = None, use_t
                dt_init_str = dt_init_str, 
                timestep_offset = ts_offset)
 
-def plot_single(time_series, m, use_time = True, show = True, title_and_ylab = None, scale_back = True):
+def plot_single(time_series, m, use_time = True, show = True, title_and_ylab = None, scale_back = True, save_name = None):
     """
     Higher level plot function for single time series.
     """
@@ -222,8 +265,9 @@ def plot_single(time_series, m, use_time = True, show = True, title_and_ylab = N
                        title_and_ylab = title_and_ylab, 
                        dt_mins = m.get('dt'), 
                        dt_init_str = m.get('t_init'))
+    save_figure(save_name, show)
 
-def plot_all(all_data, m, use_time = True, show = True, title_and_ylab = None, scale_back = True):
+def plot_all(all_data, m, use_time = True, show = True, title_and_ylab = None, scale_back = True, save_name = None):
     """
     Higher level plot funciton for multiple time series
     stored in the matrix 'all_data'
@@ -243,8 +287,19 @@ def plot_all(all_data, m, use_time = True, show = True, title_and_ylab = None, s
                         dt_init_str_list = [m[i].get('t_init') for i in range(n_series)],
                         show_last = show, 
                         title_and_ylab = title_and_ylab)
+    save_figure(save_name, show)
 
-def scatter_plot(x, y, *, show = True, lab_dict = None, lab = 'Measurements', m_and_std_x = None, m_and_std_y = None, add_line = False, custom_line = None, custom_label = None):
+
+def scatter_plot(x, y, *, 
+                 show = True, 
+                 lab_dict = None, 
+                 lab = 'Measurements', 
+                 m_and_std_x = None, 
+                 m_and_std_y = None, 
+                 add_line = False, 
+                 custom_line = None, 
+                 custom_label = None, 
+                 save_name = None):
     """
     Scatter Plot. 
     """
@@ -292,5 +347,7 @@ def scatter_plot(x, y, *, show = True, lab_dict = None, lab = 'Measurements', m_
         plt.xlabel(lab_dict['xlab'])
     plt.legend()
 
+    # Show or save
     if show:
         plt.show()
+    save_figure(save_name, show)
