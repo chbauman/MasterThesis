@@ -780,7 +780,7 @@ def load_processed(Data):
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
 
-def get_battery_data(show_plot = False, show = True):
+def get_battery_data(save_plot = False, show = True):
     """
     Load and interpolate the battery data.
     """
@@ -819,7 +819,7 @@ def get_battery_data(show_plot = False, show = True):
     m_used = [m[i] for i in use_inds]
     y_lab = '% / kW'
     t = "Raw Battery Data"
-    if show_plot:
+    if save_plot:
         plot_multiple_time_series(x, y, m_used, show = False, title_and_ylab = [t, y_lab], save_name = plot_name_before)
 
     # Extract ROI of data where it behaves strangely
@@ -827,7 +827,7 @@ def get_battery_data(show_plot = False, show = True):
     d2 = np.datetime64('2019-05-25T12:00')
     x_ext, y_ext = [[extract_date_interval(x[i], y[i], d1, d2)[k] for i in range(n_feats)] for k in range(2)]
 
-    if show_plot:
+    if save_plot:
         plot_multiple_time_series(x_ext, y_ext, m_used, 
                                   show = False, 
                                   title_and_ylab = ["Strange Battery Behavior", y_lab], 
@@ -856,7 +856,7 @@ def get_battery_data(show_plot = False, show = True):
     # Standardize
     all_data, m_out = standardize(all_data, m_out)
 
-    if show_plot:
+    if save_plot:
         # Plot
         plot_all(all_data, 
                  m_out, 
@@ -865,6 +865,84 @@ def get_battery_data(show_plot = False, show = True):
                  title_and_ylab = ['Processed Battery Data', y_lab], 
                  scale_back = True,
                  save_name = plot_name_after)
+
+    # Save and return
+    save_processed_data(all_data, m_out, name)
+    return all_data, m_out, name
+
+def get_weather_data(save_plots = True):
+    """
+    Load and interpolate the weather data.
+    """
+
+    # Constants
+    dt_mins = 15
+    filter_sigma = 2.0
+    fill_by_ip_max = 2
+    name = "Weather"
+    name +=  "" if filter_sigma is None else str(filter_sigma)
+
+    # Plot files
+    prep_plot_dir = os.path.join(preprocess_plot_path, name)
+    create_dir(prep_plot_dir)
+    plot_name_temp = os.path.join(prep_plot_dir, "Outside_Temp")
+    plot_name_irrad = os.path.join(prep_plot_dir, "Irradiance")
+    plot_name_temp_raw = os.path.join(prep_plot_dir, "Raw Outside_Temp")
+    plot_name_irrad_raw = os.path.join(prep_plot_dir, "Raw Irradiance")
+
+    # Try loading data
+    loaded = load_processed_data(name)
+    if loaded is not None:
+        return loaded
+
+    # Initialize meta data dict list
+    m_out = []
+
+    # Weather data
+    dat, m = WeatherData.getData()
+
+    # Add Temperature
+    all_data, dt_init = pipeline_preps(dat[0], 
+                               dt_mins,
+                               clean_args = [([], 30, [])],
+                               rem_out_args = None,
+                               hole_fill_args = fill_by_ip_max,
+                               n_tot_cols = 6,
+                               gauss_sigma = filter_sigma)
+    add_dt_and_tinit(m, dt_mins, dt_init)
+    m_out += [m[0]]
+
+    if save_plots:
+        plot_time_series(dat[0][1], dat[0][0], m = m[0], show = False, save_name = plot_name_temp_raw)
+        plot_single(all_data[:, 0], 
+                    m[0], 
+                    use_time = True, 
+                    show = False, 
+                    title_and_ylab = ['Outside Temperature Processed', m[0]['unit']],
+                    save_name = plot_name_temp)
+
+
+    # Add Irradiance Data
+    all_data, _ = pipeline_preps(dat[2], 
+                               dt_mins,
+                               all_data = all_data,
+                               dt_init = dt_init,
+                               row_ind = 2,
+                               clean_args = [([], 3, [1300.0, 0.0]), ([], 60 * 20)],
+                               rem_out_args = None,
+                               hole_fill_args = fill_by_ip_max,
+                               gauss_sigma = filter_sigma)
+    m_out += [m[2]]
+
+    if save_plots:
+        plot_time_series(dat[2][1], dat[2][0], m = m[2], show = False, save_name = plot_name_irrad_raw)
+        plot_single(all_data[:, 2], 
+                    m[2], 
+                    use_time = True, 
+                    show = False, 
+                    title_and_ylab = ['Irradiance Processed', m[2]['unit']],
+                    save_name = plot_name_irrad)
+    m_out += [m[2]]
 
     # Save and return
     save_processed_data(all_data, m_out, name)
@@ -971,6 +1049,8 @@ def process_DFAB_heating_data(show_plots = False):
 
     data_list = []
     dt_mins = 15
+    dfab_rooms_plot_path = os.path.join(preprocess_plot_path, "DFAB")
+    create_dir(dfab_rooms_plot_path)
 
     ################################
     # Single Rooms
@@ -989,7 +1069,8 @@ def process_DFAB_heating_data(show_plots = False):
 
         # Temperature
         if show_plots:
-            plot_time_series(data[0][1], data[0][0], m = m[0], show = False)
+            temp_plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Raw_Temp"
+            plot_time_series(data[0][1], data[0][0], m = m[0], show = False, save_name = temp_plot_file_name)
         all_data, dt_init = pipeline_preps(data[0], 
                                            dt_mins, 
                                            n_tot_cols = n_cols,
@@ -998,17 +1079,20 @@ def process_DFAB_heating_data(show_plots = False):
                                            gauss_sigma = 5.0)
         add_dt_and_tinit(m, dt_mins, dt_init)
         if show_plots:
+            temp_plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Temp"
             plot_single(all_data[:, 0], 
                         m[0], 
                         use_time = True, 
-                        show = True, 
-                        title_and_ylab = ['Temperature Interpolated', m[0]['unit']])
+                        show = False, 
+                        title_and_ylab = ['Temperature Interpolated', m[0]['unit']],
+                        save_name = temp_plot_file_name)
 
         # Valves
         for i in range(3):
             ind = i + 1
             if show_plots:
-                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False)
+                valve_plot_file_name = os.path.join(dfab_rooms_plot_path, name + "_Raw_Valve" + str(ind))
+                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = valve_plot_file_name)
             all_data, _ = pipeline_preps(data[ind], 
                                          dt_mins, 
                                          all_data = all_data,
@@ -1016,17 +1100,20 @@ def process_DFAB_heating_data(show_plots = False):
                                          row_ind = ind,
                                          clean_args = [([], 30 * 24 * 60, [])])
             if show_plots:
+                valve_plot_file_name = os.path.join(dfab_rooms_plot_path, name + "_Valve" + str(ind))
                 plot_single(all_data[:, ind], 
                             m[ind], 
                             use_time = True, 
-                            show = True, 
-                            title_and_ylab = ['Valve ' + str(ind) + ' Interpolated', m[ind]['unit']])
+                            show = False, 
+                            title_and_ylab = ['Valve ' + str(ind) + ' Interpolated', m[ind]['unit']],
+                            save_name = valve_plot_file_name)
 
         # Blinds
         if n_cols == 5:
             ind = 4
             if show_plots:
-                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False)
+                plot_file_name = os.path.join(dfab_rooms_plot_path, name + "_Raw_Blinds")
+                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
             all_data, _ = pipeline_preps(data[ind],
                                          dt_mins,
                                          dt_init = dt_init,
@@ -1035,11 +1122,13 @@ def process_DFAB_heating_data(show_plots = False):
                                          clean_args = [([], 7 * 24 * 60, [])],
                                          row_ind = ind)
             if show_plots:
+                plot_file_name = os.path.join(dfab_rooms_plot_path, name + "_Blinds")
                 plot_single(all_data[:, ind], 
                             m[ind], 
                             use_time = True, 
-                            show = True, 
-                            title_and_ylab = ['Blinds Interpolated', m[ind]['unit']])
+                            show = False, 
+                            title_and_ylab = ['Blinds Interpolated', m[ind]['unit']],
+                            save_name = plot_file_name)
 
         # Standardize and save
         all_data, m = standardize(all_data, m)
@@ -1064,7 +1153,8 @@ def process_DFAB_heating_data(show_plots = False):
         # Temperature
         ind = 0
         if show_plots:
-            plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False)
+            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Raw_Temp_In"
+            plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
         all_data, dt_init = pipeline_preps(data[ind], 
                                            dt_mins, 
                                            n_tot_cols = n_cols,
@@ -1072,15 +1162,18 @@ def process_DFAB_heating_data(show_plots = False):
                                            gauss_sigma = 5.0)
         add_dt_and_tinit(m, dt_mins, dt_init)
         if show_plots:
+            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Temp_In"
             plot_single(all_data[:, ind], 
                             m[ind], 
                             use_time = True, 
-                            show = True, 
-                            title_and_ylab = ['In Water Temperature Interpolated', m[ind]['unit']])
+                            show = False, 
+                            title_and_ylab = ['In Water Temperature Interpolated', m[ind]['unit']],
+                            save_name = plot_file_name)
 
         ind = 1
         if show_plots:
-            plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Raw_Temp_Out"
+            plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
         all_data, _ = pipeline_preps(data[ind], 
                                      dt_mins, 
                                      all_data = all_data,
@@ -1089,11 +1182,13 @@ def process_DFAB_heating_data(show_plots = False):
                                      remove_out_int_args = [10, 50],
                                      gauss_sigma = 5.0)
         if show_plots:
+            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Temp_Out"
             plot_single(all_data[:, ind], 
                             m[ind], 
                             use_time = True,
-                            show = True, 
-                            title_and_ylab = ['Out Water Temperature Interpolated', m[ind]['unit']])
+                            show = False, 
+                            title_and_ylab = ['Out Water Temperature Interpolated', m[ind]['unit']],
+                            save_name = plot_file_name)
 
         # Standardize and save
         all_data, m = standardize(all_data, m)
@@ -1120,7 +1215,10 @@ def process_DFAB_heating_data(show_plots = False):
         for i in range(n_cols):
             ind = i
             if show_plots:
-                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False)
+                addid_cols = m[i]['additionalColumns']
+                plot_name = "Valve_" + addid_cols['Floor'] + "_" + addid_cols['Device Id']
+                plot_path = os.path.join(dfab_rooms_plot_path, "Raw_" + plot_name)
+                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_path)
             if i == 0:
                 all_data, dt_init = pipeline_preps(data[ind], 
                                                    dt_mins, 
@@ -1135,11 +1233,12 @@ def process_DFAB_heating_data(show_plots = False):
                                              row_ind = ind,
                                              clean_args = [([], 30 * 24 * 60, [])])
             if show_plots:
+                plot_path = os.path.join(dfab_rooms_plot_path, plot_name)
                 plot_single(all_data[:, ind], 
                             m[ind], 
                             use_time = True, 
-                            show = True, 
-                            title_and_ylab = ['Valve ' + str(ind) + ' Interpolated', m[ind]['unit']])
+                            show = False, 
+                            title_and_ylab = ['Valve ' + str(ind) + ' Interpolated', m[ind]['unit']], save_name = plot_path)
 
         # Save
         save_processed_data(all_data, m, name)
@@ -1191,8 +1290,16 @@ def compute_DFAB_energy_usage(show_plots = True):
                   'dt': dt,
                   't_init': t_init_new}
     if show_plots:
-        plot_all(w_dat, w_m, use_time = True, show = False, scale_back = False, title_and_ylab = ["Water Temps", "Temperature"])
-        plot_single(dTemp, m_room, use_time = True, show = True, title_and_ylab = ["Temperature Difference", "DT"], scale_back = False)
+        dfab_rooms_plot_path = os.path.join(preprocess_plot_path, "DFAB")
+        w_plot_path = os.path.join(dfab_rooms_plot_path, w_name + "_WaterTemps")
+        dw_plot_path = os.path.join(dfab_rooms_plot_path, w_name + "_WaterTempDiff")
+        plot_all(w_dat, w_m, use_time = True, show = False, scale_back = False, 
+                 title_and_ylab = ["Water Temps", "Temperature"],
+                 save_name = w_plot_path)
+        plot_single(dTemp, m_room, use_time = True, show = False,
+                   title_and_ylab = ["Temperature Difference", "DT"], 
+                   scale_back = False,
+                   save_name = dw_plot_path)
 
     # Loop over rooms and compute energy
     for id, room_nr in room_dict.items():
@@ -1207,16 +1314,20 @@ def compute_DFAB_energy_usage(show_plots = True):
 
         m_room['description'] = 'Room ' + room_nr
         if show_plots:
+            tot_room_valves_plot_path = os.path.join(dfab_rooms_plot_path, "DFAB_" + m_room['description'] + "_Tot_Valves")
+            room_energy_plot_path = os.path.join(dfab_rooms_plot_path, "DFAB_" + m_room['description'] + "_Tot_Energy")
             plot_single(room_energy,
                         m_room, 
-                        use_time = True, 
+                        use_time = True,
                         show = False,
-                        title_and_ylab = ['Energy Consumption', 'Energy'])
+                        title_and_ylab = ['Energy Consumption', 'Energy'],
+                        save_name = room_energy_plot_path)
             plot_single(room_sum_valves,
-                        m_room, 
-                        use_time = True, 
-                        show = True,
-                        title_and_ylab = ['Sum All Valves', '0/1'])
+                        m_room,
+                        use_time = True,
+                        show = False,
+                        title_and_ylab = ['Sum All Valves', '0/1'],
+                        save_name = tot_room_valves_plot_path)
 
         # Add data to output
         out_dat[:, id] = room_energy
@@ -1292,6 +1403,14 @@ class Dataset():
             ds = pickle.load(f)
             return ds
     pass
+
+def generateRoomDatasets():
+    """
+    Gather the right data and put it togeter 
+    """
+
+    raise NotImplementedError("Implement this please!")
+
 
 #######################################################################################################
 # Testing

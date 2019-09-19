@@ -19,7 +19,8 @@ from pendulum import Pendulum
 from data import Room274Data, Room272Data, WeatherData, TestData, \
     analyze_data, get_heating_data, get_data_test, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
-    process_DFAB_heating_data, test_plotting_withDFAB_data, test_dataset_with_DFAB
+    process_DFAB_heating_data, test_plotting_withDFAB_data, test_dataset_with_DFAB, \
+    compute_DFAB_energy_usage, get_weather_data
 from visualize import plot_time_series, plot_ip_time_series
 
 def simple_battery_FQI():
@@ -51,12 +52,15 @@ def main():
     #TestData.getData()
     ##get_data_test()
     #return 0
-
-    #process_DFAB_heating_data(show_plots = True)
+    get_weather_data()
+    return
+    compute_DFAB_energy_usage()
+    return
+    process_DFAB_heating_data(show_plots = True)
     #test_plotting_withDFAB_data()
 
     # Battery data
-    dat_bat, m_bat, name_bat = get_battery_data(show_plot = True, show = False)
+    dat_bat, m_bat, name_bat = get_battery_data(save_plot = True, show = False)
     train_bat, test_bat = cut_and_split(dat_bat, 2, 96 * 7)
     bat_mod = BatteryModel()
     bat_mod.fit(train_bat, m_bat)

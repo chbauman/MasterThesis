@@ -61,7 +61,7 @@ def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
         plt.plot(x, y, **kwargs)
 
 # Plotting raw data series
-def plot_time_series(x, y, m, show = True, lab = None, series_index = 0, title = None):
+def plot_time_series(x, y, m, show = True, lab = None, series_index = 0, title = None, save_name = None):
     """
     Plots a time-series where x are the dates and
     y are the values.
@@ -81,7 +81,9 @@ def plot_time_series(x, y, m, show = True, lab = None, series_index = 0, title =
     # Show plot
     if show:
         plt.show()
-    return
+    
+    # Sate to raster image since vector image would be too large
+    save_figure(save_name, show, vector_format = False)
 
 def plot_multiple_time_series(x_list, y_list, m_list, *, show = True, title_and_ylab = None, save_name = None):
     """
