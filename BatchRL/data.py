@@ -1236,7 +1236,6 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
             all_data, m = standardize(all_data, m)
             save_processed_data(all_data, m, name)
             data_list += [[all_data, m, name]]
-
     
     ################################
     # All Valves Together
@@ -1264,6 +1263,7 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
             ind = i
             if show_plots:
                 addid_cols = m[i]['additionalColumns']
+
                 plot_name = "Valve_" + addid_cols['Floor'] + "_" + addid_cols['Device Id']
                 plot_path = os.path.join(dfab_rooms_plot_path, "Raw_" + plot_name)
                 plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_path)
@@ -1311,15 +1311,28 @@ def compute_DFAB_energy_usage(show_plots = True):
     # Load data
     w_dat, w_m, w_name = load_processed(DFAB_AddData)
     v_dat, v_m, v_name = load_processed(DFAB_AllValves)
-
-    # Align data
     dt = w_m[0]['dt']
+
     t_init_w = w_m[0]['t_init']
     t_init_v = v_m[0]['t_init']
 
-    w_dat[:,0] = add_mean_and_std(w_dat[:,0], w_m[0]['mean_and_std'])
-    w_dat[:,1] = add_mean_and_std(w_dat[:,1], w_m[1]['mean_and_std'])
+    # Load data from Dataset
+    w_name = "DFAB_Extra"
+    w_dataset = Dataset.loadDataset(w_name)
+    w_dat = w_dataset.get_unscaled_data()
+    t_init_w = w_dataset.t_init
+    dt = w_dataset.dt
 
+    v_name = "DFAB_Valves"
+    v_dataset = Dataset.loadDataset(v_name)
+    v_dat = v_dataset.data
+    t_init_v = v_dataset.t_init
+
+    # Scale back
+    #w_dat[:,0] = add_mean_and_std(w_dat[:,0], w_m[0]['mean_and_std'])
+    #w_dat[:,1] = add_mean_and_std(w_dat[:,1], w_m[1]['mean_and_std'])
+
+    # Align data
     aligned_data, t_init_new = align_ts(v_dat, w_dat, t_init_v, t_init_w, dt)
     aligned_len = aligned_data.shape[0]
     w_dat = aligned_data[:, -2:]
@@ -1444,6 +1457,18 @@ class Dataset():
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
         pass
+
+    def get_unscaled_data(self):
+        """
+        Adds the mean and std back to every column and returns
+        the data.
+        """
+        data_out = np.copy(self.data)
+        for k in range(self.d):
+            if self.is_scaled[k]:
+                data_out[:,k] = add_mean_and_std(data_out[:,k], self.scaling[k, :])
+
+        return data_out
 
     @staticmethod
     def get_filename(name):

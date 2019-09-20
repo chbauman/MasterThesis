@@ -46,6 +46,11 @@ def simple_battery_FQI():
     sbt.eval_policy(fqi.get_policy())
 
 def main():
+    get_weather_data()
+    get_DFAB_heating_data(use_dataset = True)
+    compute_DFAB_energy_usage()
+    return
+
     get_DFAB_heating_data(use_dataset = True)
     return
     get_weather_data()
