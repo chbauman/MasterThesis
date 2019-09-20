@@ -300,6 +300,26 @@ def plot_all(all_data, m, use_time = True, show = True, title_and_ylab = None, s
                         title_and_ylab = title_and_ylab)
     save_figure(save_name, show)
 
+def plot_dataset(dataset, show = True, title_and_ylab = None, save_name = None):
+    """
+    Plots the unscaled series in a dataset.
+    """
+    all_data = dataset.get_unscaled_data()
+    n_series = all_data.shape[1]
+    all_series = [all_data[:, i] for i in range(n_series)]
+    labs = [d for d in dataset.descriptions]
+    t_init = dataset.t_init
+
+    plot_multiple_ip_ts(all_series,
+                        lab_list = labs,
+                        mean_and_std_list = None,
+                        use_time = True,
+                        timestep_offset_list = [0 for i in range(n_series)],
+                        dt_init_str_list = [t_init for i in range(n_series)],
+                        show_last = show, 
+                        title_and_ylab = title_and_ylab)
+    save_figure(save_name, show)
+
 def scatter_plot(x, y, *, 
                  show = True, 
                  lab_dict = None, 

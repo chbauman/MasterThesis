@@ -12,7 +12,7 @@ from datetime import datetime
 from visualize import plot_time_series, plot_ip_time_series, \
     plot_single_ip_ts, plot_multiple_ip_ts, \
     plot_all, plot_single, preprocess_plot_path, \
-    plot_multiple_time_series
+    plot_multiple_time_series, plot_dataset
 from restclient import DataStruct, save_dir
 from util import *
 
@@ -1361,9 +1361,9 @@ def compute_DFAB_energy_usage(show_plots = True):
         dfab_rooms_plot_path = os.path.join(preprocess_plot_path, "DFAB")
         w_plot_path = os.path.join(dfab_rooms_plot_path, w_name + "_WaterTemps")
         dw_plot_path = os.path.join(dfab_rooms_plot_path, w_name + "_WaterTempDiff")
-        plot_all(w_dat, w_m, use_time = True, show = False, scale_back = False, 
-                 title_and_ylab = ["Water Temps", "Temperature"],
-                 save_name = w_plot_path)
+        plot_dataset(w_dataset, show = False, 
+                     title_and_ylab = ["Water Temps", "Temperature"],
+                     save_name = w_plot_path)
         plot_single(dTemp, m_room, use_time = True, show = False,
                    title_and_ylab = ["Temperature Difference", "DT"], 
                    scale_back = False,
