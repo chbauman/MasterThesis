@@ -725,6 +725,11 @@ def extract_streak(all_data, s_len, lag):
     return first_dat, streak_dat
 
 def cut_and_split(dat, seq_len, streak_len):
+    """
+    Finds the latest series of 'streak_len' timesteps
+    where all data is valid and splits the data there.
+    The it cuts both parts it into sequences of length 'seq_len'.
+    """
     dat_train, dat_test = extract_streak(dat, streak_len, seq_len - 1)
     cut_train_dat = cut_data_into_sequences(dat_train, seq_len, interleave = True)
     cut_test_dat = cut_data_into_sequences(dat_test, seq_len, interleave = True)
@@ -780,7 +785,7 @@ def load_processed(Data):
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
 
-def get_battery_data(save_plot = False, show = True, use_dataset = False):
+def get_battery_data(save_plot = False, show = True, use_dataset = True):
     """
     Load and interpolate the battery data.
     """
@@ -796,15 +801,11 @@ def get_battery_data(save_plot = False, show = True, use_dataset = False):
     plot_name_after = os.path.join(prep_plot_dir, "processed")
 
     # Try loading data
-    if use_dataset:
-        try:
-            loaded = Dataset.loadDataset(name)
-        except FileNotFoundError:
-            loaded = None
-    else:
-        loaded = load_processed_data(name)
-    if loaded is not None:
+    try:
+        loaded = Dataset.loadDataset(name)
         return loaded
+    except FileNotFoundError:
+        pass
 
     # Get data
     dat, m = BatteryData.getData()
@@ -873,12 +874,9 @@ def get_battery_data(save_plot = False, show = True, use_dataset = False):
                  save_name = plot_name_after)
 
     # Save and return
-    if use_dataset:
-        bat_dataset = Dataset(all_data, m_out, name, c_inds = np.array([1]), p_inds = np.array([0]))
-        bat_dataset.save()
-        return bat_dataset
-    save_processed_data(all_data, m_out, name)
-    return all_data, m_out, name
+    bat_dataset = Dataset.from_raw(all_data, m_out, name, c_inds = np.array([1]), p_inds = np.array([0]))
+    bat_dataset.save()
+    return bat_dataset
 
 def get_weather_data(save_plots = True):
     """
@@ -958,7 +956,7 @@ def get_weather_data(save_plots = True):
 
     # Save and return
     no_inds = np.array([], dtype = np.int32)
-    w_dataset = Dataset(all_data, m_out, name, c_inds = no_inds, p_inds = no_inds)
+    w_dataset = Dataset.from_raw(all_data, m_out, name, c_inds = no_inds, p_inds = no_inds)
     w_dataset.save()
     return w_dataset
 
@@ -1156,7 +1154,7 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
 
         # Standardize and save
         if use_dataset:
-            dataset = Dataset(all_data, m, name, c_inds = np.array([1]), p_inds = np.array([0]))
+            dataset = Dataset.from_raw(all_data, m, name, c_inds = np.array([1]), p_inds = np.array([0]))
             dataset.save()
             data_list += [dataset]
             continue
@@ -1229,7 +1227,7 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
         if use_dataset:
             all_data, m = standardize(all_data, m)
             no_inds = np.array([], dtype = np.int32)
-            dataset = Dataset(all_data, m, name, c_inds = no_inds , p_inds = no_inds)
+            dataset = Dataset.from_raw(all_data, m, name, c_inds = no_inds , p_inds = no_inds)
             dataset.save()
             data_list += [dataset]
         else:
@@ -1292,7 +1290,7 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
         if use_dataset:
             no_inds = np.array([], dtype = np.int32)
             c_inds = np.array(range(n_cols))
-            dataset = Dataset(all_data, m, name, c_inds = c_inds , p_inds = no_inds)
+            dataset = Dataset.from_raw(all_data, m, name, c_inds = c_inds , p_inds = no_inds)
             dataset.save()
             data_list += [dataset]
         else:
@@ -1307,14 +1305,6 @@ def compute_DFAB_energy_usage(show_plots = True):
     using the valves data and the inlet and outlet water
     temperature difference.
     """
-    
-    # Load data
-    w_dat, w_m, w_name = load_processed(DFAB_AddData)
-    v_dat, v_m, v_name = load_processed(DFAB_AllValves)
-    dt = w_m[0]['dt']
-
-    t_init_w = w_m[0]['t_init']
-    t_init_v = v_m[0]['t_init']
 
     # Load data from Dataset
     w_name = "DFAB_Extra"
@@ -1327,10 +1317,6 @@ def compute_DFAB_energy_usage(show_plots = True):
     v_dataset = Dataset.loadDataset(v_name)
     v_dat = v_dataset.data
     t_init_v = v_dataset.t_init
-
-    # Scale back
-    #w_dat[:,0] = add_mean_and_std(w_dat[:,0], w_m[0]['mean_and_std'])
-    #w_dat[:,1] = add_mean_and_std(w_dat[:,1], w_m[1]['mean_and_std'])
 
     # Align data
     aligned_data, t_init_new = align_ts(v_dat, w_dat, t_init_v, t_init_w, dt)
@@ -1365,7 +1351,7 @@ def compute_DFAB_energy_usage(show_plots = True):
                      title_and_ylab = ["Water Temps", "Temperature"],
                      save_name = w_plot_path)
         plot_single(dTemp, m_room, use_time = True, show = False,
-                   title_and_ylab = ["Temperature Difference", "DT"], 
+                   title_and_ylab = ["Temperature Difference", "DT"],
                    scale_back = False,
                    save_name = dw_plot_path)
 
@@ -1411,13 +1397,10 @@ class Dataset():
     This class contains all infos about a given dataset.
     """
 
-    def __init__(self, all_data, m, name, c_inds, p_inds):
+    def __init__(self, all_data, dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name):
         """
-        Constructor: Puts the important metadata from the
-        dict m into member variables.
+        Base constructor.
         """
-
-        self.name = name
 
         # Dimensions
         self.n = all_data.shape[0]
@@ -1425,27 +1408,73 @@ class Dataset():
         self.n_c = c_inds.shape[0]
         self.n_p = p_inds.shape[0]
 
-        # Metadata
-        self.dt = m[0]['dt']
-        self.t_init = m[0]['t_init']
-        self.is_scaled = np.empty((self.d,), dtype = np.bool)
-        self.is_scaled.fill(True)
-        self.scaling = np.empty((self.d, 2), dtype = np.float32)
-        self.descriptions = np.empty((self.d,), dtype = "U100")
-        for ct, el in enumerate(m):
-            desc = el['description']
-            self.descriptions[ct] = desc
-            m_a_s = el.get('mean_and_std')
-            if m_a_s is not None:
-                self.scaling[ct, 0] = m_a_s[0]
-                self.scaling[ct, 1] = m_a_s[1]
-            else:
-                self.is_scaled[ct] = False
+        # Meta data
+        self.name = name
+        self.dt = dt
+        self.t_init = t_init
+        self.is_scaled = is_scaled
+        self.scaling = scaling
+        self.descriptions = descs    
+        self.c_inds = c_inds
+        self.p_inds = p_inds
 
         # Actual data
         self.data = all_data
-        self.c_inds = c_inds
-        self.p_inds = p_inds
+
+    @classmethod
+    def from_raw(cls, all_data, m, name, c_inds, p_inds):
+        """
+        Constructor from data and dict m: 
+        Extracts the important metadata from the
+        dict m.
+        """
+        d = all_data.shape[1]
+
+        # Extract data from m
+        dt = m[0]['dt']
+        t_init = m[0]['t_init']
+        is_scaled = np.empty((d,), dtype = np.bool)
+        is_scaled.fill(True)
+        scaling = np.empty((d, 2), dtype = np.float32)
+        descs = np.empty((d,), dtype = "U100")
+        for ct, el in enumerate(m):
+            desc = el['description']
+            descs[ct] = desc
+            m_a_s = el.get('mean_and_std')
+            if m_a_s is not None:
+                scaling[ct, 0] = m_a_s[0]
+                scaling[ct, 1] = m_a_s[1]
+            else:
+                is_scaled[ct] = False
+
+        ret_val = cls(np.copy(all_data), dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
+        return ret_val
+
+    def __len__(self):
+        return self.d
+
+    @classmethod
+    def copy(cls, dataset):
+        """
+        Returns a deep copy of the passed Dataset.
+        """
+        return cls(np.copy(dataset.data),
+                   dataset.dt,
+                   dataset.t_init,
+                   np.copy(dataset.scaling),
+                   np.copy(dataset.is_scaled),
+                   np.copy(dataset.descs),
+                   np.copy(dataset.c_inds),
+                   np.copy(dataset.p_inds),
+                   dataset.name)
+
+    def __add__(self, other):
+        """
+        Merges two datasets.
+        """
+
+        raise NotImplementedError("Fuckin' do it already!!")
+
 
     def save(self):
         """
@@ -1485,6 +1514,8 @@ class Dataset():
         with open(f_name, 'rb') as f:
             ds = pickle.load(f)
             return ds
+        return
+
     pass
 
 def generateRoomDatasets():
@@ -1493,7 +1524,7 @@ def generateRoomDatasets():
     """
 
     # Get weather
-    w_dat, w_m, w_name = get_weather_data()
+    w_dataset = get_weather_data()
     w_tinit = w_m[0]['t_init']
     dt = w_m[0]['dt']
 
@@ -1531,7 +1562,6 @@ def generateRoomDatasets():
         # Add weather data
         m_out = [] + w_m
         m_out[0]['t_init'] = t_init_curr
-
 
         print(name_room)
         print(name_room)
@@ -1735,7 +1765,7 @@ def test_dataset_with_DFAB():
     s = all_data.shape
     c_inds = np.array([s[1] - 1])
     p_inds = np.array([s[1] - 2])
-    ds = Dataset(all_data, metadata, name, c_inds, p_inds)
+    ds = Dataset.from_raw(all_data, metadata, name, c_inds, p_inds)
     ds.save()
 
     ds_new = Dataset.loadDataset(name)

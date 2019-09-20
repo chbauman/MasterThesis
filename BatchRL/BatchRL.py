@@ -46,36 +46,13 @@ def simple_battery_FQI():
     sbt.eval_policy(fqi.get_policy())
 
 def main():
-    get_weather_data()
-    get_DFAB_heating_data(use_dataset = True)
-    compute_DFAB_energy_usage()
-    return
-
-    get_DFAB_heating_data(use_dataset = True)
-    return
-    get_weather_data()
-    get_battery_data(use_dataset = True)
-    return
-    generateRoomDatasets()
-    return
-
-    #test_dataset_with_DFAB()
-    #return
-    #TestData.getData()
-    ##get_data_test()
-    #return 0
-    get_weather_data()
-    return
-    compute_DFAB_energy_usage()
-    return
-    get_DFAB_heating_data(show_plots = True)
-    #test_plotting_withDFAB_data()
 
     # Battery data
-    dat_bat, m_bat, name_bat = get_battery_data(save_plot = True, show = False)
+    bat_dataset = get_battery_data(save_plot = True, show = False, use_dataset = True)
+    dat_bat = bat_dataset.data
     train_bat, test_bat = cut_and_split(dat_bat, 2, 96 * 7)
-    bat_mod = BatteryModel()
-    bat_mod.fit(train_bat, m_bat)
+    bat_mod = BatteryModel(bat_dataset)
+    bat_mod.fit(train_bat)
     return
 
     # This crashes:

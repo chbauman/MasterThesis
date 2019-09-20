@@ -23,7 +23,9 @@ n_cols = len(clr_map)
 # Saving
 plot_dir = '../Plots'
 preprocess_plot_path = os.path.join(plot_dir, "Preprocessing")
+model_plot_path = os.path.join(plot_dir, "Models")
 create_dir(preprocess_plot_path)
+create_dir(model_plot_path)
 
 def save_figure(save_name, show = False, vector_format = True):
     """
@@ -346,16 +348,10 @@ def scatter_plot(x, y, *,
 
     if add_line:
         # Fit a line with Least Squares
-        n = x_curr.shape[0]
-        ls_mat = np.empty((n, 2), dtype = np.float32)
-        ls_mat[:, 0] = 1
-        ls_mat[:, 1] = x_curr
-        m, c = np.linalg.lstsq(ls_mat, y_curr, rcond=None)[0]
-
         max_x = np.max(x_curr)
         min_x = np.min(x_curr)
         x = np.linspace(min_x, max_x, 5)
-        y = m + c * x
+        y = fit_linear_1d(x_curr, y_curr, x)
         plt.plot(x, y, label = 'Linear Fit')
 
     if custom_line:
