@@ -2,6 +2,7 @@
 import os
 import scipy
 import pickle
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -874,7 +875,7 @@ def get_battery_data(save_plot = False, show = True, use_dataset = True):
                  save_name = plot_name_after)
 
     # Save and return
-    bat_dataset = Dataset.from_raw(all_data, m_out, name, c_inds = np.array([1]), p_inds = np.array([0]))
+    bat_dataset = Dataset.fromRaw(all_data, m_out, name, c_inds = np.array([1]), p_inds = np.array([0]))
     bat_dataset.save()
     return bat_dataset
 
@@ -956,7 +957,7 @@ def get_weather_data(save_plots = True):
 
     # Save and return
     no_inds = np.array([], dtype = np.int32)
-    w_dataset = Dataset.from_raw(all_data, m_out, name, c_inds = no_inds, p_inds = no_inds)
+    w_dataset = Dataset.fromRaw(all_data, m_out, name, c_inds = no_inds, p_inds = no_inds)
     w_dataset.save()
     return w_dataset
 
@@ -1154,7 +1155,7 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
 
         # Standardize and save
         if use_dataset:
-            dataset = Dataset.from_raw(all_data, m, name, c_inds = np.array([1]), p_inds = np.array([0]))
+            dataset = Dataset.fromRaw(all_data, m, name, c_inds = np.array([1]), p_inds = np.array([0]))
             dataset.save()
             data_list += [dataset]
             continue
@@ -1227,7 +1228,7 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
         if use_dataset:
             all_data, m = standardize(all_data, m)
             no_inds = np.array([], dtype = np.int32)
-            dataset = Dataset.from_raw(all_data, m, name, c_inds = no_inds , p_inds = no_inds)
+            dataset = Dataset.fromRaw(all_data, m, name, c_inds = no_inds , p_inds = no_inds)
             dataset.save()
             data_list += [dataset]
         else:
@@ -1290,7 +1291,7 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
         if use_dataset:
             no_inds = np.array([], dtype = np.int32)
             c_inds = np.array(range(n_cols))
-            dataset = Dataset.from_raw(all_data, m, name, c_inds = c_inds , p_inds = no_inds)
+            dataset = Dataset.fromRaw(all_data, m, name, c_inds = c_inds , p_inds = no_inds)
             dataset.save()
             data_list += [dataset]
         else:
@@ -1408,6 +1409,12 @@ class Dataset():
         self.n_c = c_inds.shape[0]
         self.n_p = p_inds.shape[0]
 
+        # Check that indices are in range
+        if not check_in_range(c_inds, 0, self.d):
+            raise ValueError("Control indices out of bound.")
+        if not check_in_range(p_inds, 0, self.d):
+            raise ValueError("Prediction indices out of bound.")
+
         # Meta data
         self.name = name
         self.dt = dt
@@ -1422,7 +1429,7 @@ class Dataset():
         self.data = all_data
 
     @classmethod
-    def from_raw(cls, all_data, m, name, c_inds, p_inds):
+    def fromRaw(cls, all_data, m, name, c_inds, p_inds):
         """
         Constructor from data and dict m: 
         Extracts the important metadata from the
@@ -1470,11 +1477,71 @@ class Dataset():
 
     def __add__(self, other):
         """
-        Merges two datasets.
+        Merges dataset other into self.
         """
 
-        raise NotImplementedError("Fuckin' do it already!!")
+        # Check compatibility
+        if self.dt != other.dt:
+            raise ValueError("Datasets not compatible!")
 
+        # Merge data
+        ti1 = self.t_init
+        ti2 = other.t_init
+        data, t_init = align_ts(self.data, other.data, ti1, ti2, dt)
+
+        # Merge metadata
+        d = self.d
+        scaling = np.concatenate([self.scaling, other.scaling], axis = 0)
+        is_scaled = np.concatenate([self.is_scaled, other.is_scaled], axis = 0)
+        descs = np.concatenate([self.descs, other.descs], axis = 0)
+        c_inds = np.concatenate([self.c_inds, other.c_inds + d], axis = 0)
+        p_inds = np.concatenate([self.p_inds, other.p_inds + d], axis = 0)
+        name = self.name + other.name
+
+        return Dataset(data, dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
+
+    def getSlice(self, ind_low, ind_high):
+        """
+        Returns a new dataset with the columns
+        'ind_low' through 'ind_high'.
+        """
+
+        warnings.warn("Prediction and control indices are lost when slicing.")
+        no_inds = np.array([], dtype = np.int32)
+
+        if ind_low < 0 or ind_high > self.d or ind_low >= ind_high:
+            raise ValueError("Slice indices are invalid.")
+        if ind_low + 1 != ind_high:
+            return Dataset(np.copy(self.data[:, ind_low: ind_high]),
+                           self.dt,
+                           self.t_init,
+                           np.copy(self.scaling[ind_low: ind_high]),
+                           np.copy(self.is_scaled[ind_low: ind_high]),
+                           np.copy(self.descs[ind_low: ind_high]),
+                           no_inds,
+                           no_inds,
+                           name + "Slice" + str(ind_low) + str(ind_high))
+        else:
+           return Dataset(np.copy(self.data[:, ind_low]),
+                           self.dt,
+                           self.t_init,
+                           np.copy(self.scaling[ind_low]),
+                           np.copy(self.is_scaled[ind_low]),
+                           np.copy(self.descs[ind_low]),
+                           no_inds,
+                           no_inds,
+                           name + "Slice" + str(ind_low))
+
+    def __getitem__(self, key):
+        """
+        Allows for slicing. Returns a copy not a reference.
+        """
+        
+        if key.step != 1:
+            raise NotImplementedError("Only implemented for contiguous ranges!")
+        if isinstance(key, slice):
+            return self.getSlice(key.start, key.stop)
+        return self.getSlice(key, key + 1)
 
     def save(self):
         """
@@ -1482,12 +1549,12 @@ class Dataset():
         """
         create_dir(dataset_data_path)
 
-        file_name = self.get_filename(self.name)
+        file_name = self.getFilename(self.name)
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
         pass
 
-    def get_unscaled_data(self):
+    def getUnscaledData(self):
         """
         Adds the mean and std back to every column and returns
         the data.
@@ -1500,7 +1567,7 @@ class Dataset():
         return data_out
 
     @staticmethod
-    def get_filename(name):
+    def getFilename(name):
         return os.path.join(dataset_data_path, name) + '.pkl'
 
     @staticmethod
@@ -1508,7 +1575,7 @@ class Dataset():
         """
         Load a saved Dataset object.
         """
-        f_name = Dataset.get_filename(name)
+        f_name = Dataset.getFilename(name)
         if not os.path.isfile(f_name):
             raise FileNotFoundError("Dataset " + f_name + " does not exist.")
         with open(f_name, 'rb') as f:
@@ -1525,8 +1592,7 @@ def generateRoomDatasets():
 
     # Get weather
     w_dataset = get_weather_data()
-    w_tinit = w_m[0]['t_init']
-    dt = w_m[0]['dt']
+    dt = w_dataset.dt
 
     # Get room data
     dfab_data = get_DFAB_heating_data()
@@ -1765,7 +1831,7 @@ def test_dataset_with_DFAB():
     s = all_data.shape
     c_inds = np.array([s[1] - 1])
     p_inds = np.array([s[1] - 2])
-    ds = Dataset.from_raw(all_data, metadata, name, c_inds, p_inds)
+    ds = Dataset.fromRaw(all_data, metadata, name, c_inds, p_inds)
     ds.save()
 
     ds_new = Dataset.loadDataset(name)

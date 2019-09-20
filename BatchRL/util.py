@@ -110,6 +110,13 @@ def add_mean_and_std(ts, mean_and_std):
     """
     return ts * mean_and_std[1] + mean_and_std[0]
 
+def check_in_range(arr, low, high):
+    """
+    Returns true if all elements in arr are in
+    range [low, high) else false.
+    """
+    return np.max(arr < high) and np.min(arr >= low)
+
 #######################################################################################################
 # NEST stuff
 

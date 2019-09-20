@@ -47,6 +47,9 @@ def simple_battery_FQI():
 
 def main():
 
+    generateRoomDatasets()
+    return
+
     # Battery data
     bat_dataset = get_battery_data(save_plot = True, show = False, use_dataset = True)
     dat_bat = bat_dataset.data
