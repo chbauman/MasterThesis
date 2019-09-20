@@ -1393,19 +1393,21 @@ def compute_DFAB_energy_usage(show_plots = True):
 #######################################################################################################
 # Dataset definition and generation
 
+no_inds = np.array([], dtype = np.int32)
+
 class Dataset():
     """
     This class contains all infos about a given dataset.
     """
 
-    def __init__(self, all_data, dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name):
+    def __init__(self, all_data, dt, t_init, scaling, is_scaled, descs, c_inds = no_inds, p_inds = no_inds, name = ""):
         """
         Base constructor.
         """
 
         # Dimensions
         self.n = all_data.shape[0]
-        self.d = all_data.shape[1]
+        self.d = get_shape1(all_data)
         self.n_c = c_inds.shape[0]
         self.n_p = p_inds.shape[0]
 
@@ -1427,6 +1429,9 @@ class Dataset():
 
         # Actual data
         self.data = all_data
+        if self.d == 1:
+            self.data = np.reshape(self.data, (-1, 1))
+        return
 
     @classmethod
     def fromRaw(cls, all_data, m, name, c_inds, p_inds):
@@ -1460,6 +1465,13 @@ class Dataset():
     def __len__(self):
         return self.d
 
+    def __str__(self):
+        out_str = "Dataset(" + repr(self.data) + ", \ndt = " + repr(self.dt)
+        out_str += ", t_init = " + repr(self.t_init) + ", \nis_scaled = " + repr(self.is_scaled)
+        out_str += ", \ndescs = " + repr(self.descriptions) + ", \nc_inds = " + repr(self.c_inds)
+        out_str += ", \np_inds = " + repr(self.p_inds) + ", name = " + str(self.name) + ")"
+        return out_str
+
     @classmethod
     def copy(cls, dataset):
         """
@@ -1478,6 +1490,7 @@ class Dataset():
     def __add__(self, other):
         """
         Merges dataset other into self.
+        Does not commute!
         """
 
         # Check compatibility
@@ -1487,18 +1500,18 @@ class Dataset():
         # Merge data
         ti1 = self.t_init
         ti2 = other.t_init
-        data, t_init = align_ts(self.data, other.data, ti1, ti2, dt)
+        data, t_init = align_ts(self.data, other.data, ti1, ti2, self.dt)
 
         # Merge metadata
         d = self.d
         scaling = np.concatenate([self.scaling, other.scaling], axis = 0)
         is_scaled = np.concatenate([self.is_scaled, other.is_scaled], axis = 0)
-        descs = np.concatenate([self.descs, other.descs], axis = 0)
+        descs = np.concatenate([self.descriptions, other.descriptions], axis = 0)
         c_inds = np.concatenate([self.c_inds, other.c_inds + d], axis = 0)
         p_inds = np.concatenate([self.p_inds, other.p_inds + d], axis = 0)
         name = self.name + other.name
 
-        return Dataset(data, dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
+        return Dataset(data, self.dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
 
     def getSlice(self, ind_low, ind_high):
         """
@@ -1508,6 +1521,8 @@ class Dataset():
 
         warnings.warn("Prediction and control indices are lost when slicing.")
         no_inds = np.array([], dtype = np.int32)
+        l = ind_low
+        h = ind_high
 
         if ind_low < 0 or ind_high > self.d or ind_low >= ind_high:
             raise ValueError("Slice indices are invalid.")
@@ -1517,29 +1532,29 @@ class Dataset():
                            self.t_init,
                            np.copy(self.scaling[ind_low: ind_high]),
                            np.copy(self.is_scaled[ind_low: ind_high]),
-                           np.copy(self.descs[ind_low: ind_high]),
+                           np.copy(self.descriptions[ind_low: ind_high]),
                            no_inds,
                            no_inds,
-                           name + "Slice" + str(ind_low) + str(ind_high))
+                           self.name + "[" + str(ind_low) + ":" + str(ind_high) + "]")
         else:
-           return Dataset(np.copy(self.data[:, ind_low]),
+           return Dataset(np.copy(self.data[:, l:l+1]),
                            self.dt,
                            self.t_init,
-                           np.copy(self.scaling[ind_low]),
-                           np.copy(self.is_scaled[ind_low]),
-                           np.copy(self.descs[ind_low]),
+                           np.copy(self.scaling[l:l+1]),
+                           np.copy(self.is_scaled[l:l+1]),
+                           np.copy(self.descriptions[l:l+1]),
                            no_inds,
                            no_inds,
-                           name + "Slice" + str(ind_low))
+                           self.name + "[" + str(l) + "]")
 
     def __getitem__(self, key):
         """
         Allows for slicing. Returns a copy not a reference.
         """
         
-        if key.step != 1:
-            raise NotImplementedError("Only implemented for contiguous ranges!")
         if isinstance(key, slice):
+            if key.step is not None and key.step != 1:
+                raise NotImplementedError("Only implemented for contiguous ranges!")
             return self.getSlice(key.start, key.stop)
         return self.getSlice(key, key + 1)
 
@@ -1595,45 +1610,63 @@ def generateRoomDatasets():
     dt = w_dataset.dt
 
     # Get room data
-    dfab_data = get_DFAB_heating_data()
+    dfab_dataset_list = get_DFAB_heating_data(use_dataset = True)
     n_rooms = len(rooms)
-    dfab_room_data_list = [dfab_data[i] for i in range(n_rooms)]
+    dfab_room_dataset_list = [dfab_dataset_list[i] for i in range(n_rooms)]
 
     # Heating water temperature
-    dfab_water_temp = dfab_data[n_rooms]
-    wt_dat, wt_m, wt_name = dfab_water_temp
-    w_in_dat = wt_dat[:, 0]
-    wt_tinit = wt_m[0]['t_init']
+    dfab_hwater_temp_ds = dfab_dataset_list[n_rooms]
+
+    inlet_water_ds = dfab_hwater_temp_ds[0]
+    inlet_water_and_weather = dfab_hwater_temp_ds + inlet_water_ds
+
+    out_ds_list = []
 
     # Single room datasets
-    for ct, dat in enumerate(dfab_room_data_list):
-        dat_room, m_room, name_room = dat
-        n_cols = dat_room.shape[1]
-        n = dat_room.shape[0]
-        t_init = m_room[0]['t_init']
+    for ct, room_ds in enumerate(dfab_room_dataset_list):
 
-        # initialize
-        dat_res = np.empty((n, n_cols - 2), dtype = dat_room.dtype)
+        # Get name
+        room_nr_str = room_ds.name[-2:]
+        new_name = "Model_Room" + room_nr_str
 
-        # Copy temp and blinds and average valve data
-        dat_res[:, 0] = dat_room[:,0]
-        dat_res[:, 1] = np.mean(dat_room[:, 1:4], axis = 1)
-        if n_cols == 5:
-            dat_res[:, 2] = dat_room[:, -1]
+        # Try loading from disk
+        try:
+            curr_out_ds = Dataset.loadDataset(new_name)
+            out_ds_list += [curr_out_ds]
+            continue
+        except FileNotFoundError:
+            pass
 
-        # Add inlet water temperature and weather data
-        dat_res, t_init_curr = align_ts(dat_res, w_in_dat, t_init, wt_tinit, dt)
-        dat_res, t_init_curr = align_ts(dat_res, w_dat, t_init_curr, w_tinit, dt)
+        # Extract datasets
+        valves_ds = room_ds[1:4]
+        room_temp_ds = room_ds[0]
 
-        # Add weather data
-        m_out = [] + w_m
-        m_out[0]['t_init'] = t_init_curr
+        # Compute average valve data and put into dataset
+        valves_avg = np.mean(valves_ds.data, axis = 1)        
+        valves_avg_ds = Dataset(valves_avg,
+                                valves_ds.dt,
+                                valves_ds.t_init,
+                                np.empty((1, 2), dtype = np.float32),
+                                np.array([False]),
+                                np.array(["Averaged valve opening time."]))
 
-        print(name_room)
-        print(name_room)
+        # Put all together
+        full_ds = inlet_water_and_weather + valves_avg_ds + room_temp_ds
+        full_ds.c_inds = np.array([3], dtype = np.int32)
+        full_ds.p_inds = np.array([4], dtype = np.int32)
 
+        # Add blinds
+        if len(room_ds) == 5:
+            blinds_ds = room_ds[4]
+            full_ds = full_ds + blinds_ds
 
-    raise NotImplementedError("This still sucks, implement this shit already!")
+        # Save
+        full_ds.name = new_name
+        full_ds.save()
+        out_ds_list += [full_ds]
+
+    # Return all
+    return out_ds_list
 
 
 #######################################################################################################

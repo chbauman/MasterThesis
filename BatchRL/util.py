@@ -115,6 +115,8 @@ def check_in_range(arr, low, high):
     Returns true if all elements in arr are in
     range [low, high) else false.
     """
+    if arr.size == 0:
+        return True
     return np.max(arr < high) and np.min(arr >= low)
 
 #######################################################################################################
