@@ -1746,6 +1746,17 @@ class Dataset():
             return ds
         return
 
+    def standardize_col(self, col_ind):
+        if col_ind >= self.d:
+            raise ValueError("Column index too big!")
+        if self.is_scaled[col_ind]:
+            return
+        m = np.mean(self.data[:, col_ind])
+        std = np.std(self.data[:, col_ind])
+        self.data[:, col_ind] = (self.data[:, col_ind] - m) / std
+        self.is_scaled[col_ind] = True
+        self.scaling[col_ind] = np.array([m, std])
+
     pass
 
 def generateRoomDatasets():

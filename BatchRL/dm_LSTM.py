@@ -6,10 +6,15 @@ import keras
 from keras import backend as K
 from keras.models import Sequential
 from keras.layers import GRU, LSTM, TimeDistributed, Dense, GaussianNoise
+from functools import partial
 
 from base_dynamics_model import BaseDynamicsModel
 from keras_layers import SeqInput
 from time_series import AR_Model
+
+
+def weighted_loss(y_true, y_pred, weights):
+    return K.mean(K.abs(y_true - y_pred) * weights)
 
 class BaseRNN_DM(BaseDynamicsModel):
     """
@@ -21,6 +26,7 @@ class BaseRNN_DM(BaseDynamicsModel):
                  n_iter_max = 10000, 
                  name = 'baseRNN',
                  *,
+                 weight_vec = None,
                  gru = False, 
                  input_noise_std = None,
                  use_AR = False):
@@ -41,6 +47,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         self.gru = gru
         self.input_noise_std = input_noise_std
         self.use_AR = use_AR
+        self.weight_vec = weight_vec
 
         # Build model
         self.build_model()
@@ -69,7 +76,14 @@ class BaseRNN_DM(BaseDynamicsModel):
         # Output layer
         #model.add(TimeDistributed(Dense(self.out_dim, activation=None)))
         model.add(Dense(self.out_dim, activation=None))
-        model.compile(loss='mse',
+
+        if weight_vec is not None:
+            weights_tensor = Input(shape=(self.out_dim,))
+            loss = partial(weighted_loss, weights=weights_tensor)
+        else:
+            loss = 'mse'
+
+        model.compile(loss=loss,
                       optimizer='adam')
         model.summary()
         self.m = model
