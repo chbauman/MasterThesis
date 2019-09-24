@@ -1333,6 +1333,18 @@ def compute_DFAB_energy_usage(show_plots = True):
                                      ])
     n_rooms = len(room_dict)
 
+    
+    flow_rates_f3 = np.array([134, 123, 129, 94, 145, 129, 81], dtype = np.float32)
+    dtemp = 13
+    powers_f45 = np.array([137, 80, 130, 118, 131, 136, 207,
+                 200, 192, 147, 209, 190, 258, 258], dtype = np.float32)
+    c_p = 4.186
+    d_w = 997
+    h_to_s = 3600
+
+    flow_rates_f45 = h_to_s / (c_p * d_w * dtemp) * powers_f45
+    print(flow_rates_f45)
+
     tot_n_vals_open = np.sum(v_dat, axis = 1)
     dTemp = w_dat[:, 0] - w_dat[:, 1]
 
@@ -1473,15 +1485,58 @@ class Dataset():
         """
         Split dataset into train, validation and test set.
         """
+
+        # Cut data
         tr_dat, test_dat = cut_and_split(self.data, self.seq_len, 4 * 24 * 7)
         self.train_data = tr_dat
         n = tr_dat.shape[0]
         n_val = int(self.val_perc * n)
         n_train = n - n_val
+
+        # Save data
+        self.train_val_data = tr_dat
         self.train_data = tr_dat[:n_train]
         self.val_data = tr_dat[n_train:]
         self.test_data = test_dat
        
+    def get_prepared_data(self, what_data = 'train'):
+        """
+        Prepares the data for supervised learning.
+        """
+
+        # Get the right data
+        if what_data == 'train':
+            data_to_use = self.train_data
+        elif what_data == 'val':
+            data_to_use = self.val_data
+        elif what_data == 'test':
+            data_to_use = self.test_data
+        elif what_data == 'train_val':
+            data_to_use = self.train_val_data
+        else:
+            raise ValueError("No such data available: " + what_data)
+
+        # Get dimensions
+        s = data_to_use.shape
+        n, s_len, d = s
+        n_c = self.n_c
+
+        # Construct output data
+        input_data = np.empty((n, s_len - 1, d), dtype = np.float32)
+        output_data = np.empty((n, d - n_c), dtype = np.float32)
+
+        # Get control and other column indices
+        cont_inds = np.empty((d), dtype = np.bool)
+        cont_inds.fill(False)
+        cont_inds[self.c_inds] = True
+        other_inds = np.logical_not(cont_inds)
+
+        # Fill the data
+        input_data[:, :, :-n_c] = data_to_use[:, :-1, other_inds]
+        input_data[:, :, -n_c:] = data_to_use[:, 1:, cont_inds]
+        output_data = data_to_use[:, -1, other_inds]
+
+        return input_data, output_data
 
     @classmethod
     def fromRaw(cls, all_data, m, name, c_inds = no_inds, p_inds = no_inds):
@@ -1562,6 +1617,49 @@ class Dataset():
         name = self.name + other.name
 
         return Dataset(data, self.dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
+
+    def add_time(self, sine_cos = True):
+        """
+        Adds time to current dataset.
+        """
+        dt = self.dt
+        t_init = datetime_to_npdatetime(string_to_dt(self.t_init))
+        one_day = np.timedelta64(1,'D')
+        dt_td64 = np.timedelta64(dt, 'm')
+        n_tint_per_day = int(one_day / dt_td64)
+        print(n_tint_per_day, "time intervals per day!")
+        floor_day = np.array([t_init], dtype='datetime64[D]')[0]
+        begin_ind = int((t_init - floor_day) / dt_td64)
+        print("begin_ind", begin_ind)
+        print("t_init", t_init)
+        dat = np.empty((self.n, ), dtype = np.float32)
+        for k in range(self.n):
+            dat[k] = (begin_ind + k) % n_tint_per_day
+
+        if not sine_cos:
+            return self + Dataset(dat,
+                           self.dt,
+                           self.t_init,
+                           np.array([0.0, 1.0]),
+                           np.array([False]),
+                           np.array(["Time of day [" + dt +  " mins.]"]),
+                           no_inds,
+                           no_inds,
+                           "Time")
+        else:
+            all_dat = np.empty((self.n, 2), dtype = np.float32)
+            all_dat[:, 0] = np.sin(2 * np.pi * dat / n_tint_per_day)
+            all_dat[:, 1] = np.cos(2 * np.pi * dat / n_tint_per_day)
+            return self + Dataset(all_dat,
+                           self.dt,
+                           self.t_init,
+                           np.array([[0.0, 1.0], [0.0, 1.0]]),
+                           np.array([False, False]),
+                           np.array(["sin(Time of day)", "cos(Time of day)"]),
+                           no_inds,
+                           no_inds,
+                           "Time")
+        pass
 
     def getSlice(self, ind_low, ind_high):
         """
@@ -1717,7 +1815,6 @@ def generateRoomDatasets():
 
     # Return all
     return out_ds_list
-
 
 #######################################################################################################
 # Testing

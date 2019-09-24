@@ -16,11 +16,9 @@ class BaseRNN_DM(BaseDynamicsModel):
     Simple LSTM used for training a dynamics model.
     """
     def __init__(self, 
-                 train_seq_len, 
-                 n_feats, 
+                 data,
                  hidden_sizes = [20, 20], 
                  n_iter_max = 10000, 
-                 out_dim = 1, 
                  name = 'baseRNN',
                  *,
                  gru = False, 
@@ -30,13 +28,16 @@ class BaseRNN_DM(BaseDynamicsModel):
 
         super(BaseRNN_DM, self).__init__()
 
-        # Store parameters
-        self.train_seq_len = train_seq_len
-        self.n_feats = n_feats
+        # Store data
+        self.data = data
+        self.train_seq_len = self.data.seq_len - 1
+        self.n_feats = self.data.d        
+        self.out_dim = self.data.d  - self.data.n_c
+
+        # Store parameters        
         self.hidden_sizes = np.array(hidden_sizes, dtype = np.int32)
         self.n_iter_max = n_iter_max
         self.name = name
-        self.out_dim = out_dim
         self.gru = gru
         self.input_noise_std = input_noise_std
         self.use_AR = use_AR
@@ -73,66 +74,70 @@ class BaseRNN_DM(BaseDynamicsModel):
         model.summary()
         self.m = model
 
-    def fit(self, data, m = None):
+    def fit(self):
         """
         Fit the model if it hasn't been fitted before.
         Otherwise load the trained model.
         """
-        self.m_dat = m
 
         loaded = self.load_if_exists(self.m, self.name)
         if not loaded:
             self.deb("Fitting Model...")
                
             # Prepare the data
-            input_data, output_data = self.prepare_data(data)
+            input_data, output_data = self.data.get_prepared_data('train_val')
 
-            # Fit model
+            # Fit and save model
             self.m.fit(input_data, output_data,
                        epochs = self.n_iter_max,
                        initial_epoch = 0,
                        batch_size = 128,
-                       validation_split = 0.1)
-
+                       validation_split = self.data.val_perc)
             self.m.save_weights(self.get_path(self.name))
         else:
             self.deb("Restored trained model")
 
-        # Save disturbance parameters
-        reds = self.get_residuals(data)
-        if self.use_AR:
-            self.dist_mod = AR_Model(lag = 4)
-            self.dist_mod.fit(reds)
-            self.init_pred = np.zeros((4,))
-        self.res_std = np.std(reds)
-        
+    def model_disturbance(self):
+        """
+        Models the uncertainties in the model.
+        """
 
-    def predict(self, data, prepared = False):
+        # Compute residuals
+        input_data, output_data = self.data.get_prepared_data('train_val')
+        resids = self.predict(input_data) - output_data
+        print(resids)
+
+        if self.use_AR:
+            # Fit an AR process for each output dimension
+            self.dist_mod = [AR_Model(lag = 4).fit(resids[:, k]) for k in range(self.out_dim)]
+            self.init_pred = np.zeros((4, self.out_dim))
+        self.res_std = np.std(resids, axis = 0)
+
+    def predict(self, input_data):
         """
         Predicts a batch of sequences.
         """
 
-        input_data = np.copy(data)
-
-        # Prepare the data
-        if not prepared:
-            input_data, _ = self.prepare_data(data)
+        n = input_data.shape[0]
 
         # Predict
         preds = self.m.predict(input_data)
-        preds = preds.reshape((-1,))
+        preds = preds.reshape((n, -1))
         return preds
 
-    def disturb(self, n):
+    def disturb(self):
         """
         Returns a sample of noise of length n.
         """
         if self.use_AR:
-            next = self.dist_mod.predict(self.init_pred)
-            self.init_pred[:-1] = self.init_pred[1:]
-            self.init_pred[-1] = next
+            next = np.empty((self.out_dim,), dtype = np.float32)
+            for k in range(self.out_dim):
+                next[k] = self.dist_mod.predict(self.init_pred[:, k])      
+                
+            self.init_pred[:-1, :] = self.init_pred[1:, :]
+            self.init_pred[-1, :] = next
             return next
 
-        return np.random.normal(0, self.res_std, n)
+        return np.random.normal(0, 1, self.out_dim) * self.res_std
 
     pass

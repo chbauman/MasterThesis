@@ -21,7 +21,7 @@ from data import Room274Data, Room272Data, WeatherData, TestData, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
     get_DFAB_heating_data, test_plotting_withDFAB_data, test_dataset_with_DFAB, \
     compute_DFAB_energy_usage, get_weather_data, generateRoomDatasets, \
-    analzye_room_energy_consumption
+    analzye_room_energy_consumption, Dataset
 from visualize import plot_time_series, plot_ip_time_series
 
 def simple_battery_FQI():
@@ -47,8 +47,16 @@ def simple_battery_FQI():
     sbt.eval_policy(fqi.get_policy())
 
 def main():
+    generateRoomDatasets()
+    name_ds = 'Model_Room41'
+    ds = Dataset.loadDataset(name_ds)
+    ds = ds.add_time()
+    print(ds)
+    ds.split_train_test()
+    mod = BaseRNN_DM(ds, hidden_sizes=[50, 50], n_iter_max=100, input_noise_std = 0.01, name = "Train50_50-100_" + name_ds + "Time")
+    mod.fit()
+
     #compute_DFAB_energy_usage()
-    analzye_room_energy_consumption()
     #generateRoomDatasets()
     return
 
