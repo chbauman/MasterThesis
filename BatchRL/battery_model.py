@@ -29,18 +29,6 @@ class BatteryModel(BaseDynamicsModel):
         # Save dataset
         self.data = dataset
 
-        # Input tensors
-        s_inp = Input(shape=(1,))
-        p_inp = Input(shape=(1,))
-
-        # Define model
-        mlp = getMLPModel(mlp_layers, 1, ker_reg = 0.0001)
-        m_s = mlp(s_inp)
-        mul = Multiply()([m_s, p_inp])
-        out = Add()([mul, s_inp])
-        self.m = Model(inputs=[s_inp, p_inp], outputs=out)
-        self.m.compile(loss='mse', optimizer='adam')
-
     def prepare_dat_bat(self, indat, outdat):
         """
         shape of indat: (n, 1, 2)

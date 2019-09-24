@@ -20,7 +20,8 @@ from data import Room274Data, Room272Data, WeatherData, TestData, \
     analyze_data, get_heating_data, get_data_test, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
     get_DFAB_heating_data, test_plotting_withDFAB_data, test_dataset_with_DFAB, \
-    compute_DFAB_energy_usage, get_weather_data, generateRoomDatasets
+    compute_DFAB_energy_usage, get_weather_data, generateRoomDatasets, \
+    analzye_room_energy_consumption
 from visualize import plot_time_series, plot_ip_time_series
 
 def simple_battery_FQI():
@@ -46,8 +47,9 @@ def simple_battery_FQI():
     sbt.eval_policy(fqi.get_policy())
 
 def main():
-
-    generateRoomDatasets()
+    #compute_DFAB_energy_usage()
+    analzye_room_energy_consumption()
+    #generateRoomDatasets()
     return
 
     # Battery data

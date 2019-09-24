@@ -1310,7 +1310,7 @@ def compute_DFAB_energy_usage(show_plots = True):
     # Load data from Dataset
     w_name = "DFAB_Extra"
     w_dataset = Dataset.loadDataset(w_name)
-    w_dat = w_dataset.get_unscaled_data()
+    w_dat = w_dataset.getUnscaledData()
     t_init_w = w_dataset.t_init
     dt = w_dataset.dt
 
@@ -1386,9 +1386,42 @@ def compute_DFAB_energy_usage(show_plots = True):
 
         # Add data to output
         out_dat[:, id] = room_energy
-        m_list += [m_room]
+        m_list += [m_room.copy()]
 
-    pass
+    # Save dataset
+    ds_out = Dataset.fromRaw(out_dat, 
+                    m_list,
+                    "DFAB_Room_Energy_Consumption")
+    ds_out.save()
+
+def analzye_room_energy_consumption():
+    """
+    Compares the energy consumption of the different rooms
+    summed over whole days.
+    """
+
+    ds = Dataset.loadDataset("DFAB_Room_Energy_Consumption")
+    relevant_rooms = np.array([False, True, False, True, True, False, True], dtype = np.bool)
+    dat = ds.data[:, relevant_rooms]
+    n = dat.shape[0]
+    d = dat.shape[1]
+
+    # Set rows with nans to nan
+    row_with_nans = find_rows_with_nans(dat)
+    dat[row_with_nans, :] = np.nan
+
+    # Sum Energy consumption over days
+    n_ts = 4 * 24 # 1 Day
+    n_mins = ds.dt * n_ts
+    offset = n % n_ts
+    dat = dat[offset:, :]
+    dat = np.sum(dat.reshape((-1, n_ts, d)), axis = 1)
+
+    # Plot
+    m = [{'description': ds.descriptions[relevant_rooms][k], 'dt': n_mins} for k in range(d)]
+    f_name = os.path.join(preprocess_plot_path, "DFAB")
+    f_name = os.path.join(f_name, "energy_comparison")
+    plot_all(dat, m, use_time = False, show = False, title_and_ylab = ["Room Energy Consumption", "Energy over one day"], save_name = f_name)
 
 #######################################################################################################
 # Dataset definition and generation
@@ -1404,6 +1437,9 @@ class Dataset():
         """
         Base constructor.
         """
+
+        self.val_perc = 0.1
+        self.seq_len = 20
 
         # Dimensions
         self.n = all_data.shape[0]
@@ -1433,8 +1469,22 @@ class Dataset():
             self.data = np.reshape(self.data, (-1, 1))
         return
 
+    def split_train_test(self):
+        """
+        Split dataset into train, validation and test set.
+        """
+        tr_dat, test_dat = cut_and_split(self.data, self.seq_len, 4 * 24 * 7)
+        self.train_data = tr_dat
+        n = tr_dat.shape[0]
+        n_val = int(self.val_perc * n)
+        n_train = n - n_val
+        self.train_data = tr_dat[:n_train]
+        self.val_data = tr_dat[n_train:]
+        self.test_data = test_dat
+       
+
     @classmethod
-    def fromRaw(cls, all_data, m, name, c_inds, p_inds):
+    def fromRaw(cls, all_data, m, name, c_inds = no_inds, p_inds = no_inds):
         """
         Constructor from data and dict m: 
         Extracts the important metadata from the

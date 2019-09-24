@@ -17,7 +17,7 @@ plt.rc('font', family='serif')
 #plt.rc('text', usetex=True) # Makes Problems with the Celsius sign
 
 # Plotting colors
-clr_map = ['blue', 'green', 'c']
+clr_map = ['blue', 'green', 'c', 'm', 'k']
 n_cols = len(clr_map)
 
 # Saving
@@ -37,7 +37,6 @@ def save_figure(save_name, show = False, vector_format = True):
         fig.set_size_inches(16, 9)
 
         # Save and clear
-        save_format = '.svg'
         save_format = '.pdf' if vector_format else '.png'
         save_kwargs = {'bbox_inches': 'tight', 'dpi': 500}
         save_kwargs = {'bbox_inches': 'tight'}
@@ -241,7 +240,8 @@ def plot_multiple_ip_ts(y_list,
                         timestep_offset_list = None, 
                         dt_init_str_list = None, 
                         show_last = True, 
-                        title_and_ylab = None):
+                        title_and_ylab = None,
+                        dt_mins = 15):
     """
     Plotting function for multiple time series.
     """
@@ -261,7 +261,7 @@ def plot_multiple_ip_ts(y_list,
                series_index = k,
                last_series = last_series, 
                title_and_ylab = title_and_ylab, 
-               dt_mins = 15, 
+               dt_mins = dt_mins, 
                dt_init_str = dt_init_str, 
                timestep_offset = ts_offset)
 
@@ -299,14 +299,15 @@ def plot_all(all_data, m, use_time = True, show = True, title_and_ylab = None, s
                         timestep_offset_list = [0 for i in range(n_series)],
                         dt_init_str_list = [m[i].get('t_init') for i in range(n_series)],
                         show_last = show, 
-                        title_and_ylab = title_and_ylab)
+                        title_and_ylab = title_and_ylab,
+                        dt_mins = m[0].get('dt'))
     save_figure(save_name, show)
 
 def plot_dataset(dataset, show = True, title_and_ylab = None, save_name = None):
     """
     Plots the unscaled series in a dataset.
     """
-    all_data = dataset.get_unscaled_data()
+    all_data = dataset.getUnscaledData()
     n_series = all_data.shape[1]
     all_series = [all_data[:, i] for i in range(n_series)]
     labs = [d for d in dataset.descriptions]
