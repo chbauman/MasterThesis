@@ -78,8 +78,17 @@ def align_ts(ts_1, ts_2, t_init1, t_init2, dt):
 
     # Compute relative offset
     interv = np.timedelta64(dt, 'm')
-    ti1 = datetime_to_npdatetime(string_to_dt(t_init1))
-    ti2 = datetime_to_npdatetime(string_to_dt(t_init2))
+    ti1 = datetime_to_npdatetime(string_to_dt(t_init2))
+    ti2 = datetime_to_npdatetime(string_to_dt(t_init1))
+
+    # Ugly bugfix
+    if ti1 < ti2:
+        dout, t = align_ts(ts_2, ts_1, t_init2, t_init1, dt)
+        dout_real = np.copy(dout)
+        dout_real[:, :d_1] = dout[:, d_2:]
+        dout_real[:, d_1:] = dout[:, :d_2]
+        return dout_real, t
+
     offset = np.int(np.round((ti2 - ti1) / interv))
 
     # Compute length
