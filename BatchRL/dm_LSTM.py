@@ -93,7 +93,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         else:
             loss = 'mse'
 
-        optim = Adam(learning_rate = self.lr)
+        optim = Adam(lr = self.lr)
         model.compile(loss=loss,
                       optimizer='adam')
         model.summary()
