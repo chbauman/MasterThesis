@@ -137,7 +137,8 @@ class BaseDynamicsModel(ABC):
         s = input_data.shape
         p_inds = self.data.p_inds
         t_ind = p_inds[0]
-        t_ind = 4
+        #t_ind = 4
+        print(self.data)
         print(t_ind)
 
         # One step predictions
@@ -146,8 +147,6 @@ class BaseDynamicsModel(ABC):
         er = resids[:, t_ind]
         p = preds[:, t_ind]
         tr = output_data[:, t_ind]
-        print(self.data)
-
 
         desc = self.data.descriptions[t_ind]
         print(desc)

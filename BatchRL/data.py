@@ -1782,7 +1782,6 @@ def generateRoomDatasets():
 
     # Get weather
     w_dataset = get_weather_data()
-    print("w dataset: ", w_dataset)
     dt = w_dataset.dt
 
     # Get room data
@@ -1794,11 +1793,6 @@ def generateRoomDatasets():
     dfab_hwater_temp_ds = dfab_dataset_list[n_rooms]
     inlet_water_ds = dfab_hwater_temp_ds[0]
     inlet_water_and_weather = w_dataset + inlet_water_ds
-
-    print(inlet_water_ds.t_init)
-    print(w_dataset.t_init)
-    print(inlet_water_ds.data.shape)
-    print(w_dataset.data.shape)
 
     out_ds_list = []
 
@@ -1820,8 +1814,7 @@ def generateRoomDatasets():
 
         # Extract datasets
         valves_ds = room_ds[1:4]
-        room_temp_ds = room_ds[0]
-        
+        room_temp_ds = room_ds[0]        
 
         # Compute average valve data and put into dataset
         valves_avg = np.mean(valves_ds.data, axis = 1)        
@@ -1831,7 +1824,6 @@ def generateRoomDatasets():
                                 np.empty((1, 2), dtype = np.float32),
                                 np.array([False]),
                                 np.array(["Averaged valve open time."]))
-        print(valves_ds.t_init)
 
         # Put all together
         full_ds = (inlet_water_and_weather + valves_avg_ds) + room_temp_ds
@@ -2057,13 +2049,15 @@ def test_align():
     """
     Tests the alignment of two time series.
     """
+
+    # Test data
     t_i1 = '2019-01-01 00:00:00'
     t_i2 = '2019-01-01 00:30:00'
     dt = 15
-
     ts_1 = np.array([1, 2, 2, 2, 3, 3], dtype = np.float32)
     ts_2 = np.array([2, 3, 3], dtype = np.float32)
 
+    # Do tests
     test1 = align_ts(ts_1, ts_2, t_i1, t_i2, dt)
     print('Test 1:', test1)
     test2 = align_ts(ts_2, ts_1, t_i1, t_i2, dt)
@@ -2075,6 +2069,4 @@ def test_align():
     test5 = align_ts(ts_2, ts_1, t_i2, t_i1, dt)
     print('Test 5:', test5)
 
-    
-
-    pass
+    return

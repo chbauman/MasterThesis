@@ -6,6 +6,7 @@ import keras
 from keras import backend as K
 from keras.models import Sequential
 from keras.layers import GRU, LSTM, TimeDistributed, Dense, GaussianNoise
+from keras.optimizers import Adam
 from functools import partial
 
 from base_dynamics_model import BaseDynamicsModel
@@ -30,7 +31,8 @@ class BaseRNN_DM(BaseDynamicsModel):
                  gru = False, 
                  input_noise_std = None,
                  use_AR = False,
-                 residual_learning = False):
+                 residual_learning = False,
+                 lr = 0.001):
 
 
         super(BaseRNN_DM, self).__init__()
@@ -50,6 +52,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         self.use_AR = use_AR
         self.weight_vec = weight_vec
         self.res_learn = residual_learning
+        self.lr = lr
 
         # Build model
         self.build_model()
@@ -90,6 +93,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         else:
             loss = 'mse'
 
+        optim = Adam(learning_rate = self.lr)
         model.compile(loss=loss,
                       optimizer='adam')
         model.summary()
