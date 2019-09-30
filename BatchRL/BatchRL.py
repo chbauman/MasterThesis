@@ -48,13 +48,17 @@ def simple_battery_FQI():
 
 def main():
     generateRoomDatasets()
-    name_ds = 'Model_Room41'
+    name_ds = 'Model_Room43'
     ds = Dataset.loadDataset(name_ds)
-    ds = ds.add_time()
     print(ds)
-    ds.split_train_test()
-    mod = BaseRNN_DM(ds, hidden_sizes=[50, 50], n_iter_max=100, input_noise_std = 0.01, name = "Train50_50-100_" + name_ds + "Time")
+    ds = ds.add_time()
+    ds.split_train_test(4)
+
+    mod = BaseRNN_DM(ds, hidden_sizes=[50, 50], n_iter_max = 100, input_noise_std = 0.01, name = "Train50_50-100_" + name_ds + "Time")
     mod.fit()
+    mod.model_disturbance()
+    mod.disturb()
+    mod.analyze()
 
     #compute_DFAB_energy_usage()
     #generateRoomDatasets()

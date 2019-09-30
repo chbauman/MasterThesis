@@ -29,7 +29,8 @@ class BaseRNN_DM(BaseDynamicsModel):
                  weight_vec = None,
                  gru = False, 
                  input_noise_std = None,
-                 use_AR = False):
+                 use_AR = False,
+                 residual_learning = False):
 
 
         super(BaseRNN_DM, self).__init__()
@@ -48,6 +49,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         self.input_noise_std = input_noise_std
         self.use_AR = use_AR
         self.weight_vec = weight_vec
+        self.res_learn = residual_learning
 
         # Build model
         self.build_model()
@@ -71,13 +73,18 @@ class BaseRNN_DM(BaseDynamicsModel):
         for k in range(n_lstm):
             ret_seq = k != n_lstm - 1
             model.add(rnn(self.hidden_sizes[k],
-                           return_sequences=ret_seq))
+                          return_sequences=ret_seq))
         
         # Output layer
         #model.add(TimeDistributed(Dense(self.out_dim, activation=None)))
         model.add(Dense(self.out_dim, activation=None))
+        if self.res_learn:
+            # TODO
+            # Add input to output
+            pass
 
-        if weight_vec is not None:
+
+        if self.weight_vec is not None:
             weights_tensor = Input(shape=(self.out_dim,))
             loss = partial(weighted_loss, weights=weights_tensor)
         else:
@@ -111,21 +118,6 @@ class BaseRNN_DM(BaseDynamicsModel):
         else:
             self.deb("Restored trained model")
 
-    def model_disturbance(self):
-        """
-        Models the uncertainties in the model.
-        """
-
-        # Compute residuals
-        input_data, output_data = self.data.get_prepared_data('train_val')
-        resids = self.predict(input_data) - output_data
-        print(resids)
-
-        if self.use_AR:
-            # Fit an AR process for each output dimension
-            self.dist_mod = [AR_Model(lag = 4).fit(resids[:, k]) for k in range(self.out_dim)]
-            self.init_pred = np.zeros((4, self.out_dim))
-        self.res_std = np.std(resids, axis = 0)
 
     def predict(self, input_data):
         """
@@ -139,19 +131,6 @@ class BaseRNN_DM(BaseDynamicsModel):
         preds = preds.reshape((n, -1))
         return preds
 
-    def disturb(self):
-        """
-        Returns a sample of noise of length n.
-        """
-        if self.use_AR:
-            next = np.empty((self.out_dim,), dtype = np.float32)
-            for k in range(self.out_dim):
-                next[k] = self.dist_mod.predict(self.init_pred[:, k])      
-                
-            self.init_pred[:-1, :] = self.init_pred[1:, :]
-            self.init_pred[-1, :] = next
-            return next
 
-        return np.random.normal(0, 1, self.out_dim) * self.res_std
 
     pass

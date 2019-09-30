@@ -718,6 +718,8 @@ def extract_streak(all_data, s_len, lag):
     # Find sequences of length tot_s_len
     tmp = np.convolve(rwn, true_seq, 'valid')
     inds = np.where(tmp == tot_s_len)[0]
+    if len(inds) < 1:
+        raise IndexError("No streak of length {} found".format(tot_s_len))
     last_seq_start = inds[-1]
 
     # Extract
@@ -918,7 +920,7 @@ def get_weather_data(save_plots = True):
                                clean_args = [([], 30, [])],
                                rem_out_args = None,
                                hole_fill_args = fill_by_ip_max,
-                               n_tot_cols = 6,
+                               n_tot_cols = 2,
                                gauss_sigma = filter_sigma)
     add_dt_and_tinit(m, dt_mins, dt_init)
     m_out += [m[0]]
@@ -932,14 +934,13 @@ def get_weather_data(save_plots = True):
                     title_and_ylab = ['Outside Temperature Processed', m[0]['unit']],
                     save_name = plot_name_temp)
 
-
     # Add Irradiance Data
     all_data, _ = pipeline_preps(dat[2], 
                                dt_mins,
                                all_data = all_data,
                                dt_init = dt_init,
-                               row_ind = 2,
-                               clean_args = [([], 3, [1300.0, 0.0]), ([], 60 * 20)],
+                               row_ind = 1,
+                               clean_args = [([], 60, [1300.0, 0.0]), ([], 60 * 20)],
                                rem_out_args = None,
                                hole_fill_args = fill_by_ip_max,
                                gauss_sigma = filter_sigma)
@@ -947,13 +948,12 @@ def get_weather_data(save_plots = True):
 
     if save_plots:
         plot_time_series(dat[2][1], dat[2][0], m = m[2], show = False, save_name = plot_name_irrad_raw)
-        plot_single(all_data[:, 2], 
+        plot_single(all_data[:, 1], 
                     m[2], 
                     use_time = True, 
                     show = False, 
                     title_and_ylab = ['Irradiance Processed', m[2]['unit']],
                     save_name = plot_name_irrad)
-    m_out += [m[2]]
 
     # Save and return
     no_inds = np.array([], dtype = np.int32)
@@ -961,7 +961,6 @@ def get_weather_data(save_plots = True):
     w_dataset.save()
     return w_dataset
 
-# Real Data, takes some time to run
 # DEPRECATED
 def get_heating_data(filter_sigma = None):
     """
@@ -1481,13 +1480,14 @@ class Dataset():
             self.data = np.reshape(self.data, (-1, 1))
         return
 
-    def split_train_test(self):
+    def split_train_test(self, streak_len = 7):
         """
         Split dataset into train, validation and test set.
         """
 
         # Cut data
-        tr_dat, test_dat = cut_and_split(self.data, self.seq_len, 4 * 24 * 7)
+        s_len = int(60 / self.dt * 24 * streak_len)
+        tr_dat, test_dat = cut_and_split(self.data, self.seq_len, s_len)
         self.train_data = tr_dat
         n = tr_dat.shape[0]
         n_val = int(self.val_perc * n)
@@ -1766,6 +1766,7 @@ def generateRoomDatasets():
 
     # Get weather
     w_dataset = get_weather_data()
+    print("w dataset: ", w_dataset)
     dt = w_dataset.dt
 
     # Get room data
@@ -1777,7 +1778,7 @@ def generateRoomDatasets():
     dfab_hwater_temp_ds = dfab_dataset_list[n_rooms]
 
     inlet_water_ds = dfab_hwater_temp_ds[0]
-    inlet_water_and_weather = dfab_hwater_temp_ds + inlet_water_ds
+    inlet_water_and_weather = w_dataset + inlet_water_ds
 
     out_ds_list = []
 
@@ -1810,6 +1811,7 @@ def generateRoomDatasets():
                                 np.array(["Averaged valve opening time."]))
 
         # Put all together
+        print("iwaw", inlet_water_and_weather)
         full_ds = inlet_water_and_weather + valves_avg_ds + room_temp_ds
         full_ds.c_inds = np.array([3], dtype = np.int32)
         full_ds.p_inds = np.array([4], dtype = np.int32)

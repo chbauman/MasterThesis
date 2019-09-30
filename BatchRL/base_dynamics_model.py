@@ -29,13 +29,6 @@ class BaseDynamicsModel(ABC):
     def predict(self, data, prepared = False):
         pass
 
-    @abstractmethod
-    def disturb(self, n):
-        """
-        Returns a sample of noise of length n.
-        """
-        pass
-
     def get_path(self, name):
         return self.model_path + name + ".h5"
 
@@ -51,78 +44,116 @@ class BaseDynamicsModel(ABC):
             return True
         return False
     
-    def prepare_data(self, data, diff = False):
-        """ 
-        Prepare the data
+    def model_disturbance(self, data_str = 'train_val'):
+        """
+        Models the uncertainties in the model.
         """
 
-        d_shape = data.shape
-        seq_len_data = d_shape[1]
-        input_data = np.copy(data[:, :-1, :])
-        #output_data = data[:, 1:, 3]
-        #output_data.reshape((d_shape[0], seq_len_data - 1, 1))
-        output_data = np.copy(data[:, -1, self.out_indx])
-        if diff:
-            output_data -= np.copy(data[:, -2, self.out_indx])
+        # Compute residuals
+        input_data, output_data = self.data.get_prepared_data(data_str)
+        resids = self.predict(input_data) - output_data
+        #print(resids)
+        N_LAG = 4
 
-        if self.debug:
-            print("Input shape", input_data.shape)
-            print("Output shape", output_data.shape)
+        if self.use_AR:
+            # Fit an AR process for each output dimension
+            self.dist_mod = [AR_Model(lag = N_LAG).fit(resids[:, k]) for k in range(self.out_dim)]
+            self.init_pred = np.zeros((N_LAG, self.out_dim))
+        self.res_std = np.std(resids, axis = 0)
+        self.modeled_disturbance = True
 
-        return input_data, output_data
+    def disturb(self):
+        """
+        Returns a sample of noise of length n.
+        """
+        try:
+            md = self.modeled_disturbance
+        except AttributeError as e:
+            raise AttributeError('Need to model the disturbance first.')
 
-    def n_step_predict(self, data, n, return_all_preds = False, disturb_pred = False, diff = False):
+        if self.use_AR:
+            next = np.empty((self.out_dim,), dtype = np.float32)
+            for k in range(self.out_dim):
+                next[k] = self.dist_mod.predict(self.init_pred[:, k])      
+                
+            self.init_pred[:-1, :] = self.init_pred[1:, :]
+            self.init_pred[-1, :] = next
+            return next
+
+        return np.random.normal(0, 1, self.out_dim) * self.res_std
+
+    def n_step_predict(self, prepared_data, n, pred_inds, return_all_preds = False, disturb_pred = False, diff = False):
         """
         Applies the model n times and returns the 
         predictions.
         """
 
-        s = data.shape
-        seq_len = s[1]
-        n_data = s[0]
-        n_out = n_data - n + 1
-        
+        if diff:
+            raise NotImplementedError("Differentiating data is not implemented")
+
+        in_data, out_data = prepared_data
+
+        # Get shapes
+        n_samples = in_data.shape[0]
+        seq_len = in_data.shape[1]
+        n_out = n_samples - n + 1
+        d = len(pred_inds)
+
+        # Reserve output array
         all_preds = None
         if return_all_preds:
-            all_preds = np.empty((n_out, n))
+            all_preds = np.empty((n_out, n, d))
 
-        input_data, output_data = self.prepare_data(np.copy(data), diff=diff)
-        curr_in_data = input_data[:n_out]
-        curr_out_data = output_data[:n_out]
+        
+        curr_in_data = in_data[:n_out]
+        curr_out_data = out_data[:n_out]
         for k in range(n):
 
             # Predict
-            curr_preds = self.predict(curr_in_data, prepared = True)
+            curr_preds = self.predict(curr_in_data)
             if disturb_pred:
-                curr_preds += self.disturb(curr_preds.shape[0])
+                curr_preds += self.disturb()
 
             if return_all_preds:
                 all_preds[:, k] = curr_preds
 
             # Construct next data
             curr_in_data[:, :-1, :] = curr_in_data[:, 1:, :]
-            curr_in_data[:, -1, :] = input_data[k:(n_out + k), -1, :]
-            curr_in_data[:, -1, self.out_indx] = curr_preds
+            curr_in_data[:, -1, :] = in_data[k:(n_out + k), -1, :]
+            curr_in_data[:, -1, pred_inds] = curr_preds[:, pred_inds]
 
+        
         if return_all_preds:
             return all_preds
         return curr_preds
 
-    def analyze(self, week_data, diff = False):
+    def analyze(self, diff = False):
         """
         Analyzes the trained model
         """
 
         print("Analyzing model")
-        s = week_data.shape
-        input_data, output_data = self.prepare_data(week_data)
+        input_data, output_data = self.data.get_prepared_data('test')
+        s = input_data.shape
+        p_inds = self.data.p_inds
+        t_ind = p_inds[0]
+        t_ind = 4
+        print(t_ind)
 
         # One step predictions
-        preds = self.predict(week_data)
-        preds = preds.reshape((-1,))
-        er = preds - output_data
+        preds = self.predict(input_data)
+        resids = preds - output_data
+        er = resids[:, t_ind]
+        p = preds[:, t_ind]
+        tr = output_data[:, t_ind]
+        print(self.data)
+
+
+        desc = self.data.descriptions[t_ind]
+        print(desc)
         m = {'description': '15-Min Ahead Predictions', 'unit': 'Scaled Temperature'}
-        plot_ip_time_series([preds, output_data], lab = ['predictions', 'truth'], m = m, show = True)        
+        plot_ip_time_series([p, tr], lab = ['predictions', 'truth'], m = m, show = True)        
+        print("fuck")
 
         # One hour predictions (4 steps)
         one_h_pred = self.n_step_predict(week_data, 4, diff=diff)
