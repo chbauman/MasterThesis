@@ -50,9 +50,17 @@ def main():
     generateRoomDatasets()
     name_ds = 'Model_Room43'
     ds = Dataset.loadDataset(name_ds)
+    notnans = np.sum(np.logical_not(np.isnan(ds.data)), axis = 0)
+    print(notnans)
+    print(ds.data.shape)
     print(ds)
+    #raise NameError("Fuck")
+    ds.visualize_nans()
     ds = ds.add_time()
-    ds.split_train_test(4)
+    
+    ds[2:5].split_train_test(0.05)
+    print("rest")
+    ds.split_train_test(0.05)
 
     mod = BaseRNN_DM(ds, hidden_sizes=[50, 50], n_iter_max = 100, input_noise_std = 0.01, name = "Train50_50-100_" + name_ds + "Time")
     mod.fit()

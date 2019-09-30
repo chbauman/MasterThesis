@@ -13,7 +13,7 @@ from datetime import datetime
 from visualize import plot_time_series, plot_ip_time_series, \
     plot_single_ip_ts, plot_multiple_ip_ts, \
     plot_all, plot_single, preprocess_plot_path, \
-    plot_multiple_time_series, plot_dataset
+    plot_multiple_time_series, plot_dataset, plot_dir
 from restclient import DataStruct, save_dir
 from util import *
 
@@ -711,7 +711,10 @@ def extract_streak(all_data, s_len, lag):
     """
 
     tot_s_len = s_len + lag
-    rwn = np.int32(np.logical_not(find_rows_with_nans(all_data)))
+    not_nans = np.logical_not(find_rows_with_nans(all_data))
+    print(not_nans)
+    print(not_nans.sum())
+    rwn = np.int32(not_nans)
     true_seq = np.empty((tot_s_len, ), dtype = np.int32)
     true_seq.fill(1)
 
@@ -719,7 +722,7 @@ def extract_streak(all_data, s_len, lag):
     tmp = np.convolve(rwn, true_seq, 'valid')
     inds = np.where(tmp == tot_s_len)[0]
     if len(inds) < 1:
-        raise IndexError("No streak of length {} found".format(tot_s_len))
+        raise IndexError("No fucking streak of length {} found!!!".format(tot_s_len))
     last_seq_start = inds[-1]
 
     # Extract
@@ -1757,6 +1760,19 @@ class Dataset():
         self.is_scaled[col_ind] = True
         self.scaling[col_ind] = np.array([m, std])
 
+    def visualize_nans(self):
+        """
+        Visualizes where the holes are in the time series.
+        """
+        nan_plot_dir = os.path.join(plot_dir, "NanPlots")
+        create_dir(nan_plot_dir)
+        s_name = os.path.join(nan_plot_dir, self.name)
+        not_nans = np.logical_not(np.isnan(self.data))
+        scaled = not_nans * np.arange(1, 1 + self.d, 1, dtype = np.int32)
+        scaled[scaled == 0] = -1
+        m = [{'description': d, 'dt': self.dt} for d in self.descriptions]
+        plot_all(scaled, m, use_time = False, show = False, title_and_ylab = ["Nan plot", "Series"], scale_back = False, save_name = s_name)
+
     pass
 
 def generateRoomDatasets():
@@ -1779,6 +1795,8 @@ def generateRoomDatasets():
 
     inlet_water_ds = dfab_hwater_temp_ds[0]
     inlet_water_and_weather = w_dataset + inlet_water_ds
+    w_dataset.visualize_nans()
+    inlet_water_and_weather.visualize_nans()
 
     out_ds_list = []
 

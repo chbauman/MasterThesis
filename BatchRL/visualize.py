@@ -17,7 +17,7 @@ plt.rc('font', family='serif')
 #plt.rc('text', usetex=True) # Makes Problems with the Celsius sign
 
 # Plotting colors
-clr_map = ['blue', 'green', 'c', 'm', 'k']
+clr_map = ['blue', 'green', 'c', 'm', 'k', 'y']
 n_cols = len(clr_map)
 
 # Saving
