@@ -48,6 +48,8 @@ def simple_battery_FQI():
 
 def main():
 
+    #test_align()
+    #return
     generateRoomDatasets()
     name_ds = 'Model_Room43'
     ds = Dataset.loadDataset(name_ds)
@@ -59,9 +61,7 @@ def main():
     ds.visualize_nans()
     ds = ds.add_time()
     
-    ds[2:5].split_train_test(0.05)
-    print("rest")
-    ds.split_train_test(0.05)
+    ds.split_train_test(7)
 
     mod = BaseRNN_DM(ds, hidden_sizes=[50, 50], n_iter_max = 100, input_noise_std = 0.01, name = "Train50_50-100_" + name_ds + "Time")
     mod.fit()

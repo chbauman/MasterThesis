@@ -104,11 +104,11 @@ def align_ts(ts_1, ts_2, t_init1, t_init2, dt):
     if not start_s:
         out[:n_2, :d_2] = t2_res
         out[offset:(offset + n_1), d_2:] = t1_res
-        t_init_out = t_init1
+        t_init_out = t_init2
     else:
         out[:n_1, :d_1] = t1_res
         out[-offset:(-offset + n_2), d_1:] = t2_res
-        t_init_out = t_init2
+        t_init_out = t_init1
 
     return out, t_init_out
 
