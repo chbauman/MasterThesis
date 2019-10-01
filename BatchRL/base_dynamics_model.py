@@ -17,9 +17,8 @@ class BaseDynamicsModel(ABC):
     dynamics model.
     """
 
-    def __init__(self, out_ind = 3):
-
-        self.out_indx = out_ind
+    def __init__(self):
+        pass
 
     debug = True
     model_path = "../Models/Dynamics/"
@@ -99,13 +98,14 @@ class BaseDynamicsModel(ABC):
         # Get shapes
         n_samples = in_data.shape[0]
         seq_len = in_data.shape[1]
+        n_feat = out_data.shape[1]
         n_out = n_samples - n + 1
         d = len(pred_inds)
 
         # Reserve output array
         all_preds = None
         if return_all_preds:
-            all_preds = np.empty((n_out, n, d))
+            all_preds = np.empty((n_out, n, n_feat))
 
         curr_in_data = in_data[:n_out]
         curr_out_data = out_data[:n_out]
@@ -166,32 +166,30 @@ class BaseDynamicsModel(ABC):
                               is_scd,
                               ['Prediction', 'Ground Truth'])
 
+        # Fixed numner of timesteps prediction
+        #for n_ts in [1, 4, 20]:
+        #    dt = d.dt
+        #    time_str =  str(dt * n_ts) + 'min' if n_ts < 4 else str(dt * n_ts / 60) + 'h'
+        #    one_h_pred = self.n_step_predict([input_data, output_data], n_ts, d.p_inds_prep)
+        #    analysis_ds.data[(n_ts - 1):, 0] = one_h_pred[:, p_ind]
+        #    analysis_ds.data[:(n_ts - 1), 0] = np.nan
+        #    title_and_ylab = [time_str + ' Ahead Predictions', desc]
+        #    plot_dataset(analysis_ds,
+        #                 show = False,
+        #                 title_and_ylab = title_and_ylab,
+        #                 save_name = self.get_plt_path(time_str + 'Ahead'))
 
-        # One step predictions
-        preds = self.predict(input_data)
-        p = preds[:, p_ind]
-        plot_data[:, 0] = p
-        title_and_ylab = ['15-Min Ahead Predictions', desc]
+
+        # One-week prediction
+        full_pred = self.n_step_predict([input_data, output_data], s[0], d.p_inds_prep, 
+                                        return_all_preds = True)
+        analysis_ds.data[:, 0] = full_pred[0, :, p_ind]
+        title_and_ylab = ['1 Week Continuous Predictions', desc]
         plot_dataset(analysis_ds,
                      show = False,
                      title_and_ylab = title_and_ylab,
-                     save_name = self.get_plt_path('15minAhead'))
-
-        # One hour predictions (4 steps)
-        one_h_pred = self.n_step_predict([input_data, output_data], 4, d.p_inds_prep)
-        print(one_h_pred)
-        print(one_h_pred.shape)
+                     save_name = self.get_plt_path('OneWeek'))
         return
-
-        # One hour predictions (4 steps)
-        one_h_pred = self.n_step_predict(week_data, 4, diff=diff)
-        m['description'] = '1h Ahead Predictions'
-        plot_ip_time_series([one_h_pred, output_data[3:]], lab = ['predictions', 'truth'], m = m, show = True)
-
-        # 5 hour predictions (20 steps)
-        one_h_pred = self.n_step_predict(week_data, 20, diff=diff)
-        m['description'] = '5h Ahead Predictions'
-        plot_ip_time_series([one_h_pred, output_data[19:]], lab = ['predictions', 'truth'], m = m, show = True)
 
         # One-week prediction
         full_pred = self.n_step_predict(week_data, s[0], return_all_preds=True, diff=diff)
