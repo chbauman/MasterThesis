@@ -1,0 +1,1 @@
+scp -rp .\Datasets\ chbauman@euler.ethz.ch:MT/MasterThesis/Data/
