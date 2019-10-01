@@ -6,7 +6,9 @@ import numpy as np
 from keras.models import load_model
 from abc import ABC, abstractmethod
 
-from visualize import plot_ip_time_series, plot_multiple_ip_ts
+from visualize import plot_ip_time_series, plot_multiple_ip_ts, plot_dataset,\
+    model_plot_path
+from data import Dataset
 from util import * 
 
 class BaseDynamicsModel(ABC):
@@ -128,41 +130,57 @@ class BaseDynamicsModel(ABC):
             return all_preds
         return curr_preds
 
+    def get_plt_path(self, name):
+        """
+        Specifies the path of the plot with name 'name'
+        where it should be saved. If there is not a directory
+        for the current model, it is created.
+        """
+        dir_name = os.path.join(model_plot_path, self.name)
+        create_dir(dir_name)
+        return os.path.join(dir_name, name)
+
     def analyze(self, diff = False):
         """
         Analyzes the trained model
         """
 
         print("Analyzing model")
-        input_data, output_data = self.data.get_prepared_data('test')
-        s = input_data.shape
-        p_inds = self.data.p_inds_prep
-        t_ind = p_inds[0]
-        #t_ind = 3
-        print(self.data)
-        print(t_ind)
+        d = self.data
+
+        # Prepare the data
+        input_data, output_data = d.get_prepared_data('test')
+        s = input_data.shape        
+        p_ind = d.p_inds_prep[0]
+        orig_p_ind = d.p_inds[0]
+        tr = output_data[:, p_ind]
+
+        # Plot data
+        plot_data = np.empty((s[0], 2), dtype = np.float32)
+        plot_data[:, 1] = tr
+        desc = d.descriptions[orig_p_ind]
+        scals = np.array(repl(d.scaling[orig_p_ind], 2))
+        is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype = np.bool)
+        analysis_ds = Dataset(plot_data,
+                              d.dt,
+                              d.t_init,
+                              scals,
+                              is_scd,
+                              ['Prediction', 'Ground Truth'])
+
 
         # One step predictions
         preds = self.predict(input_data)
-        resids = preds - output_data
-        er = resids[:, t_ind]
-        p = preds[:, t_ind]
-        tr = output_data[:, t_ind]
+        p = preds[:, p_ind]
+        
+        # Plot        
+        plot_data[:, 0] = p
+        title_and_ylab = ['15-Min Ahead Predictions', desc]
+        plot_dataset(analysis_ds, 
+                     show = False, 
+                     title_and_ylab = title_and_ylab, 
+                     save_name = self.get_plt_path('15minAhead'))
 
-        # Plot
-        orig_pred_ind = self.data.p_inds[0]
-        desc = self.data.descriptions[orig_pred_ind]
-        title_and_ylab = ['15-Min Ahead Predictions', desc]        
-        plot_multiple_ip_ts([p, tr], 
-                            lab_list = ['predictions', 'truth'], 
-                            mean_and_std_list = repl(self.data.scaling[orig_pred_ind], 2),
-                            use_time = True, 
-                            timestep_offset_list = None, 
-                            dt_init_str_list = repl(self.data.t_init, 2),
-                            show_last = True, 
-                            title_and_ylab = title_and_ylab,
-                            dt_mins = self.data.dt)    
-        print("fuck")
         return
 
         # One hour predictions (4 steps)
