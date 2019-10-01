@@ -13,6 +13,7 @@ from base_dynamics_model import BaseDynamicsModel
 from keras_layers import SeqInput
 from time_series import AR_Model
 
+from util import *
 
 def weighted_loss(y_true, y_pred, weights):
     return K.mean(K.abs(y_true - y_pred) * weights)
@@ -118,10 +119,10 @@ class BaseRNN_DM(BaseDynamicsModel):
                        initial_epoch = 0,
                        batch_size = 128,
                        validation_split = self.data.val_perc)
+            create_dir(self.model_path)
             self.m.save_weights(self.get_path(self.name))
         else:
             self.deb("Restored trained model")
-
 
     def predict(self, input_data):
         """
@@ -134,7 +135,6 @@ class BaseRNN_DM(BaseDynamicsModel):
         preds = self.m.predict(input_data)
         preds = preds.reshape((n, -1))
         return preds
-
 
 
     pass

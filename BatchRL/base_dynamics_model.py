@@ -107,7 +107,6 @@ class BaseDynamicsModel(ABC):
         if return_all_preds:
             all_preds = np.empty((n_out, n, d))
 
-        
         curr_in_data = in_data[:n_out]
         curr_out_data = out_data[:n_out]
         for k in range(n):
@@ -124,7 +123,6 @@ class BaseDynamicsModel(ABC):
             curr_in_data[:, :-1, :] = curr_in_data[:, 1:, :]
             curr_in_data[:, -1, :] = in_data[k:(n_out + k), -1, :]
             curr_in_data[:, -1, pred_inds] = curr_preds[:, pred_inds]
-
         
         if return_all_preds:
             return all_preds
@@ -172,15 +170,17 @@ class BaseDynamicsModel(ABC):
         # One step predictions
         preds = self.predict(input_data)
         p = preds[:, p_ind]
-        
-        # Plot        
         plot_data[:, 0] = p
         title_and_ylab = ['15-Min Ahead Predictions', desc]
-        plot_dataset(analysis_ds, 
-                     show = False, 
-                     title_and_ylab = title_and_ylab, 
+        plot_dataset(analysis_ds,
+                     show = False,
+                     title_and_ylab = title_and_ylab,
                      save_name = self.get_plt_path('15minAhead'))
 
+        # One hour predictions (4 steps)
+        one_h_pred = self.n_step_predict([input_data, output_data], 4, d.p_inds_prep)
+        print(one_h_pred)
+        print(one_h_pred.shape)
         return
 
         # One hour predictions (4 steps)
