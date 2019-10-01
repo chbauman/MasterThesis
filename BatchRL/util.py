@@ -25,6 +25,12 @@ def apply(list_or_el, fun):
     else:
         return fun(list_or_el)
 
+def repl(el, n):
+    """
+    Constructs a list with n equal elements 'el'.
+    """
+    return [el for _ in range(n)]
+
 #######################################################################################################
 # Numerical stuff
 

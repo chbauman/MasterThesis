@@ -6,8 +6,9 @@ import numpy as np
 from keras.models import load_model
 from abc import ABC, abstractmethod
 
-from visualize import plot_ip_time_series
- 
+from visualize import plot_ip_time_series, plot_multiple_ip_ts
+from util import * 
+
 class BaseDynamicsModel(ABC):
     """
     This class describes the interface of a ML-based
@@ -148,10 +149,19 @@ class BaseDynamicsModel(ABC):
         p = preds[:, t_ind]
         tr = output_data[:, t_ind]
 
-        desc = self.data.descriptions[t_ind]
-        print(desc)
-        m = {'description': '15-Min Ahead Predictions', 'unit': 'Scaled Temperature'}
-        plot_ip_time_series([p, tr], lab = ['predictions', 'truth'], m = m, show = True)        
+        # Plot
+        orig_pred_ind = self.data.p_inds[0]
+        desc = self.data.descriptions[orig_pred_ind]
+        title_and_ylab = ['15-Min Ahead Predictions', desc]        
+        plot_multiple_ip_ts([p, tr], 
+                            lab_list = ['predictions', 'truth'], 
+                            mean_and_std_list = repl(self.data.scaling[orig_pred_ind], 2),
+                            use_time = True, 
+                            timestep_offset_list = None, 
+                            dt_init_str_list = repl(self.data.t_init, 2),
+                            show_last = True, 
+                            title_and_ylab = title_and_ylab,
+                            dt_mins = self.data.dt)    
         print("fuck")
         return
 

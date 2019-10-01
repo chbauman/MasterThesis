@@ -63,7 +63,6 @@ def main():
     mod.analyze()
 
     #compute_DFAB_energy_usage()
-    #generateRoomDatasets()
     return
 
     # Battery data
