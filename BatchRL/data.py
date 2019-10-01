@@ -1717,7 +1717,7 @@ class Dataset():
         """
         create_dir(dataset_data_path)
 
-        file_name = self.getFilename(self.name)
+        file_name = self.get_filename(self.name)
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
         pass
@@ -1735,7 +1735,7 @@ class Dataset():
         return data_out
 
     @staticmethod
-    def getFilename(name):
+    def get_filename(name):
         return os.path.join(dataset_data_path, name) + '.pkl'
 
     @staticmethod
@@ -1743,7 +1743,7 @@ class Dataset():
         """
         Load a saved Dataset object.
         """
-        f_name = Dataset.getFilename(name)
+        f_name = Dataset.get_filename(name)
         if not os.path.isfile(f_name):
             raise FileNotFoundError("Dataset " + f_name + " does not exist.")
         with open(f_name, 'rb') as f:
@@ -1756,13 +1756,20 @@ class Dataset():
             raise ValueError("Column index too big!")
         if self.is_scaled[col_ind]:
             return
-        m = np.mean(self.data[:, col_ind])
-        std = np.std(self.data[:, col_ind])
+        m = np.nanmean(self.data[:, col_ind])
+        std = np.nanstd(self.data[:, col_ind])
         self.data[:, col_ind] = (self.data[:, col_ind] - m) / std
         self.is_scaled[col_ind] = True
         self.scaling[col_ind] = np.array([m, std])
 
-    def visualize_nans(self):
+    def standardize(self):
+        """
+        Standardizes all columns in the data.
+        """
+        for k in range(self.d):
+            self.standardize_col(k)
+
+    def visualize_nans(self, name_ext = ""):
         """
         Visualizes where the holes are in the time series.
         """
@@ -1773,7 +1780,12 @@ class Dataset():
         scaled = not_nans * np.arange(1, 1 + self.d, 1, dtype = np.int32)
         scaled[scaled == 0] = -1
         m = [{'description': d, 'dt': self.dt} for d in self.descriptions]
-        plot_all(scaled, m, use_time = False, show = False, title_and_ylab = ["Nan plot", "Series"], scale_back = False, save_name = s_name)
+        plot_all(scaled, m, 
+                 use_time = False, 
+                 show = False, 
+                 title_and_ylab = ["Nan plot", "Series"], 
+                 scale_back = False, 
+                 save_name = s_name + name_ext)
 
     pass
 

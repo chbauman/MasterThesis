@@ -2,8 +2,9 @@
 import datetime
 
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
 from matplotlib.dates import DateFormatter
 from pandas.plotting import register_matplotlib_converters
@@ -18,6 +19,9 @@ plt.rc('font', family='serif')
 
 # Plotting colors
 clr_map = ['blue', 'green', 'c', 'm', 'k', 'y']
+colors = mcolors.TABLEAU_COLORS
+names = list(colors)
+clr_map = [colors[name] for name in names]
 n_cols = len(clr_map)
 
 # Saving
