@@ -111,8 +111,8 @@ class BaseRNN_DM(BaseDynamicsModel):
                       optimizer='adam')
         model.summary()
         self.m = model
-        pth = self.get_plt_path("Model.png")
-        plot_model(model, to_file=pth)
+        #pth = self.get_plt_path("Model.png")
+        #plot_model(model, to_file=pth)
 
     def fit(self):
         """
