@@ -4,8 +4,8 @@ import numpy as np
 import keras
 
 from keras import backend as K
-from keras.models import Sequential
-from keras.layers import GRU, LSTM, TimeDistributed, Dense, GaussianNoise
+from keras.models import Sequential, Model
+from keras.layers import GRU, LSTM, TimeDistributed, Dense, GaussianNoise, Input, Add, Lambda
 from keras.optimizers import Adam
 from keras.utils import plot_model
 from functools import partial
@@ -64,11 +64,12 @@ class BaseRNN_DM(BaseDynamicsModel):
         Constructs the name of the network.
         """
         ds_pt = '_DATA_' + self.data.name
-        arch = '_L' + '-'.join(map(str, self.hidden_sizes))
-        gru_str = '' if not self.gru else '_GRU'
+        arch = '_L' + '-'.join(map(str, self.hidden_sizes))        
         ep_s = '_E' + str(self.n_iter_max)
         lrs = '_LR' + str(self.lr)
-        return name + ds_pt + ep_s + arch + lrs + gru_str
+        gru_str = '' if not self.gru else '_GRU'
+        res_str = '' if not self.res_learn else '_RESL'
+        return name + ds_pt + ep_s + arch + lrs + gru_str + res_str
 
     def build_model(self):
         """
@@ -95,10 +96,13 @@ class BaseRNN_DM(BaseDynamicsModel):
         #model.add(TimeDistributed(Dense(self.out_dim, activation=None)))
         model.add(Dense(self.out_dim, activation=None))
         if self.res_learn:
-            # TODO
-            # Add input to output
-            pass
-
+            # Add last non-control input to output
+            seq_inpt = Input(shape=(self.train_seq_len, self.n_feats))
+            m_out = model(seq_inpt)
+            slicer = Lambda(lambda x: x[:, -1, :(self.n_feats - 1)] )
+            last_inpt = slicer(seq_inpt)
+            m_out_resid = Add()([m_out, last_inpt])
+            model = Model(inputs=seq_inpt, outputs=m_out_resid)
 
         if self.weight_vec is not None:
             weights_tensor = Input(shape=(self.out_dim,))

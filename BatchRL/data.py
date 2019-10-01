@@ -1502,7 +1502,7 @@ class Dataset():
         self.val_data = tr_dat[n_train:]
         self.test_data = test_dat
        
-    def get_prepared_data(self, what_data = 'train'):
+    def get_prepared_data(self, what_data = 'train', get_all_preds = False):
         """
         Prepares the data for supervised learning.
         """
@@ -1524,10 +1524,6 @@ class Dataset():
         n, s_len, d = s
         n_c = self.n_c
 
-        # Construct output data
-        input_data = np.empty((n, s_len - 1, d), dtype = np.float32)
-        output_data = np.empty((n, d - n_c), dtype = np.float32)
-
         # Get control and other column indices
         cont_inds = np.empty((d), dtype = np.bool)
         cont_inds.fill(False)
@@ -1535,9 +1531,13 @@ class Dataset():
         other_inds = np.logical_not(cont_inds)
 
         # Fill the data
+        input_data = np.empty((n, s_len - 1, d), dtype = np.float32)
         input_data[:, :, :-n_c] = data_to_use[:, :-1, other_inds]
         input_data[:, :, -n_c:] = data_to_use[:, 1:, cont_inds]
-        output_data = data_to_use[:, -1, other_inds]
+        if not get_all_preds:            
+            output_data = data_to_use[:, -1, other_inds]
+        else:
+            output_data = data_to_use[:, 1:, other_inds]
 
         # Store more parameters, assuming only one control variable
         self.c_inds_prep = self.d - 1
