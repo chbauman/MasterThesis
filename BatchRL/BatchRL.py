@@ -22,7 +22,6 @@ from data import Room274Data, Room272Data, WeatherData, TestData, \
     get_DFAB_heating_data, test_plotting_withDFAB_data, test_dataset_with_DFAB, \
     compute_DFAB_energy_usage, get_weather_data, generateRoomDatasets, \
     analzye_room_energy_consumption, Dataset, test_align
-from visualize import plot_time_series, plot_ip_time_series
 
 def simple_battery_FQI():
 
@@ -51,9 +50,8 @@ def main():
     #generateRoomDatasets()
     name_ds = 'Model_Room43'
     ds = Dataset.loadDataset(name_ds)
-    ds = ds.add_time()    
+    ds = ds.add_time()
     ds.standardize()
-    print(ds)
     ds.split_train_test(7)
 
     mod = BaseRNN_DM(ds, hidden_sizes=[50, 50], n_iter_max = 10, input_noise_std = 0.001, lr = 0.001)
@@ -72,10 +70,6 @@ def main():
     bat_mod = BatteryModel(bat_dataset)
     bat_mod.fit(train_bat)
     return
-
-    # This crashes:
-    #mod.analyze(test_bat)
-    #return
 
     # Parameters
     seq_len = 20

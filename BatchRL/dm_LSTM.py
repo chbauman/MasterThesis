@@ -7,6 +7,7 @@ from keras import backend as K
 from keras.models import Sequential
 from keras.layers import GRU, LSTM, TimeDistributed, Dense, GaussianNoise
 from keras.optimizers import Adam
+from keras.utils import plot_model
 from functools import partial
 
 from base_dynamics_model import BaseDynamicsModel
@@ -110,6 +111,8 @@ class BaseRNN_DM(BaseDynamicsModel):
                       optimizer='adam')
         model.summary()
         self.m = model
+        pth = self.get_plt_path("Model.png")
+        plot_model(model, to_file=pth)
 
     def fit(self):
         """
