@@ -55,15 +55,15 @@ def main():
     ds.split_train_test(7)
     ds.get_prepared_data()
 
+    # Construct weight vector
     w = np.ones((ds.d - ds.n_c, ), dtype = np.float32)
-    w[ds.p_inds_prep[0]] = 10.0
-    print(w)
+    w[ds.p_inds_prep[0]] = 2.0
 
     mod = BaseRNN_DM(ds, 
                      hidden_sizes=[100, 100], 
-                     n_iter_max = 10, 
+                     n_iter_max = 100, 
                      input_noise_std = 0.0001, 
-                     lr = 0.001, 
+                     lr = 0.01, 
                      residual_learning=True,
                      weight_vec = w)
 
