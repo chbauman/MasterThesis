@@ -167,18 +167,17 @@ class BaseDynamicsModel(ABC):
                               ['Prediction', 'Ground Truth'])
 
         # Fixed numner of timesteps prediction
-        #for n_ts in [1, 4, 20]:
-        #    dt = d.dt
-        #    time_str =  str(dt * n_ts) + 'min' if n_ts < 4 else str(dt * n_ts / 60) + 'h'
-        #    one_h_pred = self.n_step_predict([input_data, output_data], n_ts, d.p_inds_prep)
-        #    analysis_ds.data[(n_ts - 1):, 0] = one_h_pred[:, p_ind]
-        #    analysis_ds.data[:(n_ts - 1), 0] = np.nan
-        #    title_and_ylab = [time_str + ' Ahead Predictions', desc]
-        #    plot_dataset(analysis_ds,
-        #                 show = False,
-        #                 title_and_ylab = title_and_ylab,
-        #                 save_name = self.get_plt_path(time_str + 'Ahead'))
-
+        for n_ts in [1, 4, 20]:
+            dt = d.dt
+            time_str =  str(dt * n_ts) + 'min' if n_ts < 4 else str(dt * n_ts / 60) + 'h'
+            one_h_pred = self.n_step_predict([input_data, output_data], n_ts, d.p_inds_prep)
+            analysis_ds.data[(n_ts - 1):, 0] = one_h_pred[:, p_ind]
+            analysis_ds.data[:(n_ts - 1), 0] = np.nan
+            title_and_ylab = [time_str + ' Ahead Predictions', desc]
+            plot_dataset(analysis_ds,
+                         show = False,
+                         title_and_ylab = title_and_ylab,
+                         save_name = self.get_plt_path(time_str + 'Ahead'))
 
         # One-week prediction
         full_pred = self.n_step_predict([input_data, output_data], s[0], d.p_inds_prep, 
@@ -190,18 +189,6 @@ class BaseDynamicsModel(ABC):
                      title_and_ylab = title_and_ylab,
                      save_name = self.get_plt_path('OneWeek'))
         return
-
-        # One-week prediction
-        full_pred = self.n_step_predict(week_data, s[0], return_all_preds=True, diff=diff)
-        full_pred_noise = self.n_step_predict(week_data, s[0], return_all_preds=True, disturb_pred = True)
-        print("Prediction Shape", full_pred.shape)
-        full_pred = np.reshape(full_pred, (-1,))
-        full_pred_noise = np.reshape(full_pred_noise, (-1,))
-        init_data = week_data[0, :-1, self.out_indx]
-        m['description'] = 'Evolution'
-        plot_ip_time_series([full_pred, output_data, full_pred_noise], lab = ['predictions', 'truth', 'noisy prediction'], m = m, show = True, init = init_data)
-
-        pass
 
     def get_residuals(self, data):
         """
