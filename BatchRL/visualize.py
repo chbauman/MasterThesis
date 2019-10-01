@@ -1,8 +1,13 @@
 
 import datetime
+import os
 
 import numpy as np
 import matplotlib as mpl
+
+if not os.name == 'nt':
+    print("No fucking windows!!")
+    mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
@@ -11,7 +16,6 @@ from pandas.plotting import register_matplotlib_converters
 
 from util import *
 
-#mpl.use("pgf")
 register_matplotlib_converters()
 
 plt.rc('font', family='serif')
