@@ -12,6 +12,7 @@ from functools import partial
 from base_dynamics_model import BaseDynamicsModel
 from keras_layers import SeqInput
 from time_series import AR_Model
+from visualize import plot_train_history
 
 from util import *
 
@@ -35,7 +36,6 @@ class BaseRNN_DM(BaseDynamicsModel):
                  residual_learning = False,
                  lr = 0.001):
 
-
         super(BaseRNN_DM, self).__init__()
 
         # Store data
@@ -47,16 +47,27 @@ class BaseRNN_DM(BaseDynamicsModel):
         # Store parameters        
         self.hidden_sizes = np.array(hidden_sizes, dtype = np.int32)
         self.n_iter_max = n_iter_max
-        self.name = name
         self.gru = gru
         self.input_noise_std = input_noise_std
         self.use_AR = use_AR
         self.weight_vec = weight_vec
         self.res_learn = residual_learning
         self.lr = lr
+        self.name = self.constr_name(name)
 
         # Build model
         self.build_model()
+
+    def constr_name(self, name):
+        """
+        Constructs the name of the network.
+        """
+        ds_pt = '_DATA_' + self.data.name
+        arch = '_L' + '-'.join(map(str, self.hidden_sizes))
+        gru_str = '' if not self.gru else '_GRU'
+        ep_s = '_E' + str(self.n_iter_max)
+        lrs = '_LR' + str(self.lr)
+        return name + ds_pt + ep_s + arch + lrs + gru_str
 
     def build_model(self):
         """
@@ -114,11 +125,13 @@ class BaseRNN_DM(BaseDynamicsModel):
             input_data, output_data = self.data.get_prepared_data('train_val')
 
             # Fit and save model
-            self.m.fit(input_data, output_data,
-                       epochs = self.n_iter_max,
-                       initial_epoch = 0,
-                       batch_size = 128,
-                       validation_split = self.data.val_perc)
+            h = self.m.fit(input_data, output_data,
+                           epochs = self.n_iter_max,
+                           initial_epoch = 0,
+                           batch_size = 128,
+                           validation_split = self.data.val_perc)
+            pth = self.get_plt_path("TrainHist")
+            plot_train_history(h, pth)
             create_dir(self.model_path)
             self.m.save_weights(self.get_path(self.name))
         else:

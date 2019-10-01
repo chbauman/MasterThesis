@@ -56,7 +56,7 @@ def main():
     print(ds)
     ds.split_train_test(7)
 
-    mod = BaseRNN_DM(ds, hidden_sizes=[50, 50], n_iter_max = 200, input_noise_std = 0.001, name = "Train50_50-300_std_" + name_ds + "Time", lr = 0.001)
+    mod = BaseRNN_DM(ds, hidden_sizes=[50, 50], n_iter_max = 10, input_noise_std = 0.001, lr = 0.001)
     mod.fit()
     mod.model_disturbance()
     mod.disturb()

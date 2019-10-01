@@ -382,3 +382,20 @@ def scatter_plot(x, y, *,
     if show:
         plt.show()
     save_figure(save_name, show)
+
+def plot_train_history(hist, name = None):
+    """
+    Plot training & validation loss values of 
+    a history object returned by keras.Model.fit().
+    """
+    plt.plot(hist.history['loss'])
+    plt.plot(hist.history['val_loss'])
+    plt.yscale('log')
+    plt.title('Model loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['Training', 'Validation'], loc='upper right')
+    if name is not None:
+        save_figure(name, False)
+    else:
+        plt.show()
