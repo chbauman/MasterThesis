@@ -1539,6 +1539,11 @@ class Dataset():
         input_data[:, :, -n_c:] = data_to_use[:, 1:, cont_inds]
         output_data = data_to_use[:, -1, other_inds]
 
+        # Store more parameters, assuming only one control variable
+        self.c_inds_prep = self.d - 1
+        self.p_inds_prep = np.copy(self.p_inds)
+        self.p_inds_prep[self.p_inds_prep > self.c_inds[0]] -= 1
+
         return input_data, output_data
 
     @classmethod
@@ -1630,11 +1635,8 @@ class Dataset():
         one_day = np.timedelta64(1,'D')
         dt_td64 = np.timedelta64(dt, 'm')
         n_tint_per_day = int(one_day / dt_td64)
-        print(n_tint_per_day, "time intervals per day!")
         floor_day = np.array([t_init], dtype='datetime64[D]')[0]
         begin_ind = int((t_init - floor_day) / dt_td64)
-        print("begin_ind", begin_ind)
-        print("t_init", t_init)
         dat = np.empty((self.n, ), dtype = np.float32)
         for k in range(self.n):
             dat[k] = (begin_ind + k) % n_tint_per_day

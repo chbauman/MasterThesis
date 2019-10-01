@@ -135,9 +135,9 @@ class BaseDynamicsModel(ABC):
         print("Analyzing model")
         input_data, output_data = self.data.get_prepared_data('test')
         s = input_data.shape
-        p_inds = self.data.p_inds
+        p_inds = self.data.p_inds_prep
         t_ind = p_inds[0]
-        #t_ind = 4
+        #t_ind = 3
         print(self.data)
         print(t_ind)
 
@@ -153,6 +153,7 @@ class BaseDynamicsModel(ABC):
         m = {'description': '15-Min Ahead Predictions', 'unit': 'Scaled Temperature'}
         plot_ip_time_series([p, tr], lab = ['predictions', 'truth'], m = m, show = True)        
         print("fuck")
+        return
 
         # One hour predictions (4 steps)
         one_h_pred = self.n_step_predict(week_data, 4, diff=diff)
