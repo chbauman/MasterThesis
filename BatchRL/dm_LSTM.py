@@ -69,7 +69,8 @@ class BaseRNN_DM(BaseDynamicsModel):
         lrs = '_LR' + str(self.lr)
         gru_str = '' if not self.gru else '_GRU'
         res_str = '' if not self.res_learn else '_RESL'
-        return name + ds_pt + ep_s + arch + lrs + gru_str + res_str
+        w_str = '' if self.weight_vec is None else '_WTD'
+        return name + ds_pt + ep_s + arch + lrs + gru_str + res_str + w_str
 
     def build_model(self):
         """
@@ -99,14 +100,18 @@ class BaseRNN_DM(BaseDynamicsModel):
             # Add last non-control input to output
             seq_inpt = Input(shape=(self.train_seq_len, self.n_feats))
             m_out = model(seq_inpt)
-            slicer = Lambda(lambda x: x[:, -1, :(self.n_feats - 1)] )
+            slicer = Lambda(lambda x: x[:, -1, :self.out_dim])
             last_inpt = slicer(seq_inpt)
             m_out_resid = Add()([m_out, last_inpt])
             model = Model(inputs=seq_inpt, outputs=m_out_resid)
 
         if self.weight_vec is not None:
-            weights_tensor = Input(shape=(self.out_dim,))
-            loss = partial(weighted_loss, weights=weights_tensor)
+            k_constants = K.constant(self.weight_vec)
+            fixed_input = Input(tensor=k_constants)
+            seq_inpt = Input(shape=(self.train_seq_len, self.n_feats))
+            weights_tensor = fixed_input
+            model = Model(inputs = seq_inpt, outputs = model(seq_inpt))
+            loss = partial(weighted_loss, weights=fixed_input)
         else:
             loss = 'mse'
 
@@ -155,6 +160,5 @@ class BaseRNN_DM(BaseDynamicsModel):
         preds = self.m.predict(input_data)
         preds = preds.reshape((n, -1))
         return preds
-
 
     pass

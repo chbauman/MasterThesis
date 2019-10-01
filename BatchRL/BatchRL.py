@@ -54,7 +54,13 @@ def main():
     ds.standardize()
     ds.split_train_test(7)
 
-    mod = BaseRNN_DM(ds, hidden_sizes=[100, 100], n_iter_max = 10, input_noise_std = 0.001, lr = 0.001, residual_learning=True)
+    mod = BaseRNN_DM(ds, 
+                     hidden_sizes=[100, 100], 
+                     n_iter_max = 10, 
+                     input_noise_std = 0.0001, 
+                     lr = 0.001, 
+                     residual_learning=True,
+                     weight_vec = np.array([1.0, 1.0, 1.0, 10.0, 1.0, 1.0]))
     mod.fit()
     mod.model_disturbance()
     mod.disturb()
