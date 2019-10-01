@@ -53,6 +53,11 @@ def main():
     ds = ds.add_time()
     ds.standardize()
     ds.split_train_test(7)
+    ds.get_prepared_data()
+
+    w = np.ones((ds.d - ds.n_c, ), dtype = np.float32)
+    w[ds.p_inds_prep[0]] = 10.0
+    print(w)
 
     mod = BaseRNN_DM(ds, 
                      hidden_sizes=[100, 100], 
@@ -60,7 +65,7 @@ def main():
                      input_noise_std = 0.0001, 
                      lr = 0.001, 
                      residual_learning=True,
-                     weight_vec = np.array([1.0, 1.0, 1.0, 10.0, 1.0, 1.0]))
+                     weight_vec = w)
 
     mod.fit()
     mod.model_disturbance()
