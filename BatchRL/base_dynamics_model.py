@@ -112,7 +112,7 @@ class BaseDynamicsModel(ABC):
         for k in range(n):
 
             # Predict
-            curr_preds = self.predict(curr_in_data)
+            curr_preds = self.predict(np.copy(curr_in_data))
             if disturb_pred:
                 curr_preds += self.disturb()
 
@@ -120,8 +120,8 @@ class BaseDynamicsModel(ABC):
                 all_preds[:, k] = curr_preds
 
             # Construct next data
-            curr_in_data[:, :-1, :] = curr_in_data[:, 1:, :]
-            curr_in_data[:, -1, :] = in_data[k:(n_out + k), -1, :]
+            curr_in_data[:, :-1, :] = np.copy(curr_in_data[:, 1:, :])
+            curr_in_data[:, -1, :] = np.copy(in_data[k:(n_out + k), -1, :])
             curr_in_data[:, -1, pred_inds] = np.copy(curr_preds[:, pred_inds])
         
         if return_all_preds:
@@ -151,12 +151,12 @@ class BaseDynamicsModel(ABC):
         s = in_d.shape
         p_ind = d.p_inds_prep[0]
         orig_p_ind = d.p_inds[0]
-        tr = out_d[:, p_ind]
+        tr = np.copy(out_d[:, p_ind])
         dt = d.dt
 
         # Plot data
         plot_data = np.empty((s[0], 2), dtype = np.float32)
-        plot_data[:, 1] = np.copy(tr)
+        plot_data[:, 1] = tr
         desc = d.descriptions[orig_p_ind]
         scals = np.array(repl(d.scaling[orig_p_ind], 2))
         is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype = np.bool)
