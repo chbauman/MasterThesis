@@ -93,7 +93,7 @@ class BaseDynamicsModel(ABC):
         if diff:
             raise NotImplementedError("Differentiating data is not implemented")
 
-        in_data, out_data = prepared_data
+        in_data, out_data = copy_arr_list(prepared_data)
 
         # Get shapes
         n_samples = in_data.shape[0]
@@ -138,21 +138,20 @@ class BaseDynamicsModel(ABC):
         create_dir(dir_name)
         return os.path.join(dir_name, name)
 
-    def analyze(self, diff = False):
+    def const_nts_plot(self, predict_data, n_list, ext = ''):
         """
-        Analyzes the trained model
+        Creates a plot that shows the performance of the
+        trained model when predicting a fixed number of timesteps into 
+        the future.
         """
 
-        print("Analyzing model")
         d = self.data
-
-        # Prepare the data
-        indat_test, outdat_test = d.get_prepared_data('test')
-        #indat_train, outdat_train = d.get_prepared_data('train', train_val_streak = 7)
-        s = indat_test.shape
+        in_d, out_d = predict_data
+        s = in_d.shape
         p_ind = d.p_inds_prep[0]
         orig_p_ind = d.p_inds[0]
-        tr = outdat_test[:, p_ind]
+        tr = out_d[:, p_ind]        
+        dt = d.dt
 
         # Plot data
         plot_data = np.empty((s[0], 2), dtype = np.float32)
@@ -167,18 +166,53 @@ class BaseDynamicsModel(ABC):
                               is_scd,
                               ['Prediction', 'Ground Truth'])
 
-        # Fixed numner of timesteps prediction
-        for n_ts in [1, 4, 20]:
-            dt = d.dt
+        # Plot for all n
+        for n_ts in n_list:
             time_str =  str(dt * n_ts) + 'min' if n_ts < 4 else str(dt * n_ts / 60) + 'h'
-            one_h_pred = self.n_step_predict([indat_test, outdat_test], n_ts, d.p_inds_prep)
+            one_h_pred = self.n_step_predict(predict_data, n_ts, d.p_inds_prep)
             analysis_ds.data[(n_ts - 1):, 0] = one_h_pred[:, p_ind]
             analysis_ds.data[:(n_ts - 1), 0] = np.nan
             title_and_ylab = [time_str + ' Ahead Predictions', desc]
             plot_dataset(analysis_ds,
                          show = False,
                          title_and_ylab = title_and_ylab,
-                         save_name = self.get_plt_path(time_str + 'Ahead'))
+                         save_name = self.get_plt_path(time_str + 'Ahead' + ext))
+
+    def analyze(self, diff = False):
+        """
+        Analyzes the trained model
+        """
+
+        print("Analyzing model {}".format(self.name))
+        d = self.data
+
+        # Prepare the data
+        dat_test = d.get_prepared_data('test')
+        dat_train = d.get_prepared_data('train_streak')
+
+        # Plot for fixed number of timesteps
+        test_copy = copy_arr_list(dat_test)
+        train_copy = copy_arr_list(dat_train)
+        self.const_nts_plot(test_copy, [1, 4, 20], ext = 'Test')
+        self.const_nts_plot(train_copy, [4, 20], ext = 'Train')
+
+
+        indat_test, outdat_test = dat_test
+        s = indat_test.shape
+        p_ind = d.p_inds_prep[0]
+        orig_p_ind = d.p_inds[0]
+
+        # Plot data
+        plot_data = np.empty((s[0], 2), dtype = np.float32)
+        desc = d.descriptions[orig_p_ind]
+        scals = np.array(repl(d.scaling[orig_p_ind], 2))
+        is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype = np.bool)
+        analysis_ds = Dataset(plot_data,
+                              d.dt,
+                              d.t_init,
+                              scals,
+                              is_scd,
+                              ['Prediction', 'Ground Truth'])
 
         # One-week prediction
         full_pred = self.n_step_predict([indat_test, outdat_test], s[0], d.p_inds_prep, 

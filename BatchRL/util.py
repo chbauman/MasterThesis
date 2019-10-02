@@ -144,6 +144,13 @@ def split_arr(arr, frac2):
     n_1 = int((1.0 - frac2) * n)
     return arr[:n_1], arr[n_1:]
 
+def copy_arr_list(arr_list):
+    """
+    Copies a list of numpy arrays.
+    """
+    copy_arr_list = [np.copy(a) for a in arr_list]
+    return copy_arr_list
+
 #######################################################################################################
 # NEST stuff
 

@@ -1501,7 +1501,7 @@ class Dataset():
         self.val_data = cut_data_into_sequences(orig_val, self.seq_len, interleave = True)
         self.train_streak_data = cut_data_into_sequences(train_streak, self.seq_len, interleave = True)
        
-    def get_prepared_data(self, what_data = 'train', *, get_all_preds = False, train_val_streak = 0):
+    def get_prepared_data(self, what_data = 'train', *, get_all_preds = False):
         """
         Prepares the data for supervised learning.
         """
@@ -1515,13 +1515,10 @@ class Dataset():
             data_to_use = self.test_data
         elif what_data == 'train_val':
             data_to_use = self.train_val_data
+        elif what_data == 'train_streak':
+            data_to_use = self.train_streak_data
         else:
             raise ValueError("No such data available: " + what_data)
-
-        # Extract streak from train or val data
-        if what_data != 'test' and train_val_streak > 0:
-            s_len = int(60 / self.dt * 24 * train_val_streak)
-            _, data_to_use = cut_and_split(data_to_use, self.seq_len, s_len)
 
         # Get dimensions
         s = data_to_use.shape
