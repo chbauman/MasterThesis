@@ -24,11 +24,11 @@ class BaseDynamicsModel(ABC):
     model_path = "../Models/Dynamics/"
 
     @abstractmethod
-    def fit(self, data, m = None):
+    def fit(self):
         pass
 
     @abstractmethod
-    def predict(self, data, prepared = False):
+    def predict(self, in_data):
         pass
 
     def get_path(self, name):
@@ -125,6 +125,7 @@ class BaseDynamicsModel(ABC):
             curr_in_data[:, -1, pred_inds] = curr_preds[:, pred_inds]
         
         if return_all_preds:
+            print(all_preds)
             return all_preds
         return curr_preds
 
@@ -150,7 +151,7 @@ class BaseDynamicsModel(ABC):
         s = in_d.shape
         p_ind = d.p_inds_prep[0]
         orig_p_ind = d.p_inds[0]
-        tr = out_d[:, p_ind]        
+        tr = out_d[:, p_ind]
         dt = d.dt
 
         # Plot data
@@ -169,11 +170,11 @@ class BaseDynamicsModel(ABC):
         # Plot for all n
         for n_ts in n_list:
             time_str =  str(dt * n_ts) + 'min' if n_ts < 4 else str(dt * n_ts / 60) + 'h'
-            one_h_pred = self.n_step_predict(predict_data, n_ts, d.p_inds_prep)
-            analysis_ds.data[(n_ts - 1):, 0] = one_h_pred[:, p_ind]
+            one_h_pred = self.n_step_predict(copy_arr_list(predict_data), n_ts, d.p_inds_prep)
+            analysis_ds.data[(n_ts - 1):, 0] = np.copy(one_h_pred[:, p_ind])
             analysis_ds.data[:(n_ts - 1), 0] = np.nan
             title_and_ylab = [time_str + ' Ahead Predictions', desc]
-            plot_dataset(analysis_ds,
+            plot_dataset(Dataset.copy(analysis_ds),
                          show = False,
                          title_and_ylab = title_and_ylab,
                          save_name = self.get_plt_path(time_str + 'Ahead' + ext))
@@ -195,7 +196,6 @@ class BaseDynamicsModel(ABC):
         train_copy = copy_arr_list(dat_train)
         self.const_nts_plot(test_copy, [1, 4, 20], ext = 'Test')
         self.const_nts_plot(train_copy, [4, 20], ext = 'Train')
-
 
         indat_test, outdat_test = dat_test
         s = indat_test.shape

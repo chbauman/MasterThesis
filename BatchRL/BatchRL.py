@@ -47,35 +47,44 @@ def simple_battery_FQI():
 
 def main():
 
-    #generateRoomDatasets()
-    name_ds = 'Model_Room43'
-    ds = Dataset.loadDataset(name_ds)
-    ds = ds.add_time()
-    ds.standardize()
-    ds.split_train_test(7)
-    ds.get_prepared_data()
+    #name_ds = 'Model_Room43'
+    #ds = Dataset.loadDataset(name_ds)
+    #ds = ds.add_time()
+    #ds.standardize()
+    #ds.split_train_test(7)
+    #ds.get_prepared_data()
 
-    # Construct weight vector
-    w = np.ones((ds.d - ds.n_c, ), dtype = np.float32)
-    w[ds.p_inds_prep[0]] = 2.0
+    ## Construct weight vector
+    #w = np.ones((ds.d - ds.n_c, ), dtype = np.float32)
+    #w[ds.p_inds_prep[0]] = 2.0
 
-    mod = BaseRNN_DM(ds, 
-                     hidden_sizes=[100, 100], 
-                     n_iter_max = 100, 
-                     input_noise_std = 0.0001, 
-                     lr = 0.01, 
-                     residual_learning=True,
-                     weight_vec = w)
+    #mod = BaseRNN_DM(ds, 
+    #                 hidden_sizes=[200, 200], 
+    #                 n_iter_max = 200, 
+    #                 input_noise_std = 0.0001, 
+    #                 lr = 0.01, 
+    #                 residual_learning=True,
+    #                 weight_vec = w)
 
-    mod.fit()
-    mod.model_disturbance()
-    mod.disturb()
-    mod.analyze()
+    #mod.fit()
+    #mod.model_disturbance()
+    #mod.disturb()
+    #mod.analyze()
 
-    #compute_DFAB_energy_usage()
-    return
+    ##compute_DFAB_energy_usage()
+    #return
 
     # Battery data
+    bat_name = "Battery"
+    #get_battery_data(True)
+    bat_ds = Dataset.loadDataset(bat_name)
+    bat_ds.split_train_test(7)
+    bat_ds.get_prepared_data()
+    bat_mod = BatteryModel(bat_ds)
+    bat_mod.analyze_bat_model()
+    bat_mod.analyze()
+    return
+
     bat_dataset = get_battery_data(save_plot = True, show = False, use_dataset = True)
     dat_bat = bat_dataset.data
     train_bat, test_bat = cut_and_split(dat_bat, 2, 96 * 7)

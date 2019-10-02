@@ -1488,18 +1488,19 @@ class Dataset():
         Split dataset into train, validation and test set.
         """
 
-        # split data
+        # split data        
         s_len = int(60 / self.dt * 24 * streak_len)
-        orig_trainval, orig_test = cut_and_split(self.data, self.seq_len, s_len, ret_orig=True)
-        orig_train, orig_val = split_arr(orig_trainval, self.val_perc)
-        _, train_streak = extract_streak(orig_train, s_len, self.seq_len - 1)
+        self.streak_len = s_len
+        self.orig_trainval, self.orig_test = cut_and_split(self.data, self.seq_len, s_len, ret_orig=True)
+        self.orig_train, self.orig_val = split_arr(self.orig_trainval, self.val_perc)
+        _, self.train_streak = extract_streak(self.orig_train, s_len, self.seq_len - 1)
 
-        # Cut into sequences and save
-        self.test_data = cut_data_into_sequences(orig_test, self.seq_len, interleave = True)
-        self.train_val_data = cut_data_into_sequences(orig_trainval, self.seq_len, interleave = True)
-        self.train_data = cut_data_into_sequences(orig_train, self.seq_len, interleave = True)
-        self.val_data = cut_data_into_sequences(orig_val, self.seq_len, interleave = True)
-        self.train_streak_data = cut_data_into_sequences(train_streak, self.seq_len, interleave = True)
+        # Cut into sequences and saveself.
+        self.test_data = cut_data_into_sequences(self.orig_test, self.seq_len, interleave = True)
+        self.train_val_data = cut_data_into_sequences(self.orig_trainval, self.seq_len, interleave = True)
+        self.train_data = cut_data_into_sequences(self.orig_train, self.seq_len, interleave = True)
+        self.val_data = cut_data_into_sequences(self.orig_val, self.seq_len, interleave = True)
+        self.train_streak_data = cut_data_into_sequences(self.train_streak, self.seq_len, interleave = True)
        
     def get_prepared_data(self, what_data = 'train', *, get_all_preds = False):
         """
@@ -1596,7 +1597,7 @@ class Dataset():
                    dataset.t_init,
                    np.copy(dataset.scaling),
                    np.copy(dataset.is_scaled),
-                   np.copy(dataset.descs),
+                   np.copy(dataset.descriptions),
                    np.copy(dataset.c_inds),
                    np.copy(dataset.p_inds),
                    dataset.name)
