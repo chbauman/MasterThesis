@@ -147,11 +147,12 @@ class BaseDynamicsModel(ABC):
         d = self.data
 
         # Prepare the data
-        input_data, output_data = d.get_prepared_data('test')
-        s = input_data.shape        
+        indat_test, outdat_test = d.get_prepared_data('test')
+        #indat_train, outdat_train = d.get_prepared_data('train', train_val_streak = 7)
+        s = indat_test.shape
         p_ind = d.p_inds_prep[0]
         orig_p_ind = d.p_inds[0]
-        tr = output_data[:, p_ind]
+        tr = outdat_test[:, p_ind]
 
         # Plot data
         plot_data = np.empty((s[0], 2), dtype = np.float32)
@@ -170,7 +171,7 @@ class BaseDynamicsModel(ABC):
         for n_ts in [1, 4, 20]:
             dt = d.dt
             time_str =  str(dt * n_ts) + 'min' if n_ts < 4 else str(dt * n_ts / 60) + 'h'
-            one_h_pred = self.n_step_predict([input_data, output_data], n_ts, d.p_inds_prep)
+            one_h_pred = self.n_step_predict([indat_test, outdat_test], n_ts, d.p_inds_prep)
             analysis_ds.data[(n_ts - 1):, 0] = one_h_pred[:, p_ind]
             analysis_ds.data[:(n_ts - 1), 0] = np.nan
             title_and_ylab = [time_str + ' Ahead Predictions', desc]
@@ -180,7 +181,7 @@ class BaseDynamicsModel(ABC):
                          save_name = self.get_plt_path(time_str + 'Ahead'))
 
         # One-week prediction
-        full_pred = self.n_step_predict([input_data, output_data], s[0], d.p_inds_prep, 
+        full_pred = self.n_step_predict([indat_test, outdat_test], s[0], d.p_inds_prep, 
                                         return_all_preds = True)
         analysis_ds.data[:, 0] = full_pred[0, :, p_ind]
         title_and_ylab = ['1 Week Continuous Predictions', desc]

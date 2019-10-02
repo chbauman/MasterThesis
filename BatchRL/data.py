@@ -537,7 +537,7 @@ def pipeline_preps(orig_dat,
                    all_data = None,
                    *,
                    dt_init = None,
-                   row_ind = None,                   
+                   row_ind = None,
                    clean_args = None,
                    clip_to_int_args = None,
                    remove_out_int_args = None,
@@ -712,8 +712,6 @@ def extract_streak(all_data, s_len, lag):
 
     tot_s_len = s_len + lag
     not_nans = np.logical_not(find_rows_with_nans(all_data))
-    print(not_nans)
-    print(not_nans.sum())
     rwn = np.int32(not_nans)
     true_seq = np.empty((tot_s_len, ), dtype = np.int32)
     true_seq.fill(1)
@@ -730,13 +728,15 @@ def extract_streak(all_data, s_len, lag):
     streak_dat = all_data[last_seq_start:(last_seq_start + tot_s_len), :]
     return first_dat, streak_dat
 
-def cut_and_split(dat, seq_len, streak_len):
+def cut_and_split(dat, seq_len, streak_len, ret_orig = False):
     """
     Finds the latest series of 'streak_len' timesteps
     where all data is valid and splits the data there.
     The it cuts both parts it into sequences of length 'seq_len'.
     """
     dat_train, dat_test = extract_streak(dat, streak_len, seq_len - 1)
+    if ret_orig:
+        return dat_train, dat_test
     cut_train_dat = cut_data_into_sequences(dat_train, seq_len, interleave = True)
     cut_test_dat = cut_data_into_sequences(dat_test, seq_len, interleave = True)
     return cut_train_dat, cut_test_dat
@@ -1488,21 +1488,20 @@ class Dataset():
         Split dataset into train, validation and test set.
         """
 
-        # Cut data
+        # split data
         s_len = int(60 / self.dt * 24 * streak_len)
-        tr_dat, test_dat = cut_and_split(self.data, self.seq_len, s_len)
-        self.train_data = tr_dat
-        n = tr_dat.shape[0]
-        n_val = int(self.val_perc * n)
-        n_train = n - n_val
+        orig_trainval, orig_test = cut_and_split(self.data, self.seq_len, s_len, ret_orig=True)
+        orig_train, orig_val = split_arr(orig_trainval, self.val_perc)
+        _, train_streak = extract_streak(orig_train, s_len, self.seq_len - 1)
 
-        # Save data
-        self.train_val_data = tr_dat
-        self.train_data = tr_dat[:n_train]
-        self.val_data = tr_dat[n_train:]
-        self.test_data = test_dat
+        # Cut into sequences and save
+        self.test_data = cut_data_into_sequences(orig_test, self.seq_len, interleave = True)
+        self.train_val_data = cut_data_into_sequences(orig_trainval, self.seq_len, interleave = True)
+        self.train_data = cut_data_into_sequences(orig_train, self.seq_len, interleave = True)
+        self.val_data = cut_data_into_sequences(orig_val, self.seq_len, interleave = True)
+        self.train_streak_data = cut_data_into_sequences(train_streak, self.seq_len, interleave = True)
        
-    def get_prepared_data(self, what_data = 'train', get_all_preds = False):
+    def get_prepared_data(self, what_data = 'train', *, get_all_preds = False, train_val_streak = 0):
         """
         Prepares the data for supervised learning.
         """
@@ -1518,6 +1517,11 @@ class Dataset():
             data_to_use = self.train_val_data
         else:
             raise ValueError("No such data available: " + what_data)
+
+        # Extract streak from train or val data
+        if what_data != 'test' and train_val_streak > 0:
+            s_len = int(60 / self.dt * 24 * train_val_streak)
+            _, data_to_use = cut_and_split(data_to_use, self.seq_len, s_len)
 
         # Get dimensions
         s = data_to_use.shape

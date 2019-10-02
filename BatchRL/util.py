@@ -134,6 +134,16 @@ def check_in_range(arr, low, high):
         return True
     return np.max(arr < high) and np.min(arr >= low)
 
+def split_arr(arr, frac2):
+    """
+    Splits an array along the first axis, s.t.
+    in the secand part a fraction of 'frac2' 
+    is contained.
+    """
+    n = arr.shape[0]
+    n_1 = int((1.0 - frac2) * n)
+    return arr[:n_1], arr[n_1:]
+
 #######################################################################################################
 # NEST stuff
 

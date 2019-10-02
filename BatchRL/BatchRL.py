@@ -85,23 +85,6 @@ def main():
 
     # Parameters
     seq_len = 20
-
-    # Heating data
-    dat_heat, m_heat, name_heat = get_heating_data(2.0)
-    dat_s = dat_heat.shape
-    if False:
-        for k in range(dat_s[1]):
-            plot_ip_time_series(dat_heat[:,k], m = m_heat[k], show = k == 5)
-    train_heat, test_heat = cut_and_split(dat_heat, seq_len, 96 * 7)
-    train_shape = train_heat.shape
-    n_feats = train_shape[-1]
-    print("Train data shape:", train_shape)
-    print("Analysis data shape:", test_heat.shape)
-
-    # Train Heating model
-    mod = BaseRNN_DM(seq_len - 1, n_feats, hidden_sizes=[50, 50], n_iter_max=50, input_noise_std = 0.01, name = "Train50_50-50_" + name_heat)
-    mod.fit(train_heat)
-    mod.analyze(test_heat)
     
     # GP Model
     seq_len_gp = 4
