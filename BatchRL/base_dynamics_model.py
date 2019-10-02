@@ -122,7 +122,7 @@ class BaseDynamicsModel(ABC):
             # Construct next data
             curr_in_data[:, :-1, :] = curr_in_data[:, 1:, :]
             curr_in_data[:, -1, :] = in_data[k:(n_out + k), -1, :]
-            curr_in_data[:, -1, pred_inds] = curr_preds[:, pred_inds]
+            curr_in_data[:, -1, pred_inds] = np.copy(curr_preds[:, pred_inds])
         
         if return_all_preds:
             print(all_preds)
@@ -156,7 +156,7 @@ class BaseDynamicsModel(ABC):
 
         # Plot data
         plot_data = np.empty((s[0], 2), dtype = np.float32)
-        plot_data[:, 1] = tr
+        plot_data[:, 1] = np.copy(tr)
         desc = d.descriptions[orig_p_ind]
         scals = np.array(repl(d.scaling[orig_p_ind], 2))
         is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype = np.bool)
@@ -169,12 +169,13 @@ class BaseDynamicsModel(ABC):
 
         # Plot for all n
         for n_ts in n_list:
+            curr_ds = Dataset.copy(analysis_ds)
             time_str =  str(dt * n_ts) + 'min' if n_ts < 4 else str(dt * n_ts / 60) + 'h'
             one_h_pred = self.n_step_predict(copy_arr_list(predict_data), n_ts, d.p_inds_prep)
-            analysis_ds.data[(n_ts - 1):, 0] = np.copy(one_h_pred[:, p_ind])
-            analysis_ds.data[:(n_ts - 1), 0] = np.nan
+            curr_ds.data[(n_ts - 1):, 0] = np.copy(one_h_pred[:, p_ind])
+            curr_ds.data[:(n_ts - 1), 0] = np.nan
             title_and_ylab = [time_str + ' Ahead Predictions', desc]
-            plot_dataset(Dataset.copy(analysis_ds),
+            plot_dataset(curr_ds,
                          show = False,
                          title_and_ylab = title_and_ylab,
                          save_name = self.get_plt_path(time_str + 'Ahead' + ext))
@@ -201,9 +202,11 @@ class BaseDynamicsModel(ABC):
         s = indat_test.shape
         p_ind = d.p_inds_prep[0]
         orig_p_ind = d.p_inds[0]
+        tr = outdat_test[:, p_ind]
 
         # Plot data
         plot_data = np.empty((s[0], 2), dtype = np.float32)
+        plot_data[:, 1] = np.copy(tr)
         desc = d.descriptions[orig_p_ind]
         scals = np.array(repl(d.scaling[orig_p_ind], 2))
         is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype = np.bool)
