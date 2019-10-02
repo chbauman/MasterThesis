@@ -317,7 +317,7 @@ def plot_dataset(dataset, show = True, title_and_ylab = None, save_name = None):
     """
     all_data = dataset.getUnscaledData()
     n_series = all_data.shape[1]
-    all_series = [all_data[:, i] for i in range(n_series)]
+    all_series = [np.copy(all_data[:, i]) for i in range(n_series)]
     labs = [d for d in dataset.descriptions]
     t_init = dataset.t_init
 

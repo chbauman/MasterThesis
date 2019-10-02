@@ -107,8 +107,8 @@ class BaseDynamicsModel(ABC):
         if return_all_preds:
             all_preds = np.empty((n_out, n, n_feat))
 
-        curr_in_data = in_data[:n_out]
-        curr_out_data = out_data[:n_out]
+        curr_in_data = np.copy(in_data[:n_out])
+        curr_out_data = np.copy(out_data[:n_out])
         for k in range(n):
 
             # Predict
@@ -117,7 +117,7 @@ class BaseDynamicsModel(ABC):
                 curr_preds += self.disturb()
 
             if return_all_preds:
-                all_preds[:, k] = curr_preds
+                all_preds[:, k] = np.copy(curr_preds)
 
             # Construct next data
             curr_in_data[:, :-1, :] = np.copy(curr_in_data[:, 1:, :])
@@ -198,15 +198,15 @@ class BaseDynamicsModel(ABC):
         self.const_nts_plot(test_copy, [1, 4, 20], ext = 'Test')
         self.const_nts_plot(train_copy, [4, 20], ext = 'Train')
 
-        indat_test, outdat_test = dat_test
+        indat_test, outdat_test = copy_arr_list(dat_test)
         s = indat_test.shape
         p_ind = d.p_inds_prep[0]
         orig_p_ind = d.p_inds[0]
-        tr = outdat_test[:, p_ind]
+        tr = np.copy(outdat_test[:, p_ind])
 
         # Plot data
         plot_data = np.empty((s[0], 2), dtype = np.float32)
-        plot_data[:, 1] = np.copy(tr)
+        plot_data[:, 1] = tr
         desc = d.descriptions[orig_p_ind]
         scals = np.array(repl(d.scaling[orig_p_ind], 2))
         is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype = np.bool)

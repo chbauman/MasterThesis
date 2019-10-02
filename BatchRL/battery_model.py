@@ -41,13 +41,12 @@ class BatteryModel(BaseDynamicsModel):
     def predict(self, in_data):
 
         s = in_data.shape
-        p = in_data[:, -1, 1]
-        s_t = in_data[:, -1, 0]
+        p = np.copy(in_data[:, -1, 1])
+        s_t = np.copy(in_data[:, -1, 0])
         a1, a2, a3 = self.params
         
         s_tp1 = s_t + a1 + a2 * p + a3 * np.maximum(0, p)
-        return s_t.reshape((-1, 1))
-
+        #return s_t.reshape((-1, 1))
         return s_tp1.reshape((-1, 1))
 
     def disturb(self, n):
@@ -65,10 +64,10 @@ class BatteryModel(BaseDynamicsModel):
 
         streak_len = 7
         s_len = d.streak_len
-        orig_trainval, orig_test = cut_and_split(dat, d.seq_len, s_len, ret_orig=True)
+        #orig_trainval, orig_test = cut_and_split(dat, d.seq_len, s_len, ret_orig=True)
 
-        p = dat[1:, 1]
-        ds = dat[1:, 0] - dat[:-1, 0]
+        p = np.copy(dat[1:, 1])
+        ds = np.copy(dat[1:, 0] - dat[:-1, 0])
 
         # Remove nans
         not_nans = np.logical_not(np.logical_or(np.isnan(p), np.isnan(ds)))

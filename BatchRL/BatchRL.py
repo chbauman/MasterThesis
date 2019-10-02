@@ -46,9 +46,7 @@ def simple_battery_FQI():
     sbt.eval_policy(fqi.get_policy())
 
 def main():
-
-    test_dataset_artificially()
-
+    
     #name_ds = 'Model_Room43'
     #ds = Dataset.loadDataset(name_ds)
     #ds = ds.add_time()
