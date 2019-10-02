@@ -1491,16 +1491,16 @@ class Dataset():
         # split data        
         s_len = int(60 / self.dt * 24 * streak_len)
         self.streak_len = s_len
-        self.orig_trainval, self.orig_test = cut_and_split(self.data, self.seq_len, s_len, ret_orig=True)
-        self.orig_train, self.orig_val = split_arr(self.orig_trainval, self.val_perc)
-        _, self.train_streak = extract_streak(self.orig_train, s_len, self.seq_len - 1)
+        self.orig_trainval, self.orig_test = cut_and_split(np.copy(self.data), self.seq_len, s_len, ret_orig=True)
+        self.orig_train, self.orig_val = split_arr(np.copy(self.orig_trainval), self.val_perc)
+        _, self.train_streak = extract_streak(np.copy(self.orig_train), s_len, self.seq_len - 1)
 
         # Cut into sequences and saveself.
-        self.test_data = cut_data_into_sequences(self.orig_test, self.seq_len, interleave = True)
-        self.train_val_data = cut_data_into_sequences(self.orig_trainval, self.seq_len, interleave = True)
-        self.train_data = cut_data_into_sequences(self.orig_train, self.seq_len, interleave = True)
-        self.val_data = cut_data_into_sequences(self.orig_val, self.seq_len, interleave = True)
-        self.train_streak_data = cut_data_into_sequences(self.train_streak, self.seq_len, interleave = True)
+        self.test_data = cut_data_into_sequences(np.copy(self.orig_test), self.seq_len, interleave = True)
+        self.train_val_data = cut_data_into_sequences(np.copy(self.orig_trainval), self.seq_len, interleave = True)
+        self.train_data = cut_data_into_sequences(np.copy(self.orig_train), self.seq_len, interleave = True)
+        self.val_data = cut_data_into_sequences(np.copy(self.orig_val), self.seq_len, interleave = True)
+        self.train_streak_data = cut_data_into_sequences(np.copy(self.train_streak), self.seq_len, interleave = True)
        
     def get_prepared_data(self, what_data = 'train', *, get_all_preds = False):
         """
@@ -1520,6 +1520,7 @@ class Dataset():
             data_to_use = self.train_streak_data
         else:
             raise ValueError("No such data available: " + what_data)
+        data_to_use = np.copy(data_to_use)
 
         # Get dimensions
         s = data_to_use.shape
@@ -2086,3 +2087,29 @@ def test_align():
     print('Test 5:', test5)
 
     return
+
+def test_dataset_artificially():
+    """
+    Constructs a small synthetic dataset and makes tests.
+    """
+
+
+    dat = np.array([1,2,3,7, 
+                    1,3,4,7, 
+                    1,4,5,7,
+                    1,5,6,7], dtype = np.float32).reshape((4, 4))
+    c_inds = np.array([2])
+    p_inds = np.array([1])
+    descs = np.array(["1", "2", "3", "4"])
+    is_sc = np.array([False for _ in range(4)])
+    sc = np.empty((4, 2), dtype = np.float32)
+
+    dt = 15
+    t_init = '2019-01-01 00:00:00'
+    ds = Dataset(dat, dt, t_init, sc, is_sc, descs, c_inds, p_inds, "Test")
+
+    ds.save()
+    plot_dataset(ds, True, ["Test", "Fuck"])
+
+
+    pass

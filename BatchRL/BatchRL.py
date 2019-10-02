@@ -21,7 +21,7 @@ from data import Room274Data, Room272Data, WeatherData, TestData, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
     get_DFAB_heating_data, test_plotting_withDFAB_data, test_dataset_with_DFAB, \
     compute_DFAB_energy_usage, get_weather_data, generateRoomDatasets, \
-    analzye_room_energy_consumption, Dataset, test_align
+    analzye_room_energy_consumption, Dataset, test_align, test_dataset_artificially
 
 def simple_battery_FQI():
 
@@ -46,6 +46,8 @@ def simple_battery_FQI():
     sbt.eval_policy(fqi.get_policy())
 
 def main():
+
+    test_dataset_artificially()
 
     #name_ds = 'Model_Room43'
     #ds = Dataset.loadDataset(name_ds)
