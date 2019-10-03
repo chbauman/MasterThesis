@@ -43,7 +43,6 @@ class BatteryModel(BaseDynamicsModel):
         a1, a2, a3 = self.params
         
         s_tp1 = s_t + a1 + a2 * p + a3 * np.maximum(0, p)
-        #return s_t.reshape((-1, 1))
         return s_tp1.reshape((-1, 1))
 
     def disturb(self, n):
@@ -58,6 +57,8 @@ class BatteryModel(BaseDynamicsModel):
         d = self.data
         #dat = d.getUnscaledData()
         dat = d.data
+        scal = np.copy(d.scaling)
+        scal[0, 0] = 0.0
 
         streak_len = 7
         s_len = d.streak_len
@@ -76,6 +77,8 @@ class BatteryModel(BaseDynamicsModel):
         before_ppath = os.path.join(self.plot_path, "WithOutliers")
         scatter_plot(p, ds, lab_dict = labs,
                      show = False, 
+                     m_and_std_x = scal[1],
+                     m_and_std_y = scal[0],
                      add_line = True,
                      save_name = before_ppath)
 
@@ -101,7 +104,9 @@ class BatteryModel(BaseDynamicsModel):
         after_ppath = os.path.join(self.plot_path, "Cleaned")
         scatter_plot(masked_p, masked_ds, lab_dict = labs, 
                      show = False, 
-                     add_line = False, 
+                     add_line = False,                      
+                     m_and_std_x = scal[1],
+                     m_and_std_y = scal[0],
                      custom_line = [x_pw_line, y_pw_line],
                      custom_label = 'PW Linear Fit',
                      save_name = after_ppath)
