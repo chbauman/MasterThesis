@@ -100,6 +100,7 @@ Room5RedData = DataStruct(id_list = [421110084, # Temp
 
 DFAB_AddData = DataStruct(id_list = [421100168, # Vorlauf Temp
                                     421100170, # Rücklauf Temp
+                                    421100174, # Tot volume flow
                                     ],
                         name = "DFAB_Extra",
                         startDate='2017-01-01',
@@ -1214,11 +1215,28 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
                                      dt_mins, 
                                      all_data = all_data,
                                      dt_init = dt_init,
-                                     row_ind = 1,
+                                     row_ind = ind,
                                      remove_out_int_args = [10, 50],
                                      gauss_sigma = 5.0)
         if show_plots:
             plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Temp_Out"
+            plot_single(all_data[:, ind], 
+                            m[ind], 
+                            use_time = True,
+                            show = False, 
+                            title_and_ylab = ['Out Water Temperature Interpolated', m[ind]['unit']],
+                            save_name = plot_file_name)
+        ind = 2
+        if show_plots:
+            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Raw_Flow_Out"
+            plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
+        all_data, _ = pipeline_preps(data[ind], 
+                                     dt_mins, 
+                                     all_data = all_data,
+                                     dt_init = dt_init,
+                                     row_ind = ind)
+        if show_plots:
+            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Flow_Out"
             plot_single(all_data[:, ind], 
                             m[ind], 
                             use_time = True,

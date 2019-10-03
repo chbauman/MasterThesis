@@ -47,6 +47,9 @@ def simple_battery_FQI():
 
 def main():
     
+    get_DFAB_heating_data(show_plots=True, use_dataset = True)
+    return
+
     name_ds = 'Model_Room43'
     ds = Dataset.loadDataset(name_ds)
     ds = ds.add_time()
