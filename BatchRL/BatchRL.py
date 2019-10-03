@@ -47,30 +47,31 @@ def simple_battery_FQI():
 
 def main():
     
-    name_ds = 'Model_Room43'
-    ds = Dataset.loadDataset(name_ds)
-    ds = ds.add_time()
-    ds.standardize()
-    ds.split_train_test(7)
-    ds.get_prepared_data()
+    #name_ds = 'Model_Room43'
+    #ds = Dataset.loadDataset(name_ds)
+    #ds = ds.add_time()
+    #ds.standardize()
+    #ds.split_train_test(7)
+    #ds.get_prepared_data()
 
-    # Construct weight vector
-    w = np.ones((ds.d - ds.n_c,), dtype = np.float32)
-    w[ds.p_inds_prep[0]] = 2.0 # Weight temperature twice
+    ## Construct weight vector
+    #w = np.ones((ds.d - ds.n_c,), dtype = np.float32)
+    #w[ds.p_inds_prep[0]] = 2.0 # Weight temperature twice
 
-    mod = BaseRNN_DM(ds, 
-                     hidden_sizes=[100, 100], 
-                     n_iter_max = 100, 
-                     input_noise_std = 0.0001, 
-                     lr = 0.01, 
-                     residual_learning=True,
-                     weight_vec = w)
+    #mod = BaseRNN_DM(ds, 
+    #                 hidden_sizes=[100, 100], 
+    #                 n_iter_max = 100, 
+    #                 input_noise_std = 0.0001, 
+    #                 lr = 0.01, 
+    #                 residual_learning=True,
+    #                 weight_vec = None #w
+    #                 )
 
-    mod.fit()
-    mod.model_disturbance()
-    mod.disturb()
-    mod.analyze()
-    return
+    #mod.fit()
+    #mod.model_disturbance()
+    #mod.disturb()
+    #mod.analyze()
+    #return
 
     ##compute_DFAB_energy_usage()
     #return

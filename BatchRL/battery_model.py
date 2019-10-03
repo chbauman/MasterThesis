@@ -55,15 +55,11 @@ class BatteryModel(BaseDynamicsModel):
 
         # Get data
         d = self.data
-        #dat = d.getUnscaledData()
-        dat = d.data
+        dat = d.orig_trainval
         scal = np.copy(d.scaling)
         scal[0, 0] = 0.0
 
-        streak_len = 7
-        s_len = d.streak_len
-        #orig_trainval, orig_test = cut_and_split(dat, d.seq_len, s_len, ret_orig=True)
-
+        # Extract data
         p = np.copy(dat[1:, 1])
         ds = np.copy(dat[1:, 0] - dat[:-1, 0])
 
@@ -82,7 +78,7 @@ class BatteryModel(BaseDynamicsModel):
                      add_line = True,
                      save_name = before_ppath)
 
-        # Fit linear Model
+        # Fit linear Model and filter out outliers
         fitted_ds = fit_linear_1d(p, ds, p)
         mask = np.logical_or(ds > fitted_ds - 0.35, p < -1.0)
         masked_p = p[mask]
