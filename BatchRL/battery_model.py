@@ -23,15 +23,12 @@ class BatteryModel(BaseDynamicsModel):
         
         super(BatteryModel, self).__init__()
 
-        print(dataset)
         self.name = dataset.name
-
-        self.plot_path = os.path.join(model_plot_path, "BatteryModel")
+        self.plot_path = os.path.join(model_plot_path, self.name)
         create_dir(self.plot_path)
 
         # Save dataset
         self.data = dataset
-
 
     def fit(self):
 
@@ -84,7 +81,7 @@ class BatteryModel(BaseDynamicsModel):
 
         # Fit linear Model
         fitted_ds = fit_linear_1d(p, ds, p)
-        mask = np.logical_or(ds > fitted_ds - 0.3, p < -1.0)
+        mask = np.logical_or(ds > fitted_ds - 0.35, p < -1.0)
         masked_p = p[mask]
         masked_ds = ds[mask]
         n_mask = masked_p.shape[0]

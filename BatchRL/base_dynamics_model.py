@@ -125,7 +125,6 @@ class BaseDynamicsModel(ABC):
             curr_in_data[:, -1, pred_inds] = np.copy(curr_preds[:, pred_inds])
         
         if return_all_preds:
-            print(all_preds)
             return all_preds
         return curr_preds
 

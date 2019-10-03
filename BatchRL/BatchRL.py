@@ -59,8 +59,8 @@ def main():
     #w[ds.p_inds_prep[0]] = 2.0
 
     #mod = BaseRNN_DM(ds, 
-    #                 hidden_sizes=[200, 200], 
-    #                 n_iter_max = 200, 
+    #                 hidden_sizes=[100, 100], 
+    #                 n_iter_max = 50, 
     #                 input_noise_std = 0.0001, 
     #                 lr = 0.01, 
     #                 residual_learning=True,
@@ -70,26 +70,20 @@ def main():
     #mod.model_disturbance()
     #mod.disturb()
     #mod.analyze()
+    #return
 
     ##compute_DFAB_energy_usage()
     #return
 
     # Battery data
     bat_name = "Battery"
-    #get_battery_data(True)
+    #get_battery_data(True) # Needs to be fixed!!!
     bat_ds = Dataset.loadDataset(bat_name)
     bat_ds.split_train_test(7)
     bat_ds.get_prepared_data()
     bat_mod = BatteryModel(bat_ds)
     bat_mod.analyze_bat_model()
     bat_mod.analyze()
-    return
-
-    bat_dataset = get_battery_data(save_plot = True, show = False, use_dataset = True)
-    dat_bat = bat_dataset.data
-    train_bat, test_bat = cut_and_split(dat_bat, 2, 96 * 7)
-    bat_mod = BatteryModel(bat_dataset)
-    bat_mod.fit(train_bat)
     return
 
     # Parameters
