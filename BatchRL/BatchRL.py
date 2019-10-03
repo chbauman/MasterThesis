@@ -48,6 +48,7 @@ def simple_battery_FQI():
 def main():
     
     get_DFAB_heating_data(show_plots=True, use_dataset = True)
+    compute_DFAB_energy_usage()
     return
 
     name_ds = 'Model_Room43'

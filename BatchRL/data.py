@@ -101,6 +101,8 @@ Room5RedData = DataStruct(id_list = [421110084, # Temp
 DFAB_AddData = DataStruct(id_list = [421100168, # Vorlauf Temp
                                     421100170, # Rücklauf Temp
                                     421100174, # Tot volume flow
+                                    421100163, # Pump running
+                                    421110169, # Speed of other pump
                                     ],
                         name = "DFAB_Extra",
                         startDate='2017-01-01',
@@ -1241,7 +1243,7 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
                             m[ind], 
                             use_time = True,
                             show = False, 
-                            title_and_ylab = ['Out Water Temperature Interpolated', m[ind]['unit']],
+                            title_and_ylab = ['Volume Flow into DFAB', m[ind]['unit']],
                             save_name = plot_file_name)
 
         # Standardize and save
@@ -1335,15 +1337,19 @@ def compute_DFAB_energy_usage(show_plots = True):
     dt = w_dataset.dt
 
     v_name = "DFAB_Valves"
+    dfab_rooms_plot_path = os.path.join(preprocess_plot_path, "DFAB")
     v_dataset = Dataset.loadDataset(v_name)
-    v_dat = v_dataset.data
+    v_dat = v_dataset.getUnscaledData()
     t_init_v = v_dataset.t_init
 
     # Align data
     aligned_data, t_init_new = align_ts(v_dat, w_dat, t_init_v, t_init_w, dt)
     aligned_len = aligned_data.shape[0]
-    w_dat = aligned_data[:, -2:]
-    v_dat = aligned_data[:, :-2]
+    w_dat = aligned_data[:, 21:23]
+    v_dat = aligned_data[:, :21]
+
+    # Find nans
+    not_nans = np.logical_not(find_rows_with_nans(aligned_data))
 
     # Room info
     room_dict = {0: "31", 1: "41", 2: "42", 3: "43", 4:"51", 5: "52", 6: "53"}
@@ -1353,8 +1359,53 @@ def compute_DFAB_energy_usage(show_plots = True):
                                      ])
     n_rooms = len(room_dict)
 
+    # Loop over rooms and compute flow per room
+    v_dat_not_nan = np.copy(v_dat[not_nans])
+    nn_half = v_dat_not_nan.shape[0] // 2
+    nn_34th = 3 * v_dat_not_nan.shape[0] // 4
+    A = np.empty((v_dat_not_nan.shape[0], len(room_dict)), dtype = np.float32)
+    for id, room_nr in room_dict.items():
+        room_valves = v_dat_not_nan[:, valve_room_allocation == room_nr]
+        A[:, id] = np.mean(room_valves, axis = 1)
+    b = w_dat[not_nans, 1]
+    x = np.linalg.lstsq(A[nn_half:], b[nn_half:], rcond=None)[0]
+    print("Flow", x)
     
+    # Loop over rooms and compute flow per room
+    n_valves = len(valve_room_allocation)
+    v_dat_not_nan = np.copy(v_dat[not_nans])
+    
+    A = np.empty((v_dat_not_nan.shape[0], n_valves), dtype = np.float32)
+    for id in range(n_valves): 
+        A[:, id] = v_dat_not_nan[:, id]
+    b = w_dat[not_nans, 1]
+    x = np.linalg.lstsq(A[nn_half:nn_34th, :], b[nn_half:nn_34th], rcond=None)[0]
+    print("Flow per valve", x)
+
+    import scipy.optimize.nnls
+    x = scipy.optimize.nnls(A[nn_half:], b[nn_half:])
+    print("Non Negative Flow per valve", x)
+
+    raise NotImplementedError("Hahahah")
+
+    # PO
+    if show_plots:
+        tot_room_valves_plot_path = os.path.join(dfab_rooms_plot_path, "DFAB_All_Valves")
+        m_all = {'description': 'All valves summed',
+                  'unit': 'TBD',
+                  'dt': dt,
+                  't_init': t_init_new}
+        plot_single(np.sum(v_dat, axis = 1),
+                        m_all,
+                        use_time = True,
+                        show = False,
+                        title_and_ylab = ['Sum All Valves', '0/1'],
+                        save_name = tot_room_valves_plot_path)
+
+    
+
     flow_rates_f3 = np.array([134, 123, 129, 94, 145, 129, 81], dtype = np.float32)
+    print(np.sum(flow_rates_f3), "Flow rates sum, 3. OG")
     dtemp = 13
     powers_f45 = np.array([137, 80, 130, 118, 131, 136, 207,
                  200, 192, 147, 209, 190, 258, 258], dtype = np.float32)
@@ -1371,13 +1422,11 @@ def compute_DFAB_energy_usage(show_plots = True):
     # Prepare output
     out_dat = np.empty((aligned_len, n_rooms), dtype = np.float32)
     m_list = []
-
     m_room = {'description': 'Energy consumption room',
                   'unit': 'TBD',
                   'dt': dt,
                   't_init': t_init_new}
-    if show_plots:
-        dfab_rooms_plot_path = os.path.join(preprocess_plot_path, "DFAB")
+    if show_plots:        
         w_plot_path = os.path.join(dfab_rooms_plot_path, w_name + "_WaterTemps")
         dw_plot_path = os.path.join(dfab_rooms_plot_path, w_name + "_WaterTempDiff")
         plot_dataset(w_dataset, show = False, 
