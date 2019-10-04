@@ -46,8 +46,8 @@ def simple_battery_FQI():
     sbt.eval_policy(fqi.get_policy())
 
 def main():
-    
-    get_DFAB_heating_data(show_plots=True, use_dataset = True)
+    get_battery_data()
+    get_DFAB_heating_data()
     compute_DFAB_energy_usage()
     return
 

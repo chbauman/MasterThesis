@@ -639,8 +639,12 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
                                  dt_mins, 
                                  all_data = curr_all_dat,
                                  dt_init = dt_init,
-                                 row_ind = ind,
+                                 row_ind = col_ind,
                                  **pipeline_kwargs)       
+
+    if np.isnan(np.nanmax(all_dat[:, col_ind])):
+        raise ValueError("Something went very fucking wrong!!")
+        return
 
     # Plot before data
     plot_file_name = base_plot_dir + "_" + plot_name + "_Raw"
@@ -689,11 +693,12 @@ def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, pre
                 raise ValueError("List of description does not have correct length!!")
 
         all_data = None
-        dt_init = None
+        dt_init = None        
+        m_out = []
 
         # Sets
-        for ct, i in ind_list:
-            n_cs = n_cols if i == 0 else None
+        for ct, i in enumerate(ind_list):
+            n_cs = n_cols if ct == 0 else None
             title = cleas_desc(m[i]['description'])
             title = title if desc_list is None else desc_list[ct]
             addid_cols = m[i]['additionalColumns']
@@ -703,17 +708,18 @@ def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, pre
                                                          n_cols = n_cs,
                                                          pipeline_kwargs = prep_arg_list[ct],
                                                          col_ind = ct)
+            m_out += [m[i]]
 
         # Save
         no_inds = np.array([], dtype = np.int32)
         c_inds = np.array(range(n_cols))
-        dataset = Dataset.fromRaw(all_data, m, name, c_inds = c_inds , p_inds = no_inds)
+        dataset = Dataset.fromRaw(all_data, m_out, name, c_inds = c_inds , p_inds = no_inds)
         dataset.save()
         return dataset
 
     pass
 
-def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs):
+def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs, standd = False):
     """
     Converts a DataStruct to a Dataset.
     Using the same preprocessing steps for each series
@@ -752,10 +758,11 @@ def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs):
         # Save
         no_inds = np.array([], dtype = np.int32)
         c_inds = np.array(range(n_cols))
+        if standd:
+            all_data, m = standardize(all_data, m)
         dataset = Dataset.fromRaw(all_data, m, name, c_inds = c_inds , p_inds = no_inds)
         dataset.save()
         return dataset
-
 
 #######################################################################################################
 # Preparing Data for model fitting
@@ -949,38 +956,32 @@ def load_processed(Data):
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
 
-def get_battery_data(save_plot = False, show = True, use_dataset = True):
+def get_battery_data():
     """
     Load and interpolate the battery data.
     """
     # Constants
     dt_mins = 15
     name = "Battery"
+    bat_plot_path = os.path.join(preprocess_plot_path, name)    
+    create_dir(bat_plot_path)
+    inds = [19, 17]
+    p_kwargs_soc = {'clean_args':[([0.0], 24 * 60, [])],
+                    'rem_out_args':(100, [0.0, 100.0]),
+                     'lin_ip':True}
+    p_kwargs_ap = {'clean_args':[([], 6 * 60, [])]}
+    kws = [p_kwargs_soc, p_kwargs_ap]
+    ds = get_from_dstruct(BatteryData, bat_plot_path, dt_mins, name, inds, kws)
 
     # Plot files
-    prep_plot_dir = os.path.join(preprocess_plot_path, name)
-    create_dir(prep_plot_dir)
-    plot_name_before = os.path.join(prep_plot_dir, "raw")
-    plot_name_roi = os.path.join(prep_plot_dir, "strange")
-    plot_name_after = os.path.join(prep_plot_dir, "processed")
+    plot_name_roi = os.path.join(bat_plot_path, "Strange")
+    plot_name_after = os.path.join(bat_plot_path, "processed")
 
-    # Try loading data
-    try:
-        loaded = Dataset.loadDataset(name)
-        return loaded
-    except FileNotFoundError:
-        pass
+    y_lab = '% / kW'
+    plot_dataset(ds, False, ['Processed Battery Data', y_lab], plot_name_after)    
 
     # Get data
     dat, m = BatteryData.getData()
-
-    inds = [5, 17, 19, 20, 21, 22, 23, 28, 29, 30]
-
-    soh = [20, 30] # Twice
-    max_min_charge = [21, 22] # Idk, in kW
-    inds_soc = [19, 23] # SoC and kWh, essentially the same
-    soc_max_min = [28, 29] # Also kind of SoC, max and min, shorter time
-
     use_inds = [19, 17]
     n_feats = len(use_inds)
 
@@ -988,59 +989,19 @@ def get_battery_data(save_plot = False, show = True, use_dataset = True):
     x = [dat[i][1] for i in use_inds]
     y = [dat[i][0] for i in use_inds]
     m_used = [m[i] for i in use_inds]
-    y_lab = '% / kW'
     t = "Raw Battery Data"
-    if save_plot:
-        plot_multiple_time_series(x, y, m_used, show = False, title_and_ylab = [t, y_lab], save_name = plot_name_before)
 
     # Extract ROI of data where it behaves strangely
     d1 = np.datetime64('2019-05-24T12:00')
     d2 = np.datetime64('2019-05-25T12:00')
     x_ext, y_ext = [[extract_date_interval(x[i], y[i], d1, d2)[k] for i in range(n_feats)] for k in range(2)]
 
-    if save_plot:
-        plot_multiple_time_series(x_ext, y_ext, m_used, 
+    plot_multiple_time_series(x_ext, y_ext, m_used, 
                                   show = False, 
                                   title_and_ylab = ["Strange Battery Behavior", y_lab], 
                                   save_name = plot_name_roi)
 
-    # SoC
-    all_data, dt_init = pipeline_preps(dat[19], 
-                                  dt_mins, 
-                                  n_tot_cols = n_feats,
-                                  clean_args=[([0.0], 24 * 60, [])],
-                                  rem_out_args=(100, [0.0, 100.0]),
-                                  lin_ip = True)
-
-    # Active Power
-    all_data, _ = pipeline_preps(dat[17], 
-                                  dt_mins, 
-                                  clean_args=[([], 6 * 60, [])],
-                                  all_data=all_data,
-                                  dt_init=dt_init,
-                                  row_ind=1)
-    
-    # Metadata
-    m_out = [m[19], m[17]]
-    add_dt_and_tinit(m_out, dt_mins, dt_init)
-
-    # Standardize
-    all_data, m_out = standardize(all_data, m_out)
-
-    if save_plot:
-        # Plot
-        plot_all(all_data, 
-                 m_out, 
-                 use_time = True, 
-                 show = show, 
-                 title_and_ylab = ['Processed Battery Data', y_lab], 
-                 scale_back = True,
-                 save_name = plot_name_after)
-
-    # Save and return
-    bat_dataset = Dataset.fromRaw(all_data, m_out, name, c_inds = np.array([1]), p_inds = np.array([0]))
-    bat_dataset.save()
-    return bat_dataset
+    return ds
 
 def get_weather_data(save_plots = True):
     """
@@ -1219,7 +1180,7 @@ def get_heating_data(filter_sigma = None):
     save_processed_data(all_data, m_out, name)
     return all_data, m_out, name
 
-def get_DFAB_heating_data(show_plots = False, use_dataset = False):
+def get_DFAB_heating_data():
 
     data_list = []
     dt_mins = 15
@@ -1229,11 +1190,10 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
     ################################
     # Single Rooms
     for e in rooms:
-
         data, m = e.getData()
         n_cols = len(data)
 
-        # General Heating Data  
+        # Single Room Heating Data  
         temp_kwgs = {'clean_args': [([0.0], 24 * 60, [])], 'gauss_sigma': 5.0, 'rem_out_args': (1.5, None)}
         valv_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
         blinds_kwargs = {'clip_to_int_args': [0.0, 100.0], 'clean_args':[([], 7 * 24 * 60, [])]}
@@ -1241,101 +1201,6 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
         if n_cols == 5:
             prep_kwargs += [blinds_kwargs]
         data_list += [convert_datastruct(e, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
-        continue
-
-        # Get name
-        name = e.name
-
-        # Try loading data
-        if use_dataset:
-            try:
-                loaded = Dataset.loadDataset(name)
-                data_list += [loaded]
-                continue
-            except FileNotFoundError:
-                loaded = None
-        else:
-            # Try loading data
-            loaded = load_processed_data(name)
-            if loaded is not None:
-                data_list += [loaded]
-                continue
-
-        data, m = e.getData()
-        n_cols = len(data)
-
-        # Temperature
-        if show_plots:
-            temp_plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Raw_Temp"
-            plot_time_series(data[0][1], data[0][0], m = m[0], show = False, save_name = temp_plot_file_name)
-        all_data, dt_init = pipeline_preps(data[0], 
-                                           dt_mins, 
-                                           n_tot_cols = n_cols,
-                                           clean_args = [([0.0], 24 * 60, [])],
-                                           rem_out_args = (1.5, None),
-                                           gauss_sigma = 5.0)
-        add_dt_and_tinit(m, dt_mins, dt_init)
-        if show_plots:
-            temp_plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Temp"
-            plot_single(all_data[:, 0], 
-                        m[0], 
-                        use_time = True, 
-                        show = False, 
-                        title_and_ylab = ['Temperature Interpolated', m[0]['unit']],
-                        save_name = temp_plot_file_name)
-
-        # Valves
-        for i in range(3):
-            ind = i + 1
-            if show_plots:
-                valve_plot_file_name = os.path.join(dfab_rooms_plot_path, name + "_Raw_Valve" + str(ind))
-                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = valve_plot_file_name)
-            all_data, _ = pipeline_preps(data[ind], 
-                                         dt_mins, 
-                                         all_data = all_data,
-                                         dt_init = dt_init,
-                                         row_ind = ind,
-                                         clean_args = [([], 30 * 24 * 60, [])])
-            if show_plots:
-                valve_plot_file_name = os.path.join(dfab_rooms_plot_path, name + "_Valve" + str(ind))
-                plot_single(all_data[:, ind], 
-                            m[ind], 
-                            use_time = True, 
-                            show = False, 
-                            title_and_ylab = ['Valve ' + str(ind) + ' Interpolated', m[ind]['unit']],
-                            save_name = valve_plot_file_name)
-
-        # Blinds
-        if n_cols == 5:
-            ind = 4
-            if show_plots:
-                plot_file_name = os.path.join(dfab_rooms_plot_path, name + "_Raw_Blinds")
-                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
-            all_data, _ = pipeline_preps(data[ind],
-                                         dt_mins,
-                                         dt_init = dt_init,
-                                         all_data = all_data,
-                                         clip_to_int_args = [0.0, 100.0],
-                                         clean_args = [([], 7 * 24 * 60, [])],
-                                         row_ind = ind)
-            if show_plots:
-                plot_file_name = os.path.join(dfab_rooms_plot_path, name + "_Blinds")
-                plot_single(all_data[:, ind], 
-                            m[ind], 
-                            use_time = True, 
-                            show = False, 
-                            title_and_ylab = ['Blinds Interpolated', m[ind]['unit']],
-                            save_name = plot_file_name)
-
-        # Standardize and save
-        if use_dataset:
-            dataset = Dataset.fromRaw(all_data, m, name, c_inds = np.array([1]), p_inds = np.array([0]))
-            dataset.save()
-            data_list += [dataset]
-            continue
-        all_data, m = standardize(all_data, m)
-        save_processed_data(all_data, m, name)
-        data_list += [all_data, m, name]
 
     ################################
     # General Heating Data
