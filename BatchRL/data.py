@@ -602,7 +602,11 @@ def pipeline_preps(orig_dat,
 
     return all_data, dt_init_new
 
-def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_name, base_plot_dir, title = "", pipeline_kwargs = {}, n_cols = None, col_ind = None):
+def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_name, base_plot_dir, 
+                             title = "", 
+                             pipeline_kwargs = {}, 
+                             n_cols = None, 
+                             col_ind = None):
     """
     Adds the series with index 'ind' to curr_all_dat
     and plots the series before and after processing
@@ -615,15 +619,16 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
     all_dat = curr_all_dat
     if col_ind is None:
         col_ind = ind
-
+    elif curr_all_dat is None:
+        raise NotImplementedError("Col ind cannot be chosen if curr_all_dat is None!")
+    
     # Plot before data
     plot_file_name = base_plot_dir + "_Raw_" + plot_name
     plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
 
     # Process data
     if curr_all_dat is None:
-        if col_ind != 0:
-            raise ValueError("Cannot set col_ind in first series!")
+        col_ind = 0
         if n_cols is None:
             raise ValueError("Need to specify n_cols if data is None.")
         all_dat, dt_init_new = pipeline_preps(data[ind], 
@@ -632,22 +637,24 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
                                            **pipeline_kwargs)
         add_dt_and_tinit(m, dt_mins, dt_init_new)
     else:
+        if dt_init is None:
+            raise ValueError("dt_init cannot be None!")
         all_dat, _ = pipeline_preps(copy_arr_list(data[ind]), 
                                  dt_mins, 
                                  all_data = curr_all_dat,
                                  dt_init = dt_init,
                                  row_ind = ind,
-                                 **pipeline_kwargs)
-    
+                                 **pipeline_kwargs)       
+
     # Plot after data
-    plot_file_name2 = base_plot_dir + "_" + plot_name    
-    if True:
-        plot_single(np.copy(all_dat[:, col_ind]), 
+    plot_file_name2 = base_plot_dir + "_" + plot_name
+    plot_single(np.copy(all_dat[:, col_ind]), 
                         m[ind], 
                         use_time = True,
                         show = False, 
                         title_and_ylab = [title, m[ind]['unit']],
                         save_name = plot_file_name2)
+    
     return all_dat, dt_init_new
 
 #######################################################################################################
@@ -1285,36 +1292,50 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
     else:
         data, m = DFAB_AllValves.getData()
         n_cols = len(data)
+        all_data = None
+        dt_init = None
 
         # Valves
         for i in range(n_cols):
-            ind = i
-            if show_plots:
-                addid_cols = m[i]['additionalColumns']
 
-                plot_name = "Valve_" + addid_cols['Floor'] + "_" + addid_cols['Device Id']
-                plot_path = os.path.join(dfab_rooms_plot_path, "Raw_" + plot_name)
-                plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_path)
-            if i == 0:
-                all_data, dt_init = pipeline_preps(data[ind], 
-                                                   dt_mins, 
-                                                   n_tot_cols = n_cols,
-                                                   clean_args = [([], 30 * 24 * 60, [])])
-                add_dt_and_tinit(m, dt_mins, dt_init)
-            else:
-                all_data, _ = pipeline_preps(data[ind], 
-                                             dt_mins, 
-                                             all_data = all_data,
-                                             dt_init = dt_init,
-                                             row_ind = ind,
-                                             clean_args = [([], 30 * 24 * 60, [])])
-            if show_plots:
-                plot_path = os.path.join(dfab_rooms_plot_path, plot_name)
-                plot_single(all_data[:, ind], 
-                            m[ind], 
-                            use_time = True, 
-                            show = False, 
-                            title_and_ylab = ['Valve ' + str(ind) + ' Interpolated', m[ind]['unit']], save_name = plot_path)
+
+            #ind = i
+            #if show_plots:
+            #    addid_cols = m[i]['additionalColumns']
+            #    plot_name = "Valve_" + addid_cols['Floor'] + "_" + addid_cols['Device Id']
+            #    plot_path = os.path.join(dfab_rooms_plot_path, "Raw_" + plot_name)
+            #    plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_path)
+            #if i == 0:
+            #    all_data, dt_init = pipeline_preps(data[ind], 
+            #                                       dt_mins, 
+            #                                       n_tot_cols = n_cols,
+            #                                       clean_args = [([], 30 * 24 * 60, [])])
+            #    add_dt_and_tinit(m, dt_mins, dt_init)
+            #else:
+            #    all_data, _ = pipeline_preps(data[ind], 
+            #                                 dt_mins, 
+            #                                 all_data = all_data,
+            #                                 dt_init = dt_init,
+            #                                 row_ind = ind,
+            #                                 clean_args = [([], 30 * 24 * 60, [])])
+            #if show_plots:
+            #    plot_path = os.path.join(dfab_rooms_plot_path, plot_name)
+            #    plot_single(all_data[:, ind], 
+            #                m[ind], 
+            #                use_time = True, 
+            #                show = False, 
+            #                title_and_ylab = ['Valve ' + str(ind) + ' Interpolated', m[ind]['unit']], save_name = plot_path)
+
+            # valves
+            n_cs = n_cols if i == 0 else None
+            title = 'Valve ' + str(i)
+            plot_file_name = os.path.join(dfab_rooms_plot_path, "Valve_")
+            addid_cols = m[i]['additionalColumns']
+            plot_name = addid_cols['Floor'] + "_" + addid_cols['Device Id']
+            prep_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
+            all_data, dt_init = add_and_save_plot_series(data, m, all_data, i, dt_mins, dt_init, plot_name, plot_file_name, title, 
+                                                         n_cols = n_cs,
+                                                         pipeline_kwargs = prep_kwargs)
 
         # Save
         if use_dataset:
