@@ -686,10 +686,10 @@ def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, pre
         # Check arguments
         n_inds = len(ind_list)
         n_preps = len(prep_arg_list)
-        if n_inds > n_cols or n_preps > n_cols:
+        if n_inds > n_cols or n_preps > n_inds:
             raise ValueError("Too long lists!")
         if desc_list is not None:
-            if len(dec_list) != n_cols:
+            if len(dec_list) != n_inds:
                 raise ValueError("List of description does not have correct length!!")
 
         all_data = None
@@ -698,7 +698,7 @@ def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, pre
 
         # Sets
         for ct, i in enumerate(ind_list):
-            n_cs = n_cols if ct == 0 else None
+            n_cs = n_inds if ct == 0 else None
             title = cleas_desc(m[i]['description'])
             title = title if desc_list is None else desc_list[ct]
             addid_cols = m[i]['additionalColumns']
@@ -972,13 +972,16 @@ def get_battery_data():
     p_kwargs_ap = {'clean_args':[([], 6 * 60, [])]}
     kws = [p_kwargs_soc, p_kwargs_ap]
     ds = get_from_dstruct(BatteryData, bat_plot_path, dt_mins, name, inds, kws)
+    
 
     # Plot files
     plot_name_roi = os.path.join(bat_plot_path, "Strange")
     plot_name_after = os.path.join(bat_plot_path, "processed")
 
     y_lab = '% / kW'
+    print(ds)
     plot_dataset(ds, False, ['Processed Battery Data', y_lab], plot_name_after)    
+    return ds
 
     # Get data
     dat, m = BatteryData.getData()
