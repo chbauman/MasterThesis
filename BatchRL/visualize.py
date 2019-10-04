@@ -46,7 +46,7 @@ def save_figure(save_name, show = False, vector_format = True):
 
         # Save and clear
         save_format = '.pdf' if vector_format else '.png'
-        save_kwargs = {'bbox_inches': 'tight', 'dpi': 500}
+        #save_kwargs = {'bbox_inches': 'tight', 'dpi': 500}
         save_kwargs = {'bbox_inches': 'tight'}
         plt.savefig(save_name + save_format, **save_kwargs)
         plt.close()
@@ -62,7 +62,7 @@ def plot_helper(x, y, m_col = 'blue', label = None, dates = False):
     color = 'red'
     marker = '^'
     ms = 2
-    kwargs = {'marker': marker, 'c':color, 'linestyle': ls, 'label': label, 'markersize': ms, 'mfc': m_col, 'mec': m_col}
+    kwargs = {'marker': marker, 'c':m_col, 'linestyle': ls, 'label': label, 'markersize': ms, 'mfc': m_col, 'mec': m_col}
 
     if dates:
         plt.plot_date(x, y, **kwargs)
@@ -201,6 +201,7 @@ def plot_ip_ts(y,
     Plots an interpolated time series
     where x is assumed to be uniform.
     """
+    
 
     if series_index == 0:
         # Define plot
@@ -239,6 +240,7 @@ def plot_ip_ts(y,
         # Show plot
         if show:
             plt.show()
+
     return
 
 def plot_multiple_ip_ts(y_list, 

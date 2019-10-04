@@ -569,7 +569,7 @@ def pipeline_preps(orig_dat,
         clip_to_interval(modif_data, clip_to_int_args)
 
     # Interpolate / Subsample
-    [modif_data, dt_init_new] = interpolate_time_series(modif_data, dt_mins, lin_ip=lin_ip)
+    [modif_data, dt_init_new] = interpolate_time_series(modif_data, dt_mins, lin_ip = lin_ip)
 
     # Remove Outliers
     if rem_out_args is not None:
@@ -601,6 +601,54 @@ def pipeline_preps(orig_dat,
         all_data[:, 0] = modif_data
 
     return all_data, dt_init_new
+
+def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_name, base_plot_dir, title = "", pipeline_kwargs = {}, n_cols = None, col_ind = None):
+    """
+    Adds the series with index 'ind' to curr_all_dat
+    and plots the series before and after processing
+    with the pipeline.
+    ind: index of series in raw data
+    col_ind: column index of series in processed data 
+    """
+
+    dt_init_new = np.copy(dt_init)
+    all_dat = curr_all_dat
+    if col_ind is None:
+        col_ind = ind
+
+    # Plot before data
+    plot_file_name = base_plot_dir + "_Raw_" + plot_name
+    plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
+
+    # Process data
+    if curr_all_dat is None:
+        if col_ind != 0:
+            raise ValueError("Cannot set col_ind in first series!")
+        if n_cols is None:
+            raise ValueError("Need to specify n_cols if data is None.")
+        all_dat, dt_init_new = pipeline_preps(data[ind], 
+                                           dt_mins, 
+                                           n_tot_cols = n_cols,
+                                           **pipeline_kwargs)
+        add_dt_and_tinit(m, dt_mins, dt_init_new)
+    else:
+        all_dat, _ = pipeline_preps(copy_arr_list(data[ind]), 
+                                 dt_mins, 
+                                 all_data = curr_all_dat,
+                                 dt_init = dt_init,
+                                 row_ind = ind,
+                                 **pipeline_kwargs)
+    
+    # Plot after data
+    plot_file_name2 = base_plot_dir + "_" + plot_name    
+    if True:
+        plot_single(np.copy(all_dat[:, col_ind]), 
+                        m[ind], 
+                        use_time = True,
+                        show = False, 
+                        title_and_ylab = [title, m[ind]['unit']],
+                        save_name = plot_file_name2)
+    return all_dat, dt_init_new
 
 #######################################################################################################
 # Preparing Data for model fitting
@@ -1186,65 +1234,24 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
     if loaded is not None:
         data_list += [loaded]
     else:
+        # Get data
         data, m = DFAB_AddData.getData()
         n_cols = len(data)
+        plot_file_name = os.path.join(dfab_rooms_plot_path, name)
 
-        # Temperature
-        ind = 0
-        if show_plots:
-            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Raw_Temp_In"
-            plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
-        all_data, dt_init = pipeline_preps(data[ind], 
-                                           dt_mins, 
-                                           n_tot_cols = n_cols,
-                                           remove_out_int_args = [10, 50],
-                                           gauss_sigma = 5.0)
-        add_dt_and_tinit(m, dt_mins, dt_init)
-        if show_plots:
-            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Temp_In"
-            plot_single(all_data[:, ind], 
-                            m[ind], 
-                            use_time = True, 
-                            show = False, 
-                            title_and_ylab = ['In Water Temperature Interpolated', m[ind]['unit']],
-                            save_name = plot_file_name)
+        # Temperature flowing in and out
+        temp_kwgs = {'remove_out_int_args': [10, 50], 'gauss_sigma': 5.0}
+        all_data, dt_init = add_and_save_plot_series(data, m, None, 0, dt_mins, None, "Temp_In", plot_file_name, 'In Water Temperature', temp_kwgs, n_cols = n_cols)
+        add_and_save_plot_series(data, m, all_data, 1, dt_mins, dt_init, "Temp_Out", plot_file_name, 'Out Water Temperature', temp_kwgs)
 
-        ind = 1
-        if show_plots:
-            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Raw_Temp_Out"
-            plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
-        all_data, _ = pipeline_preps(data[ind], 
-                                     dt_mins, 
-                                     all_data = all_data,
-                                     dt_init = dt_init,
-                                     row_ind = ind,
-                                     remove_out_int_args = [10, 50],
-                                     gauss_sigma = 5.0)
-        if show_plots:
-            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Temp_Out"
-            plot_single(all_data[:, ind], 
-                            m[ind], 
-                            use_time = True,
-                            show = False, 
-                            title_and_ylab = ['Out Water Temperature Interpolated', m[ind]['unit']],
-                            save_name = plot_file_name)
-        ind = 2
-        if show_plots:
-            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Raw_Flow_Out"
-            plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
-        all_data, _ = pipeline_preps(data[ind], 
-                                     dt_mins, 
-                                     all_data = all_data,
-                                     dt_init = dt_init,
-                                     row_ind = ind)
-        if show_plots:
-            plot_file_name = os.path.join(dfab_rooms_plot_path, name) + "_Flow_Out"
-            plot_single(all_data[:, ind], 
-                            m[ind], 
-                            use_time = True,
-                            show = False, 
-                            title_and_ylab = ['Volume Flow into DFAB', m[ind]['unit']],
-                            save_name = plot_file_name)
+        # Volume flow
+        add_and_save_plot_series(data, m, all_data, 2, dt_mins, dt_init, "Flow", plot_file_name, 'Volume Flow into DFAB')
+
+        # Heating running
+        add_and_save_plot_series(data, m, all_data, 3, dt_mins, dt_init, "PumpRun", plot_file_name, 'Heat Pump is Running')
+
+        # Pump speed
+        add_and_save_plot_series(data, m, all_data, 4, dt_mins, dt_init, "PumpSpeed", plot_file_name, 'Speed of other Pump')
 
         # Standardize and save
         if use_dataset:
