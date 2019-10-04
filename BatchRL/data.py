@@ -18,7 +18,6 @@ from restclient import DataStruct, save_dir
 from util import *
 
 # Data directories
-processed_data_path = os.path.join(save_dir, "ProcessedSeries")
 dataset_data_path = os.path.join(save_dir, "Datasets")
 
 #######################################################################################################
@@ -38,7 +37,7 @@ Room272Data = DataStruct(id_list = [42150280,
                                     42150484,
                                     42150284,
                                     42150270],
-                        name = "Room272",
+                        name = "UMAR_Room272",
                         startDate='2017-01-01',
                         endDate='2019-12-31')
 
@@ -55,7 +54,7 @@ Room274Data = DataStruct(id_list = [42150281,
                                     42150492,
                                     42150287,
                                     42150274],
-                        name = "Room274",
+                        name = "UMAR_Room274",
                         startDate='2017-01-01',
                         endDate='2019-12-31')
 
@@ -905,53 +904,6 @@ def cut_and_split(dat, seq_len, streak_len, ret_orig = False):
     cut_train_dat = cut_data_into_sequences(dat_train, seq_len, interleave = True)
     cut_test_dat = cut_data_into_sequences(dat_test, seq_len, interleave = True)
     return cut_train_dat, cut_test_dat
-
-#######################################################################################################
-# Saving and Loading Processed Data
-
-def save_processed_data(all_data, m, name):
-    """
-    Saves the processed data in numpy format.
-    """
-    create_dir(processed_data_path)
-
-    # Get filename
-    data_name = os.path.join(processed_data_path, name + "_data.npy")
-    meat_data_name = os.path.join(processed_data_path, name + "_mdat.txt")
-    np.save(data_name, all_data)
-    with open(meat_data_name,'w') as data:
-        data.write(str(m))
-    return
-
-def load_processed_data(name):
-    """
-    Loades the processed data in numpy format.
-    """
-
-    data_name = os.path.join(processed_data_path, name + "_data.npy")
-    meat_data_name = os.path.join(processed_data_path, name + "_mdat.txt")
-
-    if os.path.isfile(data_name) and os.path.isfile(meat_data_name):
-        all_data = np.load(data_name)
-        with open(meat_data_name, 'r') as data:
-            contents = data.read()
-            m = literal_eval(contents)
-        return all_data, m, name
-    else:
-        print("Requested files do not exist!")
-        return
-
-def load_processed(Data):
-    """
-    Loads the processed data with the same name if 
-    if exists, otherwise raises
-    an Exception.
-    """
-    name = Data.name
-    data = load_processed_data(name)
-    if data is None:
-        raise FileNotFoundError("Water temperature data could not be found.")
-    return data
 
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
