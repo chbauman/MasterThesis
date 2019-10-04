@@ -3,6 +3,8 @@ import os
 
 import numpy as np
 
+import scipy.optimize.nnls
+
 from datetime import datetime
 
 #######################################################################################################
@@ -161,6 +163,32 @@ def copy_arr_list(arr_list):
     """
     copy_arr_list = [np.copy(a) for a in arr_list]
     return copy_arr_list
+
+def solve_ls(A, b, offset = False, non_neg = False, ret_fit = False):
+    """
+    Solves the least squares problem min_x ||Ax = b||.
+    If offset is true, then a bias term is added.
+    """
+
+    def ls_fun(A, b):
+        if non_neg:
+            return scipy.optimize.nnls(A, b)[0]
+        else:
+            return np.linalg.lstsq(A, b, rcond=None)[0]
+
+    n, m = A.shape
+    if offset:
+        A_off = np.empty((n, m + 1), dtype = A.dtype)
+        A_off[:, 0] = 1.0
+        A_off[:, 1:] = A
+        A = A_off
+
+    ret_val = ls_fun(A, b)
+    if ret_fit:
+        fit_vals = np.matmul(A, ret_val)
+        ret_val = [ret_val, fit_vals]
+
+    return ret_val
 
 #######################################################################################################
 # NEST stuff

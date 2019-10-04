@@ -405,3 +405,41 @@ def plot_train_history(hist, name = None):
         save_figure(name, False)
     else:
         plt.show()
+
+def plot_simple_ts(y_list, title = None, name = None):
+    """
+    Plots the given aligned time series.
+    """
+    n = len(y_list[0])
+    x = range(n)
+
+    fig, ax = plt.subplots()
+    for y in y_list:
+        plt.plot(x, y)
+
+    if title is not None:
+        plt.title(title)
+    if name is not None:
+        save_figure(name, False)
+    else:
+        plt.show()
+
+def stack_compare_plot(stack_y, y_compare, title = None, name = None):
+    """
+    Plots the given aligned time series.
+    """
+    n = len(y_compare[0])
+    x = range(n)
+    ys = [stack_y[:, i] for i in range(stack_y.shape[1])]
+
+    fig, ax = plt.subplots()
+    ax.stackplot(x, *ys)
+    for y in y_compare:
+        ax.plot(x, y)
+
+    if title is not None:
+        plt.title(title)
+    if name is not None:
+        save_figure(name, False)
+    else:
+        plt.show()

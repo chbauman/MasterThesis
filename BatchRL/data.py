@@ -13,7 +13,8 @@ from datetime import datetime
 from visualize import plot_time_series, plot_ip_time_series, \
     plot_single_ip_ts, plot_multiple_ip_ts, \
     plot_all, plot_single, preprocess_plot_path, \
-    plot_multiple_time_series, plot_dataset, plot_dir
+    plot_multiple_time_series, plot_dataset, plot_dir,\
+    plot_simple_ts, stack_compare_plot
 from restclient import DataStruct, save_dir
 from util import *
 
@@ -930,7 +931,6 @@ def get_battery_data():
     plot_name_after = os.path.join(bat_plot_path, "Processed")
 
     y_lab = '% / kW'
-    print(ds)
     plot_dataset(ds, False, ['Processed Battery Data', y_lab], plot_name_after)
 
     # Get data
@@ -1123,11 +1123,20 @@ def compute_DFAB_energy_usage(show_plots = True):
     # Align data
     aligned_data, t_init_new = align_ts(v_dat, w_dat, t_init_v, t_init_w, dt)
     aligned_len = aligned_data.shape[0]
-    w_dat = aligned_data[:, 21:23]
+    w_dat = aligned_data[:, 21:]
     v_dat = aligned_data[:, :21]
 
     # Find nans
     not_nans = np.logical_not(find_rows_with_nans(aligned_data))
+    aligned_not_nan = np.copy(aligned_data[not_nans])
+    n_not_nans = aligned_not_nan.shape[0]
+    w_dat_not_nan = aligned_not_nan[:, 21:]
+    v_dat_not_nan = aligned_not_nan[:, :21]
+    thresh = 0.05
+    usable = np.logical_and(w_dat_not_nan[:, 3] > 1 - thresh,
+                            w_dat_not_nan[:, 4] < thresh)
+    n_usable = np.sum(usable)
+    first_n_del = n_usable // 3
 
     # Room info
     room_dict = {0: "31", 1: "41", 2: "42", 3: "43", 4:"51", 5: "52", 6: "53"}
@@ -1136,36 +1145,34 @@ def compute_DFAB_energy_usage(show_plots = True):
                                      "51", "51", "53", "53", "53", "52", "51", # 5th Floor
                                      ])
     n_rooms = len(room_dict)
+    n_valves = len(valve_room_allocation)
 
     # Loop over rooms and compute flow per room
-    v_dat_not_nan = np.copy(v_dat[not_nans])
-    nn_half = v_dat_not_nan.shape[0] // 2
-    nn_34th = 3 * v_dat_not_nan.shape[0] // 4
-    A = np.empty((v_dat_not_nan.shape[0], len(room_dict)), dtype = np.float32)
+    A = np.empty((n_not_nans, n_rooms), dtype = np.float32)
     for id, room_nr in room_dict.items():
         room_valves = v_dat_not_nan[:, valve_room_allocation == room_nr]
         A[:, id] = np.mean(room_valves, axis = 1)
-    b = w_dat[not_nans, 1]
-    x = np.linalg.lstsq(A[nn_half:], b[nn_half:], rcond=None)[0]
+    b = w_dat_not_nan[:, 2]
+    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset = True)
     print("Flow", x)
     
-    # Loop over rooms and compute flow per room
-    n_valves = len(valve_room_allocation)
-    v_dat_not_nan = np.copy(v_dat[not_nans])
-    
-    A = np.empty((v_dat_not_nan.shape[0], n_valves), dtype = np.float32)
+
+    # Loop over rooms and compute flow per room    
+    A = np.empty((n_not_nans, n_valves), dtype = np.float32)
     for id in range(n_valves): 
         A[:, id] = v_dat_not_nan[:, id]
-    b = w_dat[not_nans, 1]
-    x = np.linalg.lstsq(A[nn_half:nn_34th, :], b[nn_half:nn_34th], rcond=None)[0]
+    b = w_dat_not_nan[:, 2]
+    x, fitted = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset = False, ret_fit = True)
     print("Flow per valve", x)
 
-    import scipy.optimize.nnls
-    x = scipy.optimize.nnls(A[nn_half:], b[nn_half:])
+    
+    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], non_neg = True)
     print("Non Negative Flow per valve", x)
+    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], non_neg = True, offset = True)
+    print("Non Negative Flow per valve with offset", x)
 
-    raise NotImplementedError("Hahahah")
-
+    
+    stack_compare_plot(A[usable][first_n_del:], [21 * b[usable][first_n_del:], 21 * fitted], title = "Valve model")
     # PO
     if show_plots:
         tot_room_valves_plot_path = os.path.join(dfab_rooms_plot_path, "DFAB_All_Valves")
@@ -1180,7 +1187,8 @@ def compute_DFAB_energy_usage(show_plots = True):
                         title_and_ylab = ['Sum All Valves', '0/1'],
                         save_name = tot_room_valves_plot_path)
 
-    
+    raise NotImplementedError("Hahahah")
+
 
     flow_rates_f3 = np.array([134, 123, 129, 94, 145, 129, 81], dtype = np.float32)
     print(np.sum(flow_rates_f3), "Flow rates sum, 3. OG")
