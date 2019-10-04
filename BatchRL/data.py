@@ -103,6 +103,7 @@ DFAB_AddData = DataStruct(id_list = [421100168, # Vorlauf Temp
                                     421100174, # Tot volume flow
                                     421100163, # Pump running
                                     421110169, # Speed of other pump
+                                    421100070, # Volume flow through other part
                                     ],
                         name = "DFAB_Extra",
                         startDate='2017-01-01',
@@ -1091,7 +1092,7 @@ def get_DFAB_heating_data():
     ################################
     # General Heating Data
     temp_kwgs = {'remove_out_int_args': [10, 50], 'gauss_sigma': 5.0}
-    prep_kwargs = [temp_kwgs, temp_kwgs, {}, {}, {}]
+    prep_kwargs = [temp_kwgs, temp_kwgs, {}, {}, {}, {}]
     data_list += [convert_datastruct(DFAB_AddData, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
     
     ################################
@@ -1135,6 +1136,8 @@ def compute_DFAB_energy_usage(show_plots = True):
     thresh = 0.05
     usable = np.logical_and(w_dat_not_nan[:, 3] > 1 - thresh,
                             w_dat_not_nan[:, 4] < thresh)
+    usable = np.logical_and(usable, w_dat_not_nan[:, 5] > 0.1)
+    usable = np.logical_and(usable, w_dat_not_nan[:, 5] < 0.2)
     n_usable = np.sum(usable)
     first_n_del = n_usable // 3
 
@@ -1157,7 +1160,7 @@ def compute_DFAB_energy_usage(show_plots = True):
     print("Flow", x)
     
 
-    # Loop over rooms and compute flow per room    
+    # Loop over rooms and compute flow per room
     A = np.empty((n_not_nans, n_valves), dtype = np.float32)
     for id in range(n_valves): 
         A[:, id] = v_dat_not_nan[:, id]
@@ -1165,7 +1168,6 @@ def compute_DFAB_energy_usage(show_plots = True):
     x, fitted = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset = False, ret_fit = True)
     print("Flow per valve", x)
 
-    
     x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], non_neg = True)
     print("Non Negative Flow per valve", x)
     x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], non_neg = True, offset = True)
