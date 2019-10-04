@@ -619,19 +619,15 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
     all_dat = curr_all_dat
     if col_ind is None:
         col_ind = ind
-    elif curr_all_dat is None:
-        raise NotImplementedError("Col ind cannot be chosen if curr_all_dat is None!")
+    elif curr_all_dat is None and col_ind != 0:
+        raise NotImplementedError("col_ind cannot be chosen if curr_all_dat is None!")
     
-    # Plot before data
-    plot_file_name = base_plot_dir + "_Raw_" + plot_name
-    plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
-
     # Process data
     if curr_all_dat is None:
         col_ind = 0
         if n_cols is None:
             raise ValueError("Need to specify n_cols if data is None.")
-        all_dat, dt_init_new = pipeline_preps(data[ind], 
+        all_dat, dt_init_new = pipeline_preps(copy_arr_list(data[ind]), 
                                            dt_mins, 
                                            n_tot_cols = n_cols,
                                            **pipeline_kwargs)
@@ -646,6 +642,10 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
                                  row_ind = ind,
                                  **pipeline_kwargs)       
 
+    # Plot before data
+    plot_file_name = base_plot_dir + "_" + plot_name + "_Raw"
+    plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
+
     # Plot after data
     plot_file_name2 = base_plot_dir + "_" + plot_name
     plot_single(np.copy(all_dat[:, col_ind]), 
@@ -656,6 +656,106 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
                         save_name = plot_file_name2)
     
     return all_dat, dt_init_new
+
+def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, prep_arg_list, desc_list = None):
+    """
+    Extracts the specified series and applies
+    preprocessing steps to all of them and puts them into a 
+    Dataset.
+    """
+
+    # Get name
+    name = dat_struct.name
+
+    # Try loading data
+    try:
+        loaded = Dataset.loadDataset(name)
+    except FileNotFoundError:
+        loaded = None
+
+    if loaded is not None:
+        return loaded
+    else:
+        data, m = dat_struct.getData()
+        n_cols = len(data)
+
+        # Check arguments
+        n_inds = len(ind_list)
+        n_preps = len(prep_arg_list)
+        if n_inds > n_cols or n_preps > n_cols:
+            raise ValueError("Too long lists!")
+        if desc_list is not None:
+            if len(dec_list) != n_cols:
+                raise ValueError("List of description does not have correct length!!")
+
+        all_data = None
+        dt_init = None
+
+        # Sets
+        for ct, i in ind_list:
+            n_cs = n_cols if i == 0 else None
+            title = cleas_desc(m[i]['description'])
+            title = title if desc_list is None else desc_list[ct]
+            addid_cols = m[i]['additionalColumns']
+            plot_name = ""
+            plot_file_name = os.path.join(base_plot_dir, addid_cols['AKS Code'])
+            all_data, dt_init = add_and_save_plot_series(data, m, all_data, i, dt_mins, dt_init, plot_name, plot_file_name, title, 
+                                                         n_cols = n_cs,
+                                                         pipeline_kwargs = prep_arg_list[ct],
+                                                         col_ind = ct)
+
+        # Save
+        no_inds = np.array([], dtype = np.int32)
+        c_inds = np.array(range(n_cols))
+        dataset = Dataset.fromRaw(all_data, m, name, c_inds = c_inds , p_inds = no_inds)
+        dataset.save()
+        return dataset
+
+    pass
+
+def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs):
+    """
+    Converts a DataStruct to a Dataset.
+    Using the same preprocessing steps for each series
+    int the DataStruct.
+    """
+    
+    # Get name
+    name = dat_struct.name
+
+    # Try loading data
+    try:
+        loaded = Dataset.loadDataset(name)
+    except FileNotFoundError:
+        loaded = None
+
+    if loaded is not None:
+        return loaded
+    else:
+        data, m = dat_struct.getData()
+        n_cols = len(data)
+        pl_kwargs = b_cast(pl_kwargs, n_cols)
+        all_data = None
+        dt_init = None
+
+        # Sets
+        for i in range(n_cols):
+            n_cs = n_cols if i == 0 else None
+            title = cleas_desc(m[i]['description'])
+            addid_cols = m[i]['additionalColumns']
+            plot_name = addid_cols['AKS Code']
+            plot_file_name = os.path.join(base_plot_dir, name)
+            all_data, dt_init = add_and_save_plot_series(data, m, all_data, i, dt_mins, dt_init, plot_name, plot_file_name, title, 
+                                                         n_cols = n_cs,
+                                                         pipeline_kwargs = pl_kwargs[i])
+
+        # Save
+        no_inds = np.array([], dtype = np.int32)
+        c_inds = np.array(range(n_cols))
+        dataset = Dataset.fromRaw(all_data, m, name, c_inds = c_inds , p_inds = no_inds)
+        dataset.save()
+        return dataset
+
 
 #######################################################################################################
 # Preparing Data for model fitting
@@ -1129,6 +1229,20 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
     ################################
     # Single Rooms
     for e in rooms:
+
+        data, m = e.getData()
+        n_cols = len(data)
+
+        # General Heating Data  
+        temp_kwgs = {'clean_args': [([0.0], 24 * 60, [])], 'gauss_sigma': 5.0, 'rem_out_args': (1.5, None)}
+        valv_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
+        blinds_kwargs = {'clip_to_int_args': [0.0, 100.0], 'clean_args':[([], 7 * 24 * 60, [])]}
+        prep_kwargs = [temp_kwgs, valv_kwargs, valv_kwargs, valv_kwargs]
+        if n_cols == 5:
+            prep_kwargs += [blinds_kwargs]
+        data_list += [convert_datastruct(e, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
+        continue
+
         # Get name
         name = e.name
 
@@ -1225,129 +1339,14 @@ def get_DFAB_heating_data(show_plots = False, use_dataset = False):
 
     ################################
     # General Heating Data
-
-    # Get name
-    name = DFAB_AddData.name
-
-    # Try loading data
-    if use_dataset:
-        try:
-            loaded = Dataset.loadDataset(name)
-        except FileNotFoundError:
-            loaded = None
-    else:
-        loaded = load_processed_data(name)
-
-    if loaded is not None:
-        data_list += [loaded]
-    else:
-        # Get data
-        data, m = DFAB_AddData.getData()
-        n_cols = len(data)
-        plot_file_name = os.path.join(dfab_rooms_plot_path, name)
-
-        # Temperature flowing in and out
-        temp_kwgs = {'remove_out_int_args': [10, 50], 'gauss_sigma': 5.0}
-        all_data, dt_init = add_and_save_plot_series(data, m, None, 0, dt_mins, None, "Temp_In", plot_file_name, 'In Water Temperature', temp_kwgs, n_cols = n_cols)
-        add_and_save_plot_series(data, m, all_data, 1, dt_mins, dt_init, "Temp_Out", plot_file_name, 'Out Water Temperature', temp_kwgs)
-
-        # Volume flow
-        add_and_save_plot_series(data, m, all_data, 2, dt_mins, dt_init, "Flow", plot_file_name, 'Volume Flow into DFAB')
-
-        # Heating running
-        add_and_save_plot_series(data, m, all_data, 3, dt_mins, dt_init, "PumpRun", plot_file_name, 'Heat Pump is Running')
-
-        # Pump speed
-        add_and_save_plot_series(data, m, all_data, 4, dt_mins, dt_init, "PumpSpeed", plot_file_name, 'Speed of other Pump')
-
-        # Standardize and save
-        if use_dataset:
-            all_data, m = standardize(all_data, m)
-            no_inds = np.array([], dtype = np.int32)
-            dataset = Dataset.fromRaw(all_data, m, name, c_inds = no_inds , p_inds = no_inds)
-            dataset.save()
-            data_list += [dataset]
-        else:
-            all_data, m = standardize(all_data, m)
-            save_processed_data(all_data, m, name)
-            data_list += [[all_data, m, name]]
+    temp_kwgs = {'remove_out_int_args': [10, 50], 'gauss_sigma': 5.0}
+    prep_kwargs = [temp_kwgs, temp_kwgs, {}, {}, {}]
+    data_list += [convert_datastruct(DFAB_AddData, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
     
     ################################
     # All Valves Together
-
-    # Get name
-    name = DFAB_AllValves.name
-
-    # Try loading data
-    if use_dataset:
-        try:
-            loaded = Dataset.loadDataset(name)
-        except FileNotFoundError:
-            loaded = None
-    else:
-        loaded = load_processed_data(name)
-
-    if loaded is not None:
-        data_list += [loaded]        
-    else:
-        data, m = DFAB_AllValves.getData()
-        n_cols = len(data)
-        all_data = None
-        dt_init = None
-
-        # Valves
-        for i in range(n_cols):
-
-
-            #ind = i
-            #if show_plots:
-            #    addid_cols = m[i]['additionalColumns']
-            #    plot_name = "Valve_" + addid_cols['Floor'] + "_" + addid_cols['Device Id']
-            #    plot_path = os.path.join(dfab_rooms_plot_path, "Raw_" + plot_name)
-            #    plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_path)
-            #if i == 0:
-            #    all_data, dt_init = pipeline_preps(data[ind], 
-            #                                       dt_mins, 
-            #                                       n_tot_cols = n_cols,
-            #                                       clean_args = [([], 30 * 24 * 60, [])])
-            #    add_dt_and_tinit(m, dt_mins, dt_init)
-            #else:
-            #    all_data, _ = pipeline_preps(data[ind], 
-            #                                 dt_mins, 
-            #                                 all_data = all_data,
-            #                                 dt_init = dt_init,
-            #                                 row_ind = ind,
-            #                                 clean_args = [([], 30 * 24 * 60, [])])
-            #if show_plots:
-            #    plot_path = os.path.join(dfab_rooms_plot_path, plot_name)
-            #    plot_single(all_data[:, ind], 
-            #                m[ind], 
-            #                use_time = True, 
-            #                show = False, 
-            #                title_and_ylab = ['Valve ' + str(ind) + ' Interpolated', m[ind]['unit']], save_name = plot_path)
-
-            # valves
-            n_cs = n_cols if i == 0 else None
-            title = 'Valve ' + str(i)
-            plot_file_name = os.path.join(dfab_rooms_plot_path, "Valve_")
-            addid_cols = m[i]['additionalColumns']
-            plot_name = addid_cols['Floor'] + "_" + addid_cols['Device Id']
-            prep_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
-            all_data, dt_init = add_and_save_plot_series(data, m, all_data, i, dt_mins, dt_init, plot_name, plot_file_name, title, 
-                                                         n_cols = n_cs,
-                                                         pipeline_kwargs = prep_kwargs)
-
-        # Save
-        if use_dataset:
-            no_inds = np.array([], dtype = np.int32)
-            c_inds = np.array(range(n_cols))
-            dataset = Dataset.fromRaw(all_data, m, name, c_inds = c_inds , p_inds = no_inds)
-            dataset.save()
-            data_list += [dataset]
-        else:
-            save_processed_data(all_data, m, name)
-            data_list += [[all_data, m, name]]
-
+    prep_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
+    data_list += [convert_datastruct(DFAB_AllValves, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
     return data_list
 
 def compute_DFAB_energy_usage(show_plots = True):

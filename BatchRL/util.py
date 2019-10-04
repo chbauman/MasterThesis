@@ -31,6 +31,17 @@ def repl(el, n):
     """
     return [el for _ in range(n)]
 
+def b_cast(l_or_el, n):
+    """
+    Checks if 'l_or_el' is a list or not.
+    If not returns a list with 'n' repeated elements 'l_or_el'.
+    """
+    if isinstance(l_or_el, list):
+        if len(l_or_el) == n:
+            return l_or_el
+        raise ValueError("Broadcast failed!!!")
+    return repl(l_or_el, n)
+
 #######################################################################################################
 # Numerical stuff
 
