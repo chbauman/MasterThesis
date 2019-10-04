@@ -973,15 +973,13 @@ def get_battery_data():
     kws = [p_kwargs_soc, p_kwargs_ap]
     ds = get_from_dstruct(BatteryData, bat_plot_path, dt_mins, name, inds, kws)
     
-
     # Plot files
     plot_name_roi = os.path.join(bat_plot_path, "Strange")
-    plot_name_after = os.path.join(bat_plot_path, "processed")
+    plot_name_after = os.path.join(bat_plot_path, "Processed")
 
     y_lab = '% / kW'
     print(ds)
-    plot_dataset(ds, False, ['Processed Battery Data', y_lab], plot_name_after)    
-    return ds
+    plot_dataset(ds, False, ['Processed Battery Data', y_lab], plot_name_after)
 
     # Get data
     dat, m = BatteryData.getData()
@@ -1003,7 +1001,6 @@ def get_battery_data():
                                   show = False, 
                                   title_and_ylab = ["Strange Battery Behavior", y_lab], 
                                   save_name = plot_name_roi)
-
     return ds
 
 def get_weather_data(save_plots = True):
@@ -1086,102 +1083,36 @@ def get_weather_data(save_plots = True):
     w_dataset.save()
     return w_dataset
 
-# DEPRECATED
-def get_heating_data(filter_sigma = None):
+def get_UMAR_heating_data():
     """
     Load and interpolate all the necessary data.
     """
 
-    # Constants
+    dstrs = [Room272Data, Room274Data]
     dt_mins = 15
     fill_by_ip_max = 2
-    name = "Room274AndWeather"
-    name +=  "" if filter_sigma is None else str(filter_sigma)
+    filter_sigma = 2.0
 
-    # Try loading data
-    loaded = load_processed_data(name)
-    if loaded is not None:
-        return loaded
+    name = "UMAR"
+    umar_rooms_plot_path = os.path.join(preprocess_plot_path, name)
+    create_dir(umar_rooms_plot_path)
+    all_ds = []
 
-    # Initialize meta data dict list
-    m_out = []
-
-    # Weather data
-    dat, m = WeatherData.getData()
-
-    # Add Temperature
-    all_data, dt_init = pipeline_preps(dat[0], 
-                               dt_mins,
-                               clean_args = [([], 30, [])],
-                               rem_out_args = None,
-                               hole_fill_args = fill_by_ip_max,
-                               n_tot_cols = 6,
-                               gauss_sigma = filter_sigma)
-    m_out += [m[0]]
-
-    # Add time
-    add_time(all_data, dt_init, 1, dt_mins)
-    m_out += [{'description': 'time of day', 'unit': str(dt_mins) + ' minutes'}]
-
-    # Add Irradiance Data
-    all_data, _ = pipeline_preps(dat[2], 
-                               dt_mins,
-                               all_data = all_data,
-                               dt_init = dt_init,
-                               row_ind = 2,
-                               clean_args = [([], 3, [1300.0, 0.0]), ([], 60 * 20)],
-                               rem_out_args = None,
-                               hole_fill_args = fill_by_ip_max,
-                               gauss_sigma = filter_sigma)
-    m_out += [m[2]]
-
-    # Room Data
-    dat, m = Room274Data.getData()
-
-    # Room Temperature
-    m_out += [m[1]]
-    all_data, _ = pipeline_preps(dat[1], 
-                               dt_mins,
-                               all_data = all_data,
-                               dt_init = dt_init,
-                               row_ind = 3,
-                               clean_args = [([0.0], 10 * 60)],
-                               rem_out_args = (4.5, [10, 100]),
-                               hole_fill_args = fill_by_ip_max,
-                               gauss_sigma = filter_sigma)
+    for dstr in dstrs:
+        
+        p_kwargs_rtemp = {'clean_args': [([0.0], 10 * 60)],
+                          'rem_out_args': (4.5, [10, 100]),
+                          'hole_fill_args': fill_by_ip_max,
+                          'gauss_sigma': filter_sigma}
+        p_kwargs_win = {'hole_fill_args': fill_by_ip_max,
+                        'gauss_sigma': filter_sigma}
+        p_kwargs_valve = {'hole_fill_args': 3,
+                          'gauss_sigma': filter_sigma}
+        kws = [p_kwargs_rtemp, p_kwargs_win, p_kwargs_valve]
+        inds = [1, 11, 12]
+        all_ds += [get_from_dstruct(dstr, umar_rooms_plot_path, dt_mins, dstr.name, inds, kws)]
     
-    # Windows
-    win_dat, m_win = dat[11], m[11]
-    m_out += [m_win]
-    all_data, _ = pipeline_preps(win_dat, 
-                               dt_mins,
-                               all_data = all_data,
-                               dt_init = dt_init,
-                               row_ind = 4,
-                               hole_fill_args = fill_by_ip_max,
-                               gauss_sigma = filter_sigma)
- 
-    # Valve
-    valve_dat, m_dat = dat[12], m[12]
-    m_out += [m_dat]
-    all_data, _ = pipeline_preps(valve_dat, 
-                               dt_mins,
-                               all_data = all_data,
-                               dt_init = dt_init,
-                               row_ind = 5,
-                               hole_fill_args = 3,
-                               gauss_sigma = filter_sigma)
-
-    #dat, m = Room272Data.getData()
-
-    for ct, e in enumerate(m_out):
-        m_out[ct]['t_init'] = dt_init
-        m_out[ct]['dt'] = dt_mins
-
-    # Standardize, save and return
-    all_data, m_out = standardize(all_data, m_out)
-    save_processed_data(all_data, m_out, name)
-    return all_data, m_out, name
+    return all_ds
 
 def get_DFAB_heating_data():
 
