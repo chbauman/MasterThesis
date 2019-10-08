@@ -1,4 +1,3 @@
-
 import numpy as np
 
 from FQI import NFQI
@@ -23,9 +22,9 @@ from data import Room274Data, Room272Data, WeatherData, TestData, \
     compute_DFAB_energy_usage, get_weather_data, generateRoomDatasets, \
     analzye_room_energy_consumption, Dataset, test_align, test_dataset_artificially
 
-def simple_battery_FQI():
 
-    sbt = SimpleBatteryTest(bidirectional = True)
+def simple_battery_FQI():
+    sbt = SimpleBatteryTest(bidirectional=True)
     sbt = CartPole()
     sbt = MountCarCont()
     sbt = Pendulum()
@@ -33,20 +32,20 @@ def simple_battery_FQI():
     state_dim = sbt.state_dim
     nb_actions = sbt.nb_actions
 
-    [s_t, a_t, r_t, s_tp1] = sbt.get_transition_tuples(n_tuples = 100000)
+    [s_t, a_t, r_t, s_tp1] = sbt.get_transition_tuples(n_tuples=100000)
 
     print((np.c_[s_t, a_t, r_t, s_tp1])[:50])
 
-    #fqi = NFQI(state_dim, nb_actions, stoch_policy_imp = False, use_diff_target_net=False, param_updata_fac=0.5, max_iters = 20, lr = 0.001)
+    # fqi = NFQI(state_dim, nb_actions, stoch_policy_imp = False, use_diff_target_net=False, param_updata_fac=0.5, max_iters = 20, lr = 0.001)
     fqi = bDDPG(state_dim, nb_actions)
-    #fqi = LSPI(state_dim, nb_actions, stoch_policy_imp=True)
+    # fqi = LSPI(state_dim, nb_actions, stoch_policy_imp=True)
 
     fqi.fit(s_t, a_t, r_t, s_tp1)
 
     sbt.eval_policy(fqi.get_policy())
 
-def main():
 
+def main():
     get_DFAB_heating_data()
     compute_DFAB_energy_usage()
     return
@@ -59,16 +58,16 @@ def main():
     ds.get_prepared_data()
 
     # Construct weight vector
-    w = np.ones((ds.d - ds.n_c,), dtype = np.float32)
-    w[ds.p_inds_prep[0]] = 2.0 # Weight temperature twice
+    w = np.ones((ds.d - ds.n_c,), dtype=np.float32)
+    w[ds.p_inds_prep[0]] = 2.0  # Weight temperature twice
 
-    mod = BaseRNN_DM(ds, 
-                     hidden_sizes=[100, 100], 
-                     n_iter_max = 100, 
-                     input_noise_std = 0.0001, 
-                     lr = 0.01, 
+    mod = BaseRNN_DM(ds,
+                     hidden_sizes=[100, 100],
+                     n_iter_max=100,
+                     input_noise_std=0.0001,
+                     lr=0.01,
                      residual_learning=True,
-                     weight_vec = None #w
+                     weight_vec=None  # w
                      )
 
     mod.fit()
@@ -78,11 +77,11 @@ def main():
     return
 
     ##compute_DFAB_energy_usage()
-    #return
+    # return
 
     # Battery data
     bat_name = "Battery"
-    #get_battery_data(True) # Needs to be fixed!!!
+    # get_battery_data(True) # Needs to be fixed!!!
     bat_ds = Dataset.loadDataset(bat_name)
     bat_ds.split_train_test(7)
     bat_ds.get_prepared_data()
@@ -93,23 +92,19 @@ def main():
 
     # Parameters
     seq_len = 20
-    
+
     # GP Model
     seq_len_gp = 4
     train_heat, test_heat = cut_and_split(dat_heat, seq_len_gp, 96 * 7)
-    mod = GPR_DM(alpha = 5.0)
+    mod = GPR_DM(alpha=5.0)
     mod.fit(train_heat)
     mod.analyze(test_heat)
 
     return
 
-    #simple_battery_FQI()
+    # simple_battery_FQI()
 
     return 0
 
 
 main()
-
-
-
-

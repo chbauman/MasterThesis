@@ -1,4 +1,3 @@
-
 import os
 import scipy
 import pickle
@@ -13,7 +12,7 @@ from datetime import datetime
 from visualize import plot_time_series, plot_ip_time_series, \
     plot_single_ip_ts, plot_multiple_ip_ts, \
     plot_all, plot_single, preprocess_plot_path, \
-    plot_multiple_time_series, plot_dataset, plot_dir,\
+    plot_multiple_time_series, plot_dataset, plot_dir, \
     plot_simple_ts, stack_compare_plot
 from restclient import DataStruct, save_dir
 from util import *
@@ -25,163 +24,164 @@ dataset_data_path = os.path.join(save_dir, "Datasets")
 # NEST Data
 
 # UMAR Room Data
-Room272Data = DataStruct(id_list = [42150280,
-                                    42150288,
-                                    42150289,
-                                    42150290,
-                                    42150291,
-                                    42150292,
-                                    42150293,
-                                    42150294,
-                                    42150295,
-                                    42150483,
-                                    42150484,
-                                    42150284,
-                                    42150270],
-                        name = "UMAR_Room272",
-                        startDate='2017-01-01',
-                        endDate='2019-12-31')
+Room272Data = DataStruct(id_list=[42150280,
+                                  42150288,
+                                  42150289,
+                                  42150290,
+                                  42150291,
+                                  42150292,
+                                  42150293,
+                                  42150294,
+                                  42150295,
+                                  42150483,
+                                  42150484,
+                                  42150284,
+                                  42150270],
+                         name="UMAR_Room272",
+                         startDate='2017-01-01',
+                         endDate='2019-12-31')
 
-Room274Data = DataStruct(id_list = [42150281,
-                                    42150312,
-                                    42150313,
-                                    42150314,
-                                    42150315,
-                                    42150316,
-                                    42150317,
-                                    42150318,
-                                    42150319,
-                                    42150491,
-                                    42150492,
-                                    42150287,
-                                    42150274],
-                        name = "UMAR_Room274",
-                        startDate='2017-01-01',
-                        endDate='2019-12-31')
+Room274Data = DataStruct(id_list=[42150281,
+                                  42150312,
+                                  42150313,
+                                  42150314,
+                                  42150315,
+                                  42150316,
+                                  42150317,
+                                  42150318,
+                                  42150319,
+                                  42150491,
+                                  42150492,
+                                  42150287,
+                                  42150274],
+                         name="UMAR_Room274",
+                         startDate='2017-01-01',
+                         endDate='2019-12-31')
 
 # DFAB Data
-Room4BlueData = DataStruct(id_list = [421110054, # Temp
-                                    421110023, # Valves
+Room4BlueData = DataStruct(id_list=[421110054,  # Temp
+                                    421110023,  # Valves
                                     421110024,
                                     421110029,
-                                    421110209 # Blinds
+                                    421110209  # Blinds
                                     ],
-                        name = "DFAB_Room41",
-                        startDate='2017-01-01',
-                        endDate='2019-12-31')
+                           name="DFAB_Room41",
+                           startDate='2017-01-01',
+                           endDate='2019-12-31')
 
-Room5BlueData = DataStruct(id_list = [421110072, # Temp
-                                    421110038, # Valves
+Room5BlueData = DataStruct(id_list=[421110072,  # Temp
+                                    421110038,  # Valves
                                     421110043,
                                     421110044,
-                                    421110219 # Blinds
+                                    421110219  # Blinds
                                     ],
-                        name = "DFAB_Room51",
-                        startDate='2017-01-01',
-                        endDate='2019-12-31')
+                           name="DFAB_Room51",
+                           startDate='2017-01-01',
+                           endDate='2019-12-31')
 
-Room4RedData = DataStruct(id_list = [421110066, # Temp
-                                    421110026, # Valves
-                                    421110027,
-                                    421110028, 
-                                    ],
-                        name = "DFAB_Room43",
-                        startDate='2017-01-01',
-                        endDate='2019-12-31')
+Room4RedData = DataStruct(id_list=[421110066,  # Temp
+                                   421110026,  # Valves
+                                   421110027,
+                                   421110028,
+                                   ],
+                          name="DFAB_Room43",
+                          startDate='2017-01-01',
+                          endDate='2019-12-31')
 
-Room5RedData = DataStruct(id_list = [421110084, # Temp
-                                    421110039, # Valves
-                                    421110040,
-                                    421110041,
-                                    ],
-                        name = "DFAB_Room53",
-                        startDate='2017-01-01',
-                        endDate='2019-12-31')
+Room5RedData = DataStruct(id_list=[421110084,  # Temp
+                                   421110039,  # Valves
+                                   421110040,
+                                   421110041,
+                                   ],
+                          name="DFAB_Room53",
+                          startDate='2017-01-01',
+                          endDate='2019-12-31')
 
-DFAB_AddData = DataStruct(id_list = [421100168, # Vorlauf Temp
-                                    421100170, # Rücklauf Temp
-                                    421100174, # Tot volume flow
-                                    421100163, # Pump running
-                                    421110169, # Speed of other pump
-                                    421100070, # Volume flow through other part
-                                    ],
-                        name = "DFAB_Extra",
-                        startDate='2017-01-01',
-                        endDate='2019-12-31')
+DFAB_AddData = DataStruct(id_list=[421100168,  # Vorlauf Temp
+                                   421100170,  # Rücklauf Temp
+                                   421100174,  # Tot volume flow
+                                   421100163,  # Pump running
+                                   421110169,  # Speed of other pump
+                                   421100070,  # Volume flow through other part
+                                   ],
+                          name="DFAB_Extra",
+                          startDate='2017-01-01',
+                          endDate='2019-12-31')
 
-DFAB_AllValves = DataStruct(id_list = [421110008, # First Floor
-                                    421110009,
-                                    421110010,
-                                    421110011,
-                                    421110012,
-                                    421110013,
-                                    421110014,
-                                    421110023, # Second Floor,
-                                    421110024,
-                                    421110025,
-                                    421110026,
-                                    421110027,
-                                    421110028,
-                                    421110029,
-                                    421110038, # Third Floor
-                                    421110039, 
-                                    421110040,
-                                    421110041,
-                                    421110042,
-                                    421110043,
-                                    421110044,
-                                    ],
-                        name = "DFAB_Valves",
-                        startDate='2017-01-01',
-                        endDate='2019-12-31')
+DFAB_AllValves = DataStruct(id_list=[421110008,  # First Floor
+                                     421110009,
+                                     421110010,
+                                     421110011,
+                                     421110012,
+                                     421110013,
+                                     421110014,
+                                     421110023,  # Second Floor,
+                                     421110024,
+                                     421110025,
+                                     421110026,
+                                     421110027,
+                                     421110028,
+                                     421110029,
+                                     421110038,  # Third Floor
+                                     421110039,
+                                     421110040,
+                                     421110041,
+                                     421110042,
+                                     421110043,
+                                     421110044,
+                                     ],
+                            name="DFAB_Valves",
+                            startDate='2017-01-01',
+                            endDate='2019-12-31')
 
 rooms = [Room4BlueData, Room5BlueData, Room4RedData, Room5RedData]
 
 # Weather Data
-WeatherData = DataStruct(id_list = [3200000,
-                                    3200002,
-                                    3200008],
-                        name = "Weather",
-                        startDate='2019-01-01',
-                        endDate='2019-12-31')
+WeatherData = DataStruct(id_list=[3200000,
+                                  3200002,
+                                  3200008],
+                         name="Weather",
+                         startDate='2019-01-01',
+                         endDate='2019-12-31')
 
 # Battery Data
-BatteryData = DataStruct(id_list = [40200000,
-                                    40200001,
-                                    40200002,
-                                    40200003,
-                                    40200004,
-                                    40200005,
-                                    40200006,
-                                    40200007,
-                                    40200008,
-                                    40200009,
-                                    40200010,
-                                    40200011,
-                                    40200012,
-                                    40200013,
-                                    40200014,
-                                    40200015,
-                                    40200016,
-                                    40200017,
-                                    40200018,
-                                    40200019,
-                                    40200087,
-                                    40200088,
-                                    40200089,
-                                    40200090,
-                                    40200098,
-                                    40200099,
-                                    40200102,
-                                    40200103,
-                                    40200104,
-                                    40200105,
-                                    40200106,
-                                    40200107,
-                                    40200108],
-                        name = "Battery",
-                        startDate='2018-01-01',
-                        endDate='2019-12-31')
+BatteryData = DataStruct(id_list=[40200000,
+                                  40200001,
+                                  40200002,
+                                  40200003,
+                                  40200004,
+                                  40200005,
+                                  40200006,
+                                  40200007,
+                                  40200008,
+                                  40200009,
+                                  40200010,
+                                  40200011,
+                                  40200012,
+                                  40200013,
+                                  40200014,
+                                  40200015,
+                                  40200016,
+                                  40200017,
+                                  40200018,
+                                  40200019,
+                                  40200087,
+                                  40200088,
+                                  40200089,
+                                  40200090,
+                                  40200098,
+                                  40200099,
+                                  40200102,
+                                  40200103,
+                                  40200104,
+                                  40200105,
+                                  40200106,
+                                  40200107,
+                                  40200108],
+                         name="Battery",
+                         startDate='2018-01-01',
+                         endDate='2019-12-31')
+
 
 #######################################################################################################
 # Time Series Processing
@@ -202,6 +202,7 @@ def extract_date_interval(dates, vals, d1, d2):
     dt_init_new = dates_new[0]
     return dates_new, vals_new, dt_init_new
 
+
 def analyze_data(dat):
     """
     Analyzes the provided data.
@@ -212,18 +213,18 @@ def analyze_data(dat):
 
     tot_time_span = dates[-1] - dates[0]
     print("Data ranges from ", dates[0], "to", dates[-1])
-    
 
     t_diffs = dates[1:] - dates[:-1]
     max_t_diff = np.max(t_diffs)
     mean_t_diff = np.mean(t_diffs)
     print("Largest gap:", np.timedelta64(max_t_diff, 'D'), "or", np.timedelta64(max_t_diff, 'h'))
     print("Mean gap:", np.timedelta64(mean_t_diff, 'm'), "or", np.timedelta64(mean_t_diff, 's'))
-    
+
     print("Positive differences:", np.all(t_diffs > np.timedelta64(0, 'ns')))
     return
 
-def clean_data(dat, rem_vals = [], n_cons_least = 60, const_excepts = []):
+
+def clean_data(dat, rem_vals=[], n_cons_least=60, const_excepts=[]):
     """
     Removes all values with a specified value 'rem_val'
     and removes all sequences where there are at 
@@ -264,7 +265,6 @@ def clean_data(dat, rem_vals = [], n_cons_least = 60, const_excepts = []):
 
             # Add value if it has not occurred too many times
             if consec_streak == False:
-            
                 new_vals[count] = v
                 new_dates[count] = d
                 count += 1
@@ -279,15 +279,17 @@ def clean_data(dat, rem_vals = [], n_cons_least = 60, const_excepts = []):
     print(tot_dat - count, "data points removed.")
     return [new_vals[:count], new_dates[:count]]
 
-def remove_out_interval(dat, interval = [0.0, 100]):
+
+def remove_out_interval(dat, interval=[0.0, 100]):
     """
     Removes values that do not lie within the interval.
-    """    
+    """
     vals, dates = dat
     vals[vals > interval[1]] = np.nan
     vals[vals < interval[0]] = np.nan
 
-def clip_to_interval(dat, interval = [0.0, 100]):
+
+def clip_to_interval(dat, interval=[0.0, 100]):
     """
     Clips the values of the time_series that are
     out of the interval to lie within.
@@ -295,6 +297,7 @@ def clip_to_interval(dat, interval = [0.0, 100]):
     vals, dates = dat
     vals[vals > interval[1]] = interval[1]
     vals[vals < interval[0]] = interval[0]
+
 
 def floor_datetime_to_min(dt, mt):
     """
@@ -309,12 +312,13 @@ def floor_datetime_to_min(dt, mt):
     pdt = datetime.utcfromtimestamp(ts)
     mins = pdt.minute
     mins = mins % mt
-    secs = pdt.second    
+    secs = pdt.second
     dt -= np.timedelta64(secs, 's')
     dt -= np.timedelta64(mins, 'm')
     return dt
 
-def interpolate_time_series(dat, dt_mins, lin_ip = False):
+
+def interpolate_time_series(dat, dt_mins, lin_ip=False):
     """
     Interpolates the given time series
     to produce another one with equidistant timesteps
@@ -332,7 +336,7 @@ def interpolate_time_series(dat, dt_mins, lin_ip = False):
     print(n_ts, "Timesteps")
 
     # Initialize
-    new_vals = np.empty((n_ts,), dtype = np.float32)
+    new_vals = np.empty((n_ts,), dtype=np.float32)
     new_vals.fill(np.nan)
     count = 0
     curr_val = 0
@@ -384,15 +388,16 @@ def interpolate_time_series(dat, dt_mins, lin_ip = False):
 
     # Return
     return [new_vals, start_dt]
- 
-def add_col(full_dat_array, data, dt_init, dt_init_new, col_ind, dt_mins = 15):
+
+
+def add_col(full_dat_array, data, dt_init, dt_init_new, col_ind, dt_mins=15):
     """
-    Add time series as columd to data array at the right index.
-    If the second time series exceeds the datatime range of the 
+    Add time series as column to data array at the right index.
+    If the second time series exceeds the datetime range of the
     first one it is cut to fit the first one. If it is too short
     the missing values are filled with NaNs.
     """
-    
+
     n_data = full_dat_array.shape[0]
     n_data_new = data.shape[0]
 
@@ -407,7 +412,8 @@ def add_col(full_dat_array, data, dt_init, dt_init_new, col_ind, dt_mins = 15):
     full_dat_array[dat_inds[0]:dat_inds[1], col_ind] = data[new_inds[0]:new_inds[1]]
     return
 
-def add_time(all_data, dt_init1, col_ind = 0, dt_mins = 15):
+
+def add_time(all_data, dt_init1, col_ind=0, dt_mins=15):
     """
     Adds the time as indices to the data,
     periodic with period one day.
@@ -422,7 +428,8 @@ def add_time(all_data, dt_init1, col_ind = 0, dt_mins = 15):
         all_data[k, col_ind] = (start_t + k) % n_ts_per_day
     return
 
-def fill_holes_linear_interpolate(time_series, max_width = 1):
+
+def fill_holes_linear_interpolate(time_series, max_width=1):
     """
     Fills the holes of a equispaced time series
     with a width up to 'max_width' 
@@ -431,7 +438,7 @@ def fill_holes_linear_interpolate(time_series, max_width = 1):
     """
 
     n = time_series.shape[0]
-    nan_bool = np.isnan(time_series)    
+    nan_bool = np.isnan(time_series)
 
     # Return if there are no NaNs
     if np.sum(nan_bool) == 0:
@@ -467,7 +474,8 @@ def fill_holes_linear_interpolate(time_series, max_width = 1):
         ind_ind += streak_len
     return
 
-def remove_outliers(time_series, grad_clip = 100, clip_interv = None):
+
+def remove_outliers(time_series, grad_clip=100, clip_interv=None):
     """
     Removes data points that lie outside 
     the specified interval 'clip_int' and ones 
@@ -479,21 +487,21 @@ def remove_outliers(time_series, grad_clip = 100, clip_interv = None):
         if x2 is None or x1 is None:
             return np.nan
         if np.isnan(x1) or np.isnan(x2):
-            return np.nan        
+            return np.nan
         return x2 - x1
 
-    def is_outlier(x, x_tm1, x_tp1 = None):
+    def is_outlier(x, x_tm1, x_tp1=None):
         g1 = grad_fd(x_tm1, x)
         g2 = grad_fd(x, x_tp1)
-        if np.isnan(g1):            
-            return True if np.absolute(g2) > 1.5 * grad_clip else False   
-        if np.isnan(g2):            
+        if np.isnan(g1):
+            return True if np.absolute(g2) > 1.5 * grad_clip else False
+        if np.isnan(g2):
             return True if np.absolute(g1) > 1.5 * grad_clip else False
         rej = np.absolute(g1) > grad_clip and np.absolute(g2) > grad_clip
         rej = rej and g1 * g2 < 0
         return rej
 
-    def reject_outls(x, x_tm1, x_tp1 = None):
+    def reject_outls(x, x_tm1, x_tp1=None):
         if is_outlier(x, x_tm1, x_tp1):
             return np.nan
         return x
@@ -501,23 +509,24 @@ def remove_outliers(time_series, grad_clip = 100, clip_interv = None):
     # First and last values
     time_series[0] = reject_outls(time_series[0], time_series[1])
     time_series[-1] = reject_outls(time_series[-1], time_series[-2])
-    
+
     # Iterate
     for ct, el in enumerate(time_series[1:-1]):
         if el != np.nan:
             # Remove large gradient outliers
-            time_series[ct + 1] = reject_outls(el, 
-                                          time_series[ct + 2], 
-                                          time_series[ct])
-            
+            time_series[ct + 1] = reject_outls(el,
+                                               time_series[ct + 2],
+                                               time_series[ct])
+
             # Clip to interval
             if clip_interv is not None:
                 if el < clip_interv[0] or el > clip_interv[1]:
                     time_series[ct + 1] = np.nan
 
-    return 
+    return
 
-def gaussian_filter_ignoring_nans(time_series, sigma = 2.0):
+
+def gaussian_filter_ignoring_nans(time_series, sigma=2.0):
     """
     1-dimensional Gaussian Filtering ignoring 
     occurrences of NaNs. From:
@@ -536,20 +545,21 @@ def gaussian_filter_ignoring_nans(time_series, sigma = 2.0):
     Z[np.isnan(time_series)] = np.nan
     return Z
 
+
 def pipeline_preps(orig_dat,
                    dt_mins,
-                   all_data = None,
+                   all_data=None,
                    *,
-                   dt_init = None,
-                   row_ind = None,
-                   clean_args = None,
-                   clip_to_int_args = None,
-                   remove_out_int_args = None,
-                   rem_out_args = None,
-                   hole_fill_args = None,
-                   n_tot_cols = None,
-                   gauss_sigma = None,
-                   lin_ip = False):
+                   dt_init=None,
+                   row_ind=None,
+                   clean_args=None,
+                   clip_to_int_args=None,
+                   remove_out_int_args=None,
+                   rem_out_args=None,
+                   hole_fill_args=None,
+                   n_tot_cols=None,
+                   gauss_sigma=None,
+                   lin_ip=False):
     """
     Applies all the specified preprocessings to the
     given data.
@@ -559,18 +569,18 @@ def pipeline_preps(orig_dat,
     # Clean Data
     if clean_args is not None:
         for k in clean_args:
-            modif_data = clean_data(orig_dat, *k)            
+            modif_data = clean_data(orig_dat, *k)
 
-    # Clip to interval
+            # Clip to interval
     if remove_out_int_args is not None:
         remove_out_interval(modif_data, remove_out_int_args)
-            
+
     # Clip to interval
     if clip_to_int_args is not None:
         clip_to_interval(modif_data, clip_to_int_args)
 
     # Interpolate / Subsample
-    [modif_data, dt_init_new] = interpolate_time_series(modif_data, dt_mins, lin_ip = lin_ip)
+    [modif_data, dt_init_new] = interpolate_time_series(modif_data, dt_mins, lin_ip=lin_ip)
 
     # Remove Outliers
     if rem_out_args is not None:
@@ -587,7 +597,7 @@ def pipeline_preps(orig_dat,
     if all_data is not None:
         if dt_init is None or row_ind is None:
             raise ValueError("Need to provide the initial time of the first series and the column index!")
-            
+
         # Add to rest of data
         add_col(all_data, modif_data, dt_init, dt_init_new, row_ind, dt_mins)
     else:
@@ -597,17 +607,18 @@ def pipeline_preps(orig_dat,
 
         # Initialize np array for compact storage
         n_data = modif_data.shape[0]
-        all_data = np.empty((n_data, n_tot_cols), dtype = np.float32)
+        all_data = np.empty((n_data, n_tot_cols), dtype=np.float32)
         all_data.fill(np.nan)
         all_data[:, 0] = modif_data
 
     return all_data, dt_init_new
 
-def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_name, base_plot_dir, 
-                             title = "", 
-                             pipeline_kwargs = {}, 
-                             n_cols = None, 
-                             col_ind = None):
+
+def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_name, base_plot_dir,
+                             title="",
+                             pipeline_kwargs={},
+                             n_cols=None,
+                             col_ind=None):
     """
     Adds the series with index 'ind' to curr_all_dat
     and plots the series before and after processing
@@ -622,26 +633,26 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
         col_ind = ind
     elif curr_all_dat is None and col_ind != 0:
         raise NotImplementedError("col_ind cannot be chosen if curr_all_dat is None!")
-    
+
     # Process data
     if curr_all_dat is None:
         col_ind = 0
         if n_cols is None:
             raise ValueError("Need to specify n_cols if data is None.")
-        all_dat, dt_init_new = pipeline_preps(copy_arr_list(data[ind]), 
-                                           dt_mins, 
-                                           n_tot_cols = n_cols,
-                                           **pipeline_kwargs)
+        all_dat, dt_init_new = pipeline_preps(copy_arr_list(data[ind]),
+                                              dt_mins,
+                                              n_tot_cols=n_cols,
+                                              **pipeline_kwargs)
         add_dt_and_tinit(m, dt_mins, dt_init_new)
     else:
         if dt_init is None:
             raise ValueError("dt_init cannot be None!")
-        all_dat, _ = pipeline_preps(copy_arr_list(data[ind]), 
-                                 dt_mins, 
-                                 all_data = curr_all_dat,
-                                 dt_init = dt_init,
-                                 row_ind = col_ind,
-                                 **pipeline_kwargs)       
+        all_dat, _ = pipeline_preps(copy_arr_list(data[ind]),
+                                    dt_mins,
+                                    all_data=curr_all_dat,
+                                    dt_init=dt_init,
+                                    row_ind=col_ind,
+                                    **pipeline_kwargs)
 
     if np.isnan(np.nanmax(all_dat[:, col_ind])):
         raise ValueError("Something went very fucking wrong!!")
@@ -649,20 +660,21 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
 
     # Plot before data
     plot_file_name = base_plot_dir + "_" + plot_name + "_Raw"
-    plot_time_series(data[ind][1], data[ind][0], m = m[ind], show = False, save_name = plot_file_name)
+    plot_time_series(data[ind][1], data[ind][0], m=m[ind], show=False, save_name=plot_file_name)
 
     # Plot after data
     plot_file_name2 = base_plot_dir + "_" + plot_name
-    plot_single(np.copy(all_dat[:, col_ind]), 
-                        m[ind], 
-                        use_time = True,
-                        show = False, 
-                        title_and_ylab = [title, m[ind]['unit']],
-                        save_name = plot_file_name2)
-    
+    plot_single(np.copy(all_dat[:, col_ind]),
+                m[ind],
+                use_time=True,
+                show=False,
+                title_and_ylab=[title, m[ind]['unit']],
+                save_name=plot_file_name2)
+
     return all_dat, dt_init_new
 
-def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, prep_arg_list, desc_list = None):
+
+def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, prep_arg_list, desc_list=None):
     """
     Extracts the specified series and applies
     preprocessing steps to all of them and puts them into a 
@@ -694,7 +706,7 @@ def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, pre
                 raise ValueError("List of description does not have correct length!!")
 
         all_data = None
-        dt_init = None        
+        dt_init = None
         m_out = []
 
         # Sets
@@ -705,28 +717,30 @@ def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, pre
             addid_cols = m[i]['additionalColumns']
             plot_name = ""
             plot_file_name = os.path.join(base_plot_dir, addid_cols['AKS Code'])
-            all_data, dt_init = add_and_save_plot_series(data, m, all_data, i, dt_mins, dt_init, plot_name, plot_file_name, title, 
-                                                         n_cols = n_cs,
-                                                         pipeline_kwargs = prep_arg_list[ct],
-                                                         col_ind = ct)
+            all_data, dt_init = add_and_save_plot_series(data, m, all_data, i, dt_mins, dt_init, plot_name,
+                                                         plot_file_name, title,
+                                                         n_cols=n_cs,
+                                                         pipeline_kwargs=prep_arg_list[ct],
+                                                         col_ind=ct)
             m_out += [m[i]]
 
         # Save
-        no_inds = np.array([], dtype = np.int32)
+        no_inds = np.array([], dtype=np.int32)
         c_inds = np.array(range(n_cols))
-        dataset = Dataset.fromRaw(all_data, m_out, name, c_inds = c_inds , p_inds = no_inds)
+        dataset = Dataset.fromRaw(all_data, m_out, name, c_inds=c_inds, p_inds=no_inds)
         dataset.save()
         return dataset
 
     pass
 
-def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs, standd = False):
+
+def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs, standd=False):
     """
     Converts a DataStruct to a Dataset.
     Using the same preprocessing steps for each series
     int the DataStruct.
     """
-    
+
     # Get name
     name = dat_struct.name
 
@@ -752,18 +766,20 @@ def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs, standd = F
             addid_cols = m[i]['additionalColumns']
             plot_name = addid_cols['AKS Code']
             plot_file_name = os.path.join(base_plot_dir, name)
-            all_data, dt_init = add_and_save_plot_series(data, m, all_data, i, dt_mins, dt_init, plot_name, plot_file_name, title, 
-                                                         n_cols = n_cs,
-                                                         pipeline_kwargs = pl_kwargs[i])
+            all_data, dt_init = add_and_save_plot_series(data, m, all_data, i, dt_mins, dt_init, plot_name,
+                                                         plot_file_name, title,
+                                                         n_cols=n_cs,
+                                                         pipeline_kwargs=pl_kwargs[i])
 
         # Save
-        no_inds = np.array([], dtype = np.int32)
+        no_inds = np.array([], dtype=np.int32)
         c_inds = np.array(range(n_cols))
         if standd:
             all_data, m = standardize(all_data, m)
-        dataset = Dataset.fromRaw(all_data, m, name, c_inds = c_inds , p_inds = no_inds)
+        dataset = Dataset.fromRaw(all_data, m, name, c_inds=c_inds, p_inds=no_inds)
         dataset.save()
         return dataset
+
 
 #######################################################################################################
 # Preparing Data for model fitting
@@ -777,8 +793,8 @@ def standardize(data, m):
     n_feat = s[1]
 
     # Compute Mean and StD ignoring NaNs
-    f_mean = np.nanmean(data, axis = 0).reshape((1, n_feat))
-    f_std = np.nanstd(data, axis = 0).reshape((1, n_feat))
+    f_mean = np.nanmean(data, axis=0).reshape((1, n_feat))
+    f_std = np.nanstd(data, axis=0).reshape((1, n_feat))
 
     # Process and store info 
     proc_data = (data - f_mean) / f_std
@@ -786,6 +802,7 @@ def standardize(data, m):
         m[k]['mean_and_std'] = [f_mean[0, k], f_std[0, k]]
 
     return proc_data, m
+
 
 def find_rows_with_nans(all_data):
     """
@@ -795,15 +812,16 @@ def find_rows_with_nans(all_data):
 
     n = all_data.shape[0]
     m = all_data.shape[1]
-    col_has_nan = np.empty((n, ), dtype = np.bool)
+    col_has_nan = np.empty((n,), dtype=np.bool)
     col_has_nan.fill(False)
 
     for k in range(m):
-        col_has_nan = np.logical_or(col_has_nan, np.isnan(all_data[:,k]))
+        col_has_nan = np.logical_or(col_has_nan, np.isnan(all_data[:, k]))
 
     return col_has_nan
 
-def cut_into_fixed_len(col_has_nan, seq_len = 20, interleave = True):
+
+def cut_into_fixed_len(col_has_nan, seq_len=20, interleave=True):
     """
     Cuts the time series into pieces of length 'seq_len'
     for training of RNN.
@@ -814,7 +832,7 @@ def cut_into_fixed_len(col_has_nan, seq_len = 20, interleave = True):
 
     # Initialize and find first non-NaN
     max_n_seq = n if interleave else n // seq_len
-    seqs = np.empty((seq_len, max_n_seq), dtype = np.int32)
+    seqs = np.empty((seq_len, max_n_seq), dtype=np.int32)
     ct = np.where(col_has_nan == False)[0][0]
     seq_count = 0
 
@@ -847,7 +865,8 @@ def cut_into_fixed_len(col_has_nan, seq_len = 20, interleave = True):
     # Return all found sequences
     return seqs[:, :seq_count]
 
-def cut_data_into_sequences(all_data, seq_len, interleave = True):
+
+def cut_data_into_sequences(all_data, seq_len, interleave=True):
     """
     Use the two functions above to cut the data into
     sequences for RNN training.
@@ -863,12 +882,13 @@ def cut_data_into_sequences(all_data, seq_len, interleave = True):
     n_seqs = seq_inds.shape[1]
 
     # Initialize empty data
-    out_dat = np.empty((n_seqs, seq_len, n_feat), dtype = np.float32)
+    out_dat = np.empty((n_seqs, seq_len, n_feat), dtype=np.float32)
 
     # Fill and return
     for k in range(n_seqs):
-        out_dat[k, :, :] = all_data[seq_inds[:, k], :] 
+        out_dat[k, :, :] = all_data[seq_inds[:, k], :]
     return out_dat
+
 
 def extract_streak(all_data, s_len, lag):
     """
@@ -879,7 +899,7 @@ def extract_streak(all_data, s_len, lag):
     tot_s_len = s_len + lag
     not_nans = np.logical_not(find_rows_with_nans(all_data))
     rwn = np.int32(not_nans)
-    true_seq = np.empty((tot_s_len, ), dtype = np.int32)
+    true_seq = np.empty((tot_s_len,), dtype=np.int32)
     true_seq.fill(1)
 
     # Find sequences of length tot_s_len
@@ -894,7 +914,8 @@ def extract_streak(all_data, s_len, lag):
     streak_dat = all_data[last_seq_start:(last_seq_start + tot_s_len), :]
     return first_dat, streak_dat
 
-def cut_and_split(dat, seq_len, streak_len, ret_orig = False):
+
+def cut_and_split(dat, seq_len, streak_len, ret_orig=False):
     """
     Finds the latest series of 'streak_len' timesteps
     where all data is valid and splits the data there.
@@ -903,9 +924,10 @@ def cut_and_split(dat, seq_len, streak_len, ret_orig = False):
     dat_train, dat_test = extract_streak(dat, streak_len, seq_len - 1)
     if ret_orig:
         return dat_train, dat_test
-    cut_train_dat = cut_data_into_sequences(dat_train, seq_len, interleave = True)
-    cut_test_dat = cut_data_into_sequences(dat_test, seq_len, interleave = True)
+    cut_train_dat = cut_data_into_sequences(dat_train, seq_len, interleave=True)
+    cut_test_dat = cut_data_into_sequences(dat_test, seq_len, interleave=True)
     return cut_train_dat, cut_test_dat
+
 
 #######################################################################################################
 # Full Data Retrieval and Preprocessing
@@ -917,16 +939,16 @@ def get_battery_data():
     # Constants
     dt_mins = 15
     name = "Battery"
-    bat_plot_path = os.path.join(preprocess_plot_path, name)    
+    bat_plot_path = os.path.join(preprocess_plot_path, name)
     create_dir(bat_plot_path)
     inds = [19, 17]
-    p_kwargs_soc = {'clean_args':[([0.0], 24 * 60, [])],
-                    'rem_out_args':(100, [0.0, 100.0]),
-                     'lin_ip':True}
-    p_kwargs_ap = {'clean_args':[([], 6 * 60, [])]}
+    p_kwargs_soc = {'clean_args': [([0.0], 24 * 60, [])],
+                    'rem_out_args': (100, [0.0, 100.0]),
+                    'lin_ip': True}
+    p_kwargs_ap = {'clean_args': [([], 6 * 60, [])]}
     kws = [p_kwargs_soc, p_kwargs_ap]
     ds = get_from_dstruct(BatteryData, bat_plot_path, dt_mins, name, inds, kws)
-    
+
     # Plot files
     plot_name_roi = os.path.join(bat_plot_path, "Strange")
     plot_name_after = os.path.join(bat_plot_path, "Processed")
@@ -950,13 +972,14 @@ def get_battery_data():
     d2 = np.datetime64('2019-05-25T12:00')
     x_ext, y_ext = [[extract_date_interval(x[i], y[i], d1, d2)[k] for i in range(n_feats)] for k in range(2)]
 
-    plot_multiple_time_series(x_ext, y_ext, m_used, 
-                                  show = False, 
-                                  title_and_ylab = ["Strange Battery Behavior", y_lab], 
-                                  save_name = plot_name_roi)
+    plot_multiple_time_series(x_ext, y_ext, m_used,
+                              show=False,
+                              title_and_ylab=["Strange Battery Behavior", y_lab],
+                              save_name=plot_name_roi)
     return ds
 
-def get_weather_data(save_plots = True):
+
+def get_weather_data(save_plots=True):
     """
     Load and interpolate the weather data.
     """
@@ -966,7 +989,7 @@ def get_weather_data(save_plots = True):
     filter_sigma = 2.0
     fill_by_ip_max = 2
     name = "Weather"
-    name +=  "" if filter_sigma is None else str(filter_sigma)
+    name += "" if filter_sigma is None else str(filter_sigma)
 
     # Plot files
     prep_plot_dir = os.path.join(preprocess_plot_path, name)
@@ -990,51 +1013,52 @@ def get_weather_data(save_plots = True):
     dat, m = WeatherData.getData()
 
     # Add Temperature
-    all_data, dt_init = pipeline_preps(dat[0], 
-                               dt_mins,
-                               clean_args = [([], 30, [])],
-                               rem_out_args = None,
-                               hole_fill_args = fill_by_ip_max,
-                               n_tot_cols = 2,
-                               gauss_sigma = filter_sigma)
+    all_data, dt_init = pipeline_preps(dat[0],
+                                       dt_mins,
+                                       clean_args=[([], 30, [])],
+                                       rem_out_args=None,
+                                       hole_fill_args=fill_by_ip_max,
+                                       n_tot_cols=2,
+                                       gauss_sigma=filter_sigma)
     add_dt_and_tinit(m, dt_mins, dt_init)
     m_out += [m[0]]
 
     if save_plots:
-        plot_time_series(dat[0][1], dat[0][0], m = m[0], show = False, save_name = plot_name_temp_raw)
-        plot_single(all_data[:, 0], 
-                    m[0], 
-                    use_time = True, 
-                    show = False, 
-                    title_and_ylab = ['Outside Temperature Processed', m[0]['unit']],
-                    save_name = plot_name_temp)
+        plot_time_series(dat[0][1], dat[0][0], m=m[0], show=False, save_name=plot_name_temp_raw)
+        plot_single(all_data[:, 0],
+                    m[0],
+                    use_time=True,
+                    show=False,
+                    title_and_ylab=['Outside Temperature Processed', m[0]['unit']],
+                    save_name=plot_name_temp)
 
     # Add Irradiance Data
-    all_data, _ = pipeline_preps(dat[2], 
-                               dt_mins,
-                               all_data = all_data,
-                               dt_init = dt_init,
-                               row_ind = 1,
-                               clean_args = [([], 60, [1300.0, 0.0]), ([], 60 * 20)],
-                               rem_out_args = None,
-                               hole_fill_args = fill_by_ip_max,
-                               gauss_sigma = filter_sigma)
+    all_data, _ = pipeline_preps(dat[2],
+                                 dt_mins,
+                                 all_data=all_data,
+                                 dt_init=dt_init,
+                                 row_ind=1,
+                                 clean_args=[([], 60, [1300.0, 0.0]), ([], 60 * 20)],
+                                 rem_out_args=None,
+                                 hole_fill_args=fill_by_ip_max,
+                                 gauss_sigma=filter_sigma)
     m_out += [m[2]]
 
     if save_plots:
-        plot_time_series(dat[2][1], dat[2][0], m = m[2], show = False, save_name = plot_name_irrad_raw)
-        plot_single(all_data[:, 1], 
-                    m[2], 
-                    use_time = True, 
-                    show = False, 
-                    title_and_ylab = ['Irradiance Processed', m[2]['unit']],
-                    save_name = plot_name_irrad)
+        plot_time_series(dat[2][1], dat[2][0], m=m[2], show=False, save_name=plot_name_irrad_raw)
+        plot_single(all_data[:, 1],
+                    m[2],
+                    use_time=True,
+                    show=False,
+                    title_and_ylab=['Irradiance Processed', m[2]['unit']],
+                    save_name=plot_name_irrad)
 
     # Save and return
-    no_inds = np.array([], dtype = np.int32)
-    w_dataset = Dataset.fromRaw(all_data, m_out, name, c_inds = no_inds, p_inds = no_inds)
+    no_inds = np.array([], dtype=np.int32)
+    w_dataset = Dataset.fromRaw(all_data, m_out, name, c_inds=no_inds, p_inds=no_inds)
     w_dataset.save()
     return w_dataset
+
 
 def get_UMAR_heating_data():
     """
@@ -1052,7 +1076,6 @@ def get_UMAR_heating_data():
     all_ds = []
 
     for dstr in dstrs:
-        
         p_kwargs_rtemp = {'clean_args': [([0.0], 10 * 60)],
                           'rem_out_args': (4.5, [10, 100]),
                           'hole_fill_args': fill_by_ip_max,
@@ -1064,11 +1087,11 @@ def get_UMAR_heating_data():
         kws = [p_kwargs_rtemp, p_kwargs_win, p_kwargs_valve]
         inds = [1, 11, 12]
         all_ds += [get_from_dstruct(dstr, umar_rooms_plot_path, dt_mins, dstr.name, inds, kws)]
-    
+
     return all_ds
 
-def get_DFAB_heating_data():
 
+def get_DFAB_heating_data():
     data_list = []
     dt_mins = 15
     dfab_rooms_plot_path = os.path.join(preprocess_plot_path, "DFAB")
@@ -1083,7 +1106,7 @@ def get_DFAB_heating_data():
         # Single Room Heating Data  
         temp_kwgs = {'clean_args': [([0.0], 24 * 60, [])], 'gauss_sigma': 5.0, 'rem_out_args': (1.5, None)}
         valv_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
-        blinds_kwargs = {'clip_to_int_args': [0.0, 100.0], 'clean_args':[([], 7 * 24 * 60, [])]}
+        blinds_kwargs = {'clip_to_int_args': [0.0, 100.0], 'clean_args': [([], 7 * 24 * 60, [])]}
         prep_kwargs = [temp_kwgs, valv_kwargs, valv_kwargs, valv_kwargs]
         if n_cols == 5:
             prep_kwargs += [blinds_kwargs]
@@ -1094,14 +1117,15 @@ def get_DFAB_heating_data():
     temp_kwgs = {'remove_out_int_args': [10, 50], 'gauss_sigma': 5.0}
     prep_kwargs = [temp_kwgs, temp_kwgs, {}, {}, {}, {}]
     data_list += [convert_datastruct(DFAB_AddData, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
-    
+
     ################################
     # All Valves Together
     prep_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
     data_list += [convert_datastruct(DFAB_AllValves, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
     return data_list
 
-def compute_DFAB_energy_usage(show_plots = True):
+
+def compute_DFAB_energy_usage(show_plots=True):
     """
     Computes the energy usage for every room at DFAB
     using the valves data and the inlet and outlet water
@@ -1142,60 +1166,58 @@ def compute_DFAB_energy_usage(show_plots = True):
     first_n_del = n_usable // 3
 
     # Room info
-    room_dict = {0: "31", 1: "41", 2: "42", 3: "43", 4:"51", 5: "52", 6: "53"}
-    valve_room_allocation = np.array(["31", "31", "31", "31", "31", "31", "31", # 3rd Floor
-                                     "41", "41", "42", "43", "43", "43", "41", # 4th Floor
-                                     "51", "51", "53", "53", "53", "52", "51", # 5th Floor
-                                     ])
+    room_dict = {0: "31", 1: "41", 2: "42", 3: "43", 4: "51", 5: "52", 6: "53"}
+    valve_room_allocation = np.array(["31", "31", "31", "31", "31", "31", "31",  # 3rd Floor
+                                      "41", "41", "42", "43", "43", "43", "41",  # 4th Floor
+                                      "51", "51", "53", "53", "53", "52", "51",  # 5th Floor
+                                      ])
     n_rooms = len(room_dict)
     n_valves = len(valve_room_allocation)
 
     # Loop over rooms and compute flow per room
-    A = np.empty((n_not_nans, n_rooms), dtype = np.float32)
+    A = np.empty((n_not_nans, n_rooms), dtype=np.float32)
     for id, room_nr in room_dict.items():
         room_valves = v_dat_not_nan[:, valve_room_allocation == room_nr]
-        A[:, id] = np.mean(room_valves, axis = 1)
+        A[:, id] = np.mean(room_valves, axis=1)
     b = w_dat_not_nan[:, 2]
-    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset = True)
+    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset=True)
     print("Flow", x)
 
     # Loop over rooms and compute flow per room
-    A = np.empty((n_not_nans, n_valves), dtype = np.float32)
-    for id in range(n_valves): 
+    A = np.empty((n_not_nans, n_valves), dtype=np.float32)
+    for id in range(n_valves):
         A[:, id] = v_dat_not_nan[:, id]
     b = w_dat_not_nan[:, 2]
-    x, fitted = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset = False, ret_fit = True)
+    x, fitted = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset=False, ret_fit=True)
     print("Flow per valve", x)
 
-    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], non_neg = True)
+    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], non_neg=True)
     print("Non Negative Flow per valve", x)
-    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], non_neg = True, offset = True)
+    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], non_neg=True, offset=True)
     print("Non Negative Flow per valve with offset", x)
 
-    
-    stack_compare_plot(A[usable][first_n_del:], [21 * b[usable][first_n_del:], 21 * fitted], title = "Valve model")
+    stack_compare_plot(A[usable][first_n_del:], [21 * b[usable][first_n_del:], 21 * fitted], title="Valve model")
     # PO
     if show_plots:
         tot_room_valves_plot_path = os.path.join(dfab_rooms_plot_path, "DFAB_All_Valves")
         m_all = {'description': 'All valves summed',
-                  'unit': 'TBD',
-                  'dt': dt,
-                  't_init': t_init_new}
-        plot_single(np.sum(v_dat, axis = 1),
-                        m_all,
-                        use_time = True,
-                        show = False,
-                        title_and_ylab = ['Sum All Valves', '0/1'],
-                        save_name = tot_room_valves_plot_path)
+                 'unit': 'TBD',
+                 'dt': dt,
+                 't_init': t_init_new}
+        plot_single(np.sum(v_dat, axis=1),
+                    m_all,
+                    use_time=True,
+                    show=False,
+                    title_and_ylab=['Sum All Valves', '0/1'],
+                    save_name=tot_room_valves_plot_path)
 
     raise NotImplementedError("Hahahah")
 
-
-    flow_rates_f3 = np.array([134, 123, 129, 94, 145, 129, 81], dtype = np.float32)
+    flow_rates_f3 = np.array([134, 123, 129, 94, 145, 129, 81], dtype=np.float32)
     print(np.sum(flow_rates_f3), "Flow rates sum, 3. OG")
     dtemp = 13
     powers_f45 = np.array([137, 80, 130, 118, 131, 136, 207,
-                 200, 192, 147, 209, 190, 258, 258], dtype = np.float32)
+                           200, 192, 147, 209, 190, 258, 258], dtype=np.float32)
     c_p = 4.186
     d_w = 997
     h_to_s = 3600
@@ -1203,64 +1225,66 @@ def compute_DFAB_energy_usage(show_plots = True):
     flow_rates_f45 = h_to_s / (c_p * d_w * dtemp) * powers_f45
     print(flow_rates_f45)
 
-    tot_n_vals_open = np.sum(v_dat, axis = 1)
+    tot_n_vals_open = np.sum(v_dat, axis=1)
     dTemp = w_dat[:, 0] - w_dat[:, 1]
 
     # Prepare output
-    out_dat = np.empty((aligned_len, n_rooms), dtype = np.float32)
+    out_dat = np.empty((aligned_len, n_rooms), dtype=np.float32)
     m_list = []
     m_room = {'description': 'Energy consumption room',
-                  'unit': 'TBD',
-                  'dt': dt,
-                  't_init': t_init_new}
-    if show_plots:        
+              'unit': 'TBD',
+              'dt': dt,
+              't_init': t_init_new}
+    if show_plots:
         w_plot_path = os.path.join(dfab_rooms_plot_path, w_name + "_WaterTemps")
         dw_plot_path = os.path.join(dfab_rooms_plot_path, w_name + "_WaterTempDiff")
-        plot_dataset(w_dataset, show = False, 
-                     title_and_ylab = ["Water Temps", "Temperature"],
-                     save_name = w_plot_path)
-        plot_single(dTemp, m_room, use_time = True, show = False,
-                   title_and_ylab = ["Temperature Difference", "DT"],
-                   scale_back = False,
-                   save_name = dw_plot_path)
+        plot_dataset(w_dataset, show=False,
+                     title_and_ylab=["Water Temps", "Temperature"],
+                     save_name=w_plot_path)
+        plot_single(dTemp, m_room, use_time=True, show=False,
+                    title_and_ylab=["Temperature Difference", "DT"],
+                    scale_back=False,
+                    save_name=dw_plot_path)
 
     # Loop over rooms and compute energy
     for id, room_nr in room_dict.items():
         room_valves = v_dat[:, valve_room_allocation == room_nr]
-        room_sum_valves = np.sum(room_valves, axis = 1)
+        room_sum_valves = np.sum(room_valves, axis=1)
 
         # Divide ignoring division by zero
-        room_energy = dTemp * np.divide(room_sum_valves, 
-                                tot_n_vals_open, 
-                                out = np.zeros_like(room_sum_valves), 
-                                where = tot_n_vals_open != 0)
+        room_energy = dTemp * np.divide(room_sum_valves,
+                                        tot_n_vals_open,
+                                        out=np.zeros_like(room_sum_valves),
+                                        where=tot_n_vals_open != 0)
 
         m_room['description'] = 'Room ' + room_nr
         if show_plots:
-            tot_room_valves_plot_path = os.path.join(dfab_rooms_plot_path, "DFAB_" + m_room['description'] + "_Tot_Valves")
+            tot_room_valves_plot_path = os.path.join(dfab_rooms_plot_path,
+                                                     "DFAB_" + m_room['description'] + "_Tot_Valves")
             room_energy_plot_path = os.path.join(dfab_rooms_plot_path, "DFAB_" + m_room['description'] + "_Tot_Energy")
             plot_single(room_energy,
-                        m_room, 
-                        use_time = True,
-                        show = False,
-                        title_and_ylab = ['Energy Consumption', 'Energy'],
-                        save_name = room_energy_plot_path)
+                        m_room,
+                        use_time=True,
+                        show=False,
+                        title_and_ylab=['Energy Consumption', 'Energy'],
+                        save_name=room_energy_plot_path)
             plot_single(room_sum_valves,
                         m_room,
-                        use_time = True,
-                        show = False,
-                        title_and_ylab = ['Sum All Valves', '0/1'],
-                        save_name = tot_room_valves_plot_path)
+                        use_time=True,
+                        show=False,
+                        title_and_ylab=['Sum All Valves', '0/1'],
+                        save_name=tot_room_valves_plot_path)
 
         # Add data to output
         out_dat[:, id] = room_energy
         m_list += [m_room.copy()]
 
     # Save dataset
-    ds_out = Dataset.fromRaw(out_dat, 
-                    m_list,
-                    "DFAB_Room_Energy_Consumption")
+    ds_out = Dataset.fromRaw(out_dat,
+                             m_list,
+                             "DFAB_Room_Energy_Consumption")
     ds_out.save()
+
 
 def analzye_room_energy_consumption():
     """
@@ -1269,7 +1293,7 @@ def analzye_room_energy_consumption():
     """
 
     ds = Dataset.loadDataset("DFAB_Room_Energy_Consumption")
-    relevant_rooms = np.array([False, True, False, True, True, False, True], dtype = np.bool)
+    relevant_rooms = np.array([False, True, False, True, True, False, True], dtype=np.bool)
     dat = ds.data[:, relevant_rooms]
     n = dat.shape[0]
     d = dat.shape[1]
@@ -1279,29 +1303,32 @@ def analzye_room_energy_consumption():
     dat[row_with_nans, :] = np.nan
 
     # Sum Energy consumption over days
-    n_ts = 4 * 24 # 1 Day
+    n_ts = 4 * 24  # 1 Day
     n_mins = ds.dt * n_ts
     offset = n % n_ts
     dat = dat[offset:, :]
-    dat = np.sum(dat.reshape((-1, n_ts, d)), axis = 1)
+    dat = np.sum(dat.reshape((-1, n_ts, d)), axis=1)
 
     # Plot
     m = [{'description': ds.descriptions[relevant_rooms][k], 'dt': n_mins} for k in range(d)]
     f_name = os.path.join(preprocess_plot_path, "DFAB")
     f_name = os.path.join(f_name, "energy_comparison")
-    plot_all(dat, m, use_time = False, show = False, title_and_ylab = ["Room Energy Consumption", "Energy over one day"], save_name = f_name)
+    plot_all(dat, m, use_time=False, show=False, title_and_ylab=["Room Energy Consumption", "Energy over one day"],
+             save_name=f_name)
+
 
 #######################################################################################################
 # Dataset definition and generation
 
-no_inds = np.array([], dtype = np.int32)
+no_inds = np.array([], dtype=np.int32)
+
 
 class Dataset():
     """
     This class contains all infos about a given dataset.
     """
 
-    def __init__(self, all_data, dt, t_init, scaling, is_scaled, descs, c_inds = no_inds, p_inds = no_inds, name = ""):
+    def __init__(self, all_data, dt, t_init, scaling, is_scaled, descs, c_inds=no_inds, p_inds=no_inds, name=""):
         """
         Base constructor.
         """
@@ -1327,7 +1354,7 @@ class Dataset():
         self.t_init = t_init
         self.is_scaled = is_scaled
         self.scaling = scaling
-        self.descriptions = descs    
+        self.descriptions = descs
         self.c_inds = c_inds
         self.p_inds = p_inds
 
@@ -1337,7 +1364,7 @@ class Dataset():
             self.data = np.reshape(self.data, (-1, 1))
         return
 
-    def split_train_test(self, streak_len = 7):
+    def split_train_test(self, streak_len=7):
         """
         Split dataset into train, validation and test set.
         """
@@ -1350,13 +1377,13 @@ class Dataset():
         _, self.train_streak = extract_streak(np.copy(self.orig_train), s_len, self.seq_len - 1)
 
         # Cut into sequences and saveself.
-        self.test_data = cut_data_into_sequences(np.copy(self.orig_test), self.seq_len, interleave = True)
-        self.train_val_data = cut_data_into_sequences(np.copy(self.orig_trainval), self.seq_len, interleave = True)
-        self.train_data = cut_data_into_sequences(np.copy(self.orig_train), self.seq_len, interleave = True)
-        self.val_data = cut_data_into_sequences(np.copy(self.orig_val), self.seq_len, interleave = True)
-        self.train_streak_data = cut_data_into_sequences(np.copy(self.train_streak), self.seq_len, interleave = True)
-       
-    def get_prepared_data(self, what_data = 'train', *, get_all_preds = False):
+        self.test_data = cut_data_into_sequences(np.copy(self.orig_test), self.seq_len, interleave=True)
+        self.train_val_data = cut_data_into_sequences(np.copy(self.orig_trainval), self.seq_len, interleave=True)
+        self.train_data = cut_data_into_sequences(np.copy(self.orig_train), self.seq_len, interleave=True)
+        self.val_data = cut_data_into_sequences(np.copy(self.orig_val), self.seq_len, interleave=True)
+        self.train_streak_data = cut_data_into_sequences(np.copy(self.train_streak), self.seq_len, interleave=True)
+
+    def get_prepared_data(self, what_data='train', *, get_all_preds=False):
         """
         Prepares the data for supervised learning.
         """
@@ -1382,16 +1409,16 @@ class Dataset():
         n_c = self.n_c
 
         # Get control and other column indices
-        cont_inds = np.empty((d), dtype = np.bool)
+        cont_inds = np.empty((d), dtype=np.bool)
         cont_inds.fill(False)
         cont_inds[self.c_inds] = True
         other_inds = np.logical_not(cont_inds)
 
         # Fill the data
-        input_data = np.empty((n, s_len - 1, d), dtype = np.float32)
+        input_data = np.empty((n, s_len - 1, d), dtype=np.float32)
         input_data[:, :, :-n_c] = data_to_use[:, :-1, other_inds]
         input_data[:, :, -n_c:] = data_to_use[:, 1:, cont_inds]
-        if not get_all_preds:            
+        if not get_all_preds:
             output_data = data_to_use[:, -1, other_inds]
         else:
             output_data = data_to_use[:, 1:, other_inds]
@@ -1404,7 +1431,7 @@ class Dataset():
         return input_data, output_data
 
     @classmethod
-    def fromRaw(cls, all_data, m, name, c_inds = no_inds, p_inds = no_inds):
+    def fromRaw(cls, all_data, m, name, c_inds=no_inds, p_inds=no_inds):
         """
         Constructor from data and dict m: 
         Extracts the important metadata from the
@@ -1415,10 +1442,10 @@ class Dataset():
         # Extract data from m
         dt = m[0]['dt']
         t_init = m[0]['t_init']
-        is_scaled = np.empty((d,), dtype = np.bool)
+        is_scaled = np.empty((d,), dtype=np.bool)
         is_scaled.fill(True)
-        scaling = np.empty((d, 2), dtype = np.float32)
-        descs = np.empty((d,), dtype = "U100")
+        scaling = np.empty((d, 2), dtype=np.float32)
+        descs = np.empty((d,), dtype="U100")
         for ct, el in enumerate(m):
             desc = el['description']
             descs[ct] = desc
@@ -1474,53 +1501,53 @@ class Dataset():
 
         # Merge metadata
         d = self.d
-        scaling = np.concatenate([self.scaling, other.scaling], axis = 0)
-        is_scaled = np.concatenate([self.is_scaled, other.is_scaled], axis = 0)
-        descs = np.concatenate([self.descriptions, other.descriptions], axis = 0)
-        c_inds = np.concatenate([self.c_inds, other.c_inds + d], axis = 0)
-        p_inds = np.concatenate([self.p_inds, other.p_inds + d], axis = 0)
+        scaling = np.concatenate([self.scaling, other.scaling], axis=0)
+        is_scaled = np.concatenate([self.is_scaled, other.is_scaled], axis=0)
+        descs = np.concatenate([self.descriptions, other.descriptions], axis=0)
+        c_inds = np.concatenate([self.c_inds, other.c_inds + d], axis=0)
+        p_inds = np.concatenate([self.p_inds, other.p_inds + d], axis=0)
         name = self.name + other.name
 
         return Dataset(data, self.dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
 
-    def add_time(self, sine_cos = True):
+    def add_time(self, sine_cos=True):
         """
         Adds time to current dataset.
         """
         dt = self.dt
         t_init = datetime_to_npdatetime(string_to_dt(self.t_init))
-        one_day = np.timedelta64(1,'D')
+        one_day = np.timedelta64(1, 'D')
         dt_td64 = np.timedelta64(dt, 'm')
         n_tint_per_day = int(one_day / dt_td64)
         floor_day = np.array([t_init], dtype='datetime64[D]')[0]
         begin_ind = int((t_init - floor_day) / dt_td64)
-        dat = np.empty((self.n, ), dtype = np.float32)
+        dat = np.empty((self.n,), dtype=np.float32)
         for k in range(self.n):
             dat[k] = (begin_ind + k) % n_tint_per_day
 
         if not sine_cos:
             return self + Dataset(dat,
-                           self.dt,
-                           self.t_init,
-                           np.array([0.0, 1.0]),
-                           np.array([False]),
-                           np.array(["Time of day [" + dt +  " mins.]"]),
-                           no_inds,
-                           no_inds,
-                           "Time")
+                                  self.dt,
+                                  self.t_init,
+                                  np.array([0.0, 1.0]),
+                                  np.array([False]),
+                                  np.array(["Time of day [" + dt + " mins.]"]),
+                                  no_inds,
+                                  no_inds,
+                                  "Time")
         else:
-            all_dat = np.empty((self.n, 2), dtype = np.float32)
+            all_dat = np.empty((self.n, 2), dtype=np.float32)
             all_dat[:, 0] = np.sin(2 * np.pi * dat / n_tint_per_day)
             all_dat[:, 1] = np.cos(2 * np.pi * dat / n_tint_per_day)
             return self + Dataset(all_dat,
-                           self.dt,
-                           self.t_init,
-                           np.array([[0.0, 1.0], [0.0, 1.0]]),
-                           np.array([False, False]),
-                           np.array(["sin(Time of day)", "cos(Time of day)"]),
-                           no_inds,
-                           no_inds,
-                           "Time")
+                                  self.dt,
+                                  self.t_init,
+                                  np.array([[0.0, 1.0], [0.0, 1.0]]),
+                                  np.array([False, False]),
+                                  np.array(["sin(Time of day)", "cos(Time of day)"]),
+                                  no_inds,
+                                  no_inds,
+                                  "Time")
         pass
 
     def getSlice(self, ind_low, ind_high):
@@ -1530,7 +1557,7 @@ class Dataset():
         """
 
         warnings.warn("Prediction and control indices are lost when slicing.")
-        no_inds = np.array([], dtype = np.int32)
+        no_inds = np.array([], dtype=np.int32)
         l = ind_low
         h = ind_high
 
@@ -1547,12 +1574,12 @@ class Dataset():
                            no_inds,
                            self.name + "[" + str(ind_low) + ":" + str(ind_high) + "]")
         else:
-           return Dataset(np.copy(self.data[:, l:l+1]),
+            return Dataset(np.copy(self.data[:, l:l + 1]),
                            self.dt,
                            self.t_init,
-                           np.copy(self.scaling[l:l+1]),
-                           np.copy(self.is_scaled[l:l+1]),
-                           np.copy(self.descriptions[l:l+1]),
+                           np.copy(self.scaling[l:l + 1]),
+                           np.copy(self.is_scaled[l:l + 1]),
+                           np.copy(self.descriptions[l:l + 1]),
                            no_inds,
                            no_inds,
                            self.name + "[" + str(l) + "]")
@@ -1561,7 +1588,7 @@ class Dataset():
         """
         Allows for slicing. Returns a copy not a reference.
         """
-        
+
         if isinstance(key, slice):
             if key.step is not None and key.step != 1:
                 raise NotImplementedError("Only implemented for contiguous ranges!")
@@ -1587,7 +1614,7 @@ class Dataset():
         data_out = np.copy(self.data)
         for k in range(self.d):
             if self.is_scaled[k]:
-                data_out[:,k] = add_mean_and_std(data_out[:,k], self.scaling[k, :])
+                data_out[:, k] = add_mean_and_std(data_out[:, k], self.scaling[k, :])
 
         return data_out
 
@@ -1626,7 +1653,7 @@ class Dataset():
         for k in range(self.d):
             self.standardize_col(k)
 
-    def visualize_nans(self, name_ext = ""):
+    def visualize_nans(self, name_ext=""):
         """
         Visualizes where the holes are in the time series.
         """
@@ -1634,17 +1661,18 @@ class Dataset():
         create_dir(nan_plot_dir)
         s_name = os.path.join(nan_plot_dir, self.name)
         not_nans = np.logical_not(np.isnan(self.data))
-        scaled = not_nans * np.arange(1, 1 + self.d, 1, dtype = np.int32)
+        scaled = not_nans * np.arange(1, 1 + self.d, 1, dtype=np.int32)
         scaled[scaled == 0] = -1
         m = [{'description': d, 'dt': self.dt} for d in self.descriptions]
-        plot_all(scaled, m, 
-                 use_time = False, 
-                 show = False, 
-                 title_and_ylab = ["Nan plot", "Series"], 
-                 scale_back = False, 
-                 save_name = s_name + name_ext)
+        plot_all(scaled, m,
+                 use_time=False,
+                 show=False,
+                 title_and_ylab=["Nan plot", "Series"],
+                 scale_back=False,
+                 save_name=s_name + name_ext)
 
     pass
+
 
 def generateRoomDatasets():
     """
@@ -1656,7 +1684,7 @@ def generateRoomDatasets():
     dt = w_dataset.dt
 
     # Get room data
-    dfab_dataset_list = get_DFAB_heating_data(use_dataset = True)
+    dfab_dataset_list = get_DFAB_heating_data(use_dataset=True)
     n_rooms = len(rooms)
     dfab_room_dataset_list = [dfab_dataset_list[i] for i in range(n_rooms)]
 
@@ -1685,21 +1713,21 @@ def generateRoomDatasets():
 
         # Extract datasets
         valves_ds = room_ds[1:4]
-        room_temp_ds = room_ds[0]        
+        room_temp_ds = room_ds[0]
 
         # Compute average valve data and put into dataset
-        valves_avg = np.mean(valves_ds.data, axis = 1)        
+        valves_avg = np.mean(valves_ds.data, axis=1)
         valves_avg_ds = Dataset(valves_avg,
                                 valves_ds.dt,
                                 valves_ds.t_init,
-                                np.empty((1, 2), dtype = np.float32),
+                                np.empty((1, 2), dtype=np.float32),
                                 np.array([False]),
                                 np.array(["Averaged valve open time."]))
 
         # Put all together
         full_ds = (inlet_water_and_weather + valves_avg_ds) + room_temp_ds
-        full_ds.c_inds = np.array([3], dtype = np.int32)
-        full_ds.p_inds = np.array([4], dtype = np.int32)
+        full_ds.c_inds = np.array([3], dtype=np.int32)
+        full_ds.p_inds = np.array([4], dtype=np.int32)
 
         # Add blinds
         if len(room_ds) == 5:
@@ -1714,83 +1742,87 @@ def generateRoomDatasets():
     # Return all
     return out_ds_list
 
+
 #######################################################################################################
 # Testing
 
 # Test Data
-TestData = DataStruct(id_list = [421100171, 421100172],
-                      name = "Test",
+TestData = DataStruct(id_list=[421100171, 421100172],
+                      name="Test",
                       startDate='2019-08-08',
                       endDate='2019-08-09')
 
+
 class TestDataSynth:
-     def getData(self):
-         """
+    def getData(self):
+        """
          Synthetic and short dataset to be used for debugging.
          """
 
-         # First Time series
-         dict1 = {}
-         dict1['description'] = "Synthetic Data Series 1: Base Series"
-         dict1['unit'] = "Test Unit 1"
-         vals1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
-         dats1 = np.array([
-                np.datetime64('2005-02-25T03:31'),
-                np.datetime64('2005-02-25T03:39'),
-                np.datetime64('2005-02-25T03:48'),
-                np.datetime64('2005-02-25T04:20'),
-                np.datetime64('2005-02-25T04:25'),
-                np.datetime64('2005-02-25T04:30'),
-             ], dtype = 'datetime64')
+        # First Time series
+        dict1 = {}
+        dict1['description'] = "Synthetic Data Series 1: Base Series"
+        dict1['unit'] = "Test Unit 1"
+        vals1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
+        dats1 = np.array([
+            np.datetime64('2005-02-25T03:31'),
+            np.datetime64('2005-02-25T03:39'),
+            np.datetime64('2005-02-25T03:48'),
+            np.datetime64('2005-02-25T04:20'),
+            np.datetime64('2005-02-25T04:25'),
+            np.datetime64('2005-02-25T04:30'),
+        ], dtype='datetime64')
 
-         # Second Time series
-         dict2 = {}
-         dict2['description'] = "Synthetic Data Series 2: Delayed and longer"
-         dict2['unit'] = "Test Unit 2"
-         vals2 = np.array([1.0, 1.4, 2.1, 1.5, 3.3, 1.8, 2.5])
-         dats2 = np.array([
-                np.datetime64('2005-02-25T03:51'),
-                np.datetime64('2005-02-25T03:59'),
-                np.datetime64('2005-02-25T04:17'),
-                np.datetime64('2005-02-25T04:21'),
-                np.datetime64('2005-02-25T04:34'),
-                np.datetime64('2005-02-25T04:55'),
-                np.datetime64('2005-02-25T05:01'),
-             ], dtype = 'datetime64')
+        # Second Time series
+        dict2 = {}
+        dict2['description'] = "Synthetic Data Series 2: Delayed and longer"
+        dict2['unit'] = "Test Unit 2"
+        vals2 = np.array([1.0, 1.4, 2.1, 1.5, 3.3, 1.8, 2.5])
+        dats2 = np.array([
+            np.datetime64('2005-02-25T03:51'),
+            np.datetime64('2005-02-25T03:59'),
+            np.datetime64('2005-02-25T04:17'),
+            np.datetime64('2005-02-25T04:21'),
+            np.datetime64('2005-02-25T04:34'),
+            np.datetime64('2005-02-25T04:55'),
+            np.datetime64('2005-02-25T05:01'),
+        ], dtype='datetime64')
 
-         # Third Time series
-         dict3 = {}
-         dict3['description'] = "Synthetic Data Series 3: Repeating Values"
-         dict3['unit'] = "Test Unit 3"
-         vals3 = np.array([0.0, 1.4, 1.4, 0.0, 3.3, 3.3, 3.3, 3.3, 0.0, 3.3, 2.5])
-         dats3 = np.array([
-                np.datetime64('2005-02-25T03:45'),
-                np.datetime64('2005-02-25T03:53'),
-                np.datetime64('2005-02-25T03:59'),
-                np.datetime64('2005-02-25T04:21'),
-                np.datetime64('2005-02-25T04:23'),
-                np.datetime64('2005-02-25T04:25'),
-                np.datetime64('2005-02-25T04:34'),
-                np.datetime64('2005-02-25T04:37'),
-                np.datetime64('2005-02-25T04:45'),
-                np.datetime64('2005-02-25T04:55'),
-                np.datetime64('2005-02-25T05:01'),
-             ], dtype = 'datetime64')
-         return ([(vals1, dats1), (vals2, dats2), (vals3, dats3)], [dict1, dict2, dict3])
+        # Third Time series
+        dict3 = {}
+        dict3['description'] = "Synthetic Data Series 3: Repeating Values"
+        dict3['unit'] = "Test Unit 3"
+        vals3 = np.array([0.0, 1.4, 1.4, 0.0, 3.3, 3.3, 3.3, 3.3, 0.0, 3.3, 2.5])
+        dats3 = np.array([
+            np.datetime64('2005-02-25T03:45'),
+            np.datetime64('2005-02-25T03:53'),
+            np.datetime64('2005-02-25T03:59'),
+            np.datetime64('2005-02-25T04:21'),
+            np.datetime64('2005-02-25T04:23'),
+            np.datetime64('2005-02-25T04:25'),
+            np.datetime64('2005-02-25T04:34'),
+            np.datetime64('2005-02-25T04:37'),
+            np.datetime64('2005-02-25T04:45'),
+            np.datetime64('2005-02-25T04:55'),
+            np.datetime64('2005-02-25T05:01'),
+        ], dtype='datetime64')
+        return ([(vals1, dats1), (vals2, dats2), (vals3, dats3)], [dict1, dict2, dict3])
+
+
 TestData2 = TestDataSynth()
+
 
 # Tests
 def get_data_test():
-
     name = "Test"
 
     # Test Sequence Cutting
-    seq1 = np.array([1,2, np.nan, 1, 2, np.nan, 3, 2, 1, 3, 4, np.nan, np.nan, 3, 2, 3, 1, 3, np.nan, 1, 2])
-    seq2 = np.array([3,4, np.nan, np.nan, 2, np.nan, 3, 2, 1, 3, 4, 7, np.nan, 3, 2, 3, 1, np.nan, np.nan, 3, 4])
+    seq1 = np.array([1, 2, np.nan, 1, 2, np.nan, 3, 2, 1, 3, 4, np.nan, np.nan, 3, 2, 3, 1, 3, np.nan, 1, 2])
+    seq2 = np.array([3, 4, np.nan, np.nan, 2, np.nan, 3, 2, 1, 3, 4, 7, np.nan, 3, 2, 3, 1, np.nan, np.nan, 3, 4])
     n = seq1.shape[0]
-    all_dat = np.empty((n, 2), dtype = np.float32)
-    all_dat[:,0] = seq1
-    all_dat[:,1] = seq2
+    all_dat = np.empty((n, 2), dtype=np.float32)
+    all_dat[:, 0] = seq1
+    all_dat[:, 1] = seq2
     print(all_dat)
 
     # Test
@@ -1806,9 +1838,9 @@ def get_data_test():
     # Test Sequence Cutting
     c = find_rows_with_nans(all_dat)
     print(c)
-    seq_inds = cut_into_fixed_len(c, 2, interleave = True)
+    seq_inds = cut_into_fixed_len(c, 2, interleave=True)
     print(seq_inds)
-    od = cut_data_into_sequences(all_dat, 2, interleave = True)
+    od = cut_data_into_sequences(all_dat, 2, interleave=True)
     print(od)
 
     # Test hole filling by interpolation
@@ -1820,7 +1852,8 @@ def get_data_test():
     print(test_ts2)
 
     # Test Outlier Removal
-    test_ts3 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, 17.0, 5.0, 2.0, -1.0, np.nan, 7.0, 7.0, 17.0, np.nan, 20.0, 5.0, 6.0])
+    test_ts3 = np.array(
+        [1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, 17.0, 5.0, 2.0, -1.0, np.nan, 7.0, 7.0, 17.0, np.nan, 20.0, 5.0, 6.0])
     print(test_ts3)
     remove_outliers(test_ts3, 5.0, [0.0, 100.0])
     print(test_ts3)
@@ -1838,12 +1871,12 @@ def get_data_test():
     print(n_data, "total data points.")
 
     # Initialize np array for compact storage
-    all_data = np.empty((n_data, 3), dtype = np.float32)
+    all_data = np.empty((n_data, 3), dtype=np.float32)
     all_data.fill(np.nan)
 
     # Add data
     add_time(all_data, dt_init1, 0, dt_mins)
-    all_data[:,1] = data1
+    all_data[:, 1] = data1
     [data2, dt_init2] = interpolate_time_series(dat[1], dt_mins)
 
     print(data2)
@@ -1857,47 +1890,48 @@ def get_data_test():
     print(m_new[0])
     return all_data, m, name
 
-def test_plotting_withDFAB_data():
 
+def test_plotting_withDFAB_data():
     data_list = get_DFAB_heating_data()
     all_data, metadata, name = data_list[-1]
     data, m = DFAB_AddData.getData()
 
     # Plot test
     ind = 0
-    plot_time_series(data[ind][1], data[ind][0], m = metadata[ind], show = False)
+    plot_time_series(data[ind][1], data[ind][0], m=metadata[ind], show=False)
 
-    plot_single_ip_ts(all_data[:, ind], 
-               lab = 'Out Water Temp',
-               show = False,
-               mean_and_std = metadata[ind]['mean_and_std'], 
-               use_time = False, 
-               title_and_ylab = ['Single TS Plot Test', metadata[ind]['unit']],
-               dt_mins = metadata[ind]['dt']
-               )
-    
-    plot_single_ip_ts(all_data[:, ind], 
-               lab = 'Out Water Temp', 
-               show = False, 
-               mean_and_std = metadata[ind]['mean_and_std'], 
-               use_time = True,               
-               title_and_ylab = ['Single TS with Dates Plot Test', metadata[ind]['unit']],
-               dt_mins = metadata[ind]['dt'],
-               dt_init_str = metadata[ind]['t_init']
-               )
+    plot_single_ip_ts(all_data[:, ind],
+                      lab='Out Water Temp',
+                      show=False,
+                      mean_and_std=metadata[ind]['mean_and_std'],
+                      use_time=False,
+                      title_and_ylab=['Single TS Plot Test', metadata[ind]['unit']],
+                      dt_mins=metadata[ind]['dt']
+                      )
+
+    plot_single_ip_ts(all_data[:, ind],
+                      lab='Out Water Temp',
+                      show=False,
+                      mean_and_std=metadata[ind]['mean_and_std'],
+                      use_time=True,
+                      title_and_ylab=['Single TS with Dates Plot Test', metadata[ind]['unit']],
+                      dt_mins=metadata[ind]['dt'],
+                      dt_init_str=metadata[ind]['t_init']
+                      )
 
     m = metadata
     plot_multiple_ip_ts([all_data[:, 0], all_data[:, 1]],
-                        lab_list = [m[i]['description'] for i in range(2)],
-                        mean_and_std_list = [m[i]['mean_and_std'] for i in range(2)],
-                        use_time = True,
-                        timestep_offset_list = [-1, 1],
-                        dt_init_str_list = [m[i]['t_init'] for i in range(2)],
-                        show_last = False, 
-                        title_and_ylab = ['Two TS with Dates Plot Test', m[ind]['unit']],
-        )
+                        lab_list=[m[i]['description'] for i in range(2)],
+                        mean_and_std_list=[m[i]['mean_and_std'] for i in range(2)],
+                        use_time=True,
+                        timestep_offset_list=[-1, 1],
+                        dt_init_str_list=[m[i]['t_init'] for i in range(2)],
+                        show_last=False,
+                        title_and_ylab=['Two TS with Dates Plot Test', m[ind]['unit']],
+                        )
 
-    plot_all(all_data, m, show = True, title_and_ylab = ['Two TS with Dates High Level Plot Test', m[ind]['unit']])
+    plot_all(all_data, m, show=True, title_and_ylab=['Two TS with Dates High Level Plot Test', m[ind]['unit']])
+
 
 def test_dataset_with_DFAB():
     name = 'Test'
@@ -1916,6 +1950,7 @@ def test_dataset_with_DFAB():
 
     compute_DFAB_energy_usage()
 
+
 def test_align():
     """
     Tests the alignment of two time series.
@@ -1925,8 +1960,8 @@ def test_align():
     t_i1 = '2019-01-01 00:00:00'
     t_i2 = '2019-01-01 00:30:00'
     dt = 15
-    ts_1 = np.array([1, 2, 2, 2, 3, 3], dtype = np.float32)
-    ts_2 = np.array([2, 3, 3], dtype = np.float32)
+    ts_1 = np.array([1, 2, 2, 2, 3, 3], dtype=np.float32)
+    ts_2 = np.array([2, 3, 3], dtype=np.float32)
 
     # Do tests
     test1 = align_ts(ts_1, ts_2, t_i1, t_i2, dt)
@@ -1942,21 +1977,21 @@ def test_align():
 
     return
 
+
 def test_dataset_artificially():
     """
     Constructs a small synthetic dataset and makes tests.
     """
 
-
-    dat = np.array([1,2,3,7, 
-                    1,3,4,7, 
-                    1,4,5,7,
-                    1,5,6,7], dtype = np.float32).reshape((4, 4))
+    dat = np.array([1, 2, 3, 7,
+                    1, 3, 4, 7,
+                    1, 4, 5, 7,
+                    1, 5, 6, 7], dtype=np.float32).reshape((4, 4))
     c_inds = np.array([2])
     p_inds = np.array([1])
     descs = np.array(["1", "2", "3", "4"])
     is_sc = np.array([False for _ in range(4)])
-    sc = np.empty((4, 2), dtype = np.float32)
+    sc = np.empty((4, 2), dtype=np.float32)
 
     dt = 15
     t_init = '2019-01-01 00:00:00'
@@ -1964,6 +1999,5 @@ def test_dataset_artificially():
 
     ds.save()
     plot_dataset(ds, True, ["Test", "Fuck"])
-
 
     pass
