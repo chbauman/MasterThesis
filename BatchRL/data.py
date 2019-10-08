@@ -1158,7 +1158,6 @@ def compute_DFAB_energy_usage(show_plots = True):
     b = w_dat_not_nan[:, 2]
     x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset = True)
     print("Flow", x)
-    
 
     # Loop over rooms and compute flow per room
     A = np.empty((n_not_nans, n_valves), dtype = np.float32)

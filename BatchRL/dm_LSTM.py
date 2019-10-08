@@ -42,10 +42,10 @@ class BaseRNN_DM(BaseDynamicsModel):
         # Store data
         self.data = data
         self.train_seq_len = self.data.seq_len - 1
-        self.n_feats = self.data.d        
+        self.n_feats = self.data.d
         self.out_dim = self.data.d  - self.data.n_c
 
-        # Store parameters        
+        # Store parameters
         self.hidden_sizes = np.array(hidden_sizes, dtype = np.int32)
         self.n_iter_max = n_iter_max
         self.gru = gru
@@ -116,8 +116,7 @@ class BaseRNN_DM(BaseDynamicsModel):
             loss = 'mse'
 
         optim = Adam(lr = self.lr)
-        model.compile(loss=loss,
-                      optimizer='adam')
+        model.compile(loss=loss, optimizer=optim)
         model.summary()
         self.m = model
         #pth = self.get_plt_path("Model.png")
