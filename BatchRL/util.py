@@ -1,4 +1,3 @@
-
 import os
 
 import numpy as np
@@ -7,15 +6,17 @@ import scipy.optimize.nnls
 
 from datetime import datetime
 
+
 #######################################################################################################
 # Python stuff
 
-def get_if_nnone(lst, indx, default = None):
+def get_if_nnone(lst, indx, default=None):
     """
     Returns a list element if list is not None, 
     else the default value.
     """
     return default if lst is None else lst[indx]
+
 
 def apply(list_or_el, fun):
     """
@@ -27,11 +28,13 @@ def apply(list_or_el, fun):
     else:
         return fun(list_or_el)
 
+
 def repl(el, n):
     """
     Constructs a list with n equal elements 'el'.
     """
     return [el for _ in range(n)]
+
 
 def b_cast(l_or_el, n):
     """
@@ -44,10 +47,11 @@ def b_cast(l_or_el, n):
         raise ValueError("Broadcast failed!!!")
     return repl(l_or_el, n)
 
+
 #######################################################################################################
 # Numerical stuff
 
-def fit_linear_1d(x, y, x_new = None):
+def fit_linear_1d(x, y, x_new=None):
     """
     Fit a linear model y = c * x + m.
     Returns coefficients m and c. If x_new
@@ -56,7 +60,7 @@ def fit_linear_1d(x, y, x_new = None):
     """
 
     n = x.shape[0]
-    ls_mat = np.empty((n, 2), dtype = np.float32)
+    ls_mat = np.empty((n, 2), dtype=np.float32)
     ls_mat[:, 0] = 1
     ls_mat[:, 1] = x
     m, c = np.linalg.lstsq(ls_mat, y, rcond=None)[0]
@@ -65,11 +69,13 @@ def fit_linear_1d(x, y, x_new = None):
     else:
         return c * x_new + m
 
+
 def fit_linear_bf_1d(x, y, b_fun):
     """
     Fits a linear model y = \alpha^T f(x).
     """
-    raise NotImplementedError("Implement this fucking function!")
+    raise NotImplementedError("Implement this fucking function already!")
+
 
 def get_shape1(arr):
     """
@@ -81,11 +87,11 @@ def get_shape1(arr):
         return 1
     else:
         return s[1]
-    return 0
+
 
 def align_ts(ts_1, ts_2, t_init1, t_init2, dt):
     """
-    Aligns the two timeseries with given initial time
+    Aligns the two time series with given initial time
     and constant timestep by padding by np.nan.
     """
 
@@ -100,7 +106,7 @@ def align_ts(ts_1, ts_2, t_init1, t_init2, dt):
     ti1 = datetime_to_npdatetime(string_to_dt(t_init2))
     ti2 = datetime_to_npdatetime(string_to_dt(t_init1))
 
-    # Ugly bugfix
+    # Ugly bug-fix
     if ti1 < ti2:
         dout, t = align_ts(ts_2, ts_1, t_init2, t_init1, dt)
         dout_real = np.copy(dout)
@@ -111,10 +117,10 @@ def align_ts(ts_1, ts_2, t_init1, t_init2, dt):
     offset = np.int(np.round((ti2 - ti1) / interv))
 
     # Compute length
-    out_len = np.maximum(n_2 - offset, n_1) 
+    out_len = np.maximum(n_2 - offset, n_1)
     start_s = offset <= 0
     out_len += offset if not start_s else 0
-    out = np.empty((out_len, d_1 + d_2), dtype = ts_1.dtype)
+    out = np.empty((out_len, d_1 + d_2), dtype=ts_1.dtype)
     out.fill(np.nan)
 
     # Copy over
@@ -131,12 +137,14 @@ def align_ts(ts_1, ts_2, t_init1, t_init2, dt):
 
     return out, t_init_out
 
+
 def add_mean_and_std(ts, mean_and_std):
     """
     Transforms the data back to having mean
     and std as specified.
     """
     return ts * mean_and_std[1] + mean_and_std[0]
+
 
 def check_in_range(arr, low, high):
     """
@@ -147,24 +155,27 @@ def check_in_range(arr, low, high):
         return True
     return np.max(arr < high) and np.min(arr >= low)
 
+
 def split_arr(arr, frac2):
     """
     Splits an array along the first axis, s.t.
-    in the secand part a fraction of 'frac2' 
+    in the second part a fraction of 'frac2'
     is contained.
     """
     n = arr.shape[0]
     n_1 = int((1.0 - frac2) * n)
     return arr[:n_1], arr[n_1:]
 
+
 def copy_arr_list(arr_list):
     """
     Copies a list of numpy arrays.
     """
-    copy_arr_list = [np.copy(a) for a in arr_list]
-    return copy_arr_list
+    copied_arr_list = [np.copy(a) for a in arr_list]
+    return copied_arr_list
 
-def solve_ls(A, b, offset = False, non_neg = False, ret_fit = False):
+
+def solve_ls(A, b, offset=False, non_neg=False, ret_fit=False):
     """
     Solves the least squares problem min_x ||Ax = b||.
     If offset is true, then a bias term is added.
@@ -178,7 +189,7 @@ def solve_ls(A, b, offset = False, non_neg = False, ret_fit = False):
 
     n, m = A.shape
     if offset:
-        A_off = np.empty((n, m + 1), dtype = A.dtype)
+        A_off = np.empty((n, m + 1), dtype=A.dtype)
         A_off[:, 0] = 1.0
         A_off[:, 1:] = A
         A = A_off
@@ -189,6 +200,7 @@ def solve_ls(A, b, offset = False, non_neg = False, ret_fit = False):
         ret_val = [ret_val, fit_vals]
 
     return ret_val
+
 
 #######################################################################################################
 # NEST stuff
@@ -202,13 +214,15 @@ def cleas_desc(nest_desc):
         return nest_desc.split(" ", 1)[1]
     return nest_desc
 
+
 def add_dt_and_tinit(m, dt_mins, dt_init):
     """
-    Adds dt and t_init to the metadata dictionnary m.
+    Adds dt and t_init to the metadata dictionary m.
     """
     for ct, e in enumerate(m):
         m[ct]['t_init'] = dt_to_string(npdatetime_to_datetime(dt_init))
         m[ct]['dt'] = dt_mins
+
 
 #######################################################################################################
 # Os functions
@@ -221,16 +235,18 @@ def create_dir(dirname):
         os.makedirs(dirname)
     return
 
+
 #######################################################################################################
 # Datetime conversions
 
-def npdatetime_to_datetime(npdt):
+def npdatetime_to_datetime(np_dt):
     """
     Convert from numpy datetime to datetime.
     """
-    ts = (npdt - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
+    ts = (np_dt - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
     dt = datetime.utcfromtimestamp(ts)
     return dt
+
 
 def datetime_to_npdatetime(dt):
     """
@@ -238,11 +254,13 @@ def datetime_to_npdatetime(dt):
     """
     return np.datetime64(dt)
 
+
 def dt_to_string(dt):
     """
     Convert datetime to string.
     """
     return str(dt)
+
 
 def string_to_dt(s):
     """
