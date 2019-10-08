@@ -43,13 +43,13 @@ def get_data_folder(name, start_date, end_date):
     return data_dir
 
 
-def read_offline(name, startDate='2019-01-01', endDate='2019-12-31'):
+def read_offline(name, start_date='2019-01-01', end_date='2019-12-31'):
     """
     Read numpy data that has already been created.
     """
 
     # Get folder name
-    data_dir = get_data_folder(name, startDate, endDate)
+    data_dir = get_data_folder(name, start_date, end_date)
 
     # Count files
     ct = 0
@@ -71,10 +71,10 @@ def read_offline(name, startDate='2019-01-01', endDate='2019-12-31'):
 
     # Transform to list of pairs and return
     list_of_tuples = list(zip(val_list, ts_list))
-    return (list_of_tuples, meta_list)
+    return list_of_tuples, meta_list
 
 
-class client(object):
+class Client(object):
     """
     Client for data retrieval from local disk or
     from SQL data base of NEST. Once loaded from the
@@ -91,30 +91,33 @@ class client(object):
         self.domain = domain
         self.url = url
         self.save_dir = save_dir
-        self.startDate = None
+        self.start_date = None
+        self.end_date = None
         self.np_data = []
         self.meta_data = []
+        self.auth = None
         pass
 
-    def read(self, df_data=[], startDate='2019-01-01', endDate='2019-12-31'):
+    def read(self, df_data=None, start_date='2019-01-01', end_date='2019-12-31'):
         """
         Reads data defined by the list of column IDs df_data
         that was acquired between startDate and endDate.
         """
 
+        if df_data is None:
+            df_data = []
+
         # https://github.com/brandond/requests-negotiate-sspi/blob/master/README.md
         from requests_negotiate_sspi import HttpNegotiateAuth
 
-        self.startDate = startDate
-        self.endDate = endDate
+        self.start_date = start_date
+        self.end_date = end_date
 
         # Check Login
-        log_data = get_pw()
-        self.username = log_data[0]
-        self.password = log_data[1]
+        username, pw = get_pw()
         self.auth = HttpNegotiateAuth(domain=self.domain,
-                                      username=self.username,
-                                      password=self.password)
+                                      username=username,
+                                      password=pw)
         s = requests.Session()
         try:
             # This fails if the username exists but the password
@@ -139,14 +142,14 @@ class client(object):
             url = self.url + column
             meta_data = s.get(url=url).json()
             self.meta_data += [meta_data]
-            url += '/timeline?startDate=' + startDate + '&endDate=' + endDate
+            url += '/timeline?startDate=' + start_date + '&endDate=' + end_date
             df = pd.DataFrame(data=s.get(url=url).json())
 
             # Convert to Numpy
-            vals = df.loc[:, "value"].to_numpy()
+            values = df.loc[:, "value"].to_numpy()
             ts = pd.to_datetime(df.loc[:, "timestamp"])
             ts = ts.to_numpy(dtype=np.datetime64)
-            self.np_data += [(vals, ts)]
+            self.np_data += [(values, ts)]
             print("Added column", ct + 1, "with ID", column)
 
         print(time.ctime() + ' REST client data acquired')
@@ -161,10 +164,10 @@ class client(object):
         print("Writing Data to local disk.")
 
         # Create directory
-        if self.startDate is None:
+        if self.start_date is None:
             print("Read data first!!")
             return
-        data_dir = get_data_folder(name, self.startDate, self.endDate)
+        data_dir = get_data_folder(name, self.start_date, self.end_date)
         if not os.path.isdir(data_dir):
             os.mkdir(data_dir)
         elif overwrite:
@@ -183,7 +186,6 @@ class client(object):
             meta_name = os.path.join(data_dir, 'meta_' + str(ct) + '.txt')
             with open(meta_name, 'w') as data:
                 data.write(str(self.meta_data[ct]))
-
         return
 
 
@@ -199,16 +201,17 @@ class DataStruct:
                  start_date='2019-01-01',
                  end_date='2019-12-31'):
 
-        # Initialize values and client
+        # Initialize values
         self.name = name
-        self.startDate = start_date
-        self.endDate = end_date
+        self.start_date = start_date
+        self.end_date = end_date
 
         # Convert elements of id_list to strings.
         for ct, el in enumerate(id_list):
             id_list[ct] = str(el)
         self.data_ids = id_list
         self.client_loaded = False
+        self.REST = None
         pass
 
     def load_client(self):
@@ -216,7 +219,7 @@ class DataStruct:
         Loads the REST client if not yet loaded.
         """
         if not self.client_loaded:
-            self.REST = client()
+            self.REST = Client()
             self.client_loaded = True
 
     def getData(self):
@@ -224,25 +227,25 @@ class DataStruct:
         If the data is not found locally it is 
         retrieved from the SQL database, otherwise 
         the local data is read and returned.
-        Returns (list((np.array(vals), np.array(timestamps))), list(dict()))
+        Returns (list((np.array(values), np.array(timestamps))), list(dict()))
         """
 
         self.load_client()
-        data_folder = get_data_folder(self.name, self.startDate, self.endDate)
+        data_folder = get_data_folder(self.name, self.start_date, self.end_date)
         if not os.path.isdir(data_folder):
             # Read from SQL database and write for later use
             ret_val, meta_data = self.REST.read(self.data_ids,
-                                                startDate=self.startDate,
-                                                endDate=self.endDate)
+                                                start_date=self.start_date,
+                                                end_date=self.end_date)
             if ret_val is None:
                 return None
             self.REST.write_np(self.name)
         else:
             # Read locally
             ret_val, meta_data = read_offline(self.name,
-                                                        startDate=self.startDate,
-                                                        endDate=self.endDate)
-        return (ret_val, meta_data)
+                                              start_date=self.start_date,
+                                              end_date=self.end_date)
+        return ret_val, meta_data
 
     pass
 
