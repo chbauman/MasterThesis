@@ -1064,7 +1064,6 @@ def get_weather_data(save_plots=True):
                     save_name=plot_name_irr)
 
     # Save and return
-    no_inds = np.array([], dtype=np.int32)
     w_dataset = Dataset.fromRaw(all_data, m_out, name, c_inds=no_inds, p_inds=no_inds)
     w_dataset.save()
     return w_dataset
