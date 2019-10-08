@@ -50,6 +50,11 @@ class BatteryModel(BaseDynamicsModel):
         raise NotImplementedError("Disturbance for battery model not implemented!")
 
     def analyze_bat_model(self):
+        """
+        This is basically the fit method, but it also
+        does some data analysis and makes some plots.
+        :return: None
+        """
         # Get data
         d = self.data
         dat = d.orig_trainval
