@@ -34,12 +34,12 @@ class LoginDialog(wx.Dialog):
         main_sizer.Add(p_sizer, 0, wx.ALL, 5)
 
         btn = wx.Button(self, label="Login")
-        btn.Bind(wx.EVT_BUTTON, self.onLogin)
+        btn.Bind(wx.EVT_BUTTON, self.on_login)
         main_sizer.Add(btn, 0, wx.ALL | wx.CENTER, 5)
 
         self.SetSizer(main_sizer)
 
-    def onLogin(self, event):
+    def on_login(self, event):
         """
         Save login data to login holder.
         """
@@ -69,7 +69,7 @@ class MainFrame(wx.Frame):
         self.Destroy()
 
 
-class login_holder:
+class LoginHolder:
     """
     Class that holds the login information.
     """
@@ -80,11 +80,11 @@ class login_holder:
 
 def get_pw():
     """
-    Opens GUI and retrieves the login informations
+    Opens GUI and retrieves the login information
     (username, password) and returns them in a tuple.
     """
 
-    lh = login_holder()
+    lh = LoginHolder()
     app = wx.App(False)
     frame = MainFrame(lh)
 
