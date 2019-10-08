@@ -669,11 +669,33 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
     return all_dat, dt_init_new
 
 
-def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, prep_arg_list,
-                     desc_list=None,
-                     c_inds=None,
-                     p_inds=None,
-                     standardize_data=False):
+def save_ds_from_raw(all_data, m_out, name, c_inds=None, p_inds=None, standardize_data=False):
+    """
+    Creates a dataset from the raw input data.
+    :param all_data: 2D numpy data array
+    :param m_out: List with metadata dictionnaries.
+    :param name: Name of the dataset.
+    :param c_inds: Control indices.
+    :param p_inds: Prediction indices.
+    :param standardize_data:
+    :return: Dataset
+    """
+    if c_inds is None:
+        c_inds = no_inds
+    if p_inds is None:
+        p_inds = no_inds
+    if standardize_data:
+        all_data, m_out = standardize(all_data, m_out)
+    dataset = Dataset.fromRaw(all_data, m_out, name, c_inds=c_inds, p_inds=p_inds)
+    dataset.save()
+    return dataset
+
+
+def get_from_data_struct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, prep_arg_list,
+                         desc_list=None,
+                         c_inds=None,
+                         p_inds=None,
+                         standardize_data=False):
     """
     Extracts the specified series and applies
     pre-processing steps to all of them and puts them into a
@@ -686,12 +708,8 @@ def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, pre
     # Try loading data
     try:
         loaded = Dataset.loadDataset(name)
-    except FileNotFoundError:
-        loaded = None
-
-    if loaded is not None:
         return loaded
-    else:
+    except FileNotFoundError:
         data, m = dat_struct.getData()
         n_cols = len(data)
 
@@ -713,9 +731,9 @@ def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, pre
             n_cs = n_inds if ct == 0 else None
             title = cleas_desc(m[i]['description'])
             title = title if desc_list is None else desc_list[ct]
-            addid_cols = m[i]['additionalColumns']
+            added_cols = m[i]['additionalColumns']
             plot_name = ""
-            plot_file_name = os.path.join(base_plot_dir, addid_cols['AKS Code'])
+            plot_file_name = os.path.join(base_plot_dir, added_cols['AKS Code'])
             all_data, dt_init = add_and_save_plot_series(data, m, all_data, i, dt_mins, dt_init, plot_name,
                                                          plot_file_name, title,
                                                          n_cols=n_cs,
@@ -724,20 +742,14 @@ def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, pre
             m_out += [m[i]]
 
         # Save
-        if c_inds is None:
-            c_inds = no_inds
-        if p_inds is None:
-            p_inds = no_inds
-        if standardize_data:
-            all_data, m_out = standardize(all_data, m_out)
-        dataset = Dataset.fromRaw(all_data, m_out, name, c_inds=c_inds, p_inds=p_inds)
-        dataset.save()
-        return dataset
+        return save_ds_from_raw(all_data, m_out, name, c_inds, p_inds, standardize_data)
     pass
 
 
-def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs,
-                       standardize_data=False):
+def convert_data_struct(dat_struct, base_plot_dir, dt_mins, pl_kwargs,
+                        c_inds=None,
+                        p_inds=None,
+                        standardize_data=False):
     """
     Converts a DataStruct to a Dataset.
     Using the same pre-processing steps for each series
@@ -750,12 +762,8 @@ def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs,
     # Try loading data
     try:
         loaded = Dataset.loadDataset(name)
-    except FileNotFoundError:
-        loaded = None
-
-    if loaded is not None:
         return loaded
-    else:
+    except FileNotFoundError:
         data, m = dat_struct.getData()
         n_cols = len(data)
         pl_kwargs = b_cast(pl_kwargs, n_cols)
@@ -766,8 +774,8 @@ def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs,
         for i in range(n_cols):
             n_cs = n_cols if i == 0 else None
             title = cleas_desc(m[i]['description'])
-            addid_cols = m[i]['additionalColumns']
-            plot_name = addid_cols['AKS Code']
+            added_cols = m[i]['additionalColumns']
+            plot_name = added_cols['AKS Code']
             plot_file_name = os.path.join(base_plot_dir, name)
             all_data, dt_init = add_and_save_plot_series(data, m, all_data, i, dt_mins, dt_init, plot_name,
                                                          plot_file_name, title,
@@ -775,12 +783,7 @@ def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs,
                                                          pipeline_kwargs=pl_kwargs[i])
 
         # Save
-        c_inds = np.array(range(n_cols))
-        if standardize_data:
-            all_data, m = standardize(all_data, m)
-        dataset = Dataset.fromRaw(all_data, m, name, c_inds=c_inds, p_inds=no_inds)
-        dataset.save()
-        return dataset
+        return save_ds_from_raw(all_data, m, name, c_inds, p_inds, standardize_data)
 
 
 #######################################################################################################
@@ -951,10 +954,10 @@ def get_battery_data():
     kws = [p_kwargs_soc, p_kwargs_ap]
     c_inds = np.array([1], dtype=np.int32)
     p_inds = np.array([0], dtype=np.int32)
-    ds = get_from_dstruct(BatteryData, bat_plot_path, dt_mins, name, inds, kws,
-                          c_inds=c_inds,
-                          p_inds=p_inds,
-                          standardize_data=True)
+    ds = get_from_data_struct(BatteryData, bat_plot_path, dt_mins, name, inds, kws,
+                              c_inds=c_inds,
+                              p_inds=p_inds,
+                              standardize_data=True)
 
     # Plot files
     plot_name_roi = os.path.join(bat_plot_path, "Strange")
@@ -1093,7 +1096,7 @@ def get_UMAR_heating_data():
                           'gauss_sigma': filter_sigma}
         kws = [p_kwargs_room_temp, p_kwargs_win, p_kwargs_valve]
         inds = [1, 11, 12]
-        all_ds += [get_from_dstruct(dat_struct, umar_rooms_plot_path, dt_mins, dat_struct.name, inds, kws)]
+        all_ds += [get_from_data_struct(dat_struct, umar_rooms_plot_path, dt_mins, dat_struct.name, inds, kws)]
 
     return all_ds
 
@@ -1117,18 +1120,18 @@ def get_DFAB_heating_data():
         prep_kwargs = [temp_kwargs, valve_kwargs, valve_kwargs, valve_kwargs]
         if n_cols == 5:
             prep_kwargs += [blinds_kwargs]
-        data_list += [convert_datastruct(e, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
+        data_list += [convert_data_struct(e, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
 
     ################################
     # General Heating Data
     temp_kwargs = {'remove_out_int_args': [10, 50], 'gauss_sigma': 5.0}
     prep_kwargs = [temp_kwargs, temp_kwargs, {}, {}, {}, {}]
-    data_list += [convert_datastruct(DFAB_AddData, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
+    data_list += [convert_data_struct(DFAB_AddData, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
 
     ################################
     # All Valves Together
     prep_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
-    data_list += [convert_datastruct(DFAB_AllValves, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
+    data_list += [convert_data_struct(DFAB_AllValves, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
     return data_list
 
 
@@ -1369,6 +1372,22 @@ class Dataset:
         self.data = all_data
         if self.d == 1:
             self.data = np.reshape(self.data, (-1, 1))
+
+        # Variables for later use
+        self.streak_len = None
+        self.orig_train_val = None
+        self.orig_test = None
+        self.orig_train = None
+        self.orig_val = None
+        self.train_streak = None
+        self.test_data = None
+        self.train_val_data = None
+        self.train_data = None
+        self.val_data = None
+        self.train_streak_data = None
+
+        self.c_inds_prep = None
+        self.p_inds_prep = None
         return
 
     def split_train_test(self, streak_len=7):
@@ -1379,13 +1398,13 @@ class Dataset:
         # split data        
         s_len = int(60 / self.dt * 24 * streak_len)
         self.streak_len = s_len
-        self.orig_trainval, self.orig_test = cut_and_split(np.copy(self.data), self.seq_len, s_len, ret_orig=True)
-        self.orig_train, self.orig_val = split_arr(np.copy(self.orig_trainval), self.val_percent)
+        self.orig_train_val, self.orig_test = cut_and_split(np.copy(self.data), self.seq_len, s_len, ret_orig=True)
+        self.orig_train, self.orig_val = split_arr(np.copy(self.orig_train_val), self.val_percent)
         _, self.train_streak = extract_streak(np.copy(self.orig_train), s_len, self.seq_len - 1)
 
-        # Cut into sequences and saveself.
+        # Cut into sequences and save to self.
         self.test_data = cut_data_into_sequences(np.copy(self.orig_test), self.seq_len, interleave=True)
-        self.train_val_data = cut_data_into_sequences(np.copy(self.orig_trainval), self.seq_len, interleave=True)
+        self.train_val_data = cut_data_into_sequences(np.copy(self.orig_train_val), self.seq_len, interleave=True)
         self.train_data = cut_data_into_sequences(np.copy(self.orig_train), self.seq_len, interleave=True)
         self.val_data = cut_data_into_sequences(np.copy(self.orig_val), self.seq_len, interleave=True)
         self.train_streak_data = cut_data_into_sequences(np.copy(self.train_streak), self.seq_len, interleave=True)
@@ -1416,7 +1435,7 @@ class Dataset:
         n_c = self.n_c
 
         # Get control and other column indices
-        cont_inds = np.empty((d), dtype=np.bool)
+        cont_inds = np.empty([d], dtype=np.bool)
         cont_inds.fill(False)
         cont_inds[self.c_inds] = True
         other_inds = np.logical_not(cont_inds)
@@ -1452,10 +1471,10 @@ class Dataset:
         is_scaled = np.empty((d,), dtype=np.bool)
         is_scaled.fill(True)
         scaling = np.empty((d, 2), dtype=np.float32)
-        descs = np.empty((d,), dtype="U100")
+        descriptions = np.empty((d,), dtype="U100")
         for ct, el in enumerate(m):
             desc = el['description']
-            descs[ct] = desc
+            descriptions[ct] = desc
             m_a_s = el.get('mean_and_std')
             if m_a_s is not None:
                 scaling[ct, 0] = m_a_s[0]
@@ -1463,7 +1482,7 @@ class Dataset:
             else:
                 is_scaled[ct] = False
 
-        ret_val = cls(np.copy(all_data), dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
+        ret_val = cls(np.copy(all_data), dt, t_init, scaling, is_scaled, descriptions, c_inds, p_inds, name)
         return ret_val
 
     def __len__(self):
@@ -1472,7 +1491,7 @@ class Dataset:
     def __str__(self):
         out_str = "Dataset(" + repr(self.data) + ", \ndt = " + repr(self.dt)
         out_str += ", t_init = " + repr(self.t_init) + ", \nis_scaled = " + repr(self.is_scaled)
-        out_str += ", \ndescs = " + repr(self.descriptions) + ", \nc_inds = " + repr(self.c_inds)
+        out_str += ", \ndescriptions = " + repr(self.descriptions) + ", \nc_inds = " + repr(self.c_inds)
         out_str += ", \np_inds = " + repr(self.p_inds) + ", name = " + str(self.name) + ")"
         return out_str
 
@@ -1564,9 +1583,7 @@ class Dataset:
         """
 
         warnings.warn("Prediction and control indices are lost when slicing.")
-        no_inds = np.array([], dtype=np.int32)
-        l = ind_low
-        h = ind_high
+        low = ind_low
 
         if ind_low < 0 or ind_high > self.d or ind_low >= ind_high:
             raise ValueError("Slice indices are invalid.")
@@ -1581,15 +1598,15 @@ class Dataset:
                            no_inds,
                            self.name + "[" + str(ind_low) + ":" + str(ind_high) + "]")
         else:
-            return Dataset(np.copy(self.data[:, l:l + 1]),
+            return Dataset(np.copy(self.data[:, low:low + 1]),
                            self.dt,
                            self.t_init,
-                           np.copy(self.scaling[l:l + 1]),
-                           np.copy(self.is_scaled[l:l + 1]),
-                           np.copy(self.descriptions[l:l + 1]),
+                           np.copy(self.scaling[low:low + 1]),
+                           np.copy(self.is_scaled[low:low + 1]),
+                           np.copy(self.descriptions[low:low + 1]),
                            no_inds,
                            no_inds,
-                           self.name + "[" + str(l) + "]")
+                           self.name + "[" + str(low) + "]")
 
     def __getitem__(self, key):
         """
@@ -1611,7 +1628,6 @@ class Dataset:
         file_name = self.get_filename(self.name)
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
-        pass
 
     def getUnscaledData(self):
         """
@@ -1636,13 +1652,18 @@ class Dataset:
         """
         f_name = Dataset.get_filename(name)
         if not os.path.isfile(f_name):
-            raise FileNotFoundError("Dataset " + f_name + " does not exist.")
+            raise FileNotFoundError("Dataset {} does not exist.".format(f_name))
         with open(f_name, 'rb') as f:
             ds = pickle.load(f)
             return ds
-        return
 
     def standardize_col(self, col_ind):
+        """
+        Standardizes a certain column of the data.
+        Nans are ignored.
+        :param col_ind: Index of the column to be standardized.
+        :return: None
+        """
         if col_ind >= self.d:
             raise ValueError("Column index too big!")
         if self.is_scaled[col_ind]:
@@ -1662,7 +1683,8 @@ class Dataset:
 
     def visualize_nans(self, name_ext=""):
         """
-        Visualizes where the holes are in the time series.
+        Visualizes where the holes are in the different
+        time series (columns) of the data.
         """
         nan_plot_dir = os.path.join(plot_dir, "NanPlots")
         create_dir(nan_plot_dir)
@@ -1677,7 +1699,6 @@ class Dataset:
                  title_and_ylab=["Nan plot", "Series"],
                  scale_back=False,
                  save_name=s_name + name_ext)
-
     pass
 
 
@@ -1764,8 +1785,8 @@ class TestDataSynthetic:
     """
     Synthetic and short dataset to be used for debugging.
     """
-    def getData(self):
 
+    def getData(self):
         # First Time series
         dict1 = {'description': "Synthetic Data Series 1: Base Series", 'unit': "Test Unit 1"}
         val_1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
