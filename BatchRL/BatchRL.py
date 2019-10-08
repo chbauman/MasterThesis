@@ -18,8 +18,8 @@ from pendulum import Pendulum
 from data import WeatherData, TestData, \
     analyze_data, get_UMAR_heating_data, get_data_test, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
-    get_DFAB_heating_data, test_plotting_withDFAB_data, test_dataset_with_DFAB, \
-    compute_DFAB_energy_usage, get_weather_data, generateRoomDatasets, \
+    get_DFAB_heating_data, \
+    compute_DFAB_energy_usage, get_weather_data, generate_room_datasets, \
     analyze_room_energy_consumption, Dataset, test_align, test_dataset_artificially
 
 
@@ -47,6 +47,13 @@ def simple_battery_FQI():
 
 def main():
     get_DFAB_heating_data()
+    generate_room_datasets()
+
+    # Do tests
+    get_data_test()
+    test_align()
+    test_dataset_artificially()
+
     # compute_DFAB_energy_usage()
     # return
 
@@ -74,14 +81,14 @@ def main():
     mod.model_disturbance()
     mod.disturb()
     mod.analyze()
-    return
+    # return
 
-    ##compute_DFAB_energy_usage()
+    # compute_DFAB_energy_usage()
     # return
 
     # Battery data
     bat_name = "Battery"
-    # get_battery_data(True) # Needs to be fixed!!!
+    get_battery_data()  # Needs to be fixed!!!
     bat_ds = Dataset.loadDataset(bat_name)
     bat_ds.split_train_test(7)
     bat_ds.get_prepared_data()

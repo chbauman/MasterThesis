@@ -332,7 +332,7 @@ def interpolate_time_series(dat, dt_mins, lin_ip=False):
     start_dt = floor_datetime_to_min(dates[0], dt_mins)
     end_dt = floor_datetime_to_min(dates[-1], dt_mins)
     interval = np.timedelta64(dt_mins, 'm')
-    n_ts = (end_dt - start_dt) // interval + 1
+    n_ts = int((end_dt - start_dt) / interval + 1)
     print(n_ts, "Timesteps")
 
     # Initialize
@@ -365,7 +365,7 @@ def interpolate_time_series(dat, dt_mins, lin_ip=False):
                 else:
                     new_values[count] = last_val
                 count += 1
-                n_data_missing = (curr_dt - curr_upper_lim) // interval
+                n_data_missing = int((curr_dt - curr_upper_lim) / interval)
                 print("Missing", n_data_missing, "data points :(")
                 for k in range(n_data_missing):
                     new_values[count] = np.nan
@@ -444,7 +444,7 @@ def fill_holes_linear_interpolate(time_series, max_width=1):
         return
 
     # Neglect NaNs at beginning and end
-    non_nans = np.where(not nan_bool)[0]
+    non_nans = np.where(nan_bool == False)[0]
     nan_bool[:non_nans[0]] = False
     nan_bool[non_nans[-1]:] = False
 
@@ -457,7 +457,7 @@ def fill_holes_linear_interpolate(time_series, max_width=1):
 
     while ind_ind < all_nans.shape[0]:
         s_ind = all_nans[ind_ind][0]
-        streak_len = np.where(not nan_bool[s_ind:])[0][0]
+        streak_len = np.where(nan_bool[s_ind:] == False)[0][0]
         if streak_len <= max_width:
 
             # Interpolate values
@@ -472,7 +472,7 @@ def fill_holes_linear_interpolate(time_series, max_width=1):
     return
 
 
-def remove_outliers(time_series, grad_clip=100, clip_interv=None):
+def remove_outliers(time_series, grad_clip=100.0, clip_interv=None):
     """
     Removes data points that lie outside 
     the specified interval 'clip_int' and ones 
@@ -669,10 +669,14 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
     return all_dat, dt_init_new
 
 
-def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, prep_arg_list, desc_list=None):
+def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, prep_arg_list,
+                     desc_list=None,
+                     c_inds=None,
+                     p_inds=None,
+                     standardize_data=False):
     """
     Extracts the specified series and applies
-    preprocessing steps to all of them and puts them into a 
+    pre-processing steps to all of them and puts them into a
     Dataset.
     """
 
@@ -697,7 +701,7 @@ def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, pre
         if n_inds > n_cols or n_preps > n_inds:
             raise ValueError("Too long lists!")
         if desc_list is not None:
-            if len(dec_list) != n_inds:
+            if len(desc_list) != n_inds:
                 raise ValueError("List of description does not have correct length!!")
 
         all_data = None
@@ -720,19 +724,23 @@ def get_from_dstruct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, pre
             m_out += [m[i]]
 
         # Save
-        no_inds = np.array([], dtype=np.int32)
-        c_inds = np.array(range(n_cols))
-        dataset = Dataset.fromRaw(all_data, m_out, name, c_inds=c_inds, p_inds=no_inds)
+        if c_inds is None:
+            c_inds = no_inds
+        if p_inds is None:
+            p_inds = no_inds
+        if standardize_data:
+            all_data, m_out = standardize(all_data, m_out)
+        dataset = Dataset.fromRaw(all_data, m_out, name, c_inds=c_inds, p_inds=p_inds)
         dataset.save()
         return dataset
-
     pass
 
 
-def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs, standd=False):
+def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs,
+                       standardize_data=False):
     """
     Converts a DataStruct to a Dataset.
-    Using the same preprocessing steps for each series
+    Using the same pre-processing steps for each series
     int the DataStruct.
     """
 
@@ -767,9 +775,8 @@ def convert_datastruct(dat_struct, base_plot_dir, dt_mins, pl_kwargs, standd=Fal
                                                          pipeline_kwargs=pl_kwargs[i])
 
         # Save
-        no_inds = np.array([], dtype=np.int32)
         c_inds = np.array(range(n_cols))
-        if standd:
+        if standardize_data:
             all_data, m = standardize(all_data, m)
         dataset = Dataset.fromRaw(all_data, m, name, c_inds=c_inds, p_inds=no_inds)
         dataset.save()
@@ -828,7 +835,7 @@ def cut_into_fixed_len(col_has_nan, seq_len=20, interleave=True):
     # Initialize and find first non-NaN
     max_n_seq = n if interleave else n // seq_len
     seqs = np.empty((seq_len, max_n_seq), dtype=np.int32)
-    ct = np.where(not col_has_nan)[0][0]
+    ct = np.where(col_has_nan == False)[0][0]
     seq_count = 0
 
     while True:
@@ -850,7 +857,7 @@ def cut_into_fixed_len(col_has_nan, seq_len=20, interleave=True):
 
         # Find next non-NaN
         ct += curr_seq_len
-        non_zs = np.where(not col_has_nan[ct:])[0]
+        non_zs = np.where(col_has_nan[ct:] == False)[0]
 
         # Break if none found
         if non_zs.shape[0] == 0:
@@ -942,7 +949,12 @@ def get_battery_data():
                     'lin_ip': True}
     p_kwargs_ap = {'clean_args': [([], 6 * 60, [])]}
     kws = [p_kwargs_soc, p_kwargs_ap]
-    ds = get_from_dstruct(BatteryData, bat_plot_path, dt_mins, name, inds, kws)
+    c_inds = np.array([1], dtype=np.int32)
+    p_inds = np.array([0], dtype=np.int32)
+    ds = get_from_dstruct(BatteryData, bat_plot_path, dt_mins, name, inds, kws,
+                          c_inds=c_inds,
+                          p_inds=p_inds,
+                          standardize_data=True)
 
     # Plot files
     plot_name_roi = os.path.join(bat_plot_path, "Strange")
@@ -1669,9 +1681,9 @@ class Dataset:
     pass
 
 
-def generateRoomDatasets():
+def generate_room_datasets():
     """
-    Gather the right data and put it togeter
+    Gather the right data and put it together.
     """
 
     # Get weather
@@ -1679,13 +1691,13 @@ def generateRoomDatasets():
     dt = w_dataset.dt
 
     # Get room data
-    dfab_dataset_list = get_DFAB_heating_data(use_dataset=True)
+    dfab_dataset_list = get_DFAB_heating_data()
     n_rooms = len(rooms)
     dfab_room_dataset_list = [dfab_dataset_list[i] for i in range(n_rooms)]
 
     # Heating water temperature
-    dfab_hwater_temp_ds = dfab_dataset_list[n_rooms]
-    inlet_water_ds = dfab_hwater_temp_ds[0]
+    dfab_heat_water_temp_ds = dfab_dataset_list[n_rooms]
+    inlet_water_ds = dfab_heat_water_temp_ds[0]
     inlet_water_and_weather = w_dataset + inlet_water_ds
 
     out_ds_list = []
@@ -1748,18 +1760,16 @@ TestData = DataStruct(id_list=[421100171, 421100172],
                       end_date='2019-08-09')
 
 
-class TestDataSynth:
+class TestDataSynthetic:
+    """
+    Synthetic and short dataset to be used for debugging.
+    """
     def getData(self):
-        """
-         Synthetic and short dataset to be used for debugging.
-         """
 
         # First Time series
-        dict1 = {}
-        dict1['description'] = "Synthetic Data Series 1: Base Series"
-        dict1['unit'] = "Test Unit 1"
-        vals1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
-        dats1 = np.array([
+        dict1 = {'description': "Synthetic Data Series 1: Base Series", 'unit': "Test Unit 1"}
+        val_1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
+        dat_1 = np.array([
             np.datetime64('2005-02-25T03:31'),
             np.datetime64('2005-02-25T03:39'),
             np.datetime64('2005-02-25T03:48'),
@@ -1769,11 +1779,9 @@ class TestDataSynth:
         ], dtype='datetime64')
 
         # Second Time series
-        dict2 = {}
-        dict2['description'] = "Synthetic Data Series 2: Delayed and longer"
-        dict2['unit'] = "Test Unit 2"
-        vals2 = np.array([1.0, 1.4, 2.1, 1.5, 3.3, 1.8, 2.5])
-        dats2 = np.array([
+        dict2 = {'description': "Synthetic Data Series 2: Delayed and longer", 'unit': "Test Unit 2"}
+        val_2 = np.array([1.0, 1.4, 2.1, 1.5, 3.3, 1.8, 2.5])
+        dat_2 = np.array([
             np.datetime64('2005-02-25T03:51'),
             np.datetime64('2005-02-25T03:59'),
             np.datetime64('2005-02-25T04:17'),
@@ -1784,11 +1792,9 @@ class TestDataSynth:
         ], dtype='datetime64')
 
         # Third Time series
-        dict3 = {}
-        dict3['description'] = "Synthetic Data Series 3: Repeating Values"
-        dict3['unit'] = "Test Unit 3"
-        vals3 = np.array([0.0, 1.4, 1.4, 0.0, 3.3, 3.3, 3.3, 3.3, 0.0, 3.3, 2.5])
-        dats3 = np.array([
+        dict3 = {'description': "Synthetic Data Series 3: Repeating Values", 'unit': "Test Unit 3"}
+        val_3 = np.array([0.0, 1.4, 1.4, 0.0, 3.3, 3.3, 3.3, 3.3, 0.0, 3.3, 2.5])
+        dat_3 = np.array([
             np.datetime64('2005-02-25T03:45'),
             np.datetime64('2005-02-25T03:53'),
             np.datetime64('2005-02-25T03:59'),
@@ -1801,10 +1807,10 @@ class TestDataSynth:
             np.datetime64('2005-02-25T04:55'),
             np.datetime64('2005-02-25T05:01'),
         ], dtype='datetime64')
-        return ([(vals1, dats1), (vals2, dats2), (vals3, dats3)], [dict1, dict2, dict3])
+        return [(val_1, dat_1), (val_2, dat_2), (val_3, dat_3)], [dict1, dict2, dict3]
 
 
-TestData2 = TestDataSynth()
+TestData2 = TestDataSynthetic()
 
 
 # Tests
@@ -1821,8 +1827,8 @@ def get_data_test():
     print(all_dat)
 
     # Test
-    strk = extract_streak(all_dat, 2, 2)
-    print(strk)
+    streak = extract_streak(all_dat, 2, 2)
+    print(streak)
 
     # Test Standardizing
     m = [{}, {}]
@@ -1879,71 +1885,7 @@ def get_data_test():
     print(data2)
 
     add_col(all_data, data2, dt_init1, dt_init2, 2, dt_mins)
-
-    save_processed_data(all_data, m, name)
-    d, m_new, name = load_processed_data(name)
-    print(m_new[0])
     return all_data, m, name
-
-
-def test_plotting_withDFAB_data():
-    data_list = get_DFAB_heating_data()
-    all_data, metadata, name = data_list[-1]
-    data, m = DFAB_AddData.getData()
-
-    # Plot test
-    ind = 0
-    plot_time_series(data[ind][1], data[ind][0], m=metadata[ind], show=False)
-
-    plot_single_ip_ts(all_data[:, ind],
-                      lab='Out Water Temp',
-                      show=False,
-                      mean_and_std=metadata[ind]['mean_and_std'],
-                      use_time=False,
-                      title_and_ylab=['Single TS Plot Test', metadata[ind]['unit']],
-                      dt_mins=metadata[ind]['dt']
-                      )
-
-    plot_single_ip_ts(all_data[:, ind],
-                      lab='Out Water Temp',
-                      show=False,
-                      mean_and_std=metadata[ind]['mean_and_std'],
-                      use_time=True,
-                      title_and_ylab=['Single TS with Dates Plot Test', metadata[ind]['unit']],
-                      dt_mins=metadata[ind]['dt'],
-                      dt_init_str=metadata[ind]['t_init']
-                      )
-
-    m = metadata
-    plot_multiple_ip_ts([all_data[:, 0], all_data[:, 1]],
-                        lab_list=[m[i]['description'] for i in range(2)],
-                        mean_and_std_list=[m[i]['mean_and_std'] for i in range(2)],
-                        use_time=True,
-                        timestep_offset_list=[-1, 1],
-                        dt_init_str_list=[m[i]['t_init'] for i in range(2)],
-                        show_last=False,
-                        title_and_ylab=['Two TS with Dates Plot Test', m[ind]['unit']],
-                        )
-
-    plot_all(all_data, m, show=True, title_and_ylab=['Two TS with Dates High Level Plot Test', m[ind]['unit']])
-
-
-def test_dataset_with_DFAB():
-    name = 'Test'
-
-    # Get part of DFAB data
-    data_list = get_DFAB_heating_data()
-    all_data, metadata, _ = data_list[-1]
-
-    s = all_data.shape
-    c_inds = np.array([s[1] - 1])
-    p_inds = np.array([s[1] - 2])
-    ds = Dataset.fromRaw(all_data, metadata, name, c_inds, p_inds)
-    ds.save()
-
-    ds_new = Dataset.loadDataset(name)
-
-    compute_DFAB_energy_usage()
 
 
 def test_align():
