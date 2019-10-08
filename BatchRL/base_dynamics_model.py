@@ -1,4 +1,3 @@
-
 import os
 
 import numpy as np
@@ -6,10 +5,29 @@ import numpy as np
 from keras.models import load_model
 from abc import ABC, abstractmethod
 
-from visualize import plot_ip_time_series, plot_multiple_ip_ts, plot_dataset,\
+from time_series import AR_Model
+from visualize import plot_ip_time_series, plot_multiple_ip_ts, plot_dataset, \
     model_plot_path
 from data import Dataset
-from util import * 
+from util import *
+
+
+def get_plot_ds(s, tr, d, orig_p_ind):
+    """
+    :return: Dataset with truth series as second series.
+    """
+    plot_data = np.empty((s[0], 2), dtype=np.float32)
+    plot_data[:, 1] = tr
+    scaling = np.array(repl(d.scaling[orig_p_ind], 2))
+    is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype=np.bool)
+    analysis_ds = Dataset(plot_data,
+                          d.dt,
+                          d.t_init,
+                          scaling,
+                          is_scd,
+                          ['Prediction', 'Ground Truth'])
+    return analysis_ds
+
 
 class BaseDynamicsModel(ABC):
     """
@@ -45,23 +63,22 @@ class BaseDynamicsModel(ABC):
             m.load_weights(full_path)
             return True
         return False
-    
-    def model_disturbance(self, data_str = 'train_val'):
+
+    def model_disturbance(self, data_str='train_val'):
         """
         Models the uncertainties in the model.
         """
 
         # Compute residuals
         input_data, output_data = self.data.get_prepared_data(data_str)
-        resids = self.predict(input_data) - output_data
-        #print(resids)
+        residuals = self.predict(input_data) - output_data
         N_LAG = 4
 
         if self.use_AR:
             # Fit an AR process for each output dimension
-            self.dist_mod = [AR_Model(lag = N_LAG).fit(resids[:, k]) for k in range(self.out_dim)]
+            self.dist_mod = [AR_Model(lag=N_LAG).fit(residuals[:, k]) for k in range(self.out_dim)]
             self.init_pred = np.zeros((N_LAG, self.out_dim))
-        self.res_std = np.std(resids, axis = 0)
+        self.res_std = np.std(residuals, axis=0)
         self.modeled_disturbance = True
 
     def disturb(self):
@@ -74,17 +91,17 @@ class BaseDynamicsModel(ABC):
             raise AttributeError('Need to model the disturbance first.')
 
         if self.use_AR:
-            next = np.empty((self.out_dim,), dtype = np.float32)
+            next_noise = np.empty((self.out_dim,), dtype=np.float32)
             for k in range(self.out_dim):
-                next[k] = self.dist_mod.predict(self.init_pred[:, k])      
-                
+                next_noise[k] = self.dist_mod.predict(self.init_pred[:, k])
+
             self.init_pred[:-1, :] = self.init_pred[1:, :]
-            self.init_pred[-1, :] = next
-            return next
+            self.init_pred[-1, :] = next_noise
+            return next_noise
 
         return np.random.normal(0, 1, self.out_dim) * self.res_std
 
-    def n_step_predict(self, prepared_data, n, pred_inds, return_all_preds = False, disturb_pred = False, diff = False):
+    def n_step_predict(self, prepared_data, n, pred_inds, return_all_preds=False, disturb_pred=False, diff=False):
         """
         Applies the model n times and returns the 
         predictions.
@@ -103,30 +120,30 @@ class BaseDynamicsModel(ABC):
         d = len(pred_inds)
 
         # Reserve output array
-        all_preds = None
+        all_pred = None
         if return_all_preds:
-            all_preds = np.empty((n_out, n, n_feat))
+            all_pred = np.empty((n_out, n, n_feat))
 
         curr_in_data = np.copy(in_data[:n_out])
         curr_out_data = np.copy(out_data[:n_out])
         for k in range(n):
 
             # Predict
-            curr_preds = self.predict(np.copy(curr_in_data))
+            curr_pred = self.predict(np.copy(curr_in_data))
             if disturb_pred:
-                curr_preds += self.disturb()
+                curr_pred += self.disturb()
 
             if return_all_preds:
-                all_preds[:, k] = np.copy(curr_preds)
+                all_pred[:, k] = np.copy(curr_pred)
 
             # Construct next data
             curr_in_data[:, :-1, :] = np.copy(curr_in_data[:, 1:, :])
             curr_in_data[:, -1, :] = np.copy(in_data[k:(n_out + k), -1, :])
-            curr_in_data[:, -1, pred_inds] = np.copy(curr_preds[:, pred_inds])
-        
+            curr_in_data[:, -1, pred_inds] = np.copy(curr_pred[:, pred_inds])
+
         if return_all_preds:
-            return all_preds
-        return curr_preds
+            return all_pred
+        return curr_pred
 
     def get_plt_path(self, name):
         """
@@ -138,7 +155,7 @@ class BaseDynamicsModel(ABC):
         create_dir(dir_name)
         return os.path.join(dir_name, name)
 
-    def const_nts_plot(self, predict_data, n_list, ext = ''):
+    def const_nts_plot(self, predict_data, n_list, ext=''):
         """
         Creates a plot that shows the performance of the
         trained model when predicting a fixed number of timesteps into 
@@ -153,33 +170,22 @@ class BaseDynamicsModel(ABC):
         tr = np.copy(out_d[:, p_ind])
         dt = d.dt
 
-        # Plot data
-        plot_data = np.empty((s[0], 2), dtype = np.float32)
-        plot_data[:, 1] = tr
-        desc = d.descriptions[orig_p_ind]
-        scals = np.array(repl(d.scaling[orig_p_ind], 2))
-        is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype = np.bool)
-        analysis_ds = Dataset(plot_data,
-                              d.dt,
-                              d.t_init,
-                              scals,
-                              is_scd,
-                              ['Prediction', 'Ground Truth'])
-
         # Plot for all n
+        analysis_ds = get_plot_ds(s, tr, d, orig_p_ind)
+        desc = d.descriptions[orig_p_ind]
         for n_ts in n_list:
             curr_ds = Dataset.copy(analysis_ds)
-            time_str =  str(dt * n_ts) + 'min' if n_ts < 4 else str(dt * n_ts / 60) + 'h'
+            time_str = str(dt * n_ts) + 'min' if n_ts < 4 else str(dt * n_ts / 60) + 'h'
             one_h_pred = self.n_step_predict(copy_arr_list(predict_data), n_ts, d.p_inds_prep)
             curr_ds.data[(n_ts - 1):, 0] = np.copy(one_h_pred[:, p_ind])
             curr_ds.data[:(n_ts - 1), 0] = np.nan
             title_and_ylab = [time_str + ' Ahead Predictions', desc]
             plot_dataset(curr_ds,
-                         show = False,
-                         title_and_ylab = title_and_ylab,
-                         save_name = self.get_plt_path(time_str + 'Ahead' + ext))
+                         show=False,
+                         title_and_ylab=title_and_ylab,
+                         save_name=self.get_plt_path(time_str + 'Ahead' + ext))
 
-    def analyze(self, diff = False):
+    def analyze(self, diff=False):
         """
         Analyzes the trained model
         """
@@ -191,40 +197,31 @@ class BaseDynamicsModel(ABC):
         dat_test = d.get_prepared_data('test')
         dat_train = d.get_prepared_data('train_streak')
 
-        # Plot for fixed number of timesteps
+        # Plot for fixed number of time-steps
         test_copy = copy_arr_list(dat_test)
         train_copy = copy_arr_list(dat_train)
-        self.const_nts_plot(test_copy, [1, 4, 20], ext = 'Test')
-        self.const_nts_plot(train_copy, [4, 20], ext = 'Train')
+        self.const_nts_plot(test_copy, [1, 4, 20], ext='Test')
+        self.const_nts_plot(train_copy, [4, 20], ext='Train')
 
-        indat_test, outdat_test = copy_arr_list(dat_test)
-        s = indat_test.shape
+        in_dat_test, out_dat_test = copy_arr_list(dat_test)
+        s = in_dat_test.shape
         p_ind = d.p_inds_prep[0]
         orig_p_ind = d.p_inds[0]
-        tr = np.copy(outdat_test[:, p_ind])
+        tr = np.copy(out_dat_test[:, p_ind])
 
         # Plot data
-        plot_data = np.empty((s[0], 2), dtype = np.float32)
-        plot_data[:, 1] = tr
+        analysis_ds = get_plot_ds(s, tr, d, orig_p_ind)
         desc = d.descriptions[orig_p_ind]
-        scals = np.array(repl(d.scaling[orig_p_ind], 2))
-        is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype = np.bool)
-        analysis_ds = Dataset(plot_data,
-                              d.dt,
-                              d.t_init,
-                              scals,
-                              is_scd,
-                              ['Prediction', 'Ground Truth'])
 
         # One-week prediction
-        full_pred = self.n_step_predict([indat_test, outdat_test], s[0], d.p_inds_prep, 
-                                        return_all_preds = True)
+        full_pred = self.n_step_predict([in_dat_test, out_dat_test], s[0], d.p_inds_prep,
+                                        return_all_preds=True)
         analysis_ds.data[:, 0] = full_pred[0, :, p_ind]
         title_and_ylab = ['1 Week Continuous Predictions', desc]
         plot_dataset(analysis_ds,
-                     show = False,
-                     title_and_ylab = title_and_ylab,
-                     save_name = self.get_plt_path('OneWeek'))
+                     show=False,
+                     title_and_ylab=title_and_ylab,
+                     save_name=self.get_plt_path('OneWeek'))
         return
 
     def get_residuals(self, data):
@@ -232,8 +229,8 @@ class BaseDynamicsModel(ABC):
         Computes the residuals using the fitted model.
         """
         input_data, output_data = self.prepare_data(data)
-        preds = self.predict(input_data, prepared = True)
-        return output_data - preds
+        predictions = self.predict(input_data)
+        return output_data - predictions
 
     def deb(self, *args):
         """

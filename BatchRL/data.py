@@ -186,7 +186,7 @@ BatteryData = DataStruct(id_list=[40200000,
 #######################################################################################################
 # Time Series Processing
 
-def extract_date_interval(dates, vals, d1, d2):
+def extract_date_interval(dates, values, d1, d2):
     """
     Extracts all data that lies within the dates d1 and d2.
     Returns None if there are no such points.
@@ -198,9 +198,9 @@ def extract_date_interval(dates, vals, d1, d2):
         print("No values in provided date interval.")
         return None
     dates_new = dates[mask]
-    vals_new = vals[mask]
+    values_new = values[mask]
     dt_init_new = dates_new[0]
-    return dates_new, vals_new, dt_init_new
+    return dates_new, values_new, dt_init_new
 
 
 def analyze_data(dat):
@@ -224,7 +224,7 @@ def analyze_data(dat):
     return
 
 
-def clean_data(dat, rem_vals=[], n_cons_least=60, const_excepts=[]):
+def clean_data(dat, rem_values=[], n_cons_least=60, const_excepts=[]):
     """
     Removes all values with a specified value 'rem_val'
     and removes all sequences where there are at 
@@ -234,50 +234,50 @@ def clean_data(dat, rem_vals=[], n_cons_least=60, const_excepts=[]):
     it is not removed.
     """
 
-    vals, dates = dat
-    tot_dat = vals.shape[0]
+    values, dates = dat
+    tot_dat = values.shape[0]
 
     # Make copy
-    new_vals = np.copy(vals)
+    new_values = np.copy(values)
     new_dates = np.copy(dates)
 
     # Initialize
     prev_val = np.nan
     count = 0
     num_occ = 1
-    consec_streak = False
+    con_streak = False
 
     # Add cleaned values and dates
-    for (v, d) in zip(vals, dates):
+    for (v, d) in zip(values, dates):
 
-        if v not in rem_vals:
+        if v not in rem_values:
 
             # Monitor how many times the same value occurred
             if v == prev_val and v not in const_excepts:
 
                 num_occ += 1
                 if num_occ == n_cons_least:
-                    consec_streak = True
+                    con_streak = True
                     count -= n_cons_least - 1
             else:
-                consec_streak = False
+                con_streak = False
                 num_occ = 1
 
             # Add value if it has not occurred too many times
-            if consec_streak == False:
-                new_vals[count] = v
+            if not con_streak:
+                new_values[count] = v
                 new_dates[count] = d
                 count += 1
                 prev_val = v
 
         else:
             # Reset streak
-            consec_streak = False
+            con_streak = False
             num_occ = 1
 
     # Return clean data
     print(tot_dat - count, "data points removed.")
-    return [new_vals[:count], new_dates[:count]]
+    return [new_values[:count], new_dates[:count]]
 
 
 def remove_out_interval(dat, interval=[0.0, 100]):
@@ -294,9 +294,9 @@ def clip_to_interval(dat, interval=[0.0, 100]):
     Clips the values of the time_series that are
     out of the interval to lie within.
     """
-    vals, dates = dat
-    vals[vals > interval[1]] = interval[1]
-    vals[vals < interval[0]] = interval[0]
+    values, dates = dat
+    values[values > interval[1]] = interval[1]
+    values[values < interval[0]] = interval[0]
 
 
 def floor_datetime_to_min(dt, mt):
@@ -310,11 +310,11 @@ def floor_datetime_to_min(dt, mt):
     dt64 = np.datetime64(dt)
     ts = (dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
     pdt = datetime.utcfromtimestamp(ts)
-    mins = pdt.minute
-    mins = mins % mt
+    minutes = pdt.minute
+    minutes = minutes % mt
     secs = pdt.second
     dt -= np.timedelta64(secs, 's')
-    dt -= np.timedelta64(mins, 'm')
+    dt -= np.timedelta64(minutes, 'm')
     return dt
 
 
@@ -326,68 +326,67 @@ def interpolate_time_series(dat, dt_mins, lin_ip=False):
     """
 
     # Unpack
-    vals, dates = dat
+    values, dates = dat
 
     # Datetime of first and last data point
     start_dt = floor_datetime_to_min(dates[0], dt_mins)
     end_dt = floor_datetime_to_min(dates[-1], dt_mins)
-    interv = np.timedelta64(dt_mins, 'm')
-    n_ts = (end_dt - start_dt) // interv + 1
+    interval = np.timedelta64(dt_mins, 'm')
+    n_ts = (end_dt - start_dt) // interval + 1
     print(n_ts, "Timesteps")
 
     # Initialize
-    new_vals = np.empty((n_ts,), dtype=np.float32)
-    new_vals.fill(np.nan)
+    new_values = np.empty((n_ts,), dtype=np.float32)
+    new_values.fill(np.nan)
     count = 0
-    curr_val = 0
     last_dt = dates[0]
-    last_val = vals[0]
-    curr_val = (last_dt - start_dt) / interv * last_val
+    last_val = values[0]
+    curr_val = (last_dt - start_dt) / interval * last_val
 
     # Loop over data points
-    for ct, v in enumerate(vals[1:]):
+    for ct, v in enumerate(values[1:]):
         curr_dt = dates[ct + 1]
-        curr_upper_lim = start_dt + (count + 1) * interv
+        curr_upper_lim = start_dt + (count + 1) * interval
         if curr_dt >= curr_upper_lim:
-            if curr_dt <= curr_upper_lim + interv:
+            if curr_dt <= curr_upper_lim + interval:
                 # Next datetime in next interval
-                curr_val += (curr_upper_lim - last_dt) / interv * v
+                curr_val += (curr_upper_lim - last_dt) / interval * v
                 if not lin_ip:
-                    new_vals[count] = curr_val
+                    new_values[count] = curr_val
                 else:
-                    new_vals[count] = last_val + (v - last_val) * (curr_upper_lim - last_dt) / (curr_dt - last_dt)
+                    new_values[count] = last_val + (v - last_val) * (curr_upper_lim - last_dt) / (curr_dt - last_dt)
                 count += 1
-                curr_val = (curr_dt - curr_upper_lim) / interv * v
+                curr_val = (curr_dt - curr_upper_lim) / interval * v
             else:
                 # Data missing!                
-                curr_val += (curr_upper_lim - last_dt) / interv * last_val
+                curr_val += (curr_upper_lim - last_dt) / interval * last_val
                 if not lin_ip:
-                    new_vals[count] = curr_val
+                    new_values[count] = curr_val
                 else:
-                    new_vals[count] = last_val
+                    new_values[count] = last_val
                 count += 1
-                n_data_missing = (curr_dt - curr_upper_lim) // interv
+                n_data_missing = (curr_dt - curr_upper_lim) // interval
                 print("Missing", n_data_missing, "data points :(")
                 for k in range(n_data_missing):
-                    new_vals[count] = np.nan
+                    new_values[count] = np.nan
                     count += 1
-                dtime_start_new_interv = curr_dt - curr_upper_lim - n_data_missing * interv
-                curr_val = dtime_start_new_interv / interv * v
+                dt_start_new_iv = curr_dt - curr_upper_lim - n_data_missing * interval
+                curr_val = dt_start_new_iv / interval * v
 
         else:
             # Next datetime still in same interval
-            curr_val += (curr_dt - last_dt) / interv * v
+            curr_val += (curr_dt - last_dt) / interval * v
 
         # Update
         last_dt = curr_dt
         last_val = v
 
     # Add last one
-    curr_val += (end_dt + interv - curr_dt) / interv * v
-    new_vals[count] = curr_val
+    curr_val += (end_dt + interval - curr_dt) / interval * v
+    new_values[count] = curr_val
 
     # Return
-    return [new_vals, start_dt]
+    return [new_values, start_dt]
 
 
 def add_col(full_dat_array, data, dt_init, dt_init_new, col_ind, dt_mins=15):
@@ -402,8 +401,8 @@ def add_col(full_dat_array, data, dt_init, dt_init_new, col_ind, dt_mins=15):
     n_data_new = data.shape[0]
 
     # Compute indices
-    interv = np.timedelta64(dt_mins, 'm')
-    offset_before = int(np.round((dt_init_new - dt_init) / interv))
+    interval = np.timedelta64(dt_mins, 'm')
+    offset_before = int(np.round((dt_init_new - dt_init) / interval))
     offset_after = n_data_new - n_data + offset_before
     dat_inds = [np.maximum(0, offset_before), n_data + np.minimum(0, offset_after)]
     new_inds = [np.maximum(0, -offset_before), n_data_new + np.minimum(0, -offset_after)]
@@ -420,10 +419,10 @@ def add_time(all_data, dt_init1, col_ind=0, dt_mins=15):
     """
 
     n_data = all_data.shape[0]
-    interv = np.timedelta64(dt_mins, 'm')
+    interval = np.timedelta64(dt_mins, 'm')
     n_ts_per_day = 24 * 60 / dt_mins
     t_temp_round = np.datetime64(dt_init1, 'D')
-    start_t = (dt_init1 - t_temp_round) / interv
+    start_t = (dt_init1 - t_temp_round) / interval
     for k in range(n_data):
         all_data[k, col_ind] = (start_t + k) % n_ts_per_day
     return
@@ -431,7 +430,7 @@ def add_time(all_data, dt_init1, col_ind=0, dt_mins=15):
 
 def fill_holes_linear_interpolate(time_series, max_width=1):
     """
-    Fills the holes of a equispaced time series
+    Fills the holes of a equi-spaced time series
     with a width up to 'max_width' 
     by linearly interpolating between the previous and
     next data point.
@@ -445,22 +444,20 @@ def fill_holes_linear_interpolate(time_series, max_width=1):
         return
 
     # Neglect NaNs at beginning and end
-    non_nans = np.where(nan_bool == False)[0]
-    first_non_nan = non_nans[0]
+    non_nans = np.where(not nan_bool)[0]
     nan_bool[:non_nans[0]] = False
     nan_bool[non_nans[-1]:] = False
 
     # Find all indices with NaNs
     all_nans = np.argwhere(nan_bool)
 
-    # Initialize itarators
-    n_nans = all_nans.shape[0]
+    # Initialize iterators
     ind_ind = 0
     s_ind = all_nans[ind_ind][0]
 
     while ind_ind < all_nans.shape[0]:
         s_ind = all_nans[ind_ind][0]
-        streak_len = np.where(nan_bool[s_ind:] == False)[0][0]
+        streak_len = np.where(not nan_bool[s_ind:])[0][0]
         if streak_len <= max_width:
 
             # Interpolate values
@@ -501,28 +498,27 @@ def remove_outliers(time_series, grad_clip=100, clip_interv=None):
         rej = rej and g1 * g2 < 0
         return rej
 
-    def reject_outls(x, x_tm1, x_tp1=None):
+    def reject_outliers(x, x_tm1, x_tp1=None):
         if is_outlier(x, x_tm1, x_tp1):
             return np.nan
         return x
 
     # First and last values
-    time_series[0] = reject_outls(time_series[0], time_series[1])
-    time_series[-1] = reject_outls(time_series[-1], time_series[-2])
+    time_series[0] = reject_outliers(time_series[0], time_series[1])
+    time_series[-1] = reject_outliers(time_series[-1], time_series[-2])
 
     # Iterate
     for ct, el in enumerate(time_series[1:-1]):
         if el != np.nan:
             # Remove large gradient outliers
-            time_series[ct + 1] = reject_outls(el,
-                                               time_series[ct + 2],
-                                               time_series[ct])
+            time_series[ct + 1] = reject_outliers(el,
+                                                  time_series[ct + 2],
+                                                  time_series[ct])
 
             # Clip to interval
             if clip_interv is not None:
                 if el < clip_interv[0] or el > clip_interv[1]:
                     time_series[ct + 1] = np.nan
-
     return
 
 
@@ -533,17 +529,17 @@ def gaussian_filter_ignoring_nans(time_series, sigma=2.0):
     https://stackoverflow.com/questions/18697532/gaussian-filtering-a-image-with-nan-in-python
     """
 
-    V = time_series.copy()
-    V[np.isnan(time_series)] = 0
-    VV = scipy.ndimage.filters.gaussian_filter1d(V, sigma=sigma)
+    v = time_series.copy()
+    v[np.isnan(time_series)] = 0
+    vv = scipy.ndimage.filters.gaussian_filter1d(v, sigma=sigma)
 
-    W = 0 * time_series.copy() + 1
-    W[np.isnan(time_series)] = 0
-    WW = scipy.ndimage.filters.gaussian_filter1d(W, sigma=sigma)
+    w = 0 * time_series.copy() + 1
+    w[np.isnan(time_series)] = 0
+    ww = scipy.ndimage.filters.gaussian_filter1d(w, sigma=sigma)
 
-    Z = VV / WW
-    Z[np.isnan(time_series)] = np.nan
-    return Z
+    z = vv / ww
+    z[np.isnan(time_series)] = np.nan
+    return z
 
 
 def pipeline_preps(orig_dat,
@@ -564,52 +560,52 @@ def pipeline_preps(orig_dat,
     Applies all the specified preprocessings to the
     given data.
     """
-    modif_data = orig_dat
+    modified_data = orig_dat
 
     # Clean Data
     if clean_args is not None:
         for k in clean_args:
-            modif_data = clean_data(orig_dat, *k)
+            modified_data = clean_data(orig_dat, *k)
 
             # Clip to interval
     if remove_out_int_args is not None:
-        remove_out_interval(modif_data, remove_out_int_args)
+        remove_out_interval(modified_data, remove_out_int_args)
 
     # Clip to interval
     if clip_to_int_args is not None:
-        clip_to_interval(modif_data, clip_to_int_args)
+        clip_to_interval(modified_data, clip_to_int_args)
 
     # Interpolate / Subsample
-    [modif_data, dt_init_new] = interpolate_time_series(modif_data, dt_mins, lin_ip=lin_ip)
+    [modified_data, dt_init_new] = interpolate_time_series(modified_data, dt_mins, lin_ip=lin_ip)
 
     # Remove Outliers
     if rem_out_args is not None:
-        remove_outliers(modif_data, *rem_out_args)
+        remove_outliers(modified_data, *rem_out_args)
 
     # Fill holes
     if hole_fill_args is not None:
-        fill_holes_linear_interpolate(modif_data, hole_fill_args)
+        fill_holes_linear_interpolate(modified_data, hole_fill_args)
 
     # Gaussian Filtering
     if gauss_sigma is not None:
-        modif_data = gaussian_filter_ignoring_nans(modif_data, gauss_sigma)
+        modified_data = gaussian_filter_ignoring_nans(modified_data, gauss_sigma)
 
     if all_data is not None:
         if dt_init is None or row_ind is None:
             raise ValueError("Need to provide the initial time of the first series and the column index!")
 
         # Add to rest of data
-        add_col(all_data, modif_data, dt_init, dt_init_new, row_ind, dt_mins)
+        add_col(all_data, modified_data, dt_init, dt_init_new, row_ind, dt_mins)
     else:
         if n_tot_cols is None:
             print("Need to know the total number of columns!")
             raise ValueError("Need to know the total number of columns!")
 
         # Initialize np array for compact storage
-        n_data = modif_data.shape[0]
+        n_data = modified_data.shape[0]
         all_data = np.empty((n_data, n_tot_cols), dtype=np.float32)
         all_data.fill(np.nan)
-        all_data[:, 0] = modif_data
+        all_data[:, 0] = modified_data
 
     return all_data, dt_init_new
 
@@ -656,7 +652,6 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
 
     if np.isnan(np.nanmax(all_dat[:, col_ind])):
         raise ValueError("Something went very fucking wrong!!")
-        return
 
     # Plot before data
     plot_file_name = base_plot_dir + "_" + plot_name + "_Raw"
@@ -833,13 +828,13 @@ def cut_into_fixed_len(col_has_nan, seq_len=20, interleave=True):
     # Initialize and find first non-NaN
     max_n_seq = n if interleave else n // seq_len
     seqs = np.empty((seq_len, max_n_seq), dtype=np.int32)
-    ct = np.where(col_has_nan == False)[0][0]
+    ct = np.where(not col_has_nan)[0][0]
     seq_count = 0
 
     while True:
         # Find next NaN
-        zers = np.where(col_has_nan[ct:] == True)[0]
-        curr_seq_len = n - ct if zers.shape[0] == 0 else zers[0]
+        zeros = np.where(col_has_nan[ct:])[0]
+        curr_seq_len = n - ct if zeros.shape[0] == 0 else zeros[0]
 
         # Add sequences
         if interleave:
@@ -855,12 +850,12 @@ def cut_into_fixed_len(col_has_nan, seq_len=20, interleave=True):
 
         # Find next non-NaN
         ct += curr_seq_len
-        nonzs = np.where(col_has_nan[ct:] == False)[0]
+        non_zs = np.where(not col_has_nan[ct:])[0]
 
         # Break if none found
-        if nonzs.shape[0] == 0:
+        if non_zs.shape[0] == 0:
             break
-        ct += nonzs[0]
+        ct += non_zs[0]
 
     # Return all found sequences
     return seqs[:, :seq_count]
@@ -930,7 +925,7 @@ def cut_and_split(dat, seq_len, streak_len, ret_orig=False):
 
 
 #######################################################################################################
-# Full Data Retrieval and Preprocessing
+# Full Data Retrieval and Pre-processing
 
 def get_battery_data():
     """
@@ -995,9 +990,9 @@ def get_weather_data(save_plots=True):
     prep_plot_dir = os.path.join(preprocess_plot_path, name)
     create_dir(prep_plot_dir)
     plot_name_temp = os.path.join(prep_plot_dir, "Outside_Temp")
-    plot_name_irrad = os.path.join(prep_plot_dir, "Irradiance")
+    plot_name_irr = os.path.join(prep_plot_dir, "Irradiance")
     plot_name_temp_raw = os.path.join(prep_plot_dir, "Raw Outside_Temp")
-    plot_name_irrad_raw = os.path.join(prep_plot_dir, "Raw Irradiance")
+    plot_name_irr_raw = os.path.join(prep_plot_dir, "Raw Irradiance")
 
     # Try loading data
     try:
@@ -1045,13 +1040,13 @@ def get_weather_data(save_plots=True):
     m_out += [m[2]]
 
     if save_plots:
-        plot_time_series(dat[2][1], dat[2][0], m=m[2], show=False, save_name=plot_name_irrad_raw)
+        plot_time_series(dat[2][1], dat[2][0], m=m[2], show=False, save_name=plot_name_irr_raw)
         plot_single(all_data[:, 1],
                     m[2],
                     use_time=True,
                     show=False,
                     title_and_ylab=['Irradiance Processed', m[2]['unit']],
-                    save_name=plot_name_irrad)
+                    save_name=plot_name_irr)
 
     # Save and return
     no_inds = np.array([], dtype=np.int32)
@@ -1065,7 +1060,7 @@ def get_UMAR_heating_data():
     Load and interpolate all the necessary data.
     """
 
-    dstrs = [Room272Data, Room274Data]
+    dat_structs = [Room272Data, Room274Data]
     dt_mins = 15
     fill_by_ip_max = 2
     filter_sigma = 2.0
@@ -1075,18 +1070,18 @@ def get_UMAR_heating_data():
     create_dir(umar_rooms_plot_path)
     all_ds = []
 
-    for dstr in dstrs:
-        p_kwargs_rtemp = {'clean_args': [([0.0], 10 * 60)],
-                          'rem_out_args': (4.5, [10, 100]),
-                          'hole_fill_args': fill_by_ip_max,
-                          'gauss_sigma': filter_sigma}
+    for dat_struct in dat_structs:
+        p_kwargs_room_temp = {'clean_args': [([0.0], 10 * 60)],
+                              'rem_out_args': (4.5, [10, 100]),
+                              'hole_fill_args': fill_by_ip_max,
+                              'gauss_sigma': filter_sigma}
         p_kwargs_win = {'hole_fill_args': fill_by_ip_max,
                         'gauss_sigma': filter_sigma}
         p_kwargs_valve = {'hole_fill_args': 3,
                           'gauss_sigma': filter_sigma}
-        kws = [p_kwargs_rtemp, p_kwargs_win, p_kwargs_valve]
+        kws = [p_kwargs_room_temp, p_kwargs_win, p_kwargs_valve]
         inds = [1, 11, 12]
-        all_ds += [get_from_dstruct(dstr, umar_rooms_plot_path, dt_mins, dstr.name, inds, kws)]
+        all_ds += [get_from_dstruct(dat_struct, umar_rooms_plot_path, dt_mins, dat_struct.name, inds, kws)]
 
     return all_ds
 
@@ -1104,18 +1099,18 @@ def get_DFAB_heating_data():
         n_cols = len(data)
 
         # Single Room Heating Data  
-        temp_kwgs = {'clean_args': [([0.0], 24 * 60, [])], 'gauss_sigma': 5.0, 'rem_out_args': (1.5, None)}
-        valv_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
+        temp_kwargs = {'clean_args': [([0.0], 24 * 60, [])], 'gauss_sigma': 5.0, 'rem_out_args': (1.5, None)}
+        valve_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
         blinds_kwargs = {'clip_to_int_args': [0.0, 100.0], 'clean_args': [([], 7 * 24 * 60, [])]}
-        prep_kwargs = [temp_kwgs, valv_kwargs, valv_kwargs, valv_kwargs]
+        prep_kwargs = [temp_kwargs, valve_kwargs, valve_kwargs, valve_kwargs]
         if n_cols == 5:
             prep_kwargs += [blinds_kwargs]
         data_list += [convert_datastruct(e, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
 
     ################################
     # General Heating Data
-    temp_kwgs = {'remove_out_int_args': [10, 50], 'gauss_sigma': 5.0}
-    prep_kwargs = [temp_kwgs, temp_kwgs, {}, {}, {}, {}]
+    temp_kwargs = {'remove_out_int_args': [10, 50], 'gauss_sigma': 5.0}
+    prep_kwargs = [temp_kwargs, temp_kwargs, {}, {}, {}, {}]
     data_list += [convert_datastruct(DFAB_AddData, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
 
     ################################
@@ -1176,17 +1171,17 @@ def compute_DFAB_energy_usage(show_plots=True):
 
     # Loop over rooms and compute flow per room
     A = np.empty((n_not_nans, n_rooms), dtype=np.float32)
-    for id, room_nr in room_dict.items():
+    for i, room_nr in room_dict.items():
         room_valves = v_dat_not_nan[:, valve_room_allocation == room_nr]
-        A[:, id] = np.mean(room_valves, axis=1)
+        A[:, i] = np.mean(room_valves, axis=1)
     b = w_dat_not_nan[:, 2]
     x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset=True)
     print("Flow", x)
 
     # Loop over rooms and compute flow per room
     A = np.empty((n_not_nans, n_valves), dtype=np.float32)
-    for id in range(n_valves):
-        A[:, id] = v_dat_not_nan[:, id]
+    for i in range(n_valves):
+        A[:, i] = v_dat_not_nan[:, i]
     b = w_dat_not_nan[:, 2]
     x, fitted = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset=False, ret_fit=True)
     print("Flow per valve", x)
@@ -1211,18 +1206,18 @@ def compute_DFAB_energy_usage(show_plots=True):
                     title_and_ylab=['Sum All Valves', '0/1'],
                     save_name=tot_room_valves_plot_path)
 
-    raise NotImplementedError("Hahahah")
+    raise NotImplementedError("Hahaha")
 
     flow_rates_f3 = np.array([134, 123, 129, 94, 145, 129, 81], dtype=np.float32)
     print(np.sum(flow_rates_f3), "Flow rates sum, 3. OG")
-    dtemp = 13
+    del_temp = 13
     powers_f45 = np.array([137, 80, 130, 118, 131, 136, 207,
                            200, 192, 147, 209, 190, 258, 258], dtype=np.float32)
     c_p = 4.186
     d_w = 997
     h_to_s = 3600
 
-    flow_rates_f45 = h_to_s / (c_p * d_w * dtemp) * powers_f45
+    flow_rates_f45 = h_to_s / (c_p * d_w * del_temp) * powers_f45
     print(flow_rates_f45)
 
     tot_n_vals_open = np.sum(v_dat, axis=1)
@@ -1247,7 +1242,7 @@ def compute_DFAB_energy_usage(show_plots=True):
                     save_name=dw_plot_path)
 
     # Loop over rooms and compute energy
-    for id, room_nr in room_dict.items():
+    for i, room_nr in room_dict.items():
         room_valves = v_dat[:, valve_room_allocation == room_nr]
         room_sum_valves = np.sum(room_valves, axis=1)
 
@@ -1276,7 +1271,7 @@ def compute_DFAB_energy_usage(show_plots=True):
                         save_name=tot_room_valves_plot_path)
 
         # Add data to output
-        out_dat[:, id] = room_energy
+        out_dat[:, i] = room_energy
         m_list += [m_room.copy()]
 
     # Save dataset
@@ -1323,7 +1318,7 @@ def analyze_room_energy_consumption():
 no_inds = np.array([], dtype=np.int32)
 
 
-class Dataset():
+class Dataset:
     """
     This class contains all infos about a given dataset.
     """
@@ -1333,7 +1328,7 @@ class Dataset():
         Base constructor.
         """
 
-        self.val_perc = 0.1
+        self.val_percent = 0.1
         self.seq_len = 20
 
         # Dimensions
@@ -1373,7 +1368,7 @@ class Dataset():
         s_len = int(60 / self.dt * 24 * streak_len)
         self.streak_len = s_len
         self.orig_trainval, self.orig_test = cut_and_split(np.copy(self.data), self.seq_len, s_len, ret_orig=True)
-        self.orig_train, self.orig_val = split_arr(np.copy(self.orig_trainval), self.val_perc)
+        self.orig_train, self.orig_val = split_arr(np.copy(self.orig_trainval), self.val_percent)
         _, self.train_streak = extract_streak(np.copy(self.orig_train), s_len, self.seq_len - 1)
 
         # Cut into sequences and saveself.

@@ -43,18 +43,18 @@ class BatteryModel(BaseDynamicsModel):
         s_tp1 = s_t + a1 + a2 * p + a3 * np.maximum(0, p)
         return s_tp1.reshape((-1, 1))
 
-    def disturb(self, n):
+    def disturb(self):
         """
         Returns a sample of noise of length n.
         """
-        pass
+        raise NotImplementedError("Disturbance for battery model not implemented!")
 
     def analyze_bat_model(self):
         # Get data
         d = self.data
         dat = d.orig_trainval
-        scal = np.copy(d.scaling)
-        scal[0, 0] = 0.0
+        scale = np.copy(d.scaling)
+        scale[0, 0] = 0.0
 
         # Extract data
         p = np.copy(dat[1:, 1])
@@ -67,13 +67,13 @@ class BatteryModel(BaseDynamicsModel):
 
         # Plot data
         labs = {'title': 'Battery Model', 'xlab': 'Active Power [kW]', 'ylab': r'$\Delta$ SoC [%]'}
-        before_ppath = os.path.join(self.plot_path, "WithOutliers")
+        before_plt_path = os.path.join(self.plot_path, "WithOutliers")
         scatter_plot(p, ds, lab_dict=labs,
                      show=False,
-                     m_and_std_x=scal[1],
-                     m_and_std_y=scal[0],
+                     m_and_std_x=scale[1],
+                     m_and_std_y=scale[0],
                      add_line=True,
-                     save_name=before_ppath)
+                     save_name=before_plt_path)
 
         # Fit linear Model and filter out outliers
         fitted_ds = fit_linear_1d(p, ds, p)
@@ -82,7 +82,7 @@ class BatteryModel(BaseDynamicsModel):
         masked_ds = ds[mask]
         n_mask = masked_p.shape[0]
 
-        # Fit pw. linear model: y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x) 
+        # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
         ls_mat = np.empty((n_mask, 3), dtype=np.float32)
         ls_mat[:, 0] = 1
         ls_mat[:, 1] = masked_p
@@ -94,12 +94,12 @@ class BatteryModel(BaseDynamicsModel):
         y_pw_line = a1 + a2 * x_pw_line + a3 * np.maximum(0, x_pw_line)
 
         # Plot model
-        after_ppath = os.path.join(self.plot_path, "Cleaned")
+        after_plt_path = os.path.join(self.plot_path, "Cleaned")
         scatter_plot(masked_p, masked_ds, lab_dict=labs,
                      show=False,
                      add_line=False,
-                     m_and_std_x=scal[1],
-                     m_and_std_y=scal[0],
+                     m_and_std_x=scale[1],
+                     m_and_std_y=scale[0],
                      custom_line=[x_pw_line, y_pw_line],
                      custom_label='PW Linear Fit',
-                     save_name=after_ppath)
+                     save_name=after_plt_path)
