@@ -15,12 +15,12 @@ from cart_pole import CartPole
 from mount_car_cont import MountCarCont
 from pendulum import Pendulum
 
-from data import Room274Data, Room272Data, WeatherData, TestData, \
+from data import WeatherData, TestData, \
     analyze_data, get_UMAR_heating_data, get_data_test, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
     get_DFAB_heating_data, test_plotting_withDFAB_data, test_dataset_with_DFAB, \
     compute_DFAB_energy_usage, get_weather_data, generateRoomDatasets, \
-    analzye_room_energy_consumption, Dataset, test_align, test_dataset_artificially
+    analyze_room_energy_consumption, Dataset, test_align, test_dataset_artificially
 
 
 def simple_battery_FQI():

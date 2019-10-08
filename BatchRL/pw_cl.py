@@ -1,13 +1,11 @@
 
-
-
-def getPW():
+def get_pw():
     """
     Commandline login getter tool.
     """
-    uname = input("Please enter username: ")
+    username = input("Please enter username: ")
     pw = input("Enter password: ")
-    return (uname, pw)
+    return username, pw
 
 
 

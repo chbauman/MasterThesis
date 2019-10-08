@@ -38,8 +38,8 @@ Room272Data = DataStruct(id_list=[42150280,
                                   42150284,
                                   42150270],
                          name="UMAR_Room272",
-                         startDate='2017-01-01',
-                         endDate='2019-12-31')
+                         start_date='2017-01-01',
+                         end_date='2019-12-31')
 
 Room274Data = DataStruct(id_list=[42150281,
                                   42150312,
@@ -55,8 +55,8 @@ Room274Data = DataStruct(id_list=[42150281,
                                   42150287,
                                   42150274],
                          name="UMAR_Room274",
-                         startDate='2017-01-01',
-                         endDate='2019-12-31')
+                         start_date='2017-01-01',
+                         end_date='2019-12-31')
 
 # DFAB Data
 Room4BlueData = DataStruct(id_list=[421110054,  # Temp
@@ -66,8 +66,8 @@ Room4BlueData = DataStruct(id_list=[421110054,  # Temp
                                     421110209  # Blinds
                                     ],
                            name="DFAB_Room41",
-                           startDate='2017-01-01',
-                           endDate='2019-12-31')
+                           start_date='2017-01-01',
+                           end_date='2019-12-31')
 
 Room5BlueData = DataStruct(id_list=[421110072,  # Temp
                                     421110038,  # Valves
@@ -76,8 +76,8 @@ Room5BlueData = DataStruct(id_list=[421110072,  # Temp
                                     421110219  # Blinds
                                     ],
                            name="DFAB_Room51",
-                           startDate='2017-01-01',
-                           endDate='2019-12-31')
+                           start_date='2017-01-01',
+                           end_date='2019-12-31')
 
 Room4RedData = DataStruct(id_list=[421110066,  # Temp
                                    421110026,  # Valves
@@ -85,8 +85,8 @@ Room4RedData = DataStruct(id_list=[421110066,  # Temp
                                    421110028,
                                    ],
                           name="DFAB_Room43",
-                          startDate='2017-01-01',
-                          endDate='2019-12-31')
+                          start_date='2017-01-01',
+                          end_date='2019-12-31')
 
 Room5RedData = DataStruct(id_list=[421110084,  # Temp
                                    421110039,  # Valves
@@ -94,8 +94,8 @@ Room5RedData = DataStruct(id_list=[421110084,  # Temp
                                    421110041,
                                    ],
                           name="DFAB_Room53",
-                          startDate='2017-01-01',
-                          endDate='2019-12-31')
+                          start_date='2017-01-01',
+                          end_date='2019-12-31')
 
 DFAB_AddData = DataStruct(id_list=[421100168,  # Vorlauf Temp
                                    421100170,  # Rücklauf Temp
@@ -105,8 +105,8 @@ DFAB_AddData = DataStruct(id_list=[421100168,  # Vorlauf Temp
                                    421100070,  # Volume flow through other part
                                    ],
                           name="DFAB_Extra",
-                          startDate='2017-01-01',
-                          endDate='2019-12-31')
+                          start_date='2017-01-01',
+                          end_date='2019-12-31')
 
 DFAB_AllValves = DataStruct(id_list=[421110008,  # First Floor
                                      421110009,
@@ -131,8 +131,8 @@ DFAB_AllValves = DataStruct(id_list=[421110008,  # First Floor
                                      421110044,
                                      ],
                             name="DFAB_Valves",
-                            startDate='2017-01-01',
-                            endDate='2019-12-31')
+                            start_date='2017-01-01',
+                            end_date='2019-12-31')
 
 rooms = [Room4BlueData, Room5BlueData, Room4RedData, Room5RedData]
 
@@ -141,8 +141,8 @@ WeatherData = DataStruct(id_list=[3200000,
                                   3200002,
                                   3200008],
                          name="Weather",
-                         startDate='2019-01-01',
-                         endDate='2019-12-31')
+                         start_date='2019-01-01',
+                         end_date='2019-12-31')
 
 # Battery Data
 BatteryData = DataStruct(id_list=[40200000,
@@ -179,8 +179,8 @@ BatteryData = DataStruct(id_list=[40200000,
                                   40200107,
                                   40200108],
                          name="Battery",
-                         startDate='2018-01-01',
-                         endDate='2019-12-31')
+                         start_date='2018-01-01',
+                         end_date='2019-12-31')
 
 
 #######################################################################################################
@@ -1286,7 +1286,7 @@ def compute_DFAB_energy_usage(show_plots=True):
     ds_out.save()
 
 
-def analzye_room_energy_consumption():
+def analyze_room_energy_consumption():
     """
     Compares the energy consumption of the different rooms
     summed over whole days.
@@ -1749,8 +1749,8 @@ def generateRoomDatasets():
 # Test Data
 TestData = DataStruct(id_list=[421100171, 421100172],
                       name="Test",
-                      startDate='2019-08-08',
-                      endDate='2019-08-09')
+                      start_date='2019-08-08',
+                      end_date='2019-08-09')
 
 
 class TestDataSynth:
