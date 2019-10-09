@@ -47,11 +47,14 @@ class SCTimeModel(BaseDynamicsModel):
             c = add_mean_and_std(c, self.data.scaling[1])
 
         # Compute new
+        dx = 24 * 60 / self.data.dt
         x = np.arccos(c)
-        if s < 0:
-            x = -x
+        x[s < 0] = -x[s < 0]
+        x += dx
         s_new = np.sin(x)
         c_new = np.cos(x)
+        print(s, " true ", c)
+        print(np.sin(x), " comp ", np.cos(x))
 
         # Evaluate and scale
         if self.data.is_scaled[0]:
@@ -60,7 +63,7 @@ class SCTimeModel(BaseDynamicsModel):
             c_new = rem_mean_and_std(c_new, self.data.scaling[1])
 
         # Concatenate and return
-        res = np.concatenate([s_new.reshape((-1, 1)), c_new.reshape((-1, 1))])
+        res = np.concatenate([s_new.reshape((-1, 1)), c_new.reshape((-1, 1))], axis=1)
         return res
 
     def disturb(self):

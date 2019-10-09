@@ -11,6 +11,7 @@ from dm_Const import ConstModel
 from battery_model import BatteryModel
 
 # Environments for debugging
+from dm_Time import SCTimeModel
 from simple_battery_test import SimpleBatteryTest
 from cart_pole import CartPole
 from mount_car_cont import MountCarCont
@@ -21,7 +22,7 @@ from data import WeatherData, TestData, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
     get_DFAB_heating_data, \
     compute_DFAB_energy_usage, get_weather_data, generate_room_datasets, \
-    analyze_room_energy_consumption, Dataset, test_align, test_dataset_artificially, no_inds
+    analyze_room_energy_consumption, Dataset, test_align, test_dataset_artificially, no_inds, generate_sin_cos_time_ds
 
 
 def simple_battery_FQI():
@@ -65,6 +66,12 @@ def main():
     ds.standardize()
     ds.split_train_test(7)
     ds.get_prepared_data()
+
+    time_data = generate_sin_cos_time_ds(ds)
+    time_data.split_train_test(7)
+    time_data.get_prepared_data()
+    time_model = SCTimeModel(time_data)
+    time_model.analyze()
 
     # Construct weight vector
     w = np.ones((ds.d - ds.n_c,), dtype=np.float32)

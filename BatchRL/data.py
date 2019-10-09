@@ -1458,8 +1458,8 @@ class Dataset:
 
         # Fill the data
         input_data = np.empty((n, s_len - 1, d), dtype=np.float32)
-        input_data[:, :, :-n_c] = data_to_use[:, :-1, other_inds]
-        input_data[:, :, -n_c:] = data_to_use[:, 1:, cont_inds]
+        input_data[:, :, :self.d - n_c] = data_to_use[:, :-1, other_inds]
+        input_data[:, :, self.d - n_c:] = data_to_use[:, 1:, cont_inds]
         if not get_all_preds:
             output_data = data_to_use[:, -1, other_inds]
         else:
@@ -1468,7 +1468,8 @@ class Dataset:
         # Store more parameters, assuming only one control variable
         self.c_inds_prep = self.d - 1
         self.p_inds_prep = np.copy(self.p_inds)
-        self.p_inds_prep[self.p_inds_prep > self.c_inds[0]] -= 1
+        for c_ind in self.c_inds:
+            self.p_inds_prep[self.p_inds_prep > c_ind] -= 1
 
         return input_data, output_data
 
