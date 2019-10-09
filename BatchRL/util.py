@@ -7,7 +7,6 @@ import scipy.optimize.nnls
 
 from datetime import datetime
 
-
 #######################################################################################################
 # Typing
 
@@ -179,6 +178,7 @@ def add_mean_and_std(ts: Arr, mean_and_std: Sequence) -> Arr:
 def rem_mean_and_std(ts: Arr, mean_and_std: Sequence) -> Arr:
     """
     Whitens the data with known mean and standard deviation.
+
     :param ts: Data to be whitened.
     :param mean_and_std: Container of the mean and the std.
     :return: Whitened data.
@@ -197,7 +197,7 @@ def check_in_range(arr: np.ndarray, low: Num, high: Num) -> bool:
     """
     if arr.size == 0:
         return True
-    return np.max(arr < high) and np.min(arr >= low)
+    return np.max(arr) < high and np.min(arr) >= low
 
 
 def split_arr(arr: np.ndarray, frac2: float) -> Tuple[Any, Any]:
@@ -321,7 +321,31 @@ def string_to_dt(s: str) -> datetime:
 def mins_to_str(mins: int) -> str:
     """
     Converts the integer 'mins' to a string.
+
     :param mins: Number of minutes.
     :return: String
     """
     return str(mins) + 'min' if mins < 60 else str(mins / 60) + 'h'
+
+
+def floor_datetime_to_min(dt, mt: int) -> np.ndarray:
+    """
+    Rounds deltatime64 dt down to mt minutes.
+    In a really fucking cumbersome way.
+
+    :param dt: Original deltatime.
+    :param mt: Number of minutes.
+    :return: Floored deltatime.
+    """
+    assert 60 % mt == 0
+
+    dt = np.array(dt, dtype='datetime64[s]')
+    dt64 = np.datetime64(dt)
+    ts = (dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
+    pdt = datetime.utcfromtimestamp(ts)
+    minutes = pdt.minute
+    minutes = minutes % mt
+    secs = pdt.second
+    dt -= np.timedelta64(secs, 's')
+    dt -= np.timedelta64(minutes, 'm')
+    return dt

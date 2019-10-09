@@ -281,42 +281,31 @@ def clean_data(dat, rem_values=(), n_cons_least: int = 60, const_excepts=()):
     return [new_values[:count], new_dates[:count]]
 
 
-def remove_out_interval(dat, interval: Tuple[Num, Num] = (0.0, 100.0)):
+def remove_out_interval(dat: Tuple, interval: Tuple[Num, Num] = (0.0, 100.0)) -> None:
     """
     Removes values that do not lie within the interval.
+
+    :param dat: Raw time series tuple (values, dates)
+    :param interval: Interval where the values have to lie within.
+    :return: None
     """
     values, dates = dat
     values[values > interval[1]] = np.nan
     values[values < interval[0]] = np.nan
 
 
-def clip_to_interval(dat, interval=(0.0, 100.0)):
+def clip_to_interval(dat: Tuple, interval: Sequence = (0.0, 100.0)) -> None:
     """
     Clips the values of the time_series that are
     out of the interval to lie within.
+
+    :param dat: Raw time series tuple (values, dates)
+    :param interval: Interval where the values will lie within.
+    :return: None
     """
     values, dates = dat
     values[values > interval[1]] = interval[1]
     values[values < interval[0]] = interval[0]
-
-
-def floor_datetime_to_min(dt, mt):
-    """
-    Rounds deltatime64 dt down to mt minutes.
-    In a really fucking cumbersome way.
-    """
-    assert 60 % mt == 0
-
-    dt = np.array(dt, dtype='datetime64[s]')
-    dt64 = np.datetime64(dt)
-    ts = (dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
-    pdt = datetime.utcfromtimestamp(ts)
-    minutes = pdt.minute
-    minutes = minutes % mt
-    secs = pdt.second
-    dt -= np.timedelta64(secs, 's')
-    dt -= np.timedelta64(minutes, 'm')
-    return dt
 
 
 def interpolate_time_series(dat, dt_mins, lin_ip=False):
@@ -431,12 +420,16 @@ def add_time(all_data, dt_init1, col_ind=0, dt_mins=15):
     return
 
 
-def fill_holes_linear_interpolate(time_series, max_width=1):
+def fill_holes_linear_interpolate(time_series: np.ndarray, max_width: int = 1) -> None:
     """
     Fills the holes of a equi-spaced time series
-    with a width up to 'max_width' 
+    with a width up to 'max_width'
     by linearly interpolating between the previous and
     next data point.
+
+    :param time_series: The time series that is processed.
+    :param max_width: Sequences of at most that many nans are removed by interpolation.
+    :return: None
     """
 
     n = time_series.shape[0]
@@ -475,11 +468,17 @@ def fill_holes_linear_interpolate(time_series, max_width=1):
     return
 
 
-def remove_outliers(time_series, grad_clip=100.0, clip_interv=None):
+def remove_outliers(time_series: np.ndarray, grad_clip: Num = 100.0,
+                    clip_int: Optional[Sequence] = None) -> np.ndarray:
     """
-    Removes data points that lie outside 
-    the specified interval 'clip_int' and ones 
-    with a large gradient.
+    Removes data points that lie outside
+    the specified interval 'clip_int' and ones
+    with a gradient larger than grad_clip.
+
+    :param time_series: The time series to process.
+    :param grad_clip: The maximum gradient magnitude.
+    :param clip_int: The interval where the data has to lie within.
+    :return: A copy of the series without the outlliers.
     """
 
     # Helper functions
@@ -519,17 +518,21 @@ def remove_outliers(time_series, grad_clip=100.0, clip_interv=None):
                                                   time_series[ct])
 
             # Clip to interval
-            if clip_interv is not None:
-                if el < clip_interv[0] or el > clip_interv[1]:
+            if clip_int is not None:
+                if el < clip_int[0] or el > clip_int[1]:
                     time_series[ct + 1] = np.nan
     return
 
 
-def gaussian_filter_ignoring_nans(time_series, sigma=2.0):
+def gaussian_filter_ignoring_nans(time_series: np.ndarray, sigma=2.0) -> np.ndarray:
     """
-    1-dimensional Gaussian Filtering ignoring 
+    Applies 1-dimensional Gaussian Filtering ignoring
     occurrences of NaNs. From:
     https://stackoverflow.com/questions/18697532/gaussian-filtering-a-image-with-nan-in-python
+
+    :param time_series: The time series to process.
+    :param sigma: Gaussian filter standard deviation.
+    :return: Filtered time series.
     """
 
     v = time_series.copy()
@@ -675,6 +678,7 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
 def save_ds_from_raw(all_data, m_out, name, c_inds=None, p_inds=None, standardize_data=False):
     """
     Creates a dataset from the raw input data.
+
     :param all_data: 2D numpy data array
     :param m_out: List with metadata dictionaries.
     :param name: Name of the dataset.
@@ -1112,6 +1116,7 @@ def get_DFAB_heating_data():
     Loads or creates all data from DFAB then returns
     a list of all datasets. 4 for the rooms, one for the heating water
     and one with all the valves.
+
     :return: list(Datasets)
     """
     data_list = []
@@ -1474,7 +1479,7 @@ class Dataset:
         return input_data, output_data
 
     @classmethod
-    def fromRaw(cls, all_data: np.ndarray, m: List, name: str, 
+    def fromRaw(cls, all_data: np.ndarray, m: List, name: str,
                 c_inds: np.ndarray = no_inds,
                 p_inds: np.ndarray = no_inds) -> 'Dataset':
         """
@@ -1757,8 +1762,6 @@ class Dataset:
                  title_and_ylab=["Nan plot", "Series"],
                  scale_back=False,
                  save_name=s_name + name_ext)
-
-    pass
 
 
 def generate_room_datasets():
