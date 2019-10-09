@@ -10,7 +10,7 @@ from datetime import datetime
 #######################################################################################################
 # Python stuff
 
-def get_if_nnone(lst, indx, default=None):
+def get_if_nnone(lst, indx: int, default=None):
     """
     Returns a list element if list is not None, 
     else the default value.
@@ -29,14 +29,14 @@ def apply(list_or_el, fun):
         return fun(list_or_el)
 
 
-def repl(el, n):
+def repl(el, n: int):
     """
     Constructs a list with n equal elements 'el'.
     """
     return [el for _ in range(n)]
 
 
-def b_cast(l_or_el, n):
+def b_cast(l_or_el, n: int):
     """
     Checks if 'l_or_el' is a list or not.
     If not returns a list with 'n' repeated elements 'l_or_el'.
@@ -175,7 +175,7 @@ def copy_arr_list(arr_list):
     return copied_arr_list
 
 
-def solve_ls(A, b, offset=False, non_neg=False, ret_fit=False):
+def solve_ls(A, b, offset: bool = False, non_neg: bool = False, ret_fit: bool = False):
     """
     Solves the least squares problem min_x ||Ax = b||.
     If offset is true, then a bias term is added.
@@ -206,7 +206,7 @@ def solve_ls(A, b, offset=False, non_neg=False, ret_fit=False):
 #######################################################################################################
 # NEST stuff
 
-def clean_desc(nest_desc):
+def clean_desc(nest_desc: str) -> str:
     """
     Removes the measurement code from the string containing
     the description of the measurement series.
@@ -228,7 +228,7 @@ def add_dt_and_tinit(m, dt_mins, dt_init):
 #######################################################################################################
 # Os functions
 
-def create_dir(dirname):
+def create_dir(dirname: str):
     """
     Creates directory if it doesn't exist already.
     """
@@ -240,7 +240,7 @@ def create_dir(dirname):
 #######################################################################################################
 # Datetime conversions
 
-def npdatetime_to_datetime(np_dt):
+def npdatetime_to_datetime(np_dt) -> datetime:
     """
     Convert from numpy datetime to datetime.
     """
@@ -249,28 +249,28 @@ def npdatetime_to_datetime(np_dt):
     return dt
 
 
-def datetime_to_npdatetime(dt):
+def datetime_to_npdatetime(dt: datetime):
     """
     Convert from datetime to numpy datetime.
     """
     return np.datetime64(dt)
 
 
-def dt_to_string(dt):
+def dt_to_string(dt: datetime) -> str:
     """
     Convert datetime to string.
     """
     return str(dt)
 
 
-def string_to_dt(s):
+def string_to_dt(s: str) -> datetime:
     """
     Convert string to datetime.
     """
     return datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
 
 
-def mins_to_str(mins):
+def mins_to_str(mins: int) -> str:
     """
     Converts the integer 'mins' to a string.
     :param mins: Number of minutes.
