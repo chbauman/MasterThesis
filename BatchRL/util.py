@@ -21,7 +21,7 @@ Arr = Union[Num, np.ndarray]
 #######################################################################################################
 # Python stuff
 
-def get_if_nnone(lst, indx: int, default=None):
+def get_if_nnone(lst: Sequence, indx: int, default=None):
     """
     Returns a list element if list is not None, 
     else the default value.
@@ -40,14 +40,14 @@ def apply(list_or_el, fun):
         return fun(list_or_el)
 
 
-def repl(el, n: int):
+def repl(el, n: int) -> List:
     """
     Constructs a list with n equal elements 'el'.
     """
     return [el for _ in range(n)]
 
 
-def b_cast(l_or_el, n: int):
+def b_cast(l_or_el, n: int) -> List:
     """
     Checks if 'l_or_el' is a list or not.
     If not returns a list with 'n' repeated elements 'l_or_el'.
@@ -193,11 +193,11 @@ def split_arr(arr: np.ndarray, frac2: float) -> Tuple[Any, Any]:
     is contained.
     """
     n: int = arr.shape[0]
-    n_1 = int((1.0 - frac2) * n)
+    n_1: int = int((1.0 - frac2) * n)
     return arr[:n_1], arr[n_1:]
 
 
-def copy_arr_list(arr_list: Sequence[Arr]):
+def copy_arr_list(arr_list: Sequence[Arr]) -> Sequence[Arr]:
     """
     Copies a list of numpy arrays.
     """
@@ -209,17 +209,21 @@ def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False, non_neg: bo
     """
     Solves the least squares problem min_x ||Ax = b||.
     If offset is true, then a bias term is added.
+    If non_neg is true, then the regression coefficients are
+    constrained to be positive.
+    If ret_fit is true, then a tuple (params, fit_values)
+    is returned.
     """
 
-    def ls_fun(A, b):
+    def ls_fun(a_mat_temp, b_temp):
         if non_neg:
-            return scipy.optimize.nnls(A, b)[0]
+            return scipy.optimize.nnls(a_mat_temp, b_temp)[0]
         else:
-            return np.linalg.lstsq(A, b, rcond=None)[0]
+            return np.linalg.lstsq(a_mat_temp, b_temp, rcond=None)[0]
 
     n, m = a_mat.shape
     if offset:
-        # Add a bias regression coefficient
+        # Add a bias regression term
         a_mat_off = np.empty((n, m + 1), dtype=a_mat.dtype)
         a_mat_off[:, 0] = 1.0
         a_mat_off[:, 1:] = a_mat
@@ -228,7 +232,7 @@ def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False, non_neg: bo
     ret_val = ls_fun(a_mat, b)
     if ret_fit:
         fit_values = np.matmul(a_mat, ret_val)
-        ret_val = [ret_val, fit_values]
+        ret_val = (ret_val, fit_values)
 
     return ret_val
 
@@ -246,7 +250,7 @@ def clean_desc(nest_desc: str) -> str:
     return nest_desc
 
 
-def add_dt_and_tinit(m, dt_mins, dt_init):
+def add_dt_and_tinit(m: Sequence, dt_mins, dt_init):
     """
     Adds dt and t_init to the metadata dictionary m.
     """
