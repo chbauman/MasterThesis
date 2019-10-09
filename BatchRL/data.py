@@ -206,10 +206,11 @@ def extract_date_interval(dates, values, d1, d2):
 def analyze_data(dat):
     """
     Analyzes the provided data.
+    DEPRECATED!
     """
 
-    vals, dates = dat
-    n_data_p = len(vals)
+    values, dates = dat
+    n_data_p = len(values)
 
     tot_time_span = dates[-1] - dates[0]
     print("Data ranges from ", dates[0], "to", dates[-1])
@@ -280,16 +281,16 @@ def clean_data(dat, rem_values=[], n_cons_least=60, const_excepts=[]):
     return [new_values[:count], new_dates[:count]]
 
 
-def remove_out_interval(dat, interval=[0.0, 100]):
+def remove_out_interval(dat, interval=(0.0, 100)):
     """
     Removes values that do not lie within the interval.
     """
-    vals, dates = dat
-    vals[vals > interval[1]] = np.nan
-    vals[vals < interval[0]] = np.nan
+    values, dates = dat
+    values[values > interval[1]] = np.nan
+    values[values < interval[0]] = np.nan
 
 
-def clip_to_interval(dat, interval=[0.0, 100]):
+def clip_to_interval(dat, interval=(0.0, 100)):
     """
     Clips the values of the time_series that are
     out of the interval to lie within.
@@ -557,7 +558,7 @@ def pipeline_preps(orig_dat,
                    gauss_sigma=None,
                    lin_ip=False):
     """
-    Applies all the specified preprocessings to the
+    Applies all the specified pre-processing to the
     given data.
     """
     modified_data = orig_dat
@@ -673,7 +674,7 @@ def save_ds_from_raw(all_data, m_out, name, c_inds=None, p_inds=None, standardiz
     """
     Creates a dataset from the raw input data.
     :param all_data: 2D numpy data array
-    :param m_out: List with metadata dictionnaries.
+    :param m_out: List with metadata dictionaries.
     :param name: Name of the dataset.
     :param c_inds: Control indices.
     :param p_inds: Prediction indices.
@@ -704,6 +705,8 @@ def get_from_data_struct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list,
 
     # Get name
     name = dat_struct.name
+    if new_name is None:
+        new_name = name
 
     # Try loading data
     try:
@@ -742,7 +745,7 @@ def get_from_data_struct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list,
             m_out += [m[i]]
 
         # Save
-        return save_ds_from_raw(all_data, m_out, name, c_inds, p_inds, standardize_data)
+        return save_ds_from_raw(all_data, m_out, new_name, c_inds, p_inds, standardize_data)
     pass
 
 
@@ -939,7 +942,9 @@ def cut_and_split(dat, seq_len, streak_len, ret_orig=False):
 
 def get_battery_data():
     """
-    Load and interpolate the battery data.
+    Loads the battery dataset if existing else
+    creates it from the raw data and creates a few plots.
+    Then returns the dataset.
     """
     # Constants
     dt_mins = 15
@@ -947,6 +952,9 @@ def get_battery_data():
     bat_plot_path = os.path.join(preprocess_plot_path, name)
     create_dir(bat_plot_path)
     inds = [19, 17]
+    n_feats = len(inds)
+
+    # Define arguments
     p_kwargs_soc = {'clean_args': [([0.0], 24 * 60, [])],
                     'rem_out_args': (100, [0.0, 100.0]),
                     'lin_ip': True}
@@ -954,6 +962,8 @@ def get_battery_data():
     kws = [p_kwargs_soc, p_kwargs_ap]
     c_inds = np.array([1], dtype=np.int32)
     p_inds = np.array([0], dtype=np.int32)
+
+    # Get the data
     ds = get_from_data_struct(BatteryData, bat_plot_path, dt_mins, name, inds, kws,
                               c_inds=c_inds,
                               p_inds=p_inds,
@@ -963,25 +973,20 @@ def get_battery_data():
     plot_name_roi = os.path.join(bat_plot_path, "Strange")
     plot_name_after = os.path.join(bat_plot_path, "Processed")
 
+    # Plot all data
     y_lab = '% / kW'
     plot_dataset(ds, False, ['Processed Battery Data', y_lab], plot_name_after)
 
     # Get data
     dat, m = BatteryData.getData()
-    use_inds = [19, 17]
-    n_feats = len(use_inds)
+    x = [dat[i][1] for i in inds]
+    y = [dat[i][0] for i in inds]
+    m_used = [m[i] for i in inds]
 
-    # Plot
-    x = [dat[i][1] for i in use_inds]
-    y = [dat[i][0] for i in use_inds]
-    m_used = [m[i] for i in use_inds]
-    t = "Raw Battery Data"
-
-    # Extract ROI of data where it behaves strangely
+    # Extract and plot ROI of data where it behaves strangely
     d1 = np.datetime64('2019-05-24T12:00')
     d2 = np.datetime64('2019-05-25T12:00')
     x_ext, y_ext = [[extract_date_interval(x[i], y[i], d1, d2)[k] for i in range(n_feats)] for k in range(2)]
-
     plot_multiple_time_series(x_ext, y_ext, m_used,
                               show=False,
                               title_and_ylab=["Strange Battery Behavior", y_lab],
@@ -1101,12 +1106,17 @@ def get_UMAR_heating_data():
 
 
 def get_DFAB_heating_data():
+    """
+    Loads or creates all data from DFAB then returns
+    a list of all datasets. 4 for the rooms, one for the heating water
+    and one with all the valves.
+    :return: list(Datasets)
+    """
     data_list = []
     dt_mins = 15
     dfab_rooms_plot_path = os.path.join(preprocess_plot_path, "DFAB")
     create_dir(dfab_rooms_plot_path)
 
-    ################################
     # Single Rooms
     for e in rooms:
         data, m = e.getData()
@@ -1121,13 +1131,11 @@ def get_DFAB_heating_data():
             prep_kwargs += [blinds_kwargs]
         data_list += [convert_data_struct(e, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
 
-    ################################
     # General Heating Data
     temp_kwargs = {'remove_out_int_args': [10, 50], 'gauss_sigma': 5.0}
     prep_kwargs = [temp_kwargs, temp_kwargs, {}, {}, {}, {}]
     data_list += [convert_data_struct(DFAB_AddData, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
 
-    ################################
     # All Valves Together
     prep_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
     data_list += [convert_data_struct(DFAB_AllValves, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
@@ -1342,6 +1350,7 @@ class Dataset:
         Base constructor.
         """
 
+        # Constants
         self.val_percent = 0.1
         self.seq_len = 20
 
@@ -1384,6 +1393,8 @@ class Dataset:
         self.train_data = None
         self.val_data = None
         self.train_streak_data = None
+        self.val_streak = None
+        self.val_streak_data = None
 
         self.c_inds_prep = None
         self.p_inds_prep = None
@@ -1400,6 +1411,7 @@ class Dataset:
         self.orig_train_val, self.orig_test = cut_and_split(np.copy(self.data), self.seq_len, s_len, ret_orig=True)
         self.orig_train, self.orig_val = split_arr(np.copy(self.orig_train_val), self.val_percent)
         _, self.train_streak = extract_streak(np.copy(self.orig_train), s_len, self.seq_len - 1)
+        _, self.val_streak = extract_streak(np.copy(self.orig_val), s_len, self.seq_len - 1)
 
         # Cut into sequences and save to self.
         self.test_data = cut_data_into_sequences(np.copy(self.orig_test), self.seq_len, interleave=True)
@@ -1407,6 +1419,7 @@ class Dataset:
         self.train_data = cut_data_into_sequences(np.copy(self.orig_train), self.seq_len, interleave=True)
         self.val_data = cut_data_into_sequences(np.copy(self.orig_val), self.seq_len, interleave=True)
         self.train_streak_data = cut_data_into_sequences(np.copy(self.train_streak), self.seq_len, interleave=True)
+        self.val_streak_data = cut_data_into_sequences(np.copy(self.val_streak), self.seq_len, interleave=True)
 
     def get_prepared_data(self, what_data='train', *, get_all_preds=False):
         """
@@ -1424,6 +1437,8 @@ class Dataset:
             data_to_use = self.train_val_data
         elif what_data == 'train_streak':
             data_to_use = self.train_streak_data
+        elif what_data == 'val_streak':
+            data_to_use = self.val_streak_data
         else:
             raise ValueError("No such data available: " + what_data)
         data_to_use = np.copy(data_to_use)

@@ -52,12 +52,12 @@ class BatteryModel(BaseDynamicsModel):
     def analyze_bat_model(self):
         """
         This is basically the fit method, but it also
-        does some data analysis and makes some plots.
+        does some data analysis and makes battery data specific some plots.
         :return: None
         """
         # Get data
         d = self.data
-        dat = d.orig_trainval
+        dat = d.orig_train_val
         scale = np.copy(d.scaling)
         scale[0, 0] = 0.0
 

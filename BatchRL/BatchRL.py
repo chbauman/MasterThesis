@@ -36,7 +36,8 @@ def simple_battery_FQI():
 
     print((np.c_[s_t, a_t, r_t, s_tp1])[:50])
 
-    # fqi = NFQI(state_dim, nb_actions, stoch_policy_imp = False, use_diff_target_net=False, param_updata_fac=0.5, max_iters = 20, lr = 0.001)
+    # fqi = NFQI(state_dim, nb_actions, stoch_policy_imp = False, use_diff_target_net=False,
+    # param_updata_fac=0.5, max_iters = 20, lr = 0.001)
     fqi = bDDPG(state_dim, nb_actions)
     # fqi = LSPI(state_dim, nb_actions, stoch_policy_imp=True)
 
@@ -49,10 +50,10 @@ def main():
     get_DFAB_heating_data()
     generate_room_datasets()
 
-    # Do tests
-    get_data_test()
-    test_align()
-    test_dataset_artificially()
+    # # Do tests
+    # get_data_test()
+    # test_align()
+    # test_dataset_artificially()
 
     # compute_DFAB_energy_usage()
     # return
