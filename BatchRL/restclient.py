@@ -11,29 +11,28 @@
 # Fixed conversion to datetime, added local 
 # data storage and added password GUI.          CB                              20190821
 # Added meta data retrieval                     CB                              20190904
-
 ###################################################################################################
 
-import requests
-import time
 import os
-
+import time
 from ast import literal_eval
+from typing import Tuple, List, Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+import requests
 
-use_cl = True
-if not use_cl:
+USE_CL: bool = True
+if not USE_CL:
     from pw_gui import get_pw
 else:
     from pw_cl import get_pw
 
 # Where to put the local copy of the data
-save_dir = '../Data/'
+save_dir: str = '../Data/'
 
 
-def get_data_folder(name, start_date, end_date):
+def get_data_folder(name: str, start_date: str, end_date: str) -> str:
     """
     Defines the naming of the data directory given
     the name and the dates.
@@ -43,7 +42,7 @@ def get_data_folder(name, start_date, end_date):
     return data_dir
 
 
-def read_offline(name, start_date='2019-01-01', end_date='2019-12-31'):
+def read_offline(name: str, start_date: str = '2019-01-01', end_date: str = '2019-12-31') -> Tuple[List, List]:
     """
     Read numpy data that has already been created.
     """
@@ -83,10 +82,12 @@ class Client(object):
     """
 
     def __init__(self,
-                 domain='nest.local',
-                 url='https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/'):
+                 domain: str = 'nest.local',
+                 url: str = 'https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/'):
         """
         Initialize parameters and empty data containers.
+        :param domain: Use default.
+        :param url: Use default.
         """
         self.domain = domain
         self.url = url
@@ -96,16 +97,19 @@ class Client(object):
         self.np_data = []
         self.meta_data = []
         self.auth = None
-        pass
 
-    def read(self, df_data=None, start_date='2019-01-01', end_date='2019-12-31'):
+    def read(self, df_data: List[str],
+             start_date: str = '2019-01-01',
+             end_date: str = '2019-12-31'
+             ) -> Optional[Tuple[List, List]]:
         """
         Reads data defined by the list of column IDs df_data
         that was acquired between startDate and endDate.
+        :param df_data: List of IDs in string format.
+        :param start_date: Starting date in string format.
+        :param end_date: End date in string format.
+        :return: (List[(Values, Dates)], List[Metadata])
         """
-
-        if df_data is None:
-            df_data = []
 
         # https://github.com/brandond/requests-negotiate-sspi/blob/master/README.md
         from requests_negotiate_sspi import HttpNegotiateAuth
@@ -155,7 +159,7 @@ class Client(object):
         print(time.ctime() + ' REST client data acquired')
         return self.np_data, self.meta_data
 
-    def write_np(self, name, overwrite=False):
+    def write_np(self, name: str, overwrite: bool = False):
         """
         Writes the read data in numpy format
         to files.
@@ -192,42 +196,46 @@ class Client(object):
 class DataStruct:
     """
     Base Class for different sets of data columns
-    defined by successive IDs.
+    defined by successive IDs, a name and a date range.
     """
 
     def __init__(self,
-                 id_list,
-                 name,
-                 start_date='2019-01-01',
-                 end_date='2019-12-31'):
-
+                 id_list: List[int],
+                 name: str,
+                 start_date: str = '2019-01-01',
+                 end_date: str = '2019-12-31'):
+        """
+        Initialize DataStruct.
+        :param id_list: IDs of the data series.
+        :param name: Name of the collection of data series.
+        :param start_date: Begin of time interval.
+        :param end_date: End of time interval.
+        """
         # Initialize values
         self.name = name
         self.start_date = start_date
         self.end_date = end_date
-
-        # Convert elements of id_list to strings.
-        for ct, el in enumerate(id_list):
-            id_list[ct] = str(el)
-        self.data_ids = id_list
         self.client_loaded = False
         self.REST = None
-        pass
 
-    def load_client(self):
+        # Convert elements of id_list to strings.
+        self.data_ids = [str(e) for e in id_list]
+
+    def load_client(self) -> None:
         """
         Loads the REST client if not yet loaded.
+        :return: None
         """
         if not self.client_loaded:
             self.REST = Client()
             self.client_loaded = True
 
-    def getData(self):
+    def getData(self) -> Optional[Tuple[List, List]]:
         """
-        If the data is not found locally it is 
-        retrieved from the SQL database, otherwise 
+        If the data is not found locally it is
+        retrieved from the SQL database, otherwise
         the local data is read and returned.
-        Returns (list((np.array(values), np.array(timestamps))), list(dict()))
+        :return: (List[(values: np.ndarray, timestamps: np.ndarray)], List[metadata: Dict])
         """
 
         self.load_client()
@@ -246,11 +254,14 @@ class DataStruct:
                                               start_date=self.start_date,
                                               end_date=self.end_date)
         return ret_val, meta_data
-
     pass
 
 
 def example():
+    """
+    Example usage of above code.
+    :return: None
+    """
     # Example data.
     test_data = DataStruct(
         id_list=[421100171, 421100172],
@@ -267,4 +278,4 @@ def example():
 
     # Do something with the data
     # Add your code here...
-    pass
+    return

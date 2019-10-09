@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import wx
 
 
@@ -9,7 +11,7 @@ class LoginDialog(wx.Dialog):
     Class to define login dialog
     """
 
-    def __init__(self, lh):
+    def __init__(self, lh: 'LoginHolder'):
         """Constructor"""
 
         wx.Dialog.__init__(self, None, title="Login")
@@ -39,7 +41,7 @@ class LoginDialog(wx.Dialog):
 
         self.SetSizer(main_sizer)
 
-    def on_login(self, event):
+    def on_login(self, event) -> None:
         """
         Save login data to login holder.
         """
@@ -47,9 +49,7 @@ class LoginDialog(wx.Dialog):
         user_password = self.password.GetValue()
         username = self.user.GetValue()
         self.lh.log_data = (username, user_password)
-
         self.Destroy()
-        return
 
 
 class MainFrame(wx.Frame):
@@ -57,11 +57,11 @@ class MainFrame(wx.Frame):
     Frame calling the login dialog only.
     """
 
-    def __init__(self, lh):
+    def __init__(self, lh: 'LoginHolder'):
         """Constructor"""
         self.lh = lh
         wx.Frame.__init__(self, None, title="Main App")
-        panel = wx.Panel(self)
+        wx.Panel(self)
 
         # Ask user to login
         dlg = LoginDialog(self.lh)
@@ -78,7 +78,7 @@ class LoginHolder:
         self.log_data = None
 
 
-def get_pw():
+def get_pw() -> Tuple[str, str]:
     """
     Opens GUI and retrieves the login information
     (username, password) and returns them in a tuple.
