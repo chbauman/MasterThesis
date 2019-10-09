@@ -21,7 +21,7 @@ from data import WeatherData, TestData, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
     get_DFAB_heating_data, \
     compute_DFAB_energy_usage, get_weather_data, generate_room_datasets, \
-    analyze_room_energy_consumption, Dataset, test_align, test_dataset_artificially
+    analyze_room_energy_consumption, Dataset, test_align, test_dataset_artificially, no_inds
 
 
 def simple_battery_FQI():
@@ -72,11 +72,11 @@ def main():
 
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(100, 100),
-                          n_iter_max=100,
-                          input_noise_std=0.0001,
-                          lr=0.01,
+                          n_iter_max=50,
+                          input_noise_std=0.001,
+                          lr=0.001,
                           residual_learning=True,
-                          weight_vec=w
+                          weight_vec=None,
                           )
     mod.fit()
     mod.model_disturbance()
@@ -84,14 +84,13 @@ def main():
     mod.analyze()
     mod_naive = ConstModel(ds)
     mod_naive.analyze()
-    # return
+
 
     # compute_DFAB_energy_usage()
-    # return
 
     # Battery data
     bat_name = "Battery"
-    get_battery_data()  # Needs to be fixed!!!
+    get_battery_data()
     bat_ds = Dataset.loadDataset(bat_name)
     bat_ds.split_train_test(7)
     bat_ds.get_prepared_data()

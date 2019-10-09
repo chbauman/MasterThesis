@@ -35,6 +35,9 @@ class BaseDynamicsModel(ABC):
     """
 
     N_LAG = 4
+    debug = True
+    model_path = "../Models/Dynamics/"
+    data: Dataset
 
     def __init__(self):
         """
@@ -44,14 +47,10 @@ class BaseDynamicsModel(ABC):
         self.name = None
         self.out_dim = None
         self.use_AR = None
-        self.data = None
         self.dist_mod = None
         self.init_pred = None
         self.res_std = None
         self.modeled_disturbance = None
-
-    debug = True
-    model_path = "../Models/Dynamics/"
 
     @abstractmethod
     def fit(self):
@@ -250,6 +249,25 @@ class BaseDynamicsModel(ABC):
                      show=False,
                      title_and_ylab=title_and_ylab,
                      save_name=self.get_plt_path('OneWeek' + ext))
+
+        if predict_all:
+            n_pred_f = self.data.d - self.data.n_c
+            for k in range(n_pred_f):
+                k_true = k + np.sum(self.data.c_inds <= k)
+                print(k, ": k, k_true =", k_true)
+                analysis_ds.data[:, 0] = np.copy(full_pred[0, :, k])
+                analysis_ds.data[:, 1] = np.copy(out_dat_test[:, k])
+                analysis_ds.scaling = np.array(repl(d.scaling[k_true], 2))
+                analysis_ds.is_scaled = np.array(repl(d.is_scaled[k_true], 2))
+                curr_p_inds = np.array([k_true], dtype=np.int32)
+                analysis_ds.p_inds = curr_p_inds
+                desc = d.descriptions[k_true]
+                title_and_ylab = ['1 Week Continuous Predictions', desc]
+                print(desc)
+                plot_dataset(analysis_ds,
+                             show=False,
+                             title_and_ylab=title_and_ylab,
+                             save_name=self.get_plt_path('OneWeek_' + str(k) + "_" + ext))
         pass
 
     def analyze(self, diff=False):

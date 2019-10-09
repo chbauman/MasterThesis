@@ -77,10 +77,11 @@ class RNNDynamicModel(BaseDynamicsModel):
         arch = '_L' + '-'.join(map(str, self.hidden_sizes))
         ep_s = '_E' + str(self.n_iter_max)
         lrs = '_LR' + str(self.lr)
+        n_str = '' if self.input_noise_std is None else '_N' + str(self.input_noise_std)
         gru_str = '' if not self.gru else '_GRU'
         res_str = '' if not self.res_learn else '_RESL'
-        w_str = '' if self.weight_vec is None else '_WTD'
-        return name + ds_pt + ep_s + arch + lrs + gru_str + res_str + w_str
+        w_str = '' if self.weight_vec is None else '_W' + '-'.join(map(str, self.weight_vec))
+        return name + ds_pt + ep_s + arch + lrs + n_str + gru_str + res_str + w_str
 
     def build_model(self) -> None:
         """

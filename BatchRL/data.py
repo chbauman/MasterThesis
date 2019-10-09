@@ -1787,6 +1787,29 @@ def generate_room_datasets():
     return out_ds_list
 
 
+def generate_time_ds_from_other(other: Dataset) -> Dataset:
+    """
+    Generates a time dataset from the last two
+    time series of another dataset.
+    :param other: The other dataset.
+    :return: A new dataset containing only the time series.
+    """
+    name = other.name + "_SinCosTime"
+
+    try:
+        return Dataset.loadDataset(name)
+    except FileNotFoundError:
+        pass
+    # Construct Time dataset
+    n_feat = other.d
+    ds_sin_cos_time: Dataset = Dataset.copy(other[n_feat - 2: n_feat])
+    ds_sin_cos_time.name = name
+    ds_sin_cos_time.p_inds = np.array([0], dtype=np.int32)
+    ds_sin_cos_time.c_inds = no_inds
+    ds_sin_cos_time.save()
+    return ds_sin_cos_time
+
+
 #######################################################################################################
 # Testing
 
