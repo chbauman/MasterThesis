@@ -1,17 +1,26 @@
 from base_dynamics_model import BaseDynamicsModel
 from util import *
 from visualize import scatter_plot, model_plot_path
+from data import Dataset
 
 
 class BatteryModel(BaseDynamicsModel):
     """
     The model of the battery:
-    s_t: SoC at time t
-    Model: $s_{t+1} = s_t + \eta(s_t) p_{t+1}$
-    p_{t+1}: average charging power from time t to t+1 (control input)
+    :math:`s_t`: SoC at time t
+    Model:
+    :math:`s_{t+1} = s_t + \\eta(s_t) p_{t+1}`,
+    :math:`p_{t+1}`:
+    average charging power from time t to t+1 (control input)
     """
 
-    def __init__(self, dataset):
+    def __init__(self, dataset: Dataset):
+        """
+        Initializes the battery model with the specified
+        dataset.
+
+        :param dataset: Dataset with data to fit modes.
+        """
         super(BatteryModel, self).__init__()
 
         self.name = dataset.name
@@ -24,12 +33,19 @@ class BatteryModel(BaseDynamicsModel):
         self.params = None
 
     def fit(self) -> None:
+        """
+        Calls analyze_bat_model, there the
+        actual model fitting happens.
+
+        :return: None
+        """
         self.analyze_bat_model()
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """
         Make predictions using the fitted model
         on the provided data.
+
         :param in_data: Prepared data.
         :return: Predictions
         """
@@ -50,6 +66,7 @@ class BatteryModel(BaseDynamicsModel):
         """
         This is basically the fit method, but it also
         does some data analysis and makes battery data specific some plots.
+
         :return: None
         """
         # Get data
