@@ -1,4 +1,6 @@
 import os
+from typing import Dict
+
 import scipy
 import pickle
 import warnings
@@ -675,7 +677,10 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
     return all_dat, dt_init_new
 
 
-def save_ds_from_raw(all_data, m_out, name, c_inds=None, p_inds=None, standardize_data=False):
+def save_ds_from_raw(all_data: np.ndarray, m_out: List[Dict], name: str,
+                     c_inds: np.ndarray = None,
+                     p_inds: np.ndarray = None,
+                     standardize_data: bool = False):
     """
     Creates a dataset from the raw input data.
 
@@ -684,7 +689,7 @@ def save_ds_from_raw(all_data, m_out, name, c_inds=None, p_inds=None, standardiz
     :param name: Name of the dataset.
     :param c_inds: Control indices.
     :param p_inds: Prediction indices.
-    :param standardize_data:
+    :param standardize_data: Whether to standardize the data.
     :return: Dataset
     """
     if c_inds is None:
