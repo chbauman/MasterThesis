@@ -19,6 +19,7 @@ class ConstModel(BaseDynamicsModel):
 
         # Save dataset
         self.data = dataset
+        self.nc = dataset.n_c
 
     def fit(self) -> None:
         """
@@ -33,7 +34,7 @@ class ConstModel(BaseDynamicsModel):
         :param in_data: Prepared data.
         :return: Same as input
         """
-        return in_data[:, -1, :]
+        return in_data[:, -1, :-self.nc]
 
     def disturb(self):
         """
