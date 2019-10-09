@@ -29,11 +29,11 @@ class ConstModel(BaseDynamicsModel):
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """
-        Make predictions by just returning the input.
+        Make predictions by just returning the last input.
         :param in_data: Prepared data.
         :return: Same as input
         """
-        return in_data
+        return in_data[:, -1, :]
 
     def disturb(self):
         """

@@ -6,6 +6,7 @@ from batchDDPG import bDDPG
 
 from dm_LSTM import RNNDynamicModel
 from dm_GPR import GPR_DM
+from dm_Const import ConstModel
 
 from battery_model import BatteryModel
 
@@ -77,11 +78,12 @@ def main():
                           residual_learning=True,
                           weight_vec=w
                           )
-
     mod.fit()
     mod.model_disturbance()
     mod.disturb()
     mod.analyze()
+    mod_naive = ConstModel(ds)
+    mod_naive.analyze()
     # return
 
     # compute_DFAB_energy_usage()
@@ -96,6 +98,8 @@ def main():
     bat_mod = BatteryModel(bat_ds)
     bat_mod.analyze_bat_model()
     bat_mod.analyze()
+    bat_mod_naive = ConstModel(bat_ds)
+    bat_mod_naive.analyze()
     return
 
     # Parameters
