@@ -36,6 +36,11 @@ def get_data_folder(name: str, start_date: str, end_date: str) -> str:
     """
     Defines the naming of the data directory given
     the name and the dates.
+
+    :param name: Name of data.
+    :param start_date: Start of data collection.
+    :param end_date: End of data collection.
+    :return: Full path of data defined by params.
     """
     ext = start_date + "__" + end_date + "__"
     data_dir = os.path.join(save_dir, ext + name)
@@ -45,6 +50,11 @@ def get_data_folder(name: str, start_date: str, end_date: str) -> str:
 def read_offline(name: str, start_date: str = '2019-01-01', end_date: str = '2019-12-31') -> Tuple[List, List]:
     """
     Read numpy data that has already been created.
+
+    :param name: Name of the data.
+    :param start_date: Start of data collection.
+    :param end_date: End of data collection.
+    :return: values, dates and metadata.
     """
 
     # Get folder name
@@ -86,6 +96,7 @@ class Client(object):
                  url: str = 'https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/'):
         """
         Initialize parameters and empty data containers.
+
         :param domain: Use default.
         :param url: Use default.
         """
@@ -105,6 +116,7 @@ class Client(object):
         """
         Reads data defined by the list of column IDs df_data
         that was acquired between startDate and endDate.
+
         :param df_data: List of IDs in string format.
         :param start_date: Starting date in string format.
         :param end_date: End date in string format.
@@ -163,19 +175,22 @@ class Client(object):
         """
         Writes the read data in numpy format
         to files.
+
+        :param name: Name of data collection.
+        :param overwrite: Whether to overwrite existing data with same name.
+        :return: None
         """
 
         print("Writing Data to local disk.")
 
         # Create directory
         if self.start_date is None:
-            print("Read data first!!")
-            return
+            raise ValueError("Read data first!!")
         data_dir = get_data_folder(name, self.start_date, self.end_date)
         if not os.path.isdir(data_dir):
             os.mkdir(data_dir)
         elif overwrite:
-            print("Not implemented, remove manually and try again.")
+            raise NotImplementedError("Not implemented, remove manually and try again.")
         else:
             print("Directory already exists.")
             return
@@ -206,6 +221,7 @@ class DataStruct:
                  end_date: str = '2019-12-31'):
         """
         Initialize DataStruct.
+
         :param id_list: IDs of the data series.
         :param name: Name of the collection of data series.
         :param start_date: Begin of time interval.
@@ -224,6 +240,7 @@ class DataStruct:
     def load_client(self) -> None:
         """
         Loads the REST client if not yet loaded.
+
         :return: None
         """
         if not self.client_loaded:
@@ -235,6 +252,7 @@ class DataStruct:
         If the data is not found locally it is
         retrieved from the SQL database, otherwise
         the local data is read and returned.
+
         :return: (List[(values: np.ndarray, timestamps: np.ndarray)], List[metadata: Dict])
         """
 
@@ -260,6 +278,7 @@ class DataStruct:
 def example():
     """
     Example usage of above code.
+
     :return: None
     """
     # Example data.
