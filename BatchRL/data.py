@@ -1474,11 +1474,20 @@ class Dataset:
         return input_data, output_data
 
     @classmethod
-    def fromRaw(cls, all_data, m, name: str, c_inds=no_inds, p_inds=no_inds):
+    def fromRaw(cls, all_data: np.ndarray, m: List, name: str, 
+                c_inds: np.ndarray = no_inds,
+                p_inds: np.ndarray = no_inds) -> 'Dataset':
         """
-        Constructor from data and dict m: 
+        Constructor from data and dict m:
         Extracts the important metadata from the
         dict m.
+
+        :param all_data: Numpy array with all the time series.
+        :param m: List of metadata dictionaries.
+        :param name: Name of the data collection.
+        :param c_inds: Control indices.
+        :param p_inds: Prediction indices.
+        :return: Generated Dataset.
         """
         d = all_data.shape[1]
 
@@ -1502,10 +1511,21 @@ class Dataset:
         ret_val = cls(np.copy(all_data), dt, t_init, scaling, is_scaled, descriptions, c_inds, p_inds, name)
         return ret_val
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """
+        Returns the number of features per sample per timestep.
+
+        :return: Number of features.
+        """
         return self.d
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Creates a string containing the most important
+        information about this dataset.
+
+        :return: Dataset description string.
+        """
         out_str = "Dataset(" + repr(self.data) + ", \ndt = " + repr(self.dt)
         out_str += ", t_init = " + repr(self.t_init) + ", \nis_scaled = " + repr(self.is_scaled)
         out_str += ", \ndescriptions = " + repr(self.descriptions) + ", \nc_inds = " + repr(self.c_inds)
@@ -1513,9 +1533,12 @@ class Dataset:
         return out_str
 
     @classmethod
-    def copy(cls, dataset):
+    def copy(cls, dataset: 'Dataset') -> 'Dataset':
         """
         Returns a deep copy of the passed Dataset.
+
+        :param dataset: The dataset to copy.
+        :return: The new dataset.
         """
         return cls(np.copy(dataset.data),
                    dataset.dt,
@@ -1527,12 +1550,14 @@ class Dataset:
                    np.copy(dataset.p_inds),
                    dataset.name)
 
-    def __add__(self, other):
+    def __add__(self, other: 'Dataset') -> 'Dataset':
         """
         Merges dataset other into self.
         Does not commute!
-        """
 
+        :param other: The dataset to merge self with.
+        :return: A new dataset with the combined data.
+        """
         # Check compatibility
         if self.dt != other.dt:
             raise ValueError("Datasets not compatible!")
@@ -1553,9 +1578,12 @@ class Dataset:
 
         return Dataset(data, self.dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
 
-    def add_time(self, sine_cos: bool = True):
+    def add_time(self, sine_cos: bool = True) -> 'Dataset':
         """
         Adds time to current dataset.
+
+        :param sine_cos: Whether to use sin(t) and cos(t) instead of t directly.
+        :return: self + the time dataset.
         """
         dt = self.dt
         t_init = datetime_to_npdatetime(string_to_dt(self.t_init))
@@ -1593,10 +1621,15 @@ class Dataset:
                                   "Time")
         pass
 
-    def getSlice(self, ind_low: int, ind_high: int):
+    def getSlice(self, ind_low: int, ind_high: int) -> 'Dataset':
         """
         Returns a new dataset with the columns
         'ind_low' through 'ind_high'.
+
+        :param ind_low: Lower range index.
+        :param ind_high: Upper range index.
+        :return: Dataset containing series [ind_low: ind_high) of current
+        dataset.
         """
 
         warnings.warn("Prediction and control indices are lost when slicing.")
@@ -1636,9 +1669,11 @@ class Dataset:
             return self.getSlice(key.start, key.stop)
         return self.getSlice(key, key + 1)
 
-    def save(self):
+    def save(self) -> None:
         """
         Save the class object to a file.
+
+        :return: None
         """
         create_dir(dataset_data_path)
 
@@ -1659,13 +1694,16 @@ class Dataset:
         return data_out
 
     @staticmethod
-    def get_filename(name: str):
+    def get_filename(name: str) -> str:
         return os.path.join(dataset_data_path, name) + '.pkl'
 
     @staticmethod
-    def loadDataset(name: str):
+    def loadDataset(name: str) -> 'Dataset':
         """
         Load a saved Dataset object.
+
+        :param name: Name of dataset.
+        :return: Loaded dataset.
         """
         f_name = Dataset.get_filename(name)
         if not os.path.isfile(f_name):
@@ -1674,10 +1712,11 @@ class Dataset:
             ds = pickle.load(f)
             return ds
 
-    def standardize_col(self, col_ind: int):
+    def standardize_col(self, col_ind: int) -> None:
         """
         Standardizes a certain column of the data.
         Nans are ignored.
+
         :param col_ind: Index of the column to be standardized.
         :return: None
         """
@@ -1691,9 +1730,11 @@ class Dataset:
         self.is_scaled[col_ind] = True
         self.scaling[col_ind] = np.array([m, std])
 
-    def standardize(self):
+    def standardize(self) -> None:
         """
         Standardizes all columns in the data.
+
+        :return: None
         """
         for k in range(self.d):
             self.standardize_col(k)

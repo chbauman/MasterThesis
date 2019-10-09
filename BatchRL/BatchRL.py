@@ -50,11 +50,11 @@ def simple_battery_FQI():
 
 
 def main():
-    test_rest_client()
     get_DFAB_heating_data()
     generate_room_datasets()
 
     # # Do tests
+    # test_rest_client()
     # get_data_test()
     # test_align()
     # test_dataset_artificially()
