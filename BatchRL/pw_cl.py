@@ -1,10 +1,13 @@
 from typing import Tuple
+from getpass import getpass
 
 
 def get_pw() -> Tuple[str, str]:
     """
     Commandline login getter tool.
+
+    :return: Tuple with username and password strings.
     """
     username = input("Please enter username: ")
-    pw = input("Enter password: ")
+    pw = getpass("Enter password: ")
     return username, pw
