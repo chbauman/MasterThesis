@@ -1,4 +1,3 @@
-
 import numpy as np
 
 import keras
@@ -13,8 +12,8 @@ from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput, \
     ReduceProbabilisticSoftMax2D, getMLPModel
 from keras_util import *
 
-class NFQI:
 
+class NFQI:
     """
     Implements the algorithm described in:
         Neural Fitted Q Iteration - First Experiences with a Data 
@@ -29,17 +28,16 @@ class NFQI:
     def __init__(self,
                  state_dim,
                  nb_actions,
-                 mlp_layers=[50, 50, 50],
+                 mlp_layers=(50, 50, 50),
                  discount_factor=0.9,
-                 use_diff_target_net = True,
+                 use_diff_target_net=True,
                  target_network_update_freq=3,
-                 param_updata_fac = 1.0,
+                 param_update_fac=1.0,
                  lr=0.0001,
                  max_iters=200,
-                 stoch_policy_imp = False,
-                 stochasticity_beta = 1.0
+                 stoch_policy_imp=False,
+                 stochasticity_beta=1.0
                  ):
-
         """
         Init function, stores all required parameters.
         """
@@ -50,40 +48,41 @@ class NFQI:
         self.discount_factor = discount_factor
         self.use_diff_target_net = use_diff_target_net
         self.target_network_update_freq = target_network_update_freq
-        self.param_updata_fac = param_updata_fac
+        self.param_update_fac = param_update_fac
         self.lr = lr
         self.max_iters = max_iters
 
         # Params for stochastic policy update
         self.stoch_policy_imp = stoch_policy_imp
         self.stochasticity_beta = stochasticity_beta
-         
+
         # Create model
         self.opt_model = self.create_optimization_target()
 
     def create_optimization_target(self):
         """
-        Creates Q(s_t, a_t) - \gamma \max_a Q(s_tp1, a) as Keras model.
+        Creates
+        :math:`Q(s_t, a_t) - \\gamma \\max_a Q(s_tp1, a)` as Keras model.
         """
 
         # State and action inputs
         s_t = Input(shape=(self.state_dim,))
         s_tp1 = Input(shape=(self.state_dim,))
-        a_t = Input(shape=(1,), dtype = np.int32)
+        a_t = Input(shape=(1,), dtype=np.int32)
 
         # Build Q-network
         a_t_one_hot = OneHot(self.nb_actions)(a_t)
         a_s_t = keras.layers.concatenate([a_t_one_hot, s_t], axis=-1)
-        Q_mod = getMLPModel(self.mlp_layers, trainable = True)
+        Q_mod = getMLPModel(self.mlp_layers, trainable=True)
         q_out = Q_mod(a_s_t)
-        self.Q_net = Q_mod        
+        self.Q_net = Q_mod
 
         # Target Q-network
         s_tp1_tar = RepeatVector(self.nb_actions)(s_tp1);
         a_t_tar = PrepInput(self.nb_actions)(s_tp1)
         a_s_t_tar = keras.layers.concatenate([a_t_tar, s_tp1_tar], axis=-1)
         if self.use_diff_target_net:
-            Q_mod = getMLPModel(self.mlp_layers, trainable = False)
+            Q_mod = getMLPModel(self.mlp_layers, trainable=False)
         q_out_tar = Q_mod(a_s_t_tar)
 
         if self.stoch_policy_imp:
@@ -91,14 +90,14 @@ class NFQI:
         else:
             argmax_q = ReduceArgMax2D(0)(q_out_tar)
         max_q = ReduceMax2D(0)(q_out_tar)
-        self.target_Q_net = Model(inputs=s_tp1, outputs=max_q)               
+        self.target_Q_net = Model(inputs=s_tp1, outputs=max_q)
 
         # Greedy Policy
         argmax_q = ReduceArgMax2D(0)(q_out_tar)
         self.greedy_policy = Model(inputs=s_tp1, outputs=argmax_q)
 
         # Optimization Target
-        lam_max_q = Lambda(lambda x: x * self.discount_factor)(max_q) 
+        lam_max_q = Lambda(lambda x: x * self.discount_factor)(max_q)
         opt_target = Subtract()([q_out, lam_max_q])
 
         # Define model
@@ -113,32 +112,31 @@ class NFQI:
         """
         Fit the Q-function.
         """
-               
+
         num_targ_net_update = self.max_iters // self.target_network_update_freq
 
-        for k in range(num_targ_net_update):   
-            
+        for k in range(num_targ_net_update):
+
             # Copy parameters to target network
             if self.use_diff_target_net and self.use_diff_target_net:
-                soft_update_params(self.target_Q_net, self.Q_net, self.param_updata_fac)
+                soft_update_params(self.target_Q_net, self.Q_net, self.param_update_fac)
 
             # Fit model with constant target network
             curr_init_epoch = k * self.target_network_update_freq
-            self.opt_model.fit([D_s, D_a, D_s_prime], D_r, 
-                               epochs = curr_init_epoch + self.target_network_update_freq, 
-                               initial_epoch = curr_init_epoch,
-                               batch_size = 128,
-                               validation_split = 0.1)
-
-        pass
+            self.opt_model.fit([D_s, D_a, D_s_prime], D_r,
+                               epochs=curr_init_epoch + self.target_network_update_freq,
+                               initial_epoch=curr_init_epoch,
+                               batch_size=128,
+                               validation_split=0.1)
 
     def get_policy(self):
         """
         Returns the fitted greedy policy.
         """
+
         def policy(s_t):
             s_t = np.reshape(s_t, (1, -1))
             action = self.greedy_policy.predict(s_t)
             return action[0][0]
-        
+
         return policy
