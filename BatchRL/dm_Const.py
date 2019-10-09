@@ -1,6 +1,6 @@
 from base_dynamics_model import BaseDynamicsModel
 from util import *
-from visualize import scatter_plot, model_plot_path
+from visualize import model_plot_path
 from data import Dataset
 
 
