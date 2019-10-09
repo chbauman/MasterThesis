@@ -4,7 +4,7 @@ from FQI import NFQI
 from LSPI import LSPI
 from batchDDPG import bDDPG
 
-from dm_LSTM import BaseRNN_DM
+from dm_LSTM import RNNDynamicModel
 from dm_GPR import GPR_DM
 
 from battery_model import BatteryModel
@@ -69,14 +69,14 @@ def main():
     w = np.ones((ds.d - ds.n_c,), dtype=np.float32)
     w[ds.p_inds_prep[0]] = 2.0  # Weight temperature twice
 
-    mod = BaseRNN_DM(ds,
-                     hidden_sizes=(100, 100),
-                     n_iter_max=100,
-                     input_noise_std=0.0001,
-                     lr=0.01,
-                     residual_learning=True,
-                     weight_vec=w
-                     )
+    mod = RNNDynamicModel(ds,
+                          hidden_sizes=(100, 100),
+                          n_iter_max=100,
+                          input_noise_std=0.0001,
+                          lr=0.01,
+                          residual_learning=True,
+                          weight_vec=w
+                          )
 
     mod.fit()
     mod.model_disturbance()
@@ -113,4 +113,5 @@ def main():
     # simple_battery_FQI()
 
 
-main()
+if __name__ == '__main__':
+    main()

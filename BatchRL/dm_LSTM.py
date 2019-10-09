@@ -28,7 +28,7 @@ def weighted_loss(y_true, y_pred, weights):
     return K.mean((y_true - y_pred) * (y_true - y_pred) * weights)
 
 
-class BaseRNN_DM(BaseDynamicsModel):
+class RNNDynamicModel(BaseDynamicsModel):
     """
     Simple LSTM used for training a dynamics model.
     """
@@ -42,11 +42,11 @@ class BaseRNN_DM(BaseDynamicsModel):
                  weight_vec: Optional[np.ndarray] = None,
                  gru: bool = False,
                  input_noise_std: Optional[float] = None,
-                 use_AR: bool = False,
+                 use_ar_process: bool = False,
                  residual_learning: bool = False,
                  lr: float = 0.001):
 
-        super(BaseRNN_DM, self).__init__()
+        super(RNNDynamicModel, self).__init__()
 
         # Store data
         self.data = data
@@ -59,7 +59,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         self.n_iter_max = n_iter_max
         self.gru = gru
         self.input_noise_std = input_noise_std
-        self.use_AR = use_AR
+        self.use_AR = use_ar_process
         self.weight_vec = weight_vec
         self.res_learn = residual_learning
         self.lr = lr
