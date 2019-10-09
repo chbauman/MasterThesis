@@ -225,7 +225,7 @@ def analyze_data(dat):
     return
 
 
-def clean_data(dat, rem_values=[], n_cons_least=60, const_excepts=[]):
+def clean_data(dat, rem_values=(), n_cons_least: int = 60, const_excepts=()):
     """
     Removes all values with a specified value 'rem_val'
     and removes all sequences where there are at 
@@ -281,7 +281,7 @@ def clean_data(dat, rem_values=[], n_cons_least=60, const_excepts=[]):
     return [new_values[:count], new_dates[:count]]
 
 
-def remove_out_interval(dat, interval=(0.0, 100)):
+def remove_out_interval(dat, interval: Tuple[Num, Num] = (0.0, 100.0)):
     """
     Removes values that do not lie within the interval.
     """
@@ -290,7 +290,7 @@ def remove_out_interval(dat, interval=(0.0, 100)):
     values[values < interval[0]] = np.nan
 
 
-def clip_to_interval(dat, interval=(0.0, 100)):
+def clip_to_interval(dat, interval=(0.0, 100.0)):
     """
     Clips the values of the time_series that are
     out of the interval to lie within.
@@ -343,6 +343,8 @@ def interpolate_time_series(dat, dt_mins, lin_ip=False):
     last_dt = dates[0]
     last_val = values[0]
     curr_val = (last_dt - start_dt) / interval * last_val
+    curr_dt = dates[0]
+    v = 0.0
 
     # Loop over data points
     for ct, v in enumerate(values[1:]):
@@ -1019,7 +1021,7 @@ def get_weather_data(save_plots=True):
         loaded = Dataset.loadDataset(name)
         return loaded
     except FileNotFoundError:
-        loaded = None
+        pass
 
     # Initialize meta data dict list
     m_out = []
@@ -1724,7 +1726,6 @@ def generate_room_datasets():
 
     # Get weather
     w_dataset = get_weather_data()
-    dt = w_dataset.dt
 
     # Get room data
     dfab_dataset_list = get_DFAB_heating_data()

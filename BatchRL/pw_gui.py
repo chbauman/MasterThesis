@@ -3,15 +3,22 @@ from typing import Tuple
 import wx
 
 
-# Adapted from: https://dzone.com/articles/wxpython-how-create-login
+class LoginHolder:
+    """
+    Class that holds the login information.
+    """
+
+    def __init__(self):
+        self.log_data = None
 
 
 class LoginDialog(wx.Dialog):
     """
     Class to define login dialog
+    Adapted from: https://dzone.com/articles/wxpython-how-create-login
     """
 
-    def __init__(self, lh: 'LoginHolder'):
+    def __init__(self, lh: LoginHolder):
         """Constructor"""
 
         wx.Dialog.__init__(self, None, title="Login")
@@ -57,7 +64,7 @@ class MainFrame(wx.Frame):
     Frame calling the login dialog only.
     """
 
-    def __init__(self, lh: 'LoginHolder'):
+    def __init__(self, lh: LoginHolder):
         """Constructor"""
         self.lh = lh
         wx.Frame.__init__(self, None, title="Main App")
@@ -67,15 +74,6 @@ class MainFrame(wx.Frame):
         dlg = LoginDialog(self.lh)
         dlg.ShowModal()
         self.Destroy()
-
-
-class LoginHolder:
-    """
-    Class that holds the login information.
-    """
-
-    def __init__(self):
-        self.log_data = None
 
 
 def get_pw() -> Tuple[str, str]:

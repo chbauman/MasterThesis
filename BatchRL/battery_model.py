@@ -1,14 +1,6 @@
-import numpy as np
-
-from keras.models import Model
-from keras.layers import Multiply, Add, Input
-
 from base_dynamics_model import BaseDynamicsModel
-from keras_util import getMLPModel
-from visualize import scatter_plot, model_plot_path
 from util import *
-
-from data import cut_and_split, Dataset
+from visualize import scatter_plot, model_plot_path
 
 
 class BatteryModel(BaseDynamicsModel):
@@ -31,11 +23,16 @@ class BatteryModel(BaseDynamicsModel):
 
         self.params = None
 
-    def fit(self):
+    def fit(self) -> None:
         self.analyze_bat_model()
 
-    def predict(self, in_data):
-        s = in_data.shape
+    def predict(self, in_data: np.ndarray) -> np.ndarray:
+        """
+        Make predictions using the fitted model
+        on the provided data.
+        :param in_data: Prepared data.
+        :return: Predictions
+        """
         p = np.copy(in_data[:, -1, 1])
         s_t = np.copy(in_data[:, -1, 0])
         a1, a2, a3 = self.params

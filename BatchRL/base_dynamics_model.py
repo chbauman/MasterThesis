@@ -6,8 +6,7 @@ from keras.models import load_model
 from abc import ABC, abstractmethod
 
 from time_series import AR_Model
-from visualize import plot_ip_time_series, plot_multiple_ip_ts, plot_dataset, \
-    model_plot_path
+from visualize import plot_dataset, model_plot_path
 from data import Dataset
 from util import *
 
@@ -104,7 +103,7 @@ class BaseDynamicsModel(ABC):
             if md is None:
                 raise AttributeError
         except AttributeError as e:
-            raise AttributeError('Need to model the disturbance first.')
+            raise AttributeError('Need to model the disturbance first: {}'.format(e))
 
         # Compute next noise
         if self.use_AR:
@@ -117,7 +116,7 @@ class BaseDynamicsModel(ABC):
             return next_noise
         return np.random.normal(0, 1, self.out_dim) * self.res_std
 
-    def n_step_predict(self, prepared_data, n: int, pred_inds,
+    def n_step_predict(self, prepared_data, n: int, pred_inds, *,
                        return_all_predictions: bool = False,
                        disturb_pred: bool = False,
                        diff: bool = False):
@@ -181,7 +180,7 @@ class BaseDynamicsModel(ABC):
         create_dir(dir_name)
         return os.path.join(dir_name, name)
 
-    def const_nts_plot(self, predict_data, n_list, ext: str = ''):
+    def const_nts_plot(self, predict_data, n_list: List[int], ext: str = ''):
         """
         Creates a plot that shows the performance of the
         trained model when predicting a fixed number of timesteps into 
@@ -254,7 +253,7 @@ class BaseDynamicsModel(ABC):
         d = self.data
 
         # Prepare the data
-        dat_test = d.get_prepared_data('test')
+        # dat_test = d.get_prepared_data('test')
         dat_train = d.get_prepared_data('train_streak')
         dat_val = d.get_prepared_data('val_streak')
 
