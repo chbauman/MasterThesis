@@ -137,8 +137,7 @@ class BaseDynamicsModel(ABC):
         n_feat = out_data.shape[1]
         n_out = n_samples - n + 1
         if predict_all:
-            d = len(pred_inds)
-            pred_inds = np.arange(d)
+            pred_inds = np.arange(n_feat)
 
         # Do checks
         if n < 1:
@@ -243,7 +242,7 @@ class BaseDynamicsModel(ABC):
         full_pred = self.n_step_predict([in_dat_test, out_dat_test], s[0], d.p_inds_prep,
                                         return_all_predictions=True,
                                         predict_all=predict_all)
-        analysis_ds.data[:, 0] = full_pred[0, :, p_ind]
+        analysis_ds.data[:, 0] = np.copy(full_pred[0, :, p_ind])
         title_and_ylab = ['1 Week Continuous Predictions', desc]
         plot_dataset(analysis_ds,
                      show=False,

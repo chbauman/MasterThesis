@@ -37,8 +37,8 @@ class SCTimeModel(BaseDynamicsModel):
         """
 
         # Get previous values
-        s = in_data[:, -1, 0]
-        c = in_data[:, -1, 1]
+        s = np.copy(in_data[:, -1, 0])
+        c = np.copy(in_data[:, -1, 1])
 
         # Scale back
         if self.data.is_scaled[0]:
@@ -47,14 +47,16 @@ class SCTimeModel(BaseDynamicsModel):
             c = add_mean_and_std(c, self.data.scaling[1])
 
         # Compute new
-        dx = 24 * 60 / self.data.dt
+        dx = 2 * np.pi / (24 * 60 / self.data.dt)
         x = np.arccos(c)
-        x[s < 0] = -x[s < 0]
+        x = np.where(s < 0, -x, x)
+
+        print(s, " true ", c)
+        print(np.sin(x), " comp ", np.cos(x))
+
         x += dx
         s_new = np.sin(x)
         c_new = np.cos(x)
-        print(s, " true ", c)
-        print(np.sin(x), " comp ", np.cos(x))
 
         # Evaluate and scale
         if self.data.is_scaled[0]:
