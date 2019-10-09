@@ -1875,6 +1875,31 @@ TestData2 = TestDataSynthetic()
 
 
 # Tests
+def test_rest_client():
+    """
+    Tests the REST client by requesting test data,
+    saving it locally, reading it locally and deleting
+    it again.
+
+    :return: None
+    """
+
+    # Load using REST api and locally
+    t_dat = TestData
+    t_dat.getData()
+    t_dat.getData()
+
+    # Remove data again
+    fol = TestData.get_data_folder()
+    for f in os.listdir(fol):
+        file_path = os.path.join(fol, f)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(e)
+
+
 def get_data_test():
     name = "Test"
 

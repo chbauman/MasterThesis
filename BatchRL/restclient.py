@@ -47,42 +47,6 @@ def get_data_folder(name: str, start_date: str, end_date: str) -> str:
     return data_dir
 
 
-def read_offline(name: str, start_date: str = '2019-01-01', end_date: str = '2019-12-31') -> Tuple[List, List]:
-    """
-    Read numpy data that has already been created.
-
-    :param name: Name of the data.
-    :param start_date: Start of data collection.
-    :param end_date: End of data collection.
-    :return: values, dates and metadata.
-    """
-
-    # Get folder name
-    data_dir = get_data_folder(name, start_date, end_date)
-
-    # Count files
-    ct = 0
-    for f in os.listdir(data_dir):
-        file_path = os.path.join(data_dir, f)
-        if f[:5] == "dates":
-            ct += 1
-
-    # Loop over files in directory and insert data into lists
-    val_list = [None] * ct
-    ts_list = [None] * ct
-    meta_list = [None] * ct
-    for k in range(ct):
-        val_list[k] = np.load(os.path.join(data_dir, "values_" + str(k) + ".npy"))
-        ts_list[k] = np.load(os.path.join(data_dir, "dates_" + str(k) + ".npy"))
-        with open(os.path.join(data_dir, "meta_" + str(k) + ".txt"), 'r') as data:
-            contents = data.read()
-            meta_list[k] = literal_eval(contents)
-
-    # Transform to list of pairs and return
-    list_of_tuples = list(zip(val_list, ts_list))
-    return list_of_tuples, meta_list
-
-
 class Client(object):
     """
     Client for data retrieval from local disk or
@@ -91,43 +55,39 @@ class Client(object):
     the local disk.
     """
 
+    domain: str = 'nest.local'
+    url: str = 'https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/'
+
     def __init__(self,
-                 domain: str = 'nest.local',
-                 url: str = 'https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/'):
+                 name,
+                 start_date: str = '2019-01-01',
+                 end_date: str = '2019-12-31'):
         """
         Initialize parameters and empty data containers.
 
-        :param domain: Use default.
-        :param url: Use default.
+        :param name: Name of the data.
+        :param start_date: Starting date in string format.
+        :param end_date: End date in string format.
         """
-        self.domain = domain
-        self.url = url
         self.save_dir = save_dir
-        self.start_date = None
-        self.end_date = None
+        self.start_date = start_date
+        self.end_date = end_date
         self.np_data = []
         self.meta_data = []
         self.auth = None
+        self.name = name
 
-    def read(self, df_data: List[str],
-             start_date: str = '2019-01-01',
-             end_date: str = '2019-12-31'
-             ) -> Optional[Tuple[List, List]]:
+    def read(self, df_data: List[str]) -> Optional[Tuple[List, List]]:
         """
         Reads data defined by the list of column IDs df_data
         that was acquired between startDate and endDate.
 
         :param df_data: List of IDs in string format.
-        :param start_date: Starting date in string format.
-        :param end_date: End date in string format.
         :return: (List[(Values, Dates)], List[Metadata])
         """
 
         # https://github.com/brandond/requests-negotiate-sspi/blob/master/README.md
         from requests_negotiate_sspi import HttpNegotiateAuth
-
-        self.start_date = start_date
-        self.end_date = end_date
 
         # Check Login
         username, pw = get_pw()
@@ -140,6 +100,7 @@ class Client(object):
             # is wrong, but not if the username does not exist?!!
             r = s.get(url=self.url, auth=self.auth)
         except TypeError as e:
+            print(e)
             print("Login failed, invalid password!")
             return None
         except Exception as e:
@@ -158,7 +119,7 @@ class Client(object):
             url = self.url + column
             meta_data = s.get(url=url).json()
             self.meta_data += [meta_data]
-            url += '/timeline?startDate=' + start_date + '&endDate=' + end_date
+            url += '/timeline?startDate=' + self.start_date + '&endDate=' + self.end_date
             df = pd.DataFrame(data=s.get(url=url).json())
 
             # Convert to Numpy
@@ -171,16 +132,46 @@ class Client(object):
         print(time.ctime() + ' REST client data acquired')
         return self.np_data, self.meta_data
 
-    def write_np(self, name: str, overwrite: bool = False):
+    def read_offline(self) -> Tuple[List, List]:
+        """
+        Read numpy data that has already been created.
+
+        :return: values, dates and metadata.
+        """
+
+        # Get folder name
+        data_dir = get_data_folder(self.name, self.start_date, self.end_date)
+
+        # Count files
+        ct = 0
+        for f in os.listdir(data_dir):
+            if f[:5] == "dates":
+                ct += 1
+
+        # Loop over files in directory and insert data into lists
+        val_list = [None] * ct
+        ts_list = [None] * ct
+        meta_list = [None] * ct
+        for k in range(ct):
+            val_list[k] = np.load(os.path.join(data_dir, "values_" + str(k) + ".npy"))
+            ts_list[k] = np.load(os.path.join(data_dir, "dates_" + str(k) + ".npy"))
+            with open(os.path.join(data_dir, "meta_" + str(k) + ".txt"), 'r') as data:
+                contents = data.read()
+                meta_list[k] = literal_eval(contents)
+
+        # Transform to list of pairs and return
+        list_of_tuples = list(zip(val_list, ts_list))
+        return list_of_tuples, meta_list
+
+    def write_np(self, overwrite: bool = False):
         """
         Writes the read data in numpy format
         to files.
 
-        :param name: Name of data collection.
         :param overwrite: Whether to overwrite existing data with same name.
         :return: None
         """
-
+        name = self.name
         print("Writing Data to local disk.")
 
         # Create directory
@@ -231,21 +222,19 @@ class DataStruct:
         self.name = name
         self.start_date = start_date
         self.end_date = end_date
-        self.client_loaded = False
-        self.REST = None
+        self.REST = Client(self.name, self.start_date, self.end_date)
 
         # Convert elements of id_list to strings.
         self.data_ids = [str(e) for e in id_list]
 
-    def load_client(self) -> None:
+    def get_data_folder(self) -> str:
         """
-        Loads the REST client if not yet loaded.
+        Returns the path of the directory where
+        the data has been / will be stored.
 
-        :return: None
+        :return: Full path to directory of data.
         """
-        if not self.client_loaded:
-            self.REST = Client()
-            self.client_loaded = True
+        return get_data_folder(self.name, self.start_date, self.end_date)
 
     def getData(self) -> Optional[Tuple[List, List]]:
         """
@@ -256,21 +245,16 @@ class DataStruct:
         :return: (List[(values: np.ndarray, timestamps: np.ndarray)], List[metadata: Dict])
         """
 
-        self.load_client()
-        data_folder = get_data_folder(self.name, self.start_date, self.end_date)
+        data_folder = self.get_data_folder()
         if not os.path.isdir(data_folder):
             # Read from SQL database and write for later use
-            ret_val, meta_data = self.REST.read(self.data_ids,
-                                                start_date=self.start_date,
-                                                end_date=self.end_date)
+            ret_val, meta_data = self.REST.read(self.data_ids)
             if ret_val is None:
                 return None
-            self.REST.write_np(self.name)
+            self.REST.write_np()
         else:
             # Read locally
-            ret_val, meta_data = read_offline(self.name,
-                                              start_date=self.start_date,
-                                              end_date=self.end_date)
+            ret_val, meta_data = self.REST.read_offline()
         return ret_val, meta_data
     pass
 
@@ -297,4 +281,4 @@ def example():
 
     # Do something with the data
     # Add your code here...
-    return
+    print(values, timestamps)

@@ -22,7 +22,8 @@ from data import WeatherData, TestData, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
     get_DFAB_heating_data, \
     compute_DFAB_energy_usage, get_weather_data, generate_room_datasets, \
-    analyze_room_energy_consumption, Dataset, test_align, test_dataset_artificially, no_inds, generate_sin_cos_time_ds
+    analyze_room_energy_consumption, Dataset, test_align, test_dataset_artificially, no_inds, \
+    generate_sin_cos_time_ds, test_rest_client
 
 
 def simple_battery_FQI():
@@ -49,6 +50,7 @@ def simple_battery_FQI():
 
 
 def main():
+    test_rest_client()
     get_DFAB_heating_data()
     generate_room_datasets()
 

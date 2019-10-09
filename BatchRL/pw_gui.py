@@ -59,7 +59,7 @@ class LoginDialog(wx.Dialog):
         Executed when the login button is clicked.
 
         :param event: Not used.
-        :return:
+        :return: None
         """
 
         user_password = self.password.GetValue()
