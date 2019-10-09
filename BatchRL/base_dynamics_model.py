@@ -119,6 +119,7 @@ class BaseDynamicsModel(ABC):
     def n_step_predict(self, prepared_data, n: int, pred_inds, *,
                        return_all_predictions: bool = False,
                        disturb_pred: bool = False,
+                       predict_all: bool = False,
                        diff: bool = False):
         """
         Applies the model n times and returns the 
@@ -136,7 +137,9 @@ class BaseDynamicsModel(ABC):
         seq_len = in_data.shape[1]
         n_feat = out_data.shape[1]
         n_out = n_samples - n + 1
-        d = len(pred_inds)
+        if predict_all:
+            d = len(pred_inds)
+            pred_inds = np.arange(d)
 
         # Do checks
         if n < 1:
@@ -162,7 +165,8 @@ class BaseDynamicsModel(ABC):
 
             # Construct next data
             curr_in_data[:, :-1, :] = np.copy(curr_in_data[:, 1:, :])
-            curr_in_data[:, -1, :] = np.copy(in_data[k:(n_out + k), -1, :])
+            if not predict_all:
+                curr_in_data[:, -1, :] = np.copy(in_data[k:(n_out + k), -1, :])
             curr_in_data[:, -1, pred_inds] = np.copy(curr_pred[:, pred_inds])
 
         # Return
@@ -180,7 +184,8 @@ class BaseDynamicsModel(ABC):
         create_dir(dir_name)
         return os.path.join(dir_name, name)
 
-    def const_nts_plot(self, predict_data, n_list: List[int], ext: str = ''):
+    def const_nts_plot(self, predict_data, n_list: List[int], ext: str = '', *,
+                       predict_all: bool = False):
         """
         Creates a plot that shows the performance of the
         trained model when predicting a fixed number of timesteps into 
@@ -201,7 +206,8 @@ class BaseDynamicsModel(ABC):
         for n_ts in n_list:
             curr_ds = Dataset.copy(analysis_ds)
             time_str = mins_to_str(dt * n_ts)
-            one_h_pred = self.n_step_predict(copy_arr_list(predict_data), n_ts, d.p_inds_prep)
+            one_h_pred = self.n_step_predict(copy_arr_list(predict_data), n_ts, d.p_inds_prep,
+                                             predict_all=predict_all)
             curr_ds.data[(n_ts - 1):, 0] = np.copy(one_h_pred[:, p_ind])
             curr_ds.data[:(n_ts - 1), 0] = np.nan
             title_and_ylab = [time_str + ' Ahead Predictions', desc]
@@ -210,11 +216,13 @@ class BaseDynamicsModel(ABC):
                          title_and_ylab=title_and_ylab,
                          save_name=self.get_plt_path(time_str + 'Ahead' + ext))
 
-    def one_week_pred_plot(self, dat_test, ext: str = None):
+    def one_week_pred_plot(self, dat_test, ext: str = None,
+                           predict_all: bool = False):
         """
         Makes a plot by continuously predicting with
         the fitted model and comparing it to the ground
         truth.
+        :param predict_all: Whether to predict all the state variables.
         :param dat_test: Data to use for making plots.
         :param ext: String extension for the filename.
         :return: None
@@ -234,7 +242,8 @@ class BaseDynamicsModel(ABC):
 
         # Continuous prediction
         full_pred = self.n_step_predict([in_dat_test, out_dat_test], s[0], d.p_inds_prep,
-                                        return_all_predictions=True)
+                                        return_all_predictions=True,
+                                        predict_all=predict_all)
         analysis_ds.data[:, 0] = full_pred[0, :, p_ind]
         title_and_ylab = ['1 Week Continuous Predictions', desc]
         plot_dataset(analysis_ds,
@@ -266,6 +275,8 @@ class BaseDynamicsModel(ABC):
         # Plot for continuous predictions
         self.one_week_pred_plot(copy_arr_list(dat_val), "Validation")
         self.one_week_pred_plot(copy_arr_list(dat_train), "Train")
+        self.one_week_pred_plot(copy_arr_list(dat_val), "Validation_All", predict_all=True)
+        self.one_week_pred_plot(copy_arr_list(dat_train), "Train_All", predict_all=True)
 
     def get_residuals(self, data_str: str):
         """
