@@ -1787,7 +1787,7 @@ def generate_room_datasets():
     return out_ds_list
 
 
-def generate_time_ds_from_other(other: Dataset) -> Dataset:
+def generate_sin_cos_time_ds(other: Dataset) -> Dataset:
     """
     Generates a time dataset from the last two
     time series of another dataset.

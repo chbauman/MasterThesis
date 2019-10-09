@@ -166,7 +166,7 @@ def align_ts(ts_1: np.ndarray, ts_2: np.ndarray, t_init1, t_init2, dt):
     return out, t_init_out
 
 
-def add_mean_and_std(ts, mean_and_std: Sequence):
+def add_mean_and_std(ts: Arr, mean_and_std: Sequence) -> Arr:
     """
     Transforms the data back to having mean
     and std as specified.
@@ -174,6 +174,20 @@ def add_mean_and_std(ts, mean_and_std: Sequence):
     if len(mean_and_std) < 2:
         raise ValueError("Invalid value for mean_and_std")
     return ts * mean_and_std[1] + mean_and_std[0]
+
+
+def rem_mean_and_std(ts: Arr, mean_and_std: Sequence) -> Arr:
+    """
+    Whitens the data with known mean and standard deviation.
+    :param ts: Data to be whitened.
+    :param mean_and_std: Container of the mean and the std.
+    :return: Whitened data.
+    """
+    if len(mean_and_std) < 2:
+        raise ValueError("Invalid value for mean_and_std")
+    if mean_and_std[1] == 0:
+        raise ZeroDivisionError("Standard deviation cannot be 0")
+    return (ts - mean_and_std[0]) / mean_and_std[1]
 
 
 def check_in_range(arr: np.ndarray, low: Num, high: Num) -> bool:
