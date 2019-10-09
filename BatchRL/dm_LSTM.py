@@ -18,7 +18,14 @@ from util import *
 
 
 def weighted_loss(y_true, y_pred, weights):
-    return K.mean(K.abs(y_true - y_pred) * weights)
+    """
+    Returns the weighted MSE between y_true and y_pred.
+    :param y_true: True labels.
+    :param y_pred: Predicted labels.
+    :param weights: Weights.
+    :return: Weighted MSE.
+    """
+    return K.mean((y_true - y_pred) * (y_true - y_pred) * weights)
 
 
 class BaseRNN_DM(BaseDynamicsModel):
@@ -28,16 +35,16 @@ class BaseRNN_DM(BaseDynamicsModel):
 
     def __init__(self,
                  data,
-                 hidden_sizes=(20, 20),
-                 n_iter_max=10000,
-                 name='baseRNN',
+                 hidden_sizes: Sequence[int] = (20, 20),
+                 n_iter_max: int = 10000,
+                 name: str = 'baseRNN',
                  *,
-                 weight_vec=None,
-                 gru=False,
-                 input_noise_std=None,
-                 use_AR=False,
-                 residual_learning=False,
-                 lr=0.001):
+                 weight_vec: Optional[np.ndarray] = None,
+                 gru: bool = False,
+                 input_noise_std: Optional[float] = None,
+                 use_AR: bool = False,
+                 residual_learning: bool = False,
+                 lr: float = 0.001):
 
         super(BaseRNN_DM, self).__init__()
 
@@ -62,7 +69,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         self.m = None
         self.build_model()
 
-    def constr_name(self, name):
+    def constr_name(self, name: str) -> str:
         """
         Constructs the name of the network.
         """
@@ -75,7 +82,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         w_str = '' if self.weight_vec is None else '_WTD'
         return name + ds_pt + ep_s + arch + lrs + gru_str + res_str + w_str
 
-    def build_model(self):
+    def build_model(self) -> None:
         """
         Builds the keras LSTM model.
         """
@@ -124,7 +131,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         # pth = self.get_plt_path("Model.png")
         # plot_model(model, to_file=pth)
 
-    def fit(self):
+    def fit(self) -> None:
         """
         Fit the model if it hasn't been fitted before.
         Otherwise load the trained model.
@@ -142,7 +149,7 @@ class BaseRNN_DM(BaseDynamicsModel):
                            epochs=self.n_iter_max,
                            initial_epoch=0,
                            batch_size=128,
-                           validation_split=self.data.val_perc)
+                           validation_split=self.data.val_percent)
             pth = self.get_plt_path("TrainHist")
             plot_train_history(h, pth)
             create_dir(self.model_path)
@@ -150,7 +157,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         else:
             self.deb("Restored trained model")
 
-    def predict(self, input_data):
+    def predict(self, input_data: np.ndarray) -> np.ndarray:
         """
         Predicts a batch of sequences.
         """

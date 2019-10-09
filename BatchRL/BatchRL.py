@@ -70,12 +70,12 @@ def main():
     w[ds.p_inds_prep[0]] = 2.0  # Weight temperature twice
 
     mod = BaseRNN_DM(ds,
-                     hidden_sizes=[100, 100],
+                     hidden_sizes=(100, 100),
                      n_iter_max=100,
                      input_noise_std=0.0001,
                      lr=0.01,
                      residual_learning=True,
-                     weight_vec=None  # w
+                     weight_vec=w
                      )
 
     mod.fit()
@@ -111,8 +111,6 @@ def main():
     return
 
     # simple_battery_FQI()
-
-    return 0
 
 
 main()
