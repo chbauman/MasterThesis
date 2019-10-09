@@ -11,8 +11,16 @@ from data import Dataset
 from util import *
 
 
-def get_plot_ds(s, tr, d, orig_p_ind):
+def get_plot_ds(s, tr: np.ndarray, d: Dataset, orig_p_ind: np.ndarray) -> Dataset:
     """
+    Creates a dataset with truth time series tr and parameters
+    from the original dataset d. Intended for plotting after
+    the first column of the data is set to the predicted series.
+
+    :param s: Shape of data of dataset.
+    :param tr: Ground truth time series.
+    :param d: Original dataset.
+    :param orig_p_ind: Prediction index relative to the original dataset.
     :return: Dataset with ground truth series as second series.
     """
     plot_data = np.empty((s[0], 2), dtype=np.float32)
@@ -34,9 +42,9 @@ class BaseDynamicsModel(ABC):
     dynamics model.
     """
 
-    N_LAG = 4
-    debug = True
-    model_path = "../Models/Dynamics/"
+    N_LAG: int = 4
+    debug: bool = True
+    model_path: str = "../Models/Dynamics/"
     data: Dataset
 
     def __init__(self):
@@ -60,13 +68,24 @@ class BaseDynamicsModel(ABC):
     def predict(self, in_data):
         pass
 
-    def get_path(self, name: str):
+    def get_path(self, name: str) -> str:
+        """
+        Returns the path where the model parameters
+        are stored. Used for keras models only.
+
+        :param name: Model name.
+        :return: Model parameter file path.
+        """
         return self.model_path + name + ".h5"
 
-    def load_if_exists(self, m, name: str):
+    def load_if_exists(self, m, name: str) -> bool:
         """
         Loads a keras model if it exists.
         Returns true if it could be loaded, else False.
+
+        :param m: Model to be loaded.
+        :param name: Name of model.
+        :return: True if model could be loaded else False.
         """
         full_path = self.get_path(name)
 
@@ -176,11 +195,14 @@ class BaseDynamicsModel(ABC):
             return all_pred
         return curr_pred
 
-    def get_plt_path(self, name: str):
+    def get_plt_path(self, name: str) -> str:
         """
         Specifies the path of the plot with name 'name'
         where it should be saved. If there is not a directory
         for the current model, it is created.
+
+        :param name: Name of the plot.
+        :return: Full path of the plot file.
         """
         dir_name = os.path.join(model_plot_path, self.name)
         create_dir(dir_name)
@@ -224,6 +246,7 @@ class BaseDynamicsModel(ABC):
         Makes a plot by continuously predicting with
         the fitted model and comparing it to the ground
         truth.
+
         :param predict_all: Whether to predict all the state variables.
         :param dat_test: Data to use for making plots.
         :param ext: String extension for the filename.
@@ -273,11 +296,14 @@ class BaseDynamicsModel(ABC):
                              save_name=self.get_plt_path('OneWeek_' + str(k) + "_" + ext))
         pass
 
-    def analyze(self, diff=False):
+    def analyze(self, diff=False) -> None:
         """
         Analyzes the trained model and makes some
         plots.
         """
+
+        if diff:
+            raise NotImplementedError("Not fucking implemented!")
 
         print("Analyzing model {}".format(self.name))
         d = self.data
@@ -302,14 +328,20 @@ class BaseDynamicsModel(ABC):
     def get_residuals(self, data_str: str):
         """
         Computes the residuals using the fitted model.
+
+        :param data_str: String defining which part of the data to use.
+        :return: Residuals.
         """
         input_data, output_data = self.data.get_prepared_data(data_str)
         residuals = self.predict(input_data) - output_data
         return residuals
 
-    def deb(self, *args):
+    def deb(self, *args) -> None:
         """
         Prints Debug Info to console.
+
+        :param args: Arguments as for print() function.
+        :return: None
         """
         if self.debug:
             print(*args)
