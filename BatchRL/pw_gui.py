@@ -14,12 +14,17 @@ class LoginHolder:
 
 class LoginDialog(wx.Dialog):
     """
-    Class to define login dialog
+    Class used to define login dialog
     Adapted from: https://dzone.com/articles/wxpython-how-create-login
     """
 
     def __init__(self, lh: LoginHolder):
-        """Constructor"""
+        """
+        Constructs the login dialog to ask for
+        username and password.
+
+        :param lh: LoginHolder, class where the login data will be saved.
+        """
 
         wx.Dialog.__init__(self, None, title="Login")
         self.lh = lh
@@ -50,7 +55,11 @@ class LoginDialog(wx.Dialog):
 
     def on_login(self, event) -> None:
         """
-        Save login data to login holder.
+        Saves login data to login holder and destroys dialog.
+        Executed when the login button is clicked.
+
+        :param event: Not used.
+        :return:
         """
 
         user_password = self.password.GetValue()
@@ -65,7 +74,12 @@ class MainFrame(wx.Frame):
     """
 
     def __init__(self, lh: LoginHolder):
-        """Constructor"""
+        """
+        Constructor of single frame which calls
+        the LoginDialog when initialized.
+
+        :param lh: LoginHolder, class where the login data will be saved.
+        """
         self.lh = lh
         wx.Frame.__init__(self, None, title="Main App")
         wx.Panel(self)
@@ -79,7 +93,9 @@ class MainFrame(wx.Frame):
 def get_pw() -> Tuple[str, str]:
     """
     Opens GUI and retrieves the login information
-    (username, password) and returns them in a tuple.
+    and returns it.
+
+    :return: Tuple containing username and password.
     """
 
     lh = LoginHolder()
