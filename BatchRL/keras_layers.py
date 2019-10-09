@@ -109,8 +109,8 @@ class PrepInput(Layer):
         tf_constant = K.arange(self.num_classes)
         one_hot_enc = K.one_hot(tf_constant, self.num_classes)
         one_hot_enc_p1 = K.reshape(one_hot_enc, (1, self.num_classes, self.num_classes))
-        all_encs = K.tile(one_hot_enc_p1, (K.shape(x)[0], 1, 1))
-        return K.reshape(all_encs, (K.shape(x)[0], self.num_classes, self.num_classes))
+        all_encodings = K.tile(one_hot_enc_p1, (K.shape(x)[0], 1, 1))
+        return K.reshape(all_encodings, (K.shape(x)[0], self.num_classes, self.num_classes))
 
     def compute_output_shape(self, input_shape):
         return input_shape[0], self.num_classes, self.num_classes
