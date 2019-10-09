@@ -11,6 +11,13 @@ class SCTimeModel(BaseDynamicsModel):
     """
 
     def __init__(self, dataset: Dataset):
+        """
+        Initialize the Sine-Cosine-Time model.
+        It predicts the next values given only the previous
+        values of the sine and the cosine of the time.
+
+        :param dataset: Dataset containing two time series, sin(time) and cos(time).
+        """
         super(SCTimeModel, self).__init__()
 
         self.name = dataset.name + "_Exact"
@@ -23,7 +30,9 @@ class SCTimeModel(BaseDynamicsModel):
 
     def fit(self) -> None:
         """
-        No need to fit anything.
+        No need to fit anything, model is deterministic
+        and exact up to numerical errors.
+
         :return: None
         """
         return
@@ -32,6 +41,7 @@ class SCTimeModel(BaseDynamicsModel):
         """
         Compute the next sin(t) and cos(t) value given the
         values at the last timestep.
+
         :param in_data: Prepared data.
         :return: Same as input
         """
@@ -50,10 +60,6 @@ class SCTimeModel(BaseDynamicsModel):
         dx = 2 * np.pi / (24 * 60 / self.data.dt)
         x = np.arccos(c)
         x = np.where(s < 0, -x, x)
-
-        print(s, " true ", c)
-        print(np.sin(x), " comp ", np.cos(x))
-
         x += dx
         s_new = np.sin(x)
         c_new = np.cos(x)
