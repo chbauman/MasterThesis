@@ -164,7 +164,11 @@ class BaseDynamicsModel(ABC):
             # Construct next data
             curr_in_data[:, :-1, :] = np.copy(curr_in_data[:, 1:, :])
             if not predict_all:
-                curr_in_data[:, -1, :] = np.copy(in_data[k:(n_out + k), -1, :])
+                curr_in_data[:, -1, :n_feat] = np.copy(out_data[k:(n_out + k), :])
+                if k != n - 1:
+                    curr_in_data[:, -1, n_feat:] = np.copy(in_data[(k + 1):(n_out + k + 1), -1, n_feat:])
+                else:
+                    curr_in_data[:, -1, n_feat:] = 0
             curr_in_data[:, -1, pred_inds] = np.copy(curr_pred[:, pred_inds])
 
         # Return
