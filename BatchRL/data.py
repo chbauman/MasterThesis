@@ -732,7 +732,7 @@ def get_from_data_struct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list,
         # Sets
         for ct, i in enumerate(ind_list):
             n_cs = n_inds if ct == 0 else None
-            title = cleas_desc(m[i]['description'])
+            title = clean_desc(m[i]['description'])
             title = title if desc_list is None else desc_list[ct]
             added_cols = m[i]['additionalColumns']
             plot_name = ""
@@ -776,7 +776,7 @@ def convert_data_struct(dat_struct, base_plot_dir, dt_mins, pl_kwargs,
         # Sets
         for i in range(n_cols):
             n_cs = n_cols if i == 0 else None
-            title = cleas_desc(m[i]['description'])
+            title = clean_desc(m[i]['description'])
             added_cols = m[i]['additionalColumns']
             plot_name = added_cols['AKS Code']
             plot_file_name = os.path.join(base_plot_dir, name)
@@ -829,7 +829,7 @@ def find_rows_with_nans(all_data):
     return col_has_nan
 
 
-def cut_into_fixed_len(col_has_nan, seq_len=20, interleave=True):
+def cut_into_fixed_len(col_has_nan, seq_len: int = 20, interleave: bool = True):
     """
     Cuts the time series into pieces of length 'seq_len'
     for training of RNN.
@@ -874,7 +874,7 @@ def cut_into_fixed_len(col_has_nan, seq_len=20, interleave=True):
     return seqs[:, :seq_count]
 
 
-def cut_data_into_sequences(all_data, seq_len, interleave=True):
+def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True):
     """
     Use the two functions above to cut the data into
     sequences for RNN training.
@@ -1345,7 +1345,7 @@ class Dataset:
     This class contains all infos about a given dataset.
     """
 
-    def __init__(self, all_data, dt, t_init, scaling, is_scaled, descs, c_inds=no_inds, p_inds=no_inds, name=""):
+    def __init__(self, all_data, dt, t_init, scaling, is_scaled, descs, c_inds=no_inds, p_inds=no_inds, name: str = ""):
         """
         Base constructor.
         """
@@ -1400,7 +1400,7 @@ class Dataset:
         self.p_inds_prep = None
         return
 
-    def split_train_test(self, streak_len=7):
+    def split_train_test(self, streak_len: int = 7):
         """
         Split dataset into train, validation and test set.
         """
@@ -1421,7 +1421,7 @@ class Dataset:
         self.train_streak_data = cut_data_into_sequences(np.copy(self.train_streak), self.seq_len, interleave=True)
         self.val_streak_data = cut_data_into_sequences(np.copy(self.val_streak), self.seq_len, interleave=True)
 
-    def get_prepared_data(self, what_data='train', *, get_all_preds=False):
+    def get_prepared_data(self, what_data: str = 'train', *, get_all_preds: bool = False):
         """
         Prepares the data for supervised learning.
         """
@@ -1471,7 +1471,7 @@ class Dataset:
         return input_data, output_data
 
     @classmethod
-    def fromRaw(cls, all_data, m, name, c_inds=no_inds, p_inds=no_inds):
+    def fromRaw(cls, all_data, m, name: str, c_inds=no_inds, p_inds=no_inds):
         """
         Constructor from data and dict m: 
         Extracts the important metadata from the
@@ -1550,7 +1550,7 @@ class Dataset:
 
         return Dataset(data, self.dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
 
-    def add_time(self, sine_cos=True):
+    def add_time(self, sine_cos: bool = True):
         """
         Adds time to current dataset.
         """
@@ -1590,7 +1590,7 @@ class Dataset:
                                   "Time")
         pass
 
-    def getSlice(self, ind_low, ind_high):
+    def getSlice(self, ind_low: int, ind_high: int):
         """
         Returns a new dataset with the columns
         'ind_low' through 'ind_high'.
@@ -1656,11 +1656,11 @@ class Dataset:
         return data_out
 
     @staticmethod
-    def get_filename(name):
+    def get_filename(name: str):
         return os.path.join(dataset_data_path, name) + '.pkl'
 
     @staticmethod
-    def loadDataset(name):
+    def loadDataset(name: str):
         """
         Load a saved Dataset object.
         """
@@ -1671,7 +1671,7 @@ class Dataset:
             ds = pickle.load(f)
             return ds
 
-    def standardize_col(self, col_ind):
+    def standardize_col(self, col_ind: int):
         """
         Standardizes a certain column of the data.
         Nans are ignored.
@@ -1695,7 +1695,7 @@ class Dataset:
         for k in range(self.d):
             self.standardize_col(k)
 
-    def visualize_nans(self, name_ext=""):
+    def visualize_nans(self, name_ext: str = ""):
         """
         Visualizes where the holes are in the different
         time series (columns) of the data.
@@ -1713,6 +1713,7 @@ class Dataset:
                  title_and_ylab=["Nan plot", "Series"],
                  scale_back=False,
                  save_name=s_name + name_ext)
+
     pass
 
 

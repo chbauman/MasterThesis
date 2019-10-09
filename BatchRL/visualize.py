@@ -78,7 +78,7 @@ def plot_time_series(x, y, m, show=True, lab=None, series_index=0, title=None, s
     """
 
     # Define plot
-    lab = cleas_desc(m['description'])
+    lab = clean_desc(m['description'])
     if series_index == 0:
         fig, ax = plt.subplots()
     plot_helper(x, y, clr_map[series_index], label=lab, dates=True)
@@ -230,7 +230,7 @@ def plot_ip_ts(y,
     else:
         x = range(n)
 
-    plot_helper(x, y_curr, m_col=clr_map[series_index], label=cleas_desc(lab), dates=use_time)
+    plot_helper(x, y_curr, m_col=clr_map[series_index], label=clean_desc(lab), dates=use_time)
 
     if last_series:
         if title_and_ylab is not None:

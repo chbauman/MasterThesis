@@ -28,7 +28,7 @@ class BaseRNN_DM(BaseDynamicsModel):
 
     def __init__(self,
                  data,
-                 hidden_sizes=[20, 20],
+                 hidden_sizes=(20, 20),
                  n_iter_max=10000,
                  name='baseRNN',
                  *,
@@ -59,6 +59,7 @@ class BaseRNN_DM(BaseDynamicsModel):
         self.name = self.constr_name(name)
 
         # Build model
+        self.m = None
         self.build_model()
 
     def constr_name(self, name):

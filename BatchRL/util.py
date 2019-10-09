@@ -189,6 +189,7 @@ def solve_ls(A, b, offset=False, non_neg=False, ret_fit=False):
 
     n, m = A.shape
     if offset:
+        # Add a bias regression coefficient
         A_off = np.empty((n, m + 1), dtype=A.dtype)
         A_off[:, 0] = 1.0
         A_off[:, 1:] = A
@@ -196,8 +197,8 @@ def solve_ls(A, b, offset=False, non_neg=False, ret_fit=False):
 
     ret_val = ls_fun(A, b)
     if ret_fit:
-        fit_vals = np.matmul(A, ret_val)
-        ret_val = [ret_val, fit_vals]
+        fit_values = np.matmul(A, ret_val)
+        ret_val = [ret_val, fit_values]
 
     return ret_val
 
@@ -205,7 +206,7 @@ def solve_ls(A, b, offset=False, non_neg=False, ret_fit=False):
 #######################################################################################################
 # NEST stuff
 
-def cleas_desc(nest_desc):
+def clean_desc(nest_desc):
     """
     Removes the measurement code from the string containing
     the description of the measurement series.
@@ -267,3 +268,12 @@ def string_to_dt(s):
     Convert string to datetime.
     """
     return datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
+
+
+def mins_to_str(mins):
+    """
+    Converts the integer 'mins' to a string.
+    :param mins: Number of minutes.
+    :return: String
+    """
+    return str(mins) + 'min' if mins < 60 else str(mins / 60) + 'h'
