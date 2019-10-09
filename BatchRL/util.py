@@ -70,11 +70,28 @@ def fit_linear_1d(x, y, x_new=None):
         return c * x_new + m
 
 
-def fit_linear_bf_1d(x, y, b_fun):
+def fit_linear_bf_1d(x, y, b_fun, offset: bool = False):
     """
     Fits a linear model y = \alpha^T f(x).
+    TODO: implement with offset!
     """
-    raise NotImplementedError("Implement this fucking function already!")
+
+    if offset:
+        raise NotImplementedError("Not implemented with offset.")
+
+    # Get shapes
+    dummy = b_fun(0.0)
+    d = dummy.shape[0]
+    n = x.shape[0]
+
+    # Fill matrix
+    ls_mat = np.empty((n, d), dtype=np.float32)
+    for ct, x_el in enumerate(x):
+        ls_mat[ct, :] = b_fun(x_el)
+
+    # Solve and return
+    coeffs = np.linalg.lstsq(ls_mat, y, rcond=None)[0]
+    return coeffs
 
 
 def get_shape1(arr):
