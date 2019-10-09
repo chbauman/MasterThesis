@@ -1,10 +1,21 @@
 import os
+from typing import Union, Optional, List, Tuple, Any, Sequence
 
 import numpy as np
 
 import scipy.optimize.nnls
 
 from datetime import datetime
+
+
+#######################################################################################################
+# Typing
+
+# Type for general number
+Num = Union[int, float]
+
+# Type for general array, including 0-D ones, i.e. single numbers
+Arr = Union[Num, np.ndarray]
 
 
 #######################################################################################################
@@ -51,7 +62,7 @@ def b_cast(l_or_el, n: int):
 #######################################################################################################
 # Numerical stuff
 
-def fit_linear_1d(x, y, x_new=None):
+def fit_linear_1d(x: np.ndarray, y: np.ndarray, x_new: Optional[np.ndarray] = None):
     """
     Fit a linear model y = c * x + m.
     Returns coefficients m and c. If x_new
@@ -70,7 +81,7 @@ def fit_linear_1d(x, y, x_new=None):
         return c * x_new + m
 
 
-def fit_linear_bf_1d(x, y, b_fun, offset: bool = False):
+def fit_linear_bf_1d(x: np.ndarray, y: np.ndarray, b_fun, offset: bool = False) -> np.ndarray:
     """
     Fits a linear model y = \alpha^T f(x).
     TODO: implement with offset!
@@ -94,7 +105,7 @@ def fit_linear_bf_1d(x, y, b_fun, offset: bool = False):
     return coeffs
 
 
-def get_shape1(arr):
+def get_shape1(arr: np.ndarray) -> int:
     """
     Returns the shape of the second dimension
     of a matrix. If it is a vector returns 1.
@@ -106,7 +117,7 @@ def get_shape1(arr):
         return s[1]
 
 
-def align_ts(ts_1, ts_2, t_init1, t_init2, dt):
+def align_ts(ts_1: np.ndarray, ts_2: np.ndarray, t_init1, t_init2, dt):
     """
     Aligns the two time series with given initial time
     and constant timestep by padding by np.nan.
@@ -155,15 +166,17 @@ def align_ts(ts_1, ts_2, t_init1, t_init2, dt):
     return out, t_init_out
 
 
-def add_mean_and_std(ts, mean_and_std):
+def add_mean_and_std(ts, mean_and_std: Sequence):
     """
     Transforms the data back to having mean
     and std as specified.
     """
+    if len(mean_and_std) < 2:
+        raise ValueError("Invalid value for mean_and_std")
     return ts * mean_and_std[1] + mean_and_std[0]
 
 
-def check_in_range(arr, low, high):
+def check_in_range(arr: np.ndarray, low: Num, high: Num) -> bool:
     """
     Returns true if all elements in arr are in
     range [low, high) else false.
@@ -173,18 +186,18 @@ def check_in_range(arr, low, high):
     return np.max(arr < high) and np.min(arr >= low)
 
 
-def split_arr(arr, frac2):
+def split_arr(arr: np.ndarray, frac2: float) -> Tuple[Any, Any]:
     """
     Splits an array along the first axis, s.t.
     in the second part a fraction of 'frac2'
     is contained.
     """
-    n = arr.shape[0]
+    n: int = arr.shape[0]
     n_1 = int((1.0 - frac2) * n)
     return arr[:n_1], arr[n_1:]
 
 
-def copy_arr_list(arr_list):
+def copy_arr_list(arr_list: Sequence[Arr]):
     """
     Copies a list of numpy arrays.
     """
@@ -192,7 +205,7 @@ def copy_arr_list(arr_list):
     return copied_arr_list
 
 
-def solve_ls(A, b, offset: bool = False, non_neg: bool = False, ret_fit: bool = False):
+def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False, non_neg: bool = False, ret_fit: bool = False):
     """
     Solves the least squares problem min_x ||Ax = b||.
     If offset is true, then a bias term is added.
@@ -204,17 +217,17 @@ def solve_ls(A, b, offset: bool = False, non_neg: bool = False, ret_fit: bool = 
         else:
             return np.linalg.lstsq(A, b, rcond=None)[0]
 
-    n, m = A.shape
+    n, m = a_mat.shape
     if offset:
         # Add a bias regression coefficient
-        A_off = np.empty((n, m + 1), dtype=A.dtype)
-        A_off[:, 0] = 1.0
-        A_off[:, 1:] = A
-        A = A_off
+        a_mat_off = np.empty((n, m + 1), dtype=a_mat.dtype)
+        a_mat_off[:, 0] = 1.0
+        a_mat_off[:, 1:] = a_mat
+        a_mat = a_mat_off
 
-    ret_val = ls_fun(A, b)
+    ret_val = ls_fun(a_mat, b)
     if ret_fit:
-        fit_values = np.matmul(A, ret_val)
+        fit_values = np.matmul(a_mat, ret_val)
         ret_val = [ret_val, fit_values]
 
     return ret_val
