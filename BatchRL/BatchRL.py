@@ -75,7 +75,10 @@ def main():
     time_model = SCTimeModel(time_data)
     time_model.analyze()
 
-    time_model_ds = SCTimeModel(time_data, )
+    print(ds)
+
+    time_model_ds = SCTimeModel(ds, 5)
+    time_model_ds.analyze()
 
     # Construct weight vector
     w = np.ones((ds.d - ds.n_c,), dtype=np.float32)
@@ -95,7 +98,6 @@ def main():
     mod.analyze()
     mod_naive = ConstModel(ds)
     mod_naive.analyze()
-
 
     # compute_DFAB_energy_usage()
 

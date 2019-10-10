@@ -153,29 +153,35 @@ class BaseDynamicsModel(ABC):
             return next_noise
         return np.random.normal(0, 1, self.out_dim) * self.res_std
 
-    def n_step_predict(self, prepared_data, n: int, pred_inds, *,
+    def n_step_predict(self, prepared_data, n: int, *,
+                       pred_ind: int = None,
                        return_all_predictions: bool = False,
-                       disturb_pred: bool = False,
-                       predict_all: bool = False,
-                       diff: bool = False):
+                       disturb_pred: bool = False):
         """
         Applies the model n times and returns the 
         predictions.
-        TODO: Implement or remove the diff == True case.
         """
-
-        if diff:
-            raise NotImplementedError("Differentiating data is not implemented")
 
         in_data, out_data = copy_arr_list(prepared_data)
 
         # Get shapes
+        n_pred = len(self.pred_inds)
+        n_tot = self.data.d
         n_samples = in_data.shape[0]
-        seq_len = in_data.shape[1]
-        n_feat = out_data.shape[1]
+        n_feat = n_tot - self.data.n_c
         n_out = n_samples - n + 1
-        if predict_all:
-            pred_inds = np.arange(n_feat)
+
+        # Prepare indices
+        if pred_ind is None:
+            # Predict all series in pred_inds
+            orig_pred_inds = np.copy(self.pred_inds)
+            out_inds = np.arange(n_pred)
+        else:
+            # Predict pred_ind'th series only
+            mod_pred_ind = self.pred_inds[pred_ind]
+            orig_pred_inds = np.array([mod_pred_ind], dtype=np.int32)
+            out_inds = np.array([pred_ind], dtype=np.int32)
+        prep_pred_inds = self.data.to_prepared(orig_pred_inds)
 
         # Do checks
         if n < 1:
@@ -186,7 +192,7 @@ class BaseDynamicsModel(ABC):
         # Initialize values and reserve output array
         all_pred = None
         if return_all_predictions:
-            all_pred = np.empty((n_out, n, n_feat))
+            all_pred = np.empty((n_out, n, n_pred))
         curr_in_data = np.copy(in_data[:n_out])
         curr_pred = None
 
@@ -201,13 +207,12 @@ class BaseDynamicsModel(ABC):
 
             # Construct next data
             curr_in_data[:, :-1, :] = np.copy(curr_in_data[:, 1:, :])
-            if not predict_all:
-                curr_in_data[:, -1, :n_feat] = np.copy(out_data[k:(n_out + k), :])
-                if k != n - 1:
-                    curr_in_data[:, -1, n_feat:] = np.copy(in_data[(k + 1):(n_out + k + 1), -1, n_feat:])
-                else:
-                    curr_in_data[:, -1, n_feat:] = 0
-            curr_in_data[:, -1, pred_inds] = np.copy(curr_pred[:, pred_inds])
+            curr_in_data[:, -1, :n_feat] = np.copy(out_data[k:(n_out + k), :])
+            if k != n - 1:
+                curr_in_data[:, -1, n_feat:] = np.copy(in_data[(k + 1):(n_out + k + 1), -1, n_feat:])
+            else:
+                curr_in_data[:, -1, n_feat:] = 0
+            curr_in_data[:, -1, prep_pred_inds] = np.copy(curr_pred[:, out_inds])
 
         # Return
         if return_all_predictions:
@@ -227,7 +232,7 @@ class BaseDynamicsModel(ABC):
         return os.path.join(dir_name, name)
 
     def const_nts_plot(self, predict_data, n_list: List[int], ext: str = '', *,
-                       predict_all: bool = False):
+                       predict_ind: int = 0):
         """
         Creates a plot that shows the performance of the
         trained model when predicting a fixed number of timesteps into 
@@ -237,8 +242,8 @@ class BaseDynamicsModel(ABC):
         d = self.data
         in_d, out_d = predict_data
         s = in_d.shape
-        p_ind = d.p_inds_prep[0]
-        orig_p_ind = d.p_inds[0]
+        orig_p_ind = np.copy(self.pred_inds[predict_ind])
+        p_ind = d.to_prepared(np.array([orig_p_ind]))[0]
         tr = np.copy(out_d[:, p_ind])
         dt = d.dt
 
@@ -248,9 +253,9 @@ class BaseDynamicsModel(ABC):
         for n_ts in n_list:
             curr_ds = Dataset.copy(analysis_ds)
             time_str = mins_to_str(dt * n_ts)
-            one_h_pred = self.n_step_predict(copy_arr_list(predict_data), n_ts, d.p_inds_prep,
-                                             predict_all=predict_all)
-            curr_ds.data[(n_ts - 1):, 0] = np.copy(one_h_pred[:, p_ind])
+            one_h_pred = self.n_step_predict(copy_arr_list(predict_data), n_ts,
+                                             pred_ind=predict_ind)
+            curr_ds.data[(n_ts - 1):, 0] = np.copy(one_h_pred[:, predict_ind])
             curr_ds.data[:(n_ts - 1), 0] = np.nan
             title_and_ylab = [time_str + ' Ahead Predictions', desc]
             plot_dataset(curr_ds,
@@ -259,13 +264,13 @@ class BaseDynamicsModel(ABC):
                          save_name=self.get_plt_path(time_str + 'Ahead' + ext))
 
     def one_week_pred_plot(self, dat_test, ext: str = None,
-                           predict_all: bool = False):
+                           predict_ind: int = 0):
         """
         Makes a plot by continuously predicting with
         the fitted model and comparing it to the ground
         truth.
 
-        :param predict_all: Whether to predict all the state variables.
+        :param predict_ind:
         :param dat_test: Data to use for making plots.
         :param ext: String extension for the filename.
         :return: None
@@ -275,8 +280,8 @@ class BaseDynamicsModel(ABC):
         d = self.data
         in_dat_test, out_dat_test = dat_test
         s = in_dat_test.shape
-        p_ind = d.p_inds_prep[0]
-        orig_p_ind = d.p_inds[0]
+        orig_p_ind = self.pred_inds[predict_ind]
+        p_ind = d.to_prepared(np.array([orig_p_ind]))[0]
         tr = np.copy(out_dat_test[:, p_ind])
 
         # Plot data
@@ -284,17 +289,17 @@ class BaseDynamicsModel(ABC):
         desc = d.descriptions[orig_p_ind]
 
         # Continuous prediction
-        full_pred = self.n_step_predict([in_dat_test, out_dat_test], s[0], d.p_inds_prep,
-                                        return_all_predictions=True,
-                                        predict_all=predict_all)
-        analysis_ds.data[:, 0] = np.copy(full_pred[0, :, p_ind])
+        full_pred = self.n_step_predict([in_dat_test, out_dat_test], s[0],
+                                        pred_ind=predict_ind,
+                                        return_all_predictions=True)
+        analysis_ds.data[:, 0] = np.copy(full_pred[0, :, predict_ind])
         title_and_ylab = ['1 Week Continuous Predictions', desc]
         plot_dataset(analysis_ds,
                      show=False,
                      title_and_ylab=title_and_ylab,
                      save_name=self.get_plt_path('OneWeek' + ext))
 
-        if predict_all:
+        if False:
             n_pred_f = self.data.d - self.data.n_c
             for k in range(n_pred_f):
                 k_true = k + np.sum(self.data.c_inds <= k)
@@ -340,8 +345,8 @@ class BaseDynamicsModel(ABC):
         # Plot for continuous predictions
         self.one_week_pred_plot(copy_arr_list(dat_val), "Validation")
         self.one_week_pred_plot(copy_arr_list(dat_train), "Train")
-        self.one_week_pred_plot(copy_arr_list(dat_val), "Validation_All", predict_all=True)
-        self.one_week_pred_plot(copy_arr_list(dat_train), "Train_All", predict_all=True)
+        self.one_week_pred_plot(copy_arr_list(dat_val), "Validation_All")
+        self.one_week_pred_plot(copy_arr_list(dat_train), "Train_All")
 
     def get_residuals(self, data_str: str):
         """

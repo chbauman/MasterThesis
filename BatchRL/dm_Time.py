@@ -38,6 +38,7 @@ class SCTimeModel(BaseDynamicsModel):
             raise AttributeError("Be fucking consistent with the scaling!")
         self.is_scaled = dataset.is_scaled[s_ind] and dataset.is_scaled[c_ind]
         self.s_scale, self.c_scale = dataset.scaling[s_ind], dataset.scaling[c_ind]
+        self.s_ind_prep, self.c_ind_prep = dataset.to_prepared(self.pred_inds)
 
     def fit(self) -> None:
         """
@@ -58,11 +59,11 @@ class SCTimeModel(BaseDynamicsModel):
         """
 
         in_sh = in_data.shape
-        s_ind, c_ind = self.pred_inds
+        s_ind, c_ind = self.s_ind_prep, self.c_ind_prep
 
         # Get previous values
-        s = np.copy(in_data[:, -1, 0])
-        c = np.copy(in_data[:, -1, 1])
+        s = np.copy(in_data[:, -1, s_ind])
+        c = np.copy(in_data[:, -1, c_ind])
 
         # Scale back
         if self.is_scaled:
@@ -82,8 +83,8 @@ class SCTimeModel(BaseDynamicsModel):
 
         # Concatenate and return
         out_dat = np.empty((in_sh[0], 2), dtype=in_data.dtype)
-        out_dat[:, s_ind] = s_new
-        out_dat[:, c_ind] = c_new
+        out_dat[:, 0] = s_new
+        out_dat[:, 1] = c_new
         return out_dat
 
     def disturb(self):
