@@ -11,7 +11,7 @@ from data import Dataset
 from util import *
 
 
-def get_plot_ds(s, tr: np.ndarray, d: Dataset, orig_p_ind: np.ndarray) -> Dataset:
+def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray) -> Dataset:
     """
     Creates a dataset with truth time series tr and parameters
     from the original dataset d. Intended for plotting after
@@ -24,7 +24,8 @@ def get_plot_ds(s, tr: np.ndarray, d: Dataset, orig_p_ind: np.ndarray) -> Datase
     :return: Dataset with ground truth series as second series.
     """
     plot_data = np.empty((s[0], 2), dtype=np.float32)
-    plot_data[:, 1] = tr
+    if tr is not None:
+        plot_data[:, 1] = tr
     scaling = np.array(repl(d.scaling[orig_p_ind], 2))
     is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype=np.bool)
     analysis_ds = Dataset(plot_data,
@@ -264,7 +265,7 @@ class BaseDynamicsModel(ABC):
                          save_name=self.get_plt_path(time_str + 'Ahead' + ext))
 
     def one_week_pred_plot(self, dat_test, ext: str = None,
-                           predict_ind: int = 0):
+                           predict_ind: int = None):
         """
         Makes a plot by continuously predicting with
         the fitted model and comparing it to the ground
@@ -280,44 +281,45 @@ class BaseDynamicsModel(ABC):
         d = self.data
         in_dat_test, out_dat_test = dat_test
         s = in_dat_test.shape
-        orig_p_ind = self.pred_inds[predict_ind]
-        p_ind = d.to_prepared(np.array([orig_p_ind]))[0]
-        tr = np.copy(out_dat_test[:, p_ind])
 
         # Plot data
-        analysis_ds = get_plot_ds(s, tr, d, orig_p_ind)
-        desc = d.descriptions[orig_p_ind]
+        analysis_ds = get_plot_ds(s, None, d, 0)
 
         # Continuous prediction
         full_pred = self.n_step_predict([in_dat_test, out_dat_test], s[0],
                                         pred_ind=predict_ind,
                                         return_all_predictions=True)
-        analysis_ds.data[:, 0] = np.copy(full_pred[0, :, predict_ind])
-        title_and_ylab = ['1 Week Continuous Predictions', desc]
-        plot_dataset(analysis_ds,
-                     show=False,
-                     title_and_ylab=title_and_ylab,
-                     save_name=self.get_plt_path('OneWeek' + ext))
 
-        if False:
-            n_pred_f = self.data.d - self.data.n_c
-            for k in range(n_pred_f):
+        if predict_ind is None:
+            n_pred = len(self.pred_inds)
+            for k in range(n_pred):
                 k_true = k + np.sum(self.data.c_inds <= k)
-                print(k, ": k, k_true =", k_true)
+                k_orig = self.pred_inds[k]
+                k_prep = self.data.to_prepared(np.array([k_true]))[0]
                 analysis_ds.data[:, 0] = np.copy(full_pred[0, :, k])
-                analysis_ds.data[:, 1] = np.copy(out_dat_test[:, k])
-                analysis_ds.scaling = np.array(repl(d.scaling[k_true], 2))
-                analysis_ds.is_scaled = np.array(repl(d.is_scaled[k_true], 2))
-                curr_p_inds = np.array([k_true], dtype=np.int32)
+                analysis_ds.data[:, 1] = np.copy(out_dat_test[:, k_prep])
+                analysis_ds.scaling = np.array(repl(d.scaling[k_orig], 2))
+                analysis_ds.is_scaled = np.array(repl(d.is_scaled[k_orig], 2))
+                curr_p_inds = np.array([k_orig], dtype=np.int32)
                 analysis_ds.p_inds = curr_p_inds
-                desc = d.descriptions[k_true]
+                desc = d.descriptions[k_orig]
                 title_and_ylab = ['1 Week Continuous Predictions', desc]
-                print(desc)
                 plot_dataset(analysis_ds,
                              show=False,
                              title_and_ylab=title_and_ylab,
                              save_name=self.get_plt_path('OneWeek_' + str(k) + "_" + ext))
-        pass
+        else:
+            orig_p_ind = self.pred_inds[predict_ind]
+            p_ind = d.to_prepared(np.array([orig_p_ind]))[0]
+            desc = d.descriptions[orig_p_ind]
+
+            analysis_ds.data[:, 0] = np.copy(full_pred[0, :, predict_ind])
+            analysis_ds.data[:, 1] = np.copy(out_dat_test[:, p_ind])
+            title_and_ylab = ['1 Week Continuous Predictions', desc]
+            plot_dataset(analysis_ds,
+                         show=False,
+                         title_and_ylab=title_and_ylab,
+                         save_name=self.get_plt_path('OneWeek' + ext))
 
     def analyze(self, diff=False) -> None:
         """
@@ -343,8 +345,13 @@ class BaseDynamicsModel(ABC):
         self.const_nts_plot(train_copy, [4, 20], ext='Train')
 
         # Plot for continuous predictions
-        self.one_week_pred_plot(copy_arr_list(dat_val), "Validation")
-        self.one_week_pred_plot(copy_arr_list(dat_train), "Train")
+        n_pred = len(self.pred_inds)
+        for k in range(n_pred):
+            ext = str(k) + "__"
+            self.one_week_pred_plot(copy_arr_list(dat_val), ext + "Validation",
+                                    predict_ind=k)
+            self.one_week_pred_plot(copy_arr_list(dat_train), ext + "Train",
+                                    predict_ind=k)
         self.one_week_pred_plot(copy_arr_list(dat_val), "Validation_All")
         self.one_week_pred_plot(copy_arr_list(dat_train), "Train_All")
 
