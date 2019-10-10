@@ -11,7 +11,7 @@ from base_dynamics_model import BaseDynamicsModel
 from keras_layers import SeqInput
 from time_series import AR_Model
 from visualize import plot_train_history
-
+from data import Dataset
 from util import *
 
 
@@ -32,7 +32,7 @@ class RNNDynamicModel(BaseDynamicsModel):
     """
 
     def __init__(self,
-                 data,
+                 data: Dataset,
                  hidden_sizes: Sequence[int] = (20, 20),
                  n_iter_max: int = 10000,
                  name: str = 'baseRNN',
@@ -45,6 +45,9 @@ class RNNDynamicModel(BaseDynamicsModel):
                  residual_learning: bool = False,
                  lr: float = 0.001):
 
+        if pred_inds is None:
+            ran = np.arange(data.d - data.n_c)
+            pred_inds = data.from_prepared(ran)
         super(RNNDynamicModel, self).__init__(data, name, pred_inds)
 
         # Store data
@@ -145,7 +148,7 @@ class RNNDynamicModel(BaseDynamicsModel):
 
             # Prepare the data
             input_data, output_data = self.data.get_prepared_data('train_val')
-            output_data = output_data[:, :, self.p_pred_inds]
+            output_data = output_data[:, self.p_pred_inds]
 
             # Fit and save model
             h = self.m.fit(input_data, output_data,

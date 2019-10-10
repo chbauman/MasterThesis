@@ -1828,7 +1828,7 @@ class Dataset:
         """
         new_inds = np.copy(inds)
         for c_ind in sorted(self.c_inds):
-            new_inds[new_inds <= c_ind] -= 1
+            new_inds[new_inds >= c_ind] += 1
         return new_inds
 
     def visualize_nans(self, name_ext: str = "") -> None:
