@@ -1932,6 +1932,7 @@ TestData = DataStruct(id_list=[421100171, 421100172],
 class TestDataSynthetic:
     """
     Synthetic and short dataset to be used for debugging.
+    Imitates a DataStruct.
     """
 
     def getData(self):
@@ -2082,7 +2083,7 @@ def get_data_test():
     return all_data, m, name
 
 
-def test_align():
+def test_align() -> None:
     """
     Tests the alignment of two time series.
     """
@@ -2105,7 +2106,6 @@ def test_align():
     print('Test 4:', test4)
     test5 = align_ts(ts_2, ts_1, t_i2, t_i1, dt)
     print('Test 5:', test5)
-
     return
 
 
@@ -2130,5 +2130,3 @@ def test_dataset_artificially():
 
     ds.save()
     plot_dataset(ds, True, ["Test", "Fuck"])
-
-    pass
