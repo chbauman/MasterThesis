@@ -21,12 +21,7 @@ class SCTimeModel(BaseDynamicsModel):
         name = dataset.name + "_Exact"
         super(SCTimeModel, self).__init__(dataset, name, None)
 
-        self.name = name
-        self.plot_path = os.path.join(model_plot_path, self.name)
-        create_dir(self.plot_path)
-
         # Save dataset
-        self.data = dataset
         self.nc = dataset.n_c
 
     def fit(self) -> None:

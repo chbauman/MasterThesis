@@ -14,9 +14,6 @@ class ConstModel(BaseDynamicsModel):
         name = dataset.name + "_Naive"
         super(ConstModel, self).__init__(dataset, name, None)
 
-        self.plot_path = os.path.join(model_plot_path, name)
-        create_dir(self.plot_path)
-
         # Save data
         self.nc = dataset.n_c
 

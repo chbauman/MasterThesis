@@ -15,16 +15,13 @@ class Periodic1DayModel(BaseDynamicsModel):
     pred_n: int = 0
 
     def __init__(self, d: Dataset, exo_inds: np.ndarray, alpha: float = 1.0):
-        super(Periodic1DayModel, self).__init__()
+
+        name = d.name + "_1DayPeriodic_Alpha" + str(alpha)
+        super(Periodic1DayModel, self).__init__(d, name, exo_inds)
 
         # Save parameters
         self.data = d
-        self.ex_inds = exo_inds
-
-        self.name = d.name + "_1DayPeriodic_Alpha" + str(alpha)
-        self.plot_path = os.path.join(model_plot_path, self.name)
-        create_dir(self.plot_path)
-        self.n_feat: int = len(self.ex_inds)
+        self.n_feat: int = len(self.pred_indices)
         self.n: int = 60 * 24 // self.d.dt
 
     def init_1day(self, day_data: np.ndarray) -> None:

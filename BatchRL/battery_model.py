@@ -22,14 +22,6 @@ class BatteryModel(BaseDynamicsModel):
         :param dataset: Dataset with data to fit modes.
         """
         super(BatteryModel, self).__init__(dataset, dataset.name, None)
-
-        self.name = dataset.name
-        self.plot_path = os.path.join(model_plot_path, self.name)
-        create_dir(self.plot_path)
-
-        # Save dataset
-        self.data = dataset
-
         self.params = None
 
     def fit(self) -> None:
