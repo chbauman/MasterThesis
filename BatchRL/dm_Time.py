@@ -30,8 +30,6 @@ class SCTimeModel(BaseDynamicsModel):
         super(SCTimeModel, self).__init__(dataset, name, inds)
 
         # Save parameters
-        self.nc = dataset.n_c
-        self.d = dataset.d
         self.dx = 2 * np.pi / (24 * 60 / dataset.dt)
 
         # Scaling parameters
@@ -73,8 +71,7 @@ class SCTimeModel(BaseDynamicsModel):
 
         # Compute new
         x = np.arccos(c)
-        x = np.where(s < 0, -x, x)
-        x += self.dx
+        x = np.where(s < 0, -x, x) + self.dx
         s_new = np.sin(x)
         c_new = np.cos(x)
 
@@ -85,7 +82,7 @@ class SCTimeModel(BaseDynamicsModel):
 
         # Concatenate and return
         out_dat = np.empty((in_sh[0], 2), dtype=in_data.dtype)
-        out_dat[:, s_ind] = s_new  
+        out_dat[:, s_ind] = s_new
         out_dat[:, c_ind] = c_new
         return out_dat
 
