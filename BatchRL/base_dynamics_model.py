@@ -54,6 +54,7 @@ class BaseDynamicsModel(ABC):
     pred_inds: np.ndarray
     name: str
     plot_path: str
+    n_pred: int
 
     def __init__(self, ds: Dataset, name: str, pred_indices: np.ndarray = None):
         """
@@ -67,9 +68,10 @@ class BaseDynamicsModel(ABC):
 
         # Set members
         self.data = ds
+        self.n_pred = ds.d - ds.n_c
         self.name = name
         if pred_indices is None:
-            pred_indices = np.arange(ds.d - ds.n_c)
+            pred_indices = np.arange(self.n_pred)
         self.pred_inds = pred_indices
         self.plot_path = os.path.join(model_plot_path, name)
         create_dir(self.plot_path)
@@ -155,13 +157,20 @@ class BaseDynamicsModel(ABC):
             return next_noise
         return np.random.normal(0, 1, self.out_dim) * self.res_std
 
-    def n_step_predict(self, prepared_data, n: int, *,
+    def n_step_predict(self, prepared_data: Sequence, n: int, *,
                        pred_ind: int = None,
                        return_all_predictions: bool = False,
-                       disturb_pred: bool = False):
+                       disturb_pred: bool = False) -> np.ndarray:
         """
-        Applies the model n times and returns the 
+        Applies the model n times and returns the
         predictions.
+
+        :param prepared_data: Data to predict.
+        :param n: Number of timesteps to predict.
+        :param pred_ind: Which series to predict, all if None.
+        :param return_all_predictions: Whether to return intermediate predictions.
+        :param disturb_pred: Whether to apply a disturbance to the prediction.
+        :return: The predictions.
         """
 
         in_data, out_data = copy_arr_list(prepared_data)
@@ -396,7 +405,8 @@ class BaseDynamicsModel(ABC):
         :return: Residuals.
         """
         input_data, output_data = self.data.get_prepared_data(data_str)
-        residuals = self.predict(input_data) - output_data
+        prep_inds = self.data.to_prepared(self.pred_inds)
+        residuals = self.predict(input_data) - output_data[:, prep_inds]
         return residuals
 
     def deb(self, *args) -> None:

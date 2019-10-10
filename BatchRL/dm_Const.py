@@ -1,6 +1,5 @@
 from base_dynamics_model import BaseDynamicsModel
 from util import *
-from visualize import model_plot_path
 from data import Dataset
 
 
@@ -10,9 +9,16 @@ class ConstModel(BaseDynamicsModel):
     input seen.
     """
 
-    def __init__(self, dataset: Dataset):
+    def __init__(self, dataset: Dataset, pred_inds: np.ndarray = None):
+        """
+        Initializes the constant model. All series specified
+        by prep_inds are predicted by the last seen value.
+
+        :param dataset: Dataset containing the data.
+        :param pred_inds: Indices of series to predict.
+        """
         name = dataset.name + "_Naive"
-        super(ConstModel, self).__init__(dataset, name, None)
+        super(ConstModel, self).__init__(dataset, name, pred_inds)
 
         # Save data
         self.nc = dataset.n_c
@@ -20,6 +26,7 @@ class ConstModel(BaseDynamicsModel):
     def fit(self) -> None:
         """
         No need to fit anything.
+
         :return: None
         """
         pass
@@ -27,13 +34,16 @@ class ConstModel(BaseDynamicsModel):
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """
         Make predictions by just returning the last input.
+
         :param in_data: Prepared data.
         :return: Same as input
         """
         return in_data[:, -1, :-self.nc]
 
-    def disturb(self):
+    def disturb(self) -> np.ndarray:
         """
         Returns a sample of noise of length n.
+
+        :return: Zero vector.
         """
-        raise NotImplementedError("Disturbance for naive model not implemented!")
+        return np.zeros((self.n_pred,), dtype=np.float32)
