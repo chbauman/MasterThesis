@@ -703,11 +703,12 @@ def save_ds_from_raw(all_data: np.ndarray, m_out: List[Dict], name: str,
     return dataset
 
 
-def get_from_data_struct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list, prep_arg_list,
-                         desc_list=None,
-                         c_inds=None,
-                         p_inds=None,
-                         standardize_data=False):
+def get_from_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins, new_name: Optional[str], ind_list,
+                         prep_arg_list,
+                         desc_list: np.ndarray = None,
+                         c_inds: np.ndarray = None,
+                         p_inds: np.ndarray = None,
+                         standardize_data: bool = False) -> 'Dataset':
     """
     Extracts the specified series and applies
     pre-processing steps to all of them and puts them into a
@@ -757,17 +758,25 @@ def get_from_data_struct(dat_struct, base_plot_dir, dt_mins, new_name, ind_list,
 
         # Save
         return save_ds_from_raw(all_data, m_out, new_name, c_inds, p_inds, standardize_data)
-    pass
 
 
-def convert_data_struct(dat_struct, base_plot_dir, dt_mins, pl_kwargs,
-                        c_inds=None,
-                        p_inds=None,
-                        standardize_data=False):
+def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int, pl_kwargs,
+                        c_inds: np.ndarray = None,
+                        p_inds: np.ndarray = None,
+                        standardize_data=False) -> 'Dataset':
     """
     Converts a DataStruct to a Dataset.
     Using the same pre-processing steps for each series
-    int the DataStruct.
+    in the DataStruct.
+
+    :param dat_struct: DataStruct to convert to Dataset.
+    :param base_plot_dir: Where to save the preprocessing plots.
+    :param dt_mins: Number of minutes in a timestep.
+    :param pl_kwargs: Preprocessing pipeline kwargs.
+    :param c_inds: Control indices.
+    :param p_inds: Prediction indices.
+    :param standardize_data: Whether to standardize the series in the dataset.
+    :return: Converted Dataset.
     """
 
     # Get name
@@ -803,10 +812,14 @@ def convert_data_struct(dat_struct, base_plot_dir, dt_mins, pl_kwargs,
 #######################################################################################################
 # Preparing Data for model fitting
 
-def standardize(data, m):
+def standardize(data: np.ndarray, m: List[Dict]) -> Tuple[np.ndarray, List[Dict]]:
     """
-    Removes mean and scales std to 1.0.
+    Removes mean and scales std to 1.0 ignoring nans.
     Stores the parameters in the meta information.
+
+    :param data: 2D Numpy array with series as columns.
+    :param m: List of metadata dicts.
+    :return: Processed array and modified list of dicts.
     """
     s = data.shape
     n_feat = s[1]
@@ -823,10 +836,13 @@ def standardize(data, m):
     return proc_data, m
 
 
-def find_rows_with_nans(all_data):
+def find_rows_with_nans(all_data: np.ndarray) -> np.ndarray:
     """
     Returns a boolean vector indicating which
     rows of 'all_dat' contain NaNs.
+
+    :param all_data: Numpy array with data series as columns.
+    :return: 1D array of bool specifying rows containing nans.
     """
 
     n = all_data.shape[0]
@@ -840,10 +856,15 @@ def find_rows_with_nans(all_data):
     return col_has_nan
 
 
-def cut_into_fixed_len(col_has_nan, seq_len: int = 20, interleave: bool = True):
+def cut_into_fixed_len(col_has_nan: np.ndarray, seq_len: int = 20, interleave: bool = True) -> np.ndarray:
     """
     Cuts the time series into pieces of length 'seq_len'
-    for training of RNN.
+    for training of dynamic model.
+
+    :param col_has_nan: 1D bool array with True where there are nans in a row.
+    :param seq_len: Length of sequences to extract.
+    :param interleave: Whether to overlap the extracted sequences.
+    :return: Index array specifying ranges of rows that do not contain nans.
     """
 
     n = col_has_nan.shape[0]
@@ -885,11 +906,19 @@ def cut_into_fixed_len(col_has_nan, seq_len: int = 20, interleave: bool = True):
     return seqs[:, :seq_count]
 
 
-def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True):
+def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True) -> np.ndarray:
     """
     Use the two functions above to cut the data into
-    sequences for RNN training.
+    sequences for dynamic model learning.
+
+    :param all_data: The 2D numpy array containing the data series.
+    :param seq_len: The length of the sequences to extract.
+    :param interleave: See cut_into_fixed_len
+    :return: 3D array with sequences.
     """
+    # Check input
+    if len(all_data.shape) > 2:
+        raise ValueError("Data array has too many dimensions!")
 
     # Use helper functions
     nans = find_rows_with_nans(all_data)
@@ -909,10 +938,16 @@ def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True):
     return out_dat
 
 
-def extract_streak(all_data, s_len, lag):
+def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Finds the last sequence where all data is available
-    for at least s_len + lag timesteps.
+    for at least s_len + lag timesteps. Then splits the
+    data before that last sequence and returns both parts.
+
+    :param all_data: The data.
+    :param s_len: The sequence length.
+    :param lag: The number of sequences the streak should contain.
+    :return: The data before the streak and the streak data.
     """
 
     tot_s_len = s_len + lag
@@ -934,11 +969,18 @@ def extract_streak(all_data, s_len, lag):
     return first_dat, streak_dat
 
 
-def cut_and_split(dat, seq_len, streak_len, ret_orig=False):
+def cut_and_split(dat: np.ndarray, seq_len: int, streak_len: int,
+                  ret_orig: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     """
     Finds the latest series of 'streak_len' timesteps
     where all data is valid and splits the data there.
     The it cuts both parts it into sequences of length 'seq_len'.
+
+    :param dat: The data series in a numpy array.
+    :param seq_len: The sequence length.
+    :param streak_len: The streak length.
+    :param ret_orig: Whether to return the original cut data without sequencing it.
+    :return: Training and streak data.
     """
     dat_train, dat_test = extract_streak(dat, streak_len, seq_len - 1)
     if ret_orig:
@@ -951,11 +993,13 @@ def cut_and_split(dat, seq_len, streak_len, ret_orig=False):
 #######################################################################################################
 # Full Data Retrieval and Pre-processing
 
-def get_battery_data():
+def get_battery_data() -> 'Dataset':
     """
     Loads the battery dataset if existing else
     creates it from the raw data and creates a few plots.
     Then returns the dataset.
+
+    :return: Battery dataset.
     """
     # Constants
     dt_mins = 15
@@ -1005,9 +1049,10 @@ def get_battery_data():
     return ds
 
 
-def get_weather_data(save_plots=True):
+def get_weather_data(save_plots=True) -> 'Dataset':
     """
     Load and interpolate the weather data.
+    TODO: Refactor with other functions!
     """
 
     # Constants
@@ -1085,9 +1130,11 @@ def get_weather_data(save_plots=True):
     return w_dataset
 
 
-def get_UMAR_heating_data():
+def get_UMAR_heating_data() -> 'Dataset':
     """
     Load and interpolate all the necessary data.
+
+    :return: The dataset with the UMAR data.
     """
 
     dat_structs = [Room272Data, Room274Data]
@@ -1116,13 +1163,13 @@ def get_UMAR_heating_data():
     return all_ds
 
 
-def get_DFAB_heating_data():
+def get_DFAB_heating_data() -> 'Dataset':
     """
     Loads or creates all data from DFAB then returns
     a list of all datasets. 4 for the rooms, one for the heating water
     and one with all the valves.
 
-    :return: list(Datasets)
+    :return: list of all required datasets.
     """
     data_list = []
     dt_mins = 15
@@ -1638,8 +1685,7 @@ class Dataset:
 
         :param ind_low: Lower range index.
         :param ind_high: Upper range index.
-        :return: Dataset containing series [ind_low: ind_high) of current
-        dataset.
+        :return: Dataset containing series [ind_low: ind_high) of current dataset.
         """
 
         warnings.warn("Prediction and control indices are lost when slicing.")
@@ -1668,9 +1714,13 @@ class Dataset:
                            no_inds,
                            self.name + "[" + str(low) + "]")
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> 'Dataset':
         """
-        Allows for slicing. Returns a copy not a reference.
+        Allows for slicing. Returns a copy not a view.
+        Slice must be contiguous, no strides.
+
+        :param key: Specifies which series to return.
+        :return: New dataset containing series specified by key.
         """
 
         if isinstance(key, slice):
@@ -1691,10 +1741,12 @@ class Dataset:
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
 
-    def getUnscaledData(self):
+    def getUnscaledData(self) -> np.ndarray:
         """
         Adds the mean and std back to every column and returns
         the data.
+
+        :return: Data array with original mean and std added back.
         """
         data_out = np.copy(self.data)
         for k in range(self.d):
@@ -1749,10 +1801,13 @@ class Dataset:
         for k in range(self.d):
             self.standardize_col(k)
 
-    def visualize_nans(self, name_ext: str = ""):
+    def visualize_nans(self, name_ext: str = "") -> None:
         """
         Visualizes where the holes are in the different
         time series (columns) of the data.
+
+        :param name_ext: Name extension.
+        :return: None
         """
         nan_plot_dir = os.path.join(plot_dir, "NanPlots")
         create_dir(nan_plot_dir)
@@ -1769,9 +1824,11 @@ class Dataset:
                  save_name=s_name + name_ext)
 
 
-def generate_room_datasets():
+def generate_room_datasets() -> List[Dataset]:
     """
-    Gather the right data and put it together.
+    Gather the right data and put it all together.
+
+    :return: List of room datasets of DFAB.
     """
 
     # Get weather
@@ -1841,15 +1898,17 @@ def generate_sin_cos_time_ds(other: Dataset) -> Dataset:
     """
     Generates a time dataset from the last two
     time series of another dataset.
+
     :param other: The other dataset.
     :return: A new dataset containing only the time series.
     """
+    # Try loading
     name = other.name + "_SinCosTime"
-
     try:
         return Dataset.loadDataset(name)
     except FileNotFoundError:
         pass
+
     # Construct Time dataset
     n_feat = other.d
     ds_sin_cos_time: Dataset = Dataset.copy(other[n_feat - 2: n_feat])
