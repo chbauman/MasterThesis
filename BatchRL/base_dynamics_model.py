@@ -51,6 +51,7 @@ class BaseDynamicsModel(ABC):
     data: Dataset
     pred_inds: np.ndarray
     name: str
+    plot_path: str
 
     def __init__(self, ds: Dataset, name: str, pred_indices: np.ndarray = None):
         """
@@ -68,6 +69,8 @@ class BaseDynamicsModel(ABC):
         if pred_indices is None:
             pred_indices = np.arange(ds.d - ds.n_c)
         self.pred_inds = pred_indices
+        self.plot_path = os.path.join(model_plot_path, name)
+        create_dir(self.plot_path)
 
         self.out_dim = None
         self.use_AR = None
@@ -220,8 +223,7 @@ class BaseDynamicsModel(ABC):
         :param name: Name of the plot.
         :return: Full path of the plot file.
         """
-        dir_name = os.path.join(model_plot_path, self.name)
-        create_dir(dir_name)
+        dir_name = self.plot_path
         return os.path.join(dir_name, name)
 
     def const_nts_plot(self, predict_data, n_list: List[int], ext: str = '', *,

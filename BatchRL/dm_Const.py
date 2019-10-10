@@ -11,14 +11,13 @@ class ConstModel(BaseDynamicsModel):
     """
 
     def __init__(self, dataset: Dataset):
-        super(ConstModel, self).__init__()
+        name = dataset.name + "_Naive"
+        super(ConstModel, self).__init__(dataset, name, None)
 
-        self.name = dataset.name + "_Naive"
-        self.plot_path = os.path.join(model_plot_path, self.name)
+        self.plot_path = os.path.join(model_plot_path, name)
         create_dir(self.plot_path)
 
-        # Save dataset
-        self.data = dataset
+        # Save data
         self.nc = dataset.n_c
 
     def fit(self) -> None:

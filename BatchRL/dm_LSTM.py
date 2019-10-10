@@ -49,7 +49,6 @@ class RNNDynamicModel(BaseDynamicsModel):
         super(RNNDynamicModel, self).__init__(data, name, None)
 
         # Store data
-        self.data = data
         self.train_seq_len = self.data.seq_len - 1
         self.n_feats = self.data.d
         self.out_dim = self.data.d - self.data.n_c
