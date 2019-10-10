@@ -26,6 +26,43 @@ def weighted_loss(y_true, y_pred, weights):
     return K.mean((y_true - y_pred) * (y_true - y_pred) * weights)
 
 
+def constr_name(name: str,
+                data_name: str,
+                hidden_sizes: Sequence,
+                pred_inds: np.ndarray,
+                n_iter_max: int,
+                lr: float,
+                gru: bool = False,
+                res_learn: bool = True,
+                weight_vec: np.ndarray = None,
+                input_noise_std: float = None) -> str:
+    """
+    Constructs the name of the network.
+
+    :param name: Base name
+    :param data_name: Name of data
+    :param hidden_sizes: Layer size list or tuple
+    :param pred_inds: Prediction indices
+    :param n_iter_max: Number of iterations
+    :param lr: Learning rate
+    :param gru: Whether to use GRU units
+    :param res_learn: Whether to use residual learning
+    :param weight_vec: Weight vector for weighted loss
+    :param input_noise_std: Standard deviation of input noise.
+    :return: String combining all these parameters.
+    """
+    ds_pt = '_DATA_' + data_name
+    arch = '_L' + '-'.join(map(str, hidden_sizes))
+    preds = '_P' + '-'.join(map(str, pred_inds))
+    ep_s = '_E' + str(n_iter_max)
+    lrs = '_LR' + str(lr)
+    n_str = '' if input_noise_std is None else '_N' + str(input_noise_std)
+    gru_str = '' if not gru else '_GRU'
+    res_str = '' if not res_learn else '_RESL'
+    w_str = '' if weight_vec is None else '_W' + '-'.join(map(str, weight_vec))
+    return name + ds_pt + preds + ep_s + arch + lrs + n_str + gru_str + res_str + w_str
+
+
 class RNNDynamicModel(BaseDynamicsModel):
     """
     Simple LSTM used for training a dynamics model.
@@ -45,9 +82,26 @@ class RNNDynamicModel(BaseDynamicsModel):
                  residual_learning: bool = False,
                  lr: float = 0.001):
 
+        """
+        Constructor, defines all the network parameters.
+
+        :param name: Base name
+        :param data: Dataset
+        :param hidden_sizes: Layer size list or tuple
+        :param pred_inds: Prediction indices
+        :param n_iter_max: Number of iterations
+        :param lr: Learning rate
+        :param gru: Whether to use GRU units
+        :param residual_learning: Whether to use residual learning
+        :param weight_vec: Weight vector for weighted loss
+        :param input_noise_std: Standard deviation of input noise.
+        """
         if pred_inds is None:
             ran = np.arange(data.d - data.n_c)
             pred_inds = data.from_prepared(ran)
+        name = constr_name(name, data.name, hidden_sizes,
+                           pred_inds, n_iter_max, lr, gru,
+                           residual_learning, weight_vec, input_noise_std)
         super(RNNDynamicModel, self).__init__(data, name, pred_inds)
 
         # Store data
@@ -64,30 +118,17 @@ class RNNDynamicModel(BaseDynamicsModel):
         self.weight_vec = weight_vec
         self.res_learn = residual_learning
         self.lr = lr
-        self.name = self.constr_name(name)
 
         # Build model
         self.m = None
         self.build_model()
 
-    def constr_name(self, name: str) -> str:
-        """
-        Constructs the name of the network.
-        """
-        ds_pt = '_DATA_' + self.data.name
-        arch = '_L' + '-'.join(map(str, self.hidden_sizes))
-        preds = '_P' + '-'.join(map(str, self.pred_inds))
-        ep_s = '_E' + str(self.n_iter_max)
-        lrs = '_LR' + str(self.lr)
-        n_str = '' if self.input_noise_std is None else '_N' + str(self.input_noise_std)
-        gru_str = '' if not self.gru else '_GRU'
-        res_str = '' if not self.res_learn else '_RESL'
-        w_str = '' if self.weight_vec is None else '_W' + '-'.join(map(str, self.weight_vec))
-        return name + ds_pt + preds + ep_s + arch + lrs + n_str + gru_str + res_str + w_str
-
     def build_model(self) -> None:
         """
-        Builds the keras LSTM model.
+        Builds the keras LSTM model and saves it
+        to self.
+
+        :return: None
         """
 
         # Initialize
@@ -165,7 +206,10 @@ class RNNDynamicModel(BaseDynamicsModel):
 
     def predict(self, input_data: np.ndarray) -> np.ndarray:
         """
-        Predicts a batch of sequences.
+        Predicts a batch of sequences using the fitted model.
+
+        :param input_data: 3D numpy array with input data.
+        :return: 2D numpy array with the predictions.
         """
 
         n = input_data.shape[0]
