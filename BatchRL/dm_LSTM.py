@@ -1,5 +1,3 @@
-import numpy as np
-
 import keras
 
 from keras import backend as K
@@ -39,6 +37,7 @@ class RNNDynamicModel(BaseDynamicsModel):
                  n_iter_max: int = 10000,
                  name: str = 'baseRNN',
                  *,
+                 pred_inds: np.ndarray = None,
                  weight_vec: Optional[np.ndarray] = None,
                  gru: bool = False,
                  input_noise_std: Optional[float] = None,
@@ -46,12 +45,12 @@ class RNNDynamicModel(BaseDynamicsModel):
                  residual_learning: bool = False,
                  lr: float = 0.001):
 
-        super(RNNDynamicModel, self).__init__(data, name, None)
+        super(RNNDynamicModel, self).__init__(data, name, pred_inds)
 
         # Store data
         self.train_seq_len = self.data.seq_len - 1
         self.n_feats = self.data.d
-        self.out_dim = self.data.d - self.data.n_c
+        self.out_dim = self.n_pred
 
         # Store parameters
         self.hidden_sizes = np.array(hidden_sizes, dtype=np.int32)
@@ -74,13 +73,14 @@ class RNNDynamicModel(BaseDynamicsModel):
         """
         ds_pt = '_DATA_' + self.data.name
         arch = '_L' + '-'.join(map(str, self.hidden_sizes))
+        preds = '_P' + '-'.join(map(str, self.pred_inds))
         ep_s = '_E' + str(self.n_iter_max)
         lrs = '_LR' + str(self.lr)
         n_str = '' if self.input_noise_std is None else '_N' + str(self.input_noise_std)
         gru_str = '' if not self.gru else '_GRU'
         res_str = '' if not self.res_learn else '_RESL'
         w_str = '' if self.weight_vec is None else '_W' + '-'.join(map(str, self.weight_vec))
-        return name + ds_pt + ep_s + arch + lrs + n_str + gru_str + res_str + w_str
+        return name + ds_pt + preds + ep_s + arch + lrs + n_str + gru_str + res_str + w_str
 
     def build_model(self) -> None:
         """
@@ -135,6 +135,8 @@ class RNNDynamicModel(BaseDynamicsModel):
         """
         Fit the model if it hasn't been fitted before.
         Otherwise load the trained model.
+
+        :return: None
         """
 
         loaded = self.load_if_exists(self.m, self.name)
@@ -143,6 +145,7 @@ class RNNDynamicModel(BaseDynamicsModel):
 
             # Prepare the data
             input_data, output_data = self.data.get_prepared_data('train_val')
+            output_data = output_data[:, :, self.p_pred_inds]
 
             # Fit and save model
             h = self.m.fit(input_data, output_data,

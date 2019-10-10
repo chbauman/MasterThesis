@@ -52,8 +52,10 @@ class BaseDynamicsModel(ABC):
     # Member variables
     data: Dataset
     pred_inds: np.ndarray
+    p_pred_inds: np.ndarray
     name: str
     plot_path: str
+    n_pred_full: int
     n_pred: int
 
     def __init__(self, ds: Dataset, name: str, pred_indices: np.ndarray = None):
@@ -68,11 +70,17 @@ class BaseDynamicsModel(ABC):
 
         # Set members
         self.data = ds
-        self.n_pred = ds.d - ds.n_c
         self.name = name
+
+        # Indices
         if pred_indices is None:
-            pred_indices = np.arange(self.n_pred)
+            pred_indices = np.arange(ds.d - ds.n_c)
         self.pred_inds = pred_indices
+        self.p_pred_inds = ds.to_prepared(pred_indices)
+
+        self.n_pred = len(pred_indices)
+        self.n_pred_full = ds.d - ds.n_c
+
         self.plot_path = os.path.join(model_plot_path, name)
         create_dir(self.plot_path)
 
