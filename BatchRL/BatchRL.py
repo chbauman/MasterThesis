@@ -75,6 +75,8 @@ def main():
     time_model = SCTimeModel(time_data)
     time_model.analyze()
 
+    time_model_ds = SCTimeModel(time_data, )
+
     # Construct weight vector
     w = np.ones((ds.d - ds.n_c,), dtype=np.float32)
     w[ds.p_inds_prep[0]] = 2.0  # Weight temperature twice

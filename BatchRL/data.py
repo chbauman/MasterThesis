@@ -1801,6 +1801,36 @@ class Dataset:
         for k in range(self.d):
             self.standardize_col(k)
 
+    def to_prepared(self, inds: Arr) -> Arr:
+        """
+        Converts the indices from the original dataset
+        to the indices corresponding to the prepared data.
+        Since the control series are moved to the end while
+        preparing the data, this is needed.
+
+        :param inds: Original indices.
+        :return: New indices.
+        """
+        new_inds = np.copy(inds)
+        for c_ind in sorted(self.c_inds, reverse=True):
+            new_inds[new_inds > c_ind] -= 1
+        return new_inds
+
+    def from_prepared(self, inds: Arr) -> Arr:
+        """
+        Converts the indices from the prepared data
+        to the indices corresponding to the original dataset.
+        Since the control series are moved to the end while
+        preparing the data, this is needed.
+
+        :param inds: Data indices.
+        :return: Original indices.
+        """
+        new_inds = np.copy(inds)
+        for c_ind in sorted(self.c_inds):
+            new_inds[new_inds <= c_ind] -= 1
+        return new_inds
+
     def visualize_nans(self, name_ext: str = "") -> None:
         """
         Visualizes where the holes are in the different
