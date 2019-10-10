@@ -92,6 +92,15 @@ def main():
                           residual_learning=True,
                           weight_vec=None,
                           )
+    mod = RNNDynamicModel(ds,
+                          hidden_sizes=(100, 100),
+                          n_iter_max=50,
+                          input_noise_std=0.001,
+                          lr=0.001,
+                          residual_learning=True,
+                          weight_vec=None,
+                          pred_inds=np.array([4], dtype=np.int32)
+                          )
     mod.fit()
     mod.model_disturbance()
     mod.disturb()

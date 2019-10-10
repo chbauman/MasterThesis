@@ -22,8 +22,13 @@ Arr = Union[Num, np.ndarray]
 
 def get_if_nnone(lst: Sequence, indx: int, default=None):
     """
-    Returns a list element if list is not None, 
+    Returns a list element if list is not None,
     else the default value.
+
+    :param lst: List of elements or None
+    :param indx: List index.
+    :param default: Default return value
+    :return: List element at position indx if lst is not None, else default.
     """
     return default if lst is None else lst[indx]
 
@@ -32,6 +37,10 @@ def apply(list_or_el, fun):
     """
     Applies the function fun to each element of list_or_el
     if it is a list, else it is applied directly to list_or_el.
+
+    :param list_or_el: List of elements or single element.
+    :param fun: Function to apply to elements.
+    :return: List or element with function applied.
     """
     if isinstance(list_or_el, list):
         return [fun(k) for k in list_or_el]
@@ -42,6 +51,12 @@ def apply(list_or_el, fun):
 def repl(el, n: int) -> List:
     """
     Constructs a list with n equal elements 'el'.
+    If el is not a primitive type, then it might
+    give a list with views on el.
+
+    :param el: Element to repeat.
+    :param n: Number of times.
+    :return: New list with elements.
     """
     return [el for _ in range(n)]
 
@@ -50,6 +65,10 @@ def b_cast(l_or_el, n: int) -> List:
     """
     Checks if 'l_or_el' is a list or not.
     If not returns a list with 'n' repeated elements 'l_or_el'.
+
+    :param l_or_el: List of elements or element.
+    :param n: Length of list.
+    :return: list
     """
     if isinstance(l_or_el, list):
         if len(l_or_el) == n:

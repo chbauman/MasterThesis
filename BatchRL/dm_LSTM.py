@@ -18,6 +18,7 @@ from util import *
 def weighted_loss(y_true, y_pred, weights):
     """
     Returns the weighted MSE between y_true and y_pred.
+
     :param y_true: True labels.
     :param y_pred: Predicted labels.
     :param weights: Weights.
@@ -218,5 +219,3 @@ class RNNDynamicModel(BaseDynamicsModel):
         predictions = self.m.predict(input_data)
         predictions = predictions.reshape((n, -1))
         return predictions
-
-    pass
