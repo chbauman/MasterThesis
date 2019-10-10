@@ -39,20 +39,36 @@ def get_plot_ds(s, tr: np.ndarray, d: Dataset, orig_p_ind: np.ndarray) -> Datase
 class BaseDynamicsModel(ABC):
     """
     This class describes the interface of a ML-based
-    dynamics model.
+    (partial) dynamics model.
     """
 
+    # Constants
     N_LAG: int = 4
     debug: bool = True
     model_path: str = "../Models/Dynamics/"
-    data: Dataset
 
-    def __init__(self):
+    # Member variables
+    data: Dataset
+    pred_inds: np.ndarray
+    name: str
+
+    def __init__(self, ds: Dataset, name: str, pred_indices: np.ndarray = None):
         """
-        Lists all required member variables.
-        No need to explicitly call it.
+        Constructor for the base of every dynamics model.
+        If pred_indices is None, all series are predicted.
+
+        :param ds: Dataset containing all the data.
+        :param name: Name of the model.
+        :param pred_indices: Indices specifying the series in the data that the model predicts.
         """
-        self.name = None
+
+        # Set members
+        self.data = ds
+        self.name = name
+        if pred_indices is None:
+            pred_indices = np.arange(ds.d - ds.n_c)
+        self.pred_inds = pred_indices
+
         self.out_dim = None
         self.use_AR = None
         self.dist_mod = None

@@ -46,7 +46,7 @@ class RNNDynamicModel(BaseDynamicsModel):
                  residual_learning: bool = False,
                  lr: float = 0.001):
 
-        super(RNNDynamicModel, self).__init__()
+        super(RNNDynamicModel, self).__init__(data, name, None)
 
         # Store data
         self.data = data

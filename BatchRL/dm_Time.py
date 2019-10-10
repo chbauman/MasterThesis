@@ -18,9 +18,10 @@ class SCTimeModel(BaseDynamicsModel):
 
         :param dataset: Dataset containing two time series, sin(time) and cos(time).
         """
-        super(SCTimeModel, self).__init__()
+        name = dataset.name + "_Exact"
+        super(SCTimeModel, self).__init__(dataset, self.name, None)
 
-        self.name = dataset.name + "_Exact"
+        self.name = name
         self.plot_path = os.path.join(model_plot_path, self.name)
         create_dir(self.plot_path)
 
