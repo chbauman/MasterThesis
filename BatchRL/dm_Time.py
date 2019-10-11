@@ -33,12 +33,12 @@ class SCTimeModel(BaseDynamicsModel):
         self.dx = 2 * np.pi / (24 * 60 / dataset.dt)
 
         # Scaling parameters
-        s_ind, c_ind = self.pred_inds
+        s_ind, c_ind = self.out_inds
         if dataset.is_scaled[s_ind] != dataset.is_scaled[c_ind]:
             raise AttributeError("Be fucking consistent with the scaling!")
         self.is_scaled = dataset.is_scaled[s_ind] and dataset.is_scaled[c_ind]
         self.s_scale, self.c_scale = dataset.scaling[s_ind], dataset.scaling[c_ind]
-        self.s_ind_prep, self.c_ind_prep = dataset.to_prepared(self.pred_inds)
+        self.s_ind_prep, self.c_ind_prep = dataset.to_prepared(self.out_inds)
 
     def fit(self) -> None:
         """

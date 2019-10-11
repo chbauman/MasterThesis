@@ -28,9 +28,7 @@ def weighted_loss(y_true, y_pred, weights):
 
 
 def constr_name(name: str,
-                data_name: str,
                 hidden_sizes: Sequence,
-                pred_inds: np.ndarray,
                 n_iter_max: int,
                 lr: float,
                 gru: bool = False,
@@ -41,9 +39,7 @@ def constr_name(name: str,
     Constructs the name of the network.
 
     :param name: Base name
-    :param data_name: Name of data
     :param hidden_sizes: Layer size list or tuple
-    :param pred_inds: Prediction indices
     :param n_iter_max: Number of iterations
     :param lr: Learning rate
     :param gru: Whether to use GRU units
@@ -52,16 +48,14 @@ def constr_name(name: str,
     :param input_noise_std: Standard deviation of input noise.
     :return: String combining all these parameters.
     """
-    ds_pt = '_DATA_' + data_name
     arch = '_L' + '-'.join(map(str, hidden_sizes))
-    preds = '_P' + '-'.join(map(str, pred_inds))
     ep_s = '_E' + str(n_iter_max)
     lrs = '_LR' + str(lr)
     n_str = '' if input_noise_std is None else '_N' + str(input_noise_std)
     gru_str = '' if not gru else '_GRU'
     res_str = '' if not res_learn else '_RESL'
     w_str = '' if weight_vec is None else '_W' + '-'.join(map(str, weight_vec))
-    return name + ds_pt + preds + ep_s + arch + lrs + n_str + gru_str + res_str + w_str
+    return name + ep_s + arch + lrs + n_str + gru_str + res_str + w_str
 
 
 class RNNDynamicModel(BaseDynamicsModel):
@@ -75,8 +69,8 @@ class RNNDynamicModel(BaseDynamicsModel):
                  n_iter_max: int = 10000,
                  name: str = 'baseRNN',
                  *,
-                 inp_inds: np.ndarray = None,
-                 pred_inds: np.ndarray = None,
+                 in_inds: np.ndarray = None,
+                 out_inds: np.ndarray = None,
                  weight_vec: Optional[np.ndarray] = None,
                  gru: bool = False,
                  input_noise_std: Optional[float] = None,
@@ -90,8 +84,8 @@ class RNNDynamicModel(BaseDynamicsModel):
         :param name: Base name
         :param data: Dataset
         :param hidden_sizes: Layer size list or tuple
-        :param pred_inds: Prediction indices
-        :param inp_inds: Input indices
+        :param out_inds: Prediction indices
+        :param in_inds: Input indices
         :param n_iter_max: Number of iterations
         :param lr: Learning rate
         :param gru: Whether to use GRU units
@@ -99,20 +93,10 @@ class RNNDynamicModel(BaseDynamicsModel):
         :param weight_vec: Weight vector for weighted loss
         :param input_noise_std: Standard deviation of input noise.
         """
-        if pred_inds is None:
-            ran = np.arange(data.d - data.n_c)
-            pred_inds = data.from_prepared(ran)
-        name = constr_name(name, data.name, hidden_sizes,
-                           pred_inds, n_iter_max, lr, gru,
+        name = constr_name(name, hidden_sizes,
+                           n_iter_max, lr, gru,
                            residual_learning, weight_vec, input_noise_std)
-        super(RNNDynamicModel, self).__init__(data, name, pred_inds)
-
-        # Input indices
-        if inp_inds is None:
-            all_inds = np.arange(data.d)
-            inp_inds = data.from_prepared(all_inds)
-        self.inp_inds = inp_inds
-        self.prepared_inp_inds = sorted(data.to_prepared(inp_inds))
+        super(RNNDynamicModel, self).__init__(data, name, out_inds, in_inds)
 
         # Store data
         self.train_seq_len = self.data.seq_len - 1
@@ -199,7 +183,7 @@ class RNNDynamicModel(BaseDynamicsModel):
 
             # Prepare the data
             input_data, output_data = self.data.get_prepared_data('train_val')
-            output_data = output_data[:, self.p_pred_inds]
+            output_data = output_data[:, self.p_out_inds]
 
             # Fit and save model
             h = self.m.fit(input_data, output_data,

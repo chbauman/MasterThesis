@@ -17,7 +17,7 @@ class ConstModel(BaseDynamicsModel):
         :param dataset: Dataset containing the data.
         :param pred_inds: Indices of series to predict.
         """
-        name = dataset.name + "_Naive"
+        name = "Naive"
         super(ConstModel, self).__init__(dataset, name, pred_inds)
 
         # Save data

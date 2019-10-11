@@ -51,34 +51,51 @@ class BaseDynamicsModel(ABC):
 
     # Member variables
     data: Dataset
-    pred_inds: np.ndarray
-    p_pred_inds: np.ndarray
+    out_inds: np.ndarray
+    p_out_inds: np.ndarray
     name: str
     plot_path: str
     n_pred_full: int
     n_pred: int
 
-    def __init__(self, ds: Dataset, name: str, pred_indices: np.ndarray = None):
+    def __init__(self, ds: Dataset, name: str,
+                 out_indices: np.ndarray = None,
+                 in_indices: np.ndarray = None):
         """
         Constructor for the base of every dynamics model.
-        If pred_indices is None, all series are predicted.
+        If out_indices is None, all series are predicted.
+        If in_indices is None, all series are used as input to the model.
 
         :param ds: Dataset containing all the data.
         :param name: Name of the model.
-        :param pred_indices: Indices specifying the series in the data that the model predicts.
+        :param out_indices: Indices specifying the series in the data that the model predicts.
+        :param in_indices: Indices specifying the series in the data that the model takes as input.
         """
 
-        # Set members
+        # Set dataset
         self.data = ds
-        self.name = name
 
         # Indices
-        if pred_indices is None:
-            pred_indices = ds.from_prepared(np.arange(ds.d - ds.n_c))
-        self.pred_inds = pred_indices
-        self.p_pred_inds = ds.to_prepared(pred_indices)
+        out_inds_str = ""
+        if out_indices is None:
+            out_indices = ds.from_prepared(np.arange(ds.d - ds.n_c))
+        else:
+            out_inds_str = "_Out" + '-'.join(map(str, out_indices))
+        self.out_inds = out_indices
+        self.p_out_inds = ds.to_prepared(out_indices)
 
-        self.n_pred = len(pred_indices)
+        in_inds_str = ""
+        if in_indices is None:
+            in_indices = ds.from_prepared(np.arange(ds.d))
+        else:
+            in_inds_str = "_In" + '-'.join(map(str, in_indices))
+        self.in_indices = in_indices
+        self.p_in_indices = ds.to_prepared(in_indices)
+
+        # name
+        self.name = ds.name + out_inds_str + in_inds_str + "_MODEL_" + name
+
+        self.n_pred = len(out_indices)
         self.n_pred_full = ds.d - ds.n_c
 
         self.plot_path = os.path.join(model_plot_path, name)
@@ -184,7 +201,7 @@ class BaseDynamicsModel(ABC):
         in_data, out_data = copy_arr_list(prepared_data)
 
         # Get shapes
-        n_pred = len(self.pred_inds)
+        n_pred = len(self.out_inds)
         n_tot = self.data.d
         n_samples = in_data.shape[0]
         n_feat = n_tot - self.data.n_c
@@ -192,12 +209,12 @@ class BaseDynamicsModel(ABC):
 
         # Prepare indices
         if pred_ind is None:
-            # Predict all series in pred_inds
-            orig_pred_inds = np.copy(self.pred_inds)
+            # Predict all series in out_inds
+            orig_pred_inds = np.copy(self.out_inds)
             out_inds = np.arange(n_pred)
         else:
             # Predict pred_ind'th series only
-            mod_pred_ind = self.pred_inds[pred_ind]
+            mod_pred_ind = self.out_inds[pred_ind]
             orig_pred_inds = np.array([mod_pred_ind], dtype=np.int32)
             out_inds = np.array([pred_ind], dtype=np.int32)
         prep_pred_inds = self.data.to_prepared(orig_pred_inds)
@@ -273,7 +290,7 @@ class BaseDynamicsModel(ABC):
 
         # Plot for all n
         if predict_ind is not None:
-            orig_p_ind = np.copy(self.pred_inds[predict_ind])
+            orig_p_ind = np.copy(self.out_inds[predict_ind])
             p_ind = d.to_prepared(np.array([orig_p_ind]))[0]
             tr = np.copy(out_d[:, p_ind])
 
@@ -292,7 +309,7 @@ class BaseDynamicsModel(ABC):
                              title_and_ylab=title_and_ylab,
                              save_name=self.get_plt_path(time_str + 'Ahead' + ext))
         else:
-            n_pred = len(self.pred_inds)
+            n_pred = len(self.out_inds)
             for n_ts in n_list:
                 # Predict
                 full_pred = self.n_step_predict([in_d, out_d], n_ts,
@@ -302,7 +319,7 @@ class BaseDynamicsModel(ABC):
                 # Plot all
                 for k in range(n_pred):
                     # Construct dataset and plot
-                    k_orig = self.pred_inds[k]
+                    k_orig = self.out_inds[k]
                     k_prep = self.data.to_prepared(np.array([k_orig]))[0]
                     k_orig_arr = np.array([k_orig])
                     new_ds = get_plot_ds(s, np.copy(out_d[:, k_prep]), d, k_orig_arr)
@@ -341,10 +358,10 @@ class BaseDynamicsModel(ABC):
                                         return_all_predictions=True)
 
         if predict_ind is None:
-            n_pred = len(self.pred_inds)
+            n_pred = len(self.out_inds)
             for k in range(n_pred):
                 # Construct dataset and plot
-                k_orig = self.pred_inds[k]
+                k_orig = self.out_inds[k]
                 k_prep = self.data.to_prepared(np.array([k_orig]))[0]
                 k_orig_arr = np.array([k_orig])
                 new_ds = get_plot_ds(s, np.copy(out_dat_test[:, k_prep]), d, k_orig_arr)
@@ -357,9 +374,9 @@ class BaseDynamicsModel(ABC):
                              save_name=self.get_plt_path('OneWeek_' + str(k) + "_" + ext))
         else:
             # Construct dataset and plot
-            orig_p_ind = self.pred_inds[predict_ind]
+            orig_p_ind = self.out_inds[predict_ind]
             analysis_ds = get_plot_ds(s, None, d, np.array([orig_p_ind]))
-            orig_p_ind = self.pred_inds[predict_ind]
+            orig_p_ind = self.out_inds[predict_ind]
             p_ind = d.to_prepared(np.array([orig_p_ind]))[0]
             desc = d.descriptions[orig_p_ind]
             analysis_ds.data[:, 0] = np.copy(full_pred[0, :, predict_ind])
@@ -397,7 +414,7 @@ class BaseDynamicsModel(ABC):
         self.one_week_pred_plot(copy_arr_list(dat_train), "Train_All")
 
         # Make more predictions
-        # n_pred = len(self.pred_inds)
+        # n_pred = len(self.out_inds)
         # if n_pred > 1:
         #     for k in range(n_pred):
         #         ext = str(k) + "__"
@@ -414,7 +431,7 @@ class BaseDynamicsModel(ABC):
         :return: Residuals.
         """
         input_data, output_data = self.data.get_prepared_data(data_str)
-        prep_inds = self.data.to_prepared(self.pred_inds)
+        prep_inds = self.data.to_prepared(self.out_inds)
         residuals = self.predict(input_data) - output_data[:, prep_inds]
         return residuals
 

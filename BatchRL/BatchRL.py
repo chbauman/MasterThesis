@@ -98,7 +98,7 @@ def main():
                           lr=0.001,
                           residual_learning=True,
                           weight_vec=None,
-                          pred_inds=np.array([4], dtype=np.int32)
+                          out_inds=np.array([4], dtype=np.int32)
                           )
     mod.fit()
     mod.model_disturbance()
