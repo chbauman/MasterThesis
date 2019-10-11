@@ -74,7 +74,7 @@ class BaseDynamicsModel(ABC):
 
         # Indices
         if pred_indices is None:
-            pred_indices = np.arange(ds.d - ds.n_c)
+            pred_indices = ds.from_prepared(np.arange(ds.d - ds.n_c))
         self.pred_inds = pred_indices
         self.p_pred_inds = ds.to_prepared(pred_indices)
 

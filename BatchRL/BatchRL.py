@@ -103,7 +103,8 @@ def main():
     mod.fit()
     mod.model_disturbance()
     mod.disturb()
-    mod.analyze()
+    # mod.analyze()
+
     mod_naive = ConstModel(ds)
     mod_naive.analyze()
 
