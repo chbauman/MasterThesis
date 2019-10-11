@@ -7,12 +7,11 @@ from batchDDPG import bDDPG
 from dm_LSTM import RNNDynamicModel
 from dm_GPR import GPR_DM
 from dm_Const import ConstModel
-
 from battery_model import BatteryModel
-
-# Environments for debugging
 from dm_Time import SCTimeModel
+from dm_TimePeriodic import Periodic1DayModel
 from simple_battery_test import SimpleBatteryTest
+# Environments for debugging
 from cart_pole import CartPole
 from mount_car_cont import MountCarCont
 from pendulum import Pendulum
@@ -52,6 +51,12 @@ def simple_battery_FQI():
 def main():
     # get_DFAB_heating_data()
     # generate_room_datasets()
+
+    w_dat = get_weather_data()
+    w_dat.split_train_test()
+    pre_mod = Periodic1DayModel(w_dat, None, alpha=1.0)
+    pre_mod.analyze_6_days()
+    return
 
     # # Do tests
     # test_rest_client()
