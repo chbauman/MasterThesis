@@ -98,7 +98,7 @@ class BaseDynamicsModel(ABC):
         self.n_pred = len(out_indices)
         self.n_pred_full = ds.d - ds.n_c
 
-        self.plot_path = os.path.join(model_plot_path, name)
+        self.plot_path = os.path.join(model_plot_path, self.name)
         create_dir(self.plot_path)
 
         self.out_dim = None
