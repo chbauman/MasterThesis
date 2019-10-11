@@ -83,6 +83,7 @@ class BaseDynamicsModel(ABC):
             out_inds_str = "_Out" + '-'.join(map(str, out_indices))
         self.out_inds = out_indices
         self.p_out_inds = ds.to_prepared(out_indices)
+        ds.check_inds(out_indices, False)
 
         in_inds_str = ""
         if in_indices is None:
@@ -91,6 +92,7 @@ class BaseDynamicsModel(ABC):
             in_inds_str = "_In" + '-'.join(map(str, in_indices))
         self.in_indices = in_indices
         self.p_in_indices = ds.to_prepared(in_indices)
+        ds.check_inds(in_indices, True)
 
         # name
         self.name = ds.name + out_inds_str + in_inds_str + "_MODEL_" + name
