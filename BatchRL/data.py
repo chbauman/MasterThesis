@@ -1811,12 +1811,12 @@ class Dataset:
         :param inds: Original indices.
         :return: New indices.
         """
-        # TODO: check for duplicates
         new_inds = np.copy(inds)
         n_tot = self.d
-        for c_ind in sorted(self.c_inds, reverse=True):
-            new_inds[new_inds > c_ind] -= 1
-            new_inds[new_inds == c_ind] = n_tot - 1
+        for c_ind in self.c_inds:
+            new_inds[inds > c_ind] -= 1
+        for ct, c_ind in enumerate(self.c_inds):
+            new_inds[inds == c_ind] = n_tot - self.n_c + ct
         return new_inds
 
     def from_prepared(self, inds: Arr) -> Arr:
@@ -1830,10 +1830,11 @@ class Dataset:
         :return: Original indices.
         """
         new_inds = np.copy(inds)
-        n_c = self.n_c
         n_tot = self.d
-        for c_ind in sorted(self.c_inds):
+        for c_ind in self.c_inds:
             new_inds[new_inds >= c_ind] += 1
+        for ct, c_ind in enumerate(self.c_inds):
+            new_inds[inds == n_tot - self.n_c + ct] = c_ind
         return new_inds
 
     def visualize_nans(self, name_ext: str = "") -> None:
@@ -2168,8 +2169,9 @@ def test_dataset_artificially() -> None:
 
     # Specify tests
     test_list = [
-        (np.array([2, 4], dtype=np.int32), np.array([1, 3], dtype=np.int32), ds.to_prepared),
+        (np.array([2, 4], dtype=np.int32), np.array([1, 2], dtype=np.int32), ds.to_prepared),
         (np.array([2, 3], dtype=np.int32), np.array([1, 4], dtype=np.int32), ds.to_prepared),
+        (np.array([0, 1, 2, 3, 4], dtype=np.int32), np.array([0, 3, 1, 4, 2], dtype=np.int32), ds.to_prepared),
         (np.array([0, 1, 2], dtype=np.int32), np.array([0, 2, 4], dtype=np.int32), ds.from_prepared),
         (np.array([2, 3, 4], dtype=np.int32), np.array([4, 1, 3], dtype=np.int32), ds.from_prepared),
     ]
@@ -2180,7 +2182,7 @@ def test_dataset_artificially() -> None:
         out = fun(inp)
         if not arr_eq(sol, out):
             print("Test failed :(")
-            raise AssertionError("Function: {} with input: {} not giving: {}!!!".format(fun, inp, sol))
+            raise AssertionError("Function: {} with input: {} not giving: {} but: {}!!!".format(fun, inp, sol, out))
 
     print("Test passed :)")
 
