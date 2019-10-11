@@ -80,6 +80,17 @@ def b_cast(l_or_el, n: int) -> List:
 #######################################################################################################
 # Numerical stuff
 
+def arr_eq(arr1: Arr, arr2: Arr) -> bool:
+    """
+    Tests if two arrays have all equal elements.
+
+    :param arr1: First array.
+    :param arr2: Array to compare with.
+    :return: Whether all the elements are the same.
+    """
+    return np.sum(arr1 != arr2) == 0
+
+
 def fit_linear_1d(x: np.ndarray, y: np.ndarray, x_new: Optional[np.ndarray] = None):
     """
     Fit a linear model y = c * x + m.

@@ -1819,7 +1819,7 @@ class Dataset:
             new_inds[new_inds == c_ind] = n_tot - 1
         return new_inds
 
-    def from_prepared(self, inds: Arr, n_tot: int = None) -> Arr:
+    def from_prepared(self, inds: Arr) -> Arr:
         """
         Converts the indices from the prepared data
         to the indices corresponding to the original dataset.
@@ -2144,24 +2144,43 @@ def test_align() -> None:
     return
 
 
-def test_dataset_artificially():
+def test_dataset_artificially() -> None:
     """
     Constructs a small synthetic dataset and makes tests.
     """
 
-    dat = np.array([1, 2, 3, 7,
-                    1, 3, 4, 7,
-                    1, 4, 5, 7,
-                    1, 5, 6, 7], dtype=np.float32).reshape((4, 4))
-    c_inds = np.array([2])
-    p_inds = np.array([1])
-    descs = np.array(["1", "2", "3", "4"])
-    is_sc = np.array([False for _ in range(4)])
-    sc = np.empty((4, 2), dtype=np.float32)
+    dat = np.array([1, 2, 3, 7, 8,
+                    1, 3, 4, 7, 9,
+                    1, 4, 5, 7, 8,
+                    1, 5, 6, 7, 9], dtype=np.float32).reshape((4, -1))
+    n_series = dat.shape[1]
+    c_inds = np.array([1, 3])
+    descs = np.array([str(i) for i in range(n_series)])
+    is_sc = np.array([False for _ in range(n_series)])
+    sc = np.empty((n_series, 2), dtype=np.float32)
 
     dt = 15
     t_init = '2019-01-01 00:00:00'
-    ds = Dataset(dat, dt, t_init, sc, is_sc, descs, c_inds, p_inds, "Test")
+    ds = Dataset(dat, dt, t_init, sc, is_sc, descs, c_inds, name="SyntheticTest")
 
     ds.save()
     plot_dataset(ds, True, ["Test", "Fuck"])
+
+    # Specify tests
+    test_list = [
+        (np.array([2, 4], dtype=np.int32), np.array([1, 3], dtype=np.int32), ds.to_prepared),
+        (np.array([2, 3], dtype=np.int32), np.array([1, 4], dtype=np.int32), ds.to_prepared),
+        (np.array([0, 1, 2], dtype=np.int32), np.array([0, 2, 4], dtype=np.int32), ds.from_prepared),
+        (np.array([2, 3, 4], dtype=np.int32), np.array([4, 1, 3], dtype=np.int32), ds.from_prepared),
+    ]
+
+    # Run tests
+    for t in test_list:
+        inp, sol, fun = t
+        out = fun(inp)
+        if not arr_eq(sol, out):
+            print("Test failed :(")
+            raise AssertionError("Function: {} with input: {} not giving: {}!!!".format(fun, inp, sol))
+
+    print("Test passed :)")
+

@@ -50,15 +50,15 @@ def simple_battery_FQI():
 
 
 def main():
-    get_DFAB_heating_data()
-    generate_room_datasets()
+    # get_DFAB_heating_data()
+    # generate_room_datasets()
 
     # # Do tests
     # test_rest_client()
     # get_data_test()
     # test_align()
-    # test_dataset_artificially()
-
+    test_dataset_artificially()
+    return
     # compute_DFAB_energy_usage()
     # return
 
