@@ -58,7 +58,6 @@ def main():
     # get_data_test()
     # test_align()
     test_dataset_artificially()
-    return
     # compute_DFAB_energy_usage()
     # return
 

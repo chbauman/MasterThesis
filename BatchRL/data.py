@@ -2148,6 +2148,10 @@ def test_align() -> None:
 def test_dataset_artificially() -> None:
     """
     Constructs a small synthetic dataset and makes tests.
+    Tests the plotting and the index conversion of the dataset.
+    Throws an exception if a test fails.
+
+    :return: None
     """
 
     dat = np.array([1, 2, 3, 7, 8,

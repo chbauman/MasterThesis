@@ -293,21 +293,22 @@ class BaseDynamicsModel(ABC):
                              save_name=self.get_plt_path(time_str + 'Ahead' + ext))
         else:
             n_pred = len(self.pred_inds)
-            for k in range(n_pred):
-                full_pred = self.n_step_predict([in_d, out_d], s[0],
-                                                pred_ind=predict_ind,
-                                                return_all_predictions=True)
+            for n_ts in n_list:
+                # Predict
+                full_pred = self.n_step_predict([in_d, out_d], n_ts,
+                                                pred_ind=predict_ind)
+                time_str = mins_to_str(dt * n_ts)
 
-                # Construct dataset and plot
-                k_orig = self.pred_inds[k]
-                k_prep = self.data.to_prepared(np.array([k_orig]))[0]
-                k_orig_arr = np.array([k_orig])
-                new_ds = get_plot_ds(s, np.copy(out_d[:, k_prep]), d, k_orig_arr)
-                desc = d.descriptions[k_orig]
-
-                for n_ts in n_list:
-                    time_str = mins_to_str(dt * n_ts)
-                    new_ds.data[:, 0] = np.copy(full_pred[0, :, k])
+                # Plot all
+                for k in range(n_pred):
+                    # Construct dataset and plot
+                    k_orig = self.pred_inds[k]
+                    k_prep = self.data.to_prepared(np.array([k_orig]))[0]
+                    k_orig_arr = np.array([k_orig])
+                    new_ds = get_plot_ds(s, np.copy(out_d[:, k_prep]), d, k_orig_arr)
+                    desc = d.descriptions[k_orig]
+                    new_ds.data[(n_ts - 1):, 0] = np.copy(full_pred[:, k])
+                    new_ds.data[:(n_ts - 1), 0] = np.nan
                     title_and_ylab = [time_str + ' Ahead Predictions', desc]
                     plot_dataset(new_ds,
                                  show=False,
