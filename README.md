@@ -29,5 +29,6 @@ $ cd ..
 $ mkdir Docs
 $ cd Docs
 $ sphinx-apidoc.exe -F -H 'BatchRL' -A 'Chris' -o . '..\MasterThesis\BatchRL\'
+$ cp ../MasterThesis/conf.py .
 $ ./make html
 ```
