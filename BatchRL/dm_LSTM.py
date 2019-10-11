@@ -182,8 +182,7 @@ class RNNDynamicModel(BaseDynamicsModel):
             self.deb("Fitting Model...")
 
             # Prepare the data
-            input_data, output_data = self.data.get_prepared_data('train_val')
-            output_data = output_data[:, self.p_out_inds]
+            input_data, output_data = self.get_fit_data('train_val')
 
             # Fit and save model
             h = self.m.fit(input_data, output_data,

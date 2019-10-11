@@ -116,6 +116,19 @@ class BaseDynamicsModel(ABC):
     def predict(self, in_data):
         pass
 
+    def get_fit_data(self, data_name: str = "train"):
+        """
+        Returns the required data for fitting the model
+        taking care of choosing the right series by indexing.
+
+        :param data_name: The string specifying which portion of the data to use.
+        :return: The input and output data for supervised learning.
+        """
+        in_dat, out_dat = self.data.get_prepared_data(data_name)
+        res_in_dat = in_dat[self.p_in_indices]
+        res_out_dat_out = in_dat[self.p_out_indices]
+        return res_in_dat, res_out_dat_out
+
     def get_path(self, name: str) -> str:
         """
         Returns the path where the model parameters
