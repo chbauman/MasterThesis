@@ -14,7 +14,7 @@ class Periodic1DayModel(BaseDynamicsModel):
     pred_t: int = 0
     tot_t: int = 0
 
-    def __init__(self, d: Dataset, exo_inds: np.ndarray = None, alpha: float = 0.01):
+    def __init__(self, d: Dataset, exo_inds: np.ndarray = None, alpha: float = 0.1):
         """
         Initializes model.
 
@@ -39,7 +39,13 @@ class Periodic1DayModel(BaseDynamicsModel):
         """
         self.pred_t = 0
         self.tot_t = 0
-        self.hist = day_data
+        dat_copy = np.copy(day_data)
+        n_feat = dat_copy.shape[-1]
+        n_hists = dat_copy.shape[0]
+        for k in range(n_feat):
+            for i in range(n_hists):
+                dat_copy[i, :, k] = make_periodic(dat_copy[i, :, k])
+        self.hist = dat_copy
 
     def fit(self) -> None:
         """
@@ -52,7 +58,7 @@ class Periodic1DayModel(BaseDynamicsModel):
     def curr_alpha(self, t: int) -> float:
         """
         The decay function:
-        :math:`\\alpha_t = \\e^{-\\alpha t} \\in [0, 1]`
+        :math:`\\alpha_t = e^{-\\alpha t} \\in [0, 1]`
 
         :param t: Time variable.
         :return: Current weight of the input.

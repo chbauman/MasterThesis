@@ -281,6 +281,35 @@ def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False, non_neg: bo
     return ret_val
 
 
+def make_periodic(arr_1d: np.ndarray, keep_start: bool = True, keep_min: bool = True):
+    """
+    Makes a data series periodic by scaling it by a linearly in / decreasing
+    factor to in / decrease the values towards the end of the series to match
+    the start.
+
+    :param arr_1d: Series to make periodic.
+    :param keep_start:
+    :param keep_min: Whether to keep the minimum at the same level.
+    :return: The periodic series.
+    """
+
+    n = len(arr_1d)
+    if not keep_start:
+        raise NotImplementedError("Fucking do it already!")
+    if n < 2:
+        raise ValueError("Too small fucking array!!")
+    first = arr_1d[0]
+    last = arr_1d[-1]
+    d_last = last - arr_1d[-2]
+    min_val = 0.0 if not keep_min else np.min(arr_1d)
+    first_offs = first - min_val
+    last_offs = last + d_last - min_val
+    fac = first_offs / last_offs
+    arr_01 = np.arange(n) / (n - 1)
+    f = 1.0 * np.flip(arr_01) + fac * arr_01
+    return (arr_1d - min_val) * f + min_val
+
+
 #######################################################################################################
 # NEST stuff
 
