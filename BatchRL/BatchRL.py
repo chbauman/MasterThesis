@@ -54,7 +54,7 @@ def main():
 
     w_dat = get_weather_data()
     w_dat.split_train_test()
-    pre_mod = Periodic1DayModel(w_dat, None, alpha=1.0)
+    pre_mod = Periodic1DayModel(w_dat, None, alpha=0.1)
     pre_mod.analyze_6_days()
     return
 

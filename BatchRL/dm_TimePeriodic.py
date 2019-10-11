@@ -12,8 +12,9 @@ class Periodic1DayModel(BaseDynamicsModel):
     # Member variables
     hist: np.ndarray
     pred_t: int = 0
+    tot_t: int = 0
 
-    def __init__(self, d: Dataset, exo_inds: np.ndarray = None, alpha: float = 1.0):
+    def __init__(self, d: Dataset, exo_inds: np.ndarray = None, alpha: float = 0.01):
         """
         Initializes model.
 
@@ -37,6 +38,7 @@ class Periodic1DayModel(BaseDynamicsModel):
         :return: None
         """
         self.pred_t = 0
+        self.tot_t = 0
         self.hist = day_data
 
     def fit(self) -> None:
@@ -69,12 +71,14 @@ class Periodic1DayModel(BaseDynamicsModel):
 
         # Update time
         self.pred_t = (self.pred_t + 1) % self.n
+        self.tot_t += 1
 
         # Make prediction
         curr_in = in_data[:, -1, :]
         curr_h = self.hist[:, self.pred_t, :]
-        curr_a = self.curr_alpha(self.pred_t)
+        curr_a = self.curr_alpha(self.tot_t)
         curr_out = curr_a * curr_in + (1.0 - curr_a) * curr_h
+        print(curr_a)
         return curr_out
 
     def disturb(self):
