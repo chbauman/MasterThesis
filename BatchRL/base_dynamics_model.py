@@ -1,14 +1,8 @@
-import os
-
-import numpy as np
-
-from keras.models import load_model
 from abc import ABC, abstractmethod
-
-from time_series import AR_Model
-from visualize import plot_dataset, model_plot_path
 from data import Dataset
+from time_series import AR_Model
 from util import *
+from visualize import plot_dataset, model_plot_path
 
 
 def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray) -> Dataset:
@@ -83,7 +77,7 @@ class BaseDynamicsModel(ABC):
             out_inds_str = "_Out" + '-'.join(map(str, out_indices))
         self.out_inds = out_indices
         self.p_out_inds = ds.to_prepared(out_indices)
-        ds.check_inds(out_indices, False)
+        ds.check_inds(out_indices, True)
 
         in_inds_str = ""
         if in_indices is None:
@@ -128,7 +122,7 @@ class BaseDynamicsModel(ABC):
         """
         in_dat, out_dat = self.data.get_prepared_data(data_name)
         res_in_dat = in_dat[self.p_in_indices]
-        res_out_dat_out = in_dat[self.p_out_indices]
+        res_out_dat_out = in_dat[self.p_out_inds]
         return res_in_dat, res_out_dat_out
 
     def get_path(self, name: str) -> str:
@@ -143,7 +137,7 @@ class BaseDynamicsModel(ABC):
 
     def load_if_exists(self, m, name: str) -> bool:
         """
-        Loads a keras model if it exists.
+        Loads the keras model if it exists.
         Returns true if it could be loaded, else False.
 
         :param m: Model to be loaded.
