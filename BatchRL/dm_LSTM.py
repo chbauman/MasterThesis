@@ -75,6 +75,7 @@ class RNNDynamicModel(BaseDynamicsModel):
                  n_iter_max: int = 10000,
                  name: str = 'baseRNN',
                  *,
+                 inp_inds: np.ndarray = None,
                  pred_inds: np.ndarray = None,
                  weight_vec: Optional[np.ndarray] = None,
                  gru: bool = False,
@@ -90,6 +91,7 @@ class RNNDynamicModel(BaseDynamicsModel):
         :param data: Dataset
         :param hidden_sizes: Layer size list or tuple
         :param pred_inds: Prediction indices
+        :param inp_inds: Input indices
         :param n_iter_max: Number of iterations
         :param lr: Learning rate
         :param gru: Whether to use GRU units
@@ -104,6 +106,13 @@ class RNNDynamicModel(BaseDynamicsModel):
                            pred_inds, n_iter_max, lr, gru,
                            residual_learning, weight_vec, input_noise_std)
         super(RNNDynamicModel, self).__init__(data, name, pred_inds)
+
+        # Input indices
+        if inp_inds is None:
+            all_inds = np.arange(data.d)
+            inp_inds = data.from_prepared(all_inds)
+        self.inp_inds = inp_inds
+        self.prepared_inp_inds = sorted(data.to_prepared(inp_inds))
 
         # Store data
         self.train_seq_len = self.data.seq_len - 1

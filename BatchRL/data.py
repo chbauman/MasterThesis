@@ -1811,12 +1811,15 @@ class Dataset:
         :param inds: Original indices.
         :return: New indices.
         """
+        # TODO: check for duplicates
         new_inds = np.copy(inds)
+        n_tot = self.d
         for c_ind in sorted(self.c_inds, reverse=True):
             new_inds[new_inds > c_ind] -= 1
+            new_inds[new_inds == c_ind] = n_tot - 1
         return new_inds
 
-    def from_prepared(self, inds: Arr) -> Arr:
+    def from_prepared(self, inds: Arr, n_tot: int = None) -> Arr:
         """
         Converts the indices from the prepared data
         to the indices corresponding to the original dataset.
@@ -1827,6 +1830,8 @@ class Dataset:
         :return: Original indices.
         """
         new_inds = np.copy(inds)
+        n_c = self.n_c
+        n_tot = self.d
         for c_ind in sorted(self.c_inds):
             new_inds[new_inds >= c_ind] += 1
         return new_inds
