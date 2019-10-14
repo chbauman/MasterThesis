@@ -47,6 +47,8 @@ class BaseDynamicsModel(ABC):
     data: Dataset
     out_inds: np.ndarray
     p_out_inds: np.ndarray
+    in_indices: np.ndarray
+    p_in_indices: np.ndarray
     name: str
     plot_path: str
     n_pred_full: int
