@@ -3,6 +3,7 @@ import numpy as np
 from FQI import NFQI
 from LSPI import LSPI
 from batchDDPG import bDDPG
+from dm_Composite import CompositeModel
 
 from dm_LSTM import RNNDynamicModel
 from dm_GPR import GPR_DM
@@ -73,14 +74,14 @@ def main():
     ds.standardize()
     ds.split_train_test(7)
     ds.get_prepared_data()
+    print(ds)
 
-    # time_model_ds = SCTimeModel(ds, 5)
+    time_model_ds = SCTimeModel(ds, 5)
     # time_model_ds.analyze()
 
     # Construct weight vector
     w = np.ones((ds.d - ds.n_c,), dtype=np.float32)
     w[ds.p_inds_prep[0]] = 2.0  # Weight temperature twice
-
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(100, 100),
                           n_iter_max=50,
@@ -88,16 +89,13 @@ def main():
                           lr=0.001,
                           residual_learning=True,
                           weight_vec=None,
+                          out_inds=np.array([4], dtype=np.int32)
                           )
-    # mod = RNNDynamicModel(ds,
-    #                       hidden_sizes=(100, 100),
-    #                       n_iter_max=50,
-    #                       input_noise_std=0.001,
-    #                       lr=0.001,
-    #                       residual_learning=True,
-    #                       weight_vec=None,
-    #                       out_inds=np.array([4], dtype=np.int32)
-    #                       )
+
+    comp_model = CompositeModel(ds, [mod, time_model_ds], new_name="CompositeTimeRNN")
+    comp_model.fit()
+    comp_model.analyze()
+
     # mod.fit()
     # mod.model_disturbance()
     # mod.disturb()

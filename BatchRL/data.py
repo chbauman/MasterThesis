@@ -1528,6 +1528,8 @@ class Dataset:
             output_data = data_to_use[:, 1:, other_inds]
 
         # Store more parameters, assuming only one control variable
+        # TODO: General case for multiple control variables!!
+        # Or remove this part, i.e. do it in initializer
         self.c_inds_prep = self.d - 1
         self.p_inds_prep = np.copy(self.p_inds)
         for c_ind in self.c_inds:

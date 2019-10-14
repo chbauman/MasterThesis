@@ -8,13 +8,14 @@ class CompositeModel(BaseDynamicsModel):
     The composite model, containing multiple other models.
     """
 
-    def __init__(self, dataset: Dataset, model_list: List[BaseDynamicsModel] = None):
+    def __init__(self, dataset: Dataset, model_list: List[BaseDynamicsModel] = None, new_name: str = None):
         """
         Initialize the Composite model. All individual model
         need to be initialized with the same dataset!
 
         :param dataset: Dataset.
         :param model_list: A list of dynamics models defined for the same dataset.
+        :param new_name: The name to give to this model, default produces very long names.
         """
         # Compute name and check datasets
         name = dataset.name + "Composite"
@@ -22,6 +23,8 @@ class CompositeModel(BaseDynamicsModel):
             name += "_" + m.name
             if m.data != dataset:
                 raise ValueError("Model {} needs to model the same dataset as the Composite model.".format(m.name))
+        if new_name is not None:
+            name = new_name
 
         # Collect indices
         all_out_inds = np.concatenate([m.out_inds for m in model_list])
@@ -52,13 +55,18 @@ class CompositeModel(BaseDynamicsModel):
         """
 
         in_sh = in_data.shape
-        out_dat = np.empty((in_sh[0], in_sh[1], self.n_pred))
+        out_dat = np.empty((in_sh[0], self.n_pred), dtype=in_data.dtype)
 
+        # Predict with all the models
+        curr_ind = 0
         for m in self.model_list:
+            n_pred_m = m.n_pred
             in_inds = m.p_in_indices
             out_inds = m.p_out_inds
-            preds = m.predict(in_data[:, :, in_inds])
-            out_dat[:, :, out_inds] = preds
+            pred_in_dat = in_data[:, :, in_inds]
+            preds = m.predict(pred_in_dat)
+            out_dat[:, curr_ind: (curr_ind + n_pred_m)] = preds
+            curr_ind += n_pred_m
 
         return out_dat
 
