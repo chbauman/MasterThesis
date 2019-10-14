@@ -80,6 +80,19 @@ def b_cast(l_or_el, n: int) -> List:
 #######################################################################################################
 # Numerical stuff
 
+def has_duplicates(arr: np.ndarray) -> bool:
+    """
+    Returns true if arr contains duplicate values else
+    False.
+
+    :param arr: Array to check for duplicates.
+    :return: Whether it has duplicates.
+    """
+    m = np.zeros_like(arr, dtype=bool)
+    m[np.unique(arr, return_index=True)[1]] = True
+    return np.sum(~m) > 0
+
+
 def arr_eq(arr1: Arr, arr2: Arr) -> bool:
     """
     Tests if two arrays have all equal elements.
@@ -408,3 +421,26 @@ def floor_datetime_to_min(dt, mt: int) -> np.ndarray:
     dt -= np.timedelta64(secs, 's')
     dt -= np.timedelta64(minutes, 'm')
     return dt
+
+
+#######################################################################################################
+# Tests
+
+def test_numpy_functions() -> None:
+    """
+    Tests some of the numpy functions.
+    Raises errors if the tests are not passed.
+
+    :return: None
+    """
+
+    ind_arr = np.array([1, 2, 3, 4, 2, 3, 0], dtype=np.int32)
+    ind_arr_no_dup = np.array([1, 2, 4, 3, 0], dtype=np.int32)
+
+    if not has_duplicates(ind_arr) or has_duplicates(ind_arr_no_dup):
+        raise ValueError("Implementation of has_duplicates contains errors!")
+
+    if arr_eq(ind_arr, ind_arr_no_dup) or not arr_eq(ind_arr, ind_arr):
+        raise ValueError("Implementation of arr_eq(...) contains errors!")
+
+    print("Test passed :)")

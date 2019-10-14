@@ -15,6 +15,7 @@ from simple_battery_test import SimpleBatteryTest
 from cart_pole import CartPole
 from mount_car_cont import MountCarCont
 from pendulum import Pendulum
+from util import *
 
 from data import WeatherData, TestData, \
     analyze_data, get_UMAR_heating_data, get_data_test, \
@@ -58,6 +59,7 @@ def main():
     # pre_mod.analyze_6_days()
 
     # # Do tests
+    test_numpy_functions()
     # test_rest_client()
     # get_data_test()
     # test_align()
