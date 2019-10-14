@@ -68,18 +68,19 @@ def main():
     # compute_DFAB_energy_usage()
     # return
 
+    # Dataset
     name_ds = 'Model_Room43'
     ds = Dataset.loadDataset(name_ds)
     ds = ds.add_time()
     ds.standardize()
     ds.split_train_test(7)
     ds.get_prepared_data()
-    print(ds)
 
+    # Time variable prediction
     time_model_ds = SCTimeModel(ds, 5)
     # time_model_ds.analyze()
 
-    # Construct weight vector
+    # Room temperature model
     w = np.ones((ds.d - ds.n_c,), dtype=np.float32)
     w[ds.p_inds_prep[0]] = 2.0  # Weight temperature twice
     mod = RNNDynamicModel(ds,
@@ -92,7 +93,13 @@ def main():
                           out_inds=np.array([4], dtype=np.int32)
                           )
 
-    comp_model = CompositeModel(ds, [mod, time_model_ds], new_name="CompositeTimeRNN")
+    # Exogenous variable model
+    exo_inds = np.array([0, 1, 2], dtype=np.int32)
+    pre_mod = Periodic1DayModel(ds, exo_inds, alpha=0.1)
+    # pre_mod.analyze_6_days()
+
+    # Full model
+    comp_model = CompositeModel(ds, [mod, time_model_ds, pre_mod], new_name="CompositeTimeRNN")
     comp_model.fit()
     comp_model.analyze_6_days()
 

@@ -23,7 +23,7 @@ class Periodic1DayModel(BaseDynamicsModel):
         :param alpha: The decay parameter alpha.
         """
         name = "1DayPeriodic_Alpha" + str(alpha)
-        super(Periodic1DayModel, self).__init__(d, name, exo_inds)
+        super(Periodic1DayModel, self).__init__(d, name, exo_inds, exo_inds)
 
         # Save parameters
         self.data = d
@@ -81,11 +81,11 @@ class Periodic1DayModel(BaseDynamicsModel):
         self.tot_t += 1
 
         # Make prediction
+        in_data = in_data[:, :, self.p_in_indices]
         curr_in = in_data[:, -1, :]
-        curr_h = self.hist[:, self.pred_t, :]
+        curr_h = self.hist[:, self.pred_t, self.p_in_indices]
         curr_a = self.curr_alpha(self.tot_t)
         curr_out = curr_a * curr_in + (1.0 - curr_a) * curr_h
-        print(curr_a)
         return curr_out
 
     def disturb(self):

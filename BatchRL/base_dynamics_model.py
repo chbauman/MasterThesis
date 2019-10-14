@@ -469,9 +469,9 @@ class BaseDynamicsModel(ABC):
 
         # Plot for continuous predictions
         self.init_1day(dat_train_init)
-        self.one_week_pred_plot(copy_arr_list(dat_train_used), "Train_All")
+        self.one_week_pred_plot(copy_arr_list(dat_train_used), "6d_Train_All")
         self.init_1day(dat_val_init)
-        self.one_week_pred_plot(copy_arr_list(dat_val_used), "Validation_All")
+        self.one_week_pred_plot(copy_arr_list(dat_val_used), "6d_Validation_All")
 
     def get_residuals(self, data_str: str):
         """
