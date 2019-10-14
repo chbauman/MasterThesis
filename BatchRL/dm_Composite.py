@@ -5,8 +5,7 @@ from data import Dataset
 
 class CompositeModel(BaseDynamicsModel):
     """
-    The naive model that predicts the last
-    input seen.
+    The composite model, containing multiple other models.
     """
 
     def __init__(self, dataset: Dataset, model_list: List[BaseDynamicsModel] = None):
@@ -17,15 +16,19 @@ class CompositeModel(BaseDynamicsModel):
         :param dataset: Dataset.
         :param model_list: A list of dynamics models defined for the same dataset.
         """
-        # Compute indices and name
+        # Compute name and check datasets
         name = dataset.name + "Composite"
         for m in model_list:
             name += "_" + m.name
             if m.data != dataset:
                 raise ValueError("Model {} needs to model the same dataset as the Composite model.".format(m.name))
 
-        inds = np.array([], dtype=np.int32)
-        super(CompositeModel, self).__init__(dataset, name, inds)
+        # Collect indices
+        all_out_inds = np.concatenate([m.out_inds for m in model_list])
+        if has_duplicates(all_out_inds):
+            raise ValueError("Predicting one or more series multiple times.")
+
+        super(CompositeModel, self).__init__(dataset, name, all_out_inds, None)
 
         # Save parameters
         self.model_list = model_list
@@ -39,7 +42,6 @@ class CompositeModel(BaseDynamicsModel):
 
         for m in self.model_list:
             m.fit()
-        return
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """

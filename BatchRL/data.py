@@ -1806,13 +1806,14 @@ class Dataset:
         for k in range(self.d):
             self.standardize_col(k)
 
-    def check_inds(self, inds: np.ndarray, include_c: bool = True) -> None:
+    def check_inds(self, inds: np.ndarray, include_c: bool = True, unique: bool = True) -> None:
         """
         Checks if the in or out indices are in a valid range,
         otherwise raises an exception.
 
         :param inds: Indices to check.
         :param include_c: Whether they may include control indices.
+        :param unique: Whether to require unique elements only.
         :return: None
         """
         upper_ind = self.d
@@ -1820,6 +1821,8 @@ class Dataset:
             upper_ind -= self.n_c
         if not check_in_range(inds, 0, upper_ind):
             raise ValueError("Indices not in valid range!!")
+        if unique and has_duplicates(inds):
+            raise ValueError("Indices containing duplicates!!!")
 
     def to_prepared(self, inds: Arr) -> Arr:
         """

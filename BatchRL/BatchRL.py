@@ -106,7 +106,7 @@ def main():
     # mod_naive = ConstModel(ds)
     # mod_naive.analyze()
 
-    compute_DFAB_energy_usage()
+    # compute_DFAB_energy_usage()
 
     # Battery data
     bat_name = "Battery"
