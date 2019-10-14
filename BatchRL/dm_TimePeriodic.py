@@ -94,31 +94,3 @@ class Periodic1DayModel(BaseDynamicsModel):
         """
         raise NotImplementedError("Disturbance for naive model not implemented!")
 
-    def analyze_6_days(self) -> None:
-        """
-        Analyzes this model using the 7 day streaks.
-
-        :return: None
-        """
-        d = self.data
-        n = 60 * 24 // d.dt
-
-        # Prepare the data
-        # dat_test = d.get_prepared_data('test')
-        dat_train_in, dat_train_out = d.get_prepared_data('train_streak')
-        dat_val_in, dat_val_out = d.get_prepared_data('val_streak')
-        n_feat = dat_train_out.shape[-1]
-
-        # Extract first day
-        dat_train_init = dat_train_out[:n].reshape((1, -1, n_feat))
-        dat_val_init = dat_val_out[:n].reshape((1, -1, n_feat))
-
-        # Collect rest
-        dat_train_used = dat_train_in[n:], dat_train_out[n:]
-        dat_val_used = dat_val_in[n:], dat_val_out[n:]
-
-        # Plot for continuous predictions
-        self.init_1day(dat_train_init)
-        self.one_week_pred_plot(copy_arr_list(dat_train_used), "Train_All")
-        self.init_1day(dat_val_init)
-        self.one_week_pred_plot(copy_arr_list(dat_val_used), "Validation_All")

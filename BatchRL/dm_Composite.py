@@ -8,7 +8,9 @@ class CompositeModel(BaseDynamicsModel):
     The composite model, containing multiple other models.
     """
 
-    def __init__(self, dataset: Dataset, model_list: List[BaseDynamicsModel] = None, new_name: str = None):
+    model_list: List[BaseDynamicsModel]
+
+    def __init__(self, dataset: Dataset, model_list: List[BaseDynamicsModel], new_name: str = None):
         """
         Initialize the Composite model. All individual model
         need to be initialized with the same dataset!
@@ -33,8 +35,18 @@ class CompositeModel(BaseDynamicsModel):
 
         super(CompositeModel, self).__init__(dataset, name, all_out_inds, None)
 
-        # Save parameters
+        # Save models
         self.model_list = model_list
+
+    def init_1day(self, day_data: np.ndarray) -> None:
+        """
+        Calls the same function on all models in list.
+
+        :param day_data: The data for the initialization.
+        :return: None
+        """
+        for m in self.model_list:
+            m.init_1day(day_data)
 
     def fit(self) -> None:
         """
@@ -62,7 +74,6 @@ class CompositeModel(BaseDynamicsModel):
         for m in self.model_list:
             n_pred_m = m.n_pred
             in_inds = m.p_in_indices
-            out_inds = m.p_out_inds
             pred_in_dat = in_data[:, :, in_inds]
             preds = m.predict(pred_in_dat)
             out_dat[:, curr_ind: (curr_ind + n_pred_m)] = preds

@@ -94,7 +94,7 @@ def main():
 
     comp_model = CompositeModel(ds, [mod, time_model_ds], new_name="CompositeTimeRNN")
     comp_model.fit()
-    comp_model.analyze()
+    comp_model.analyze_6_days()
 
     # mod.fit()
     # mod.model_disturbance()

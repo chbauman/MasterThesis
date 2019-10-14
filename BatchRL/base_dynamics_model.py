@@ -114,6 +114,16 @@ class BaseDynamicsModel(ABC):
     def predict(self, in_data):
         pass
 
+    def init_1day(self, day_data: np.ndarray) -> None:
+        """
+        Initializer for models that need more previous data than seq_len
+        time steps.
+
+        :param day_data: The data of one day to initialize model.
+        :return: None
+        """
+        pass
+
     def get_fit_data(self, data_name: str = "train"):
         """
         Returns the required data for fitting the model
@@ -433,6 +443,35 @@ class BaseDynamicsModel(ABC):
         #                                 predict_ind=k)
         #         self.one_week_pred_plot(copy_arr_list(dat_train), ext + "Train",
         #                                 predict_ind=k)
+
+    def analyze_6_days(self) -> None:
+        """
+        Analyzes this model using the 7 day streaks.
+
+        :return: None
+        """
+        d = self.data
+        n = 60 * 24 // d.dt
+
+        # Prepare the data
+        # dat_test = d.get_prepared_data('test')
+        dat_train_in, dat_train_out = d.get_prepared_data('train_streak')
+        dat_val_in, dat_val_out = d.get_prepared_data('val_streak')
+        n_feat = dat_train_out.shape[-1]
+
+        # Extract first day
+        dat_train_init = dat_train_out[:n].reshape((1, -1, n_feat))
+        dat_val_init = dat_val_out[:n].reshape((1, -1, n_feat))
+
+        # Collect rest
+        dat_train_used = dat_train_in[n:], dat_train_out[n:]
+        dat_val_used = dat_val_in[n:], dat_val_out[n:]
+
+        # Plot for continuous predictions
+        self.init_1day(dat_train_init)
+        self.one_week_pred_plot(copy_arr_list(dat_train_used), "Train_All")
+        self.init_1day(dat_val_init)
+        self.one_week_pred_plot(copy_arr_list(dat_val_used), "Validation_All")
 
     def get_residuals(self, data_str: str):
         """
