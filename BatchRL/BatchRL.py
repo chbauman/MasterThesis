@@ -52,17 +52,16 @@ def main():
     # get_DFAB_heating_data()
     # generate_room_datasets()
 
-    w_dat = get_weather_data()
-    w_dat.split_train_test()
-    pre_mod = Periodic1DayModel(w_dat, None, alpha=0.1)
-    pre_mod.analyze_6_days()
-    return
+    # w_dat = get_weather_data()
+    # w_dat.split_train_test()
+    # pre_mod = Periodic1DayModel(w_dat, None, alpha=0.1)
+    # pre_mod.analyze_6_days()
 
     # # Do tests
     # test_rest_client()
     # get_data_test()
     # test_align()
-    test_dataset_artificially()
+    # test_dataset_artificially()
     # compute_DFAB_energy_usage()
     # return
 
@@ -73,16 +72,8 @@ def main():
     ds.split_train_test(7)
     ds.get_prepared_data()
 
-    time_data = generate_sin_cos_time_ds(ds)
-    time_data.split_train_test(7)
-    time_data.get_prepared_data()
-    time_model = SCTimeModel(time_data)
-    time_model.analyze()
-
-    print(ds)
-
-    time_model_ds = SCTimeModel(ds, 5)
-    time_model_ds.analyze()
+    # time_model_ds = SCTimeModel(ds, 5)
+    # time_model_ds.analyze()
 
     # Construct weight vector
     w = np.ones((ds.d - ds.n_c,), dtype=np.float32)
@@ -105,15 +96,15 @@ def main():
     #                       weight_vec=None,
     #                       out_inds=np.array([4], dtype=np.int32)
     #                       )
-    mod.fit()
-    mod.model_disturbance()
-    mod.disturb()
-    mod.analyze()
-    #
-    mod_naive = ConstModel(ds)
-    mod_naive.analyze()
+    # mod.fit()
+    # mod.model_disturbance()
+    # mod.disturb()
+    # mod.analyze()
+    # #
+    # mod_naive = ConstModel(ds)
+    # mod_naive.analyze()
 
-    # compute_DFAB_energy_usage()
+    compute_DFAB_energy_usage()
 
     # Battery data
     bat_name = "Battery"

@@ -32,7 +32,8 @@ class Periodic1DayModel(BaseDynamicsModel):
 
     def init_1day(self, day_data: np.ndarray) -> None:
         """
-        Sets the history and resets time.
+        Sets the history and resets time. Makes the history periodic
+        for predictions longer than one day.
 
         :param day_data: New history data to use.
         :return: None

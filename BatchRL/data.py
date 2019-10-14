@@ -1238,6 +1238,9 @@ def compute_DFAB_energy_usage(show_plots=True):
                             w_dat_not_nan[:, 4] < thresh)
     usable = np.logical_and(usable, w_dat_not_nan[:, 5] > 0.1)
     usable = np.logical_and(usable, w_dat_not_nan[:, 5] < 0.2)
+
+    usable = np.logical_and(usable, w_dat_not_nan[:, 2] < 0.9)
+    usable = np.logical_and(usable, w_dat_not_nan[:, 2] > 0.6)
     n_usable = np.sum(usable)
     first_n_del = n_usable // 3
 
@@ -1272,8 +1275,10 @@ def compute_DFAB_energy_usage(show_plots=True):
     x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], non_neg=True, offset=True)
     print("Non Negative Flow per valve with offset", x)
 
-    stack_compare_plot(A[usable][first_n_del:], [21 * b[usable][first_n_del:], 21 * fitted], title="Valve model")
+    # stack_compare_plot(A[usable][first_n_del:], [21 * b[usable][first_n_del:], 21 * fitted], title="Valve model")
+    stack_compare_plot(A[usable][first_n_del:], [21 * 0.0286 * np.ones(b[usable][first_n_del:].shape), 21 * fitted], title="Valve model")
     # PO
+    x[:] = 0.0286
     if show_plots:
         tot_room_valves_plot_path = os.path.join(dfab_rooms_plot_path, "DFAB_All_Valves")
         m_all = {'description': 'All valves summed',
