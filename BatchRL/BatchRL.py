@@ -85,7 +85,7 @@ def main():
     w[ds.p_inds_prep[0]] = 2.0  # Weight temperature twice
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(100, 100),
-                          n_iter_max=50,
+                          n_iter_max=100,
                           input_noise_std=0.001,
                           lr=0.001,
                           residual_learning=True,
@@ -99,7 +99,7 @@ def main():
     # pre_mod.analyze_6_days()
 
     # Full model
-    comp_model = CompositeModel(ds, [mod, time_model_ds, pre_mod], new_name="CompositeTimeRNN")
+    comp_model = CompositeModel(ds, [mod, time_model_ds, pre_mod], new_name="CompositeTimeRNNExo")
     comp_model.fit()
     comp_model.analyze_6_days()
 

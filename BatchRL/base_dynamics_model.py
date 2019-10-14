@@ -133,8 +133,8 @@ class BaseDynamicsModel(ABC):
         :return: The input and output data for supervised learning.
         """
         in_dat, out_dat = self.data.get_prepared_data(data_name)
-        res_in_dat = in_dat[self.p_in_indices]
-        res_out_dat_out = out_dat[self.p_out_inds]
+        res_in_dat = in_dat[:, :, self.p_in_indices]
+        res_out_dat_out = out_dat[:, self.p_out_inds]
         return res_in_dat, res_out_dat_out
 
     def get_path(self, name: str) -> str:
