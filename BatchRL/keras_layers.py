@@ -142,17 +142,38 @@ class ConstrainedNoise(Layer):
 
     consts: Sequence[SeriesConstraint]  #: Sequence of constraints
     input_noise_std: float  #: The std of the Gaussian noise to add
+    is_input: bool
 
     def __init__(self, input_noise_std: float = 0,
                  consts: Sequence[SeriesConstraint] = None,
                  is_input: bool = True,
                  **kwargs):
+        """
+        Adds Gaussian noise with mean 0 and std as specified
+        and then applies the constraints.
+
+        Args:
+            input_noise_std: The level of noise.
+            consts: The list of constraints.
+            is_input: Whether it is applied to an input tensor (3D)
+                or an output tensor (2D).
+            **kwargs: Layer kwargs.
+        """
         super(ConstrainedNoise, self).__init__(**kwargs)
         self.input_noise_std = input_noise_std
         self.consts = consts
         self.is_input = is_input
 
     def call(self, x):
+        """
+        Builds the layer given the input x.
+
+        Args:
+            x: The input to the layer.
+
+        Returns:
+            The output of the layer satisfying the constraints.
+        """
 
         x_modify = x
 
@@ -188,6 +209,15 @@ class ConstrainedNoise(Layer):
         return x_modify
 
     def compute_output_shape(self, input_shape):
+        """
+        The shape stays the same.
+
+        Args:
+            input_shape: The shape of the input.
+
+        Returns:
+            Same as input.
+        """
         return input_shape
 
 
