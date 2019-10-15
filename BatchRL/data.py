@@ -1,4 +1,5 @@
 import os
+from collections import namedtuple
 from typing import Dict
 
 import scipy
@@ -1401,6 +1402,10 @@ def analyze_room_energy_consumption():
 #######################################################################################################
 # Dataset definition and generation
 
+#: Constraint class, `type_str` needs to be in [None, 'interval', 'exact']
+SeriesConstraint = namedtuple("SeriesConstraint", ['type_str', 'extra_dat'])
+
+#: Empty index set
 no_inds = np.array([], dtype=np.int32)
 
 

@@ -8,12 +8,10 @@ from keras.optimizers import Adam
 
 from base_dynamics_model import BaseDynamicsModel
 from data import Dataset
-from keras_layers import SeqInput
+from keras_layers import SeqInput, ConstrainedNoise
 from util import *
 from visualize import plot_train_history
-
-#: Constraint class, `type_str` needs to be in [None, 'interval', 'exact']
-SeriesConstraint = namedtuple("SeriesConstraint", ['type_str', 'extra_dat'])
+from data import SeriesConstraint
 
 
 def weighted_loss(y_true, y_pred, weights):
@@ -137,7 +135,7 @@ class RNNDynamicModel(BaseDynamicsModel):
 
         # Add noise layer
         if self.input_noise_std is not None:
-            model.add(GaussianNoise(self.input_noise_std))
+            model.add(ConstrainedNoise(self.input_noise_std))
 
         # Add layers
         rnn = GRU if self.gru else LSTM

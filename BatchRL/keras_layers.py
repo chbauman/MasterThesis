@@ -4,8 +4,8 @@ import tensorflow as tf
 from keras_util import *
 from keras import backend as K
 from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, \
-    Lambda, Subtract, BatchNormalization, Layer, Concatenate, GaussianNoise
-from dm_LSTM import SeriesConstraint
+    Lambda, Subtract, BatchNormalization, Layer, Concatenate, GaussianNoise, namedtuple
+from data import SeriesConstraint
 
 
 class ReduceMax2D(Layer):
