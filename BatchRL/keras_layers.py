@@ -218,7 +218,7 @@ def test_layers() -> None:
     if not np.allclose(layer_out, seq_input):
         raise AssertionError("SeqInput layer not implemented correctly!!")
 
-    # Test Constrain Layer
+    # Test Constraint Layer
     consts = [
         SeriesConstraint('interval', [0.0, 1.0]),
         SeriesConstraint(),
@@ -235,5 +235,6 @@ def test_layers() -> None:
         raise AssertionError("Exact constraint in Constrained Noise layer not implemented correctly!!")
     if not check_in_range(layer_out[:, :, 0], 0.0, 1.00001):
         raise AssertionError("Interval constraint in Constrained Noise layer not implemented correctly!!")
-    print("Keras Layers test passed :)")
+
+    print("Keras Layers tests passed :)")
 

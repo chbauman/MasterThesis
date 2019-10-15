@@ -62,12 +62,12 @@ def main():
 
     # # Do tests
     test_layers()
-    return
     test_numpy_functions()
     # test_rest_client()
     # get_data_test()
     # test_align()
-    # test_dataset_artificially()
+    test_dataset_artificially()
+    return
     # compute_DFAB_energy_usage()
     # return
 

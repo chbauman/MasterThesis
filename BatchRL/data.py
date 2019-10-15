@@ -1402,9 +1402,40 @@ def analyze_room_energy_consumption():
 #######################################################################################################
 # Dataset definition and generation
 
-#: Constraint class, `type_str` needs to be in [None, 'interval', 'exact']
-SeriesConstraint = namedtuple("SeriesConstraint", ['type_str', 'extra_dat'])
-SeriesConstraint.__new__.__defaults__ = (None, None)
+# #: Constraint class, `type_str` needs to be in [None, 'interval', 'exact']
+# SeriesConstraint = namedtuple("SeriesConstraint", ['type_str', 'extra_dat'])
+# SeriesConstraint.__new__.__defaults__ = (None, None)
+
+class SeriesConstraint:
+    """
+    The class defining constraints for single data series.
+    """
+
+    #: The allowed constraint type
+    allowed_names: List = [None, 'interval', 'exact']
+    name: str = None  #: The type of the current instance
+    extra_dat: np.ndarray = None  #: The interval for the `interval` type.
+
+    def __init__(self, name: str = None, extra_dat: Union[List, np.ndarray] = None):
+
+        if name not in self.allowed_names:
+            raise ValueError("Invalid name!")
+        self.name = name
+        if name != 'interval':
+            if extra_dat is not None:
+                raise ValueError("What the fuck are you passing?? : {}".format(extra_dat))
+        else:
+            self.extra_dat = np.array(extra_dat)
+
+    def __getitem__(self, item):
+
+        if item < 0 or item >= 2:
+            raise IndexError("Index out of range!!")
+        if item == 0:
+            return self.name
+        if item == 1:
+            return self.extra_dat
+
 
 #: Empty index set
 no_inds = np.array([], dtype=np.int32)
@@ -1890,6 +1921,29 @@ class Dataset:
                  scale_back=False,
                  save_name=s_name + name_ext)
 
+    def transform_c_list(self, const_list: List[SeriesConstraint], remove_mean: bool = True) -> None:
+        """
+        Transforms the interval constraints in the sequence of constraints
+        to fit the standardized / non-standardized series.
+
+        Args:
+            const_list: The list with the constraints for the series.
+            remove_mean: Whether to remove or to add the given mean and std.
+
+        Returns:
+            None
+        """
+
+        if self.d != len(const_list):
+            raise ValueError("Constraint List not compatible with dataset.")
+        for ct, sc in enumerate(const_list):
+            if sc[0] == 'interval':
+                if self.is_scaled[ct]:
+                    mas = self.scaling[ct]
+                    iv = sc[1]
+                    iv_trf = trf_mean_and_std(iv, mas, remove_mean)
+                    const_list[ct] = SeriesConstraint('interval', iv_trf)
+
 
 def generate_room_datasets() -> List[Dataset]:
     """
@@ -2183,12 +2237,13 @@ def test_dataset_artificially() -> None:
     Throws an exception if a test fails.
 
     :return: None
+    :raises AssertionError: If a test is not passed.
     """
 
-    dat = np.array([1, 2, 3, 7, 8,
+    dat = np.array([0, 2, 3, 7, 8,
                     1, 3, 4, 7, 9,
                     1, 4, 5, 7, 8,
-                    1, 5, 6, 7, 9], dtype=np.float32).reshape((4, -1))
+                    2, 5, 6, 7, 9], dtype=np.float32).reshape((4, -1))
     n_series = dat.shape[1]
     c_inds = np.array([1, 3])
     descs = np.array([str(i) for i in range(n_series)])
@@ -2218,6 +2273,23 @@ def test_dataset_artificially() -> None:
         if not arr_eq(sol, out):
             print("Test failed :(")
             raise AssertionError("Function: {} with input: {} not giving: {} but: {}!!!".format(fun, inp, sol, out))
+
+    # Test the constraints and the standardization
+    c_list = [
+        SeriesConstraint('interval', np.array([0.0, 1.0])),
+        SeriesConstraint(),
+        SeriesConstraint(),
+        SeriesConstraint(),
+        SeriesConstraint(),
+    ]
+
+    ds.standardize()
+    if not np.allclose(ds.scaling[0][0], 1.0):
+        raise AssertionError("Standardizing failed!")
+
+    ds.transform_c_list(c_list)
+    if not np.allclose(c_list[0].extra_dat, np.array(-1.0, 0.0)):
+        raise AssertionError("Interval transformation failed!")
 
     print("Test passed :)")
 

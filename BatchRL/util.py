@@ -209,6 +209,25 @@ def align_ts(ts_1: np.ndarray, ts_2: np.ndarray, t_init1, t_init2, dt):
     return out, t_init_out
 
 
+def trf_mean_and_std(ts: Arr, mean_and_std: Sequence, remove: bool = True) -> Arr:
+    """
+    Adds or removes mean and std from time series.
+
+    Args:
+        ts: The time series.
+        mean_and_std: Mean and standard deviance.
+        remove: Whether to remove or to add.
+
+    Returns:
+        New time series with mean and std removed or added.
+    """
+
+    if remove:
+        return rem_mean_and_std(ts, mean_and_std)
+    else:
+        return add_mean_and_std(ts, mean_and_std)
+
+
 def add_mean_and_std(ts: Arr, mean_and_std: Sequence) -> Arr:
     """
     Transforms the data back to having mean
