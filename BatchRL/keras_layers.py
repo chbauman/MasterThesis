@@ -127,9 +127,6 @@ class SeqInput(Layer):
     def __init__(self, **kwargs):
         super(SeqInput, self).__init__(**kwargs)
 
-    def build(self, input_shape):
-        pass
-
     def call(self, x):
         return x
 
@@ -146,39 +143,49 @@ class ConstrainedNoise(Layer):
     consts: Sequence[SeriesConstraint]  #: Sequence of constraints
     input_noise_std: float  #: The std of the Gaussian noise to add
 
-    def __init__(self, input_noise_std: float = 0, consts: Sequence[SeriesConstraint] = None, **kwargs):
+    def __init__(self, input_noise_std: float = 0,
+                 consts: Sequence[SeriesConstraint] = None,
+                 is_input: bool = True,
+                 **kwargs):
         super(ConstrainedNoise, self).__init__(**kwargs)
         self.input_noise_std = input_noise_std
         self.consts = consts
-
-    def build(self, input_shape):
-        pass
+        self.is_input = is_input
 
     def call(self, x):
-        if self.input_noise_std == 0:
-            return x
-        gn_layer = GaussianNoise(self.input_noise_std)
-        if self.consts is None:
-            return gn_layer(x)
-        else:
-            noise_x = gn_layer(x)
+
+        x_modify = x
+
+        # Add noise if std > 0
+        if self.input_noise_std > 0:
+            gn_layer = GaussianNoise(self.input_noise_std)
+            x_modify = gn_layer(x_modify)
+
+        # Enforce constraints
+        if self.consts is not None:
+            noise_x = x_modify
             n_feats = len(self.consts)
 
             # Split features
-            feature_tensors = [noise_x[:, :, ct:(ct + 1)] for ct in range(n_feats)]
+            if self.is_input:
+                feature_tensors = [noise_x[:, :, ct:(ct + 1)] for ct in range(n_feats)]
+            else:
+                feature_tensors = [noise_x[:, ct:(ct + 1)] for ct in range(n_feats)]
             for ct, c in enumerate(self.consts):
                 if c[0] is None:
                     continue
                 elif c[0] == 'interval':
                     iv = c[1]
                     feature_tensors[ct] = K.clip(feature_tensors[ct], iv[0], iv[1])
-                elif c[0] == 'exact':
+                elif c[0] == 'exact' and self.input_noise_std > 0:
                     feature_tensors[ct] = x[:, :, ct:(ct + 1)]
                 else:
                     raise ValueError("Constraint type {} not supported!!".format(c[0]))
 
             # Concatenate again
-            return K.concatenate(feature_tensors, axis=2)
+            x_modify = K.concatenate(feature_tensors, axis=-1)
+
+        return x_modify
 
     def compute_output_shape(self, input_shape):
         return input_shape

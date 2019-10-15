@@ -135,7 +135,7 @@ class RNNDynamicModel(BaseDynamicsModel):
 
         # Add noise layer
         if self.input_noise_std is not None:
-            model.add(ConstrainedNoise(self.input_noise_std))
+            model.add(ConstrainedNoise(self.input_noise_std, consts=self.constraint_list))
 
         # Add layers
         rnn = GRU if self.gru else LSTM
@@ -146,6 +146,8 @@ class RNNDynamicModel(BaseDynamicsModel):
 
         # Output layer
         # model.add(TimeDistributed(Dense(self.out_dim, activation=None)))
+        out_constraints = [self.constraint_list[i] for i in self.out_inds]
+        out_const_layer = ConstrainedNoise(0, consts=out_constraints, is_input=False)
         model.add(Dense(self.out_dim, activation=None))
         if self.res_learn:
             # Add last non-control input to output
@@ -154,7 +156,10 @@ class RNNDynamicModel(BaseDynamicsModel):
             slicer = Lambda(lambda x: x[:, -1, :self.out_dim])
             last_input = slicer(seq_input)
             final_out = Add()([m_out, last_input])
+            final_out = out_const_layer(final_out)
             model = Model(inputs=seq_input, outputs=final_out)
+        else:
+            model.add(out_const_layer)
 
         if self.weight_vec is not None:
             k_constants = K.constant(self.weight_vec)
