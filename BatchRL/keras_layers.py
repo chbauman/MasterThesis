@@ -125,12 +125,36 @@ class SeqInput(Layer):
     """
 
     def __init__(self, **kwargs):
+        """
+        Initializes the layer.
+
+        Args:
+            **kwargs: kwargs for super.
+        """
         super(SeqInput, self).__init__(**kwargs)
 
     def call(self, x):
+        """
+        Returns `x` unchanged.
+
+        Args:
+            x: Input tensor.
+
+        Returns:
+            `x` unchanged.
+        """
         return x
 
     def compute_output_shape(self, input_shape):
+        """
+        The shape stays the same.
+
+        Args:
+            input_shape: The shape of the input.
+
+        Returns:
+            Same as input.
+        """
         return input_shape
 
 
@@ -225,8 +249,10 @@ def test_layers() -> None:
     """
     Test the custom layers.
 
-    :return: None
-    :raises AssertionError: If a test fails.
+    Returns: None
+
+    Raises:
+        AssertionError: If a test fails.
     """
     seq_input = np.array([
         [[1, 2, 3, 4], [2, 3, 4, 5]],
