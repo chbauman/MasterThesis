@@ -86,11 +86,11 @@ def main():
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(100, 100),
                           n_iter_max=100,
-                          input_noise_std=0.001,
+                          input_noise_std=0.0001,
                           lr=0.001,
                           residual_learning=True,
                           weight_vec=None,
-                          out_inds=np.array([4], dtype=np.int32)
+                          out_inds=np.array([0, 1, 2, 4], dtype=np.int32)
                           )
 
     # Exogenous variable model
@@ -99,7 +99,7 @@ def main():
     # pre_mod.analyze_6_days()
 
     # Full model
-    comp_model = CompositeModel(ds, [mod, time_model_ds, pre_mod], new_name="CompositeTimeRNNExo")
+    comp_model = CompositeModel(ds, [mod, time_model_ds], new_name="CompositeTimeRNNFull")
     comp_model.fit()
     comp_model.analyze_6_days()
 

@@ -43,16 +43,16 @@ class BaseDynamicsModel(ABC):
     debug: bool = True
     model_path: str = "../Models/Dynamics/"
 
-    # Member variables
+    #: Dataset containing all the data
     data: Dataset
     out_inds: np.ndarray
     p_out_inds: np.ndarray
     in_indices: np.ndarray
     p_in_indices: np.ndarray
-    name: str
-    plot_path: str
+    name: str  #: Name of the model
+    plot_path: str  #: Path to the plot folder
     n_pred_full: int
-    n_pred: int
+    n_pred: int  #: Number of dimensions of the prediction
 
     def __init__(self, ds: Dataset, name: str,
                  out_indices: np.ndarray = None,
@@ -179,9 +179,12 @@ class BaseDynamicsModel(ABC):
         self.res_std = np.std(residuals, axis=0)
         self.modeled_disturbance = True
 
-    def disturb(self):
+    def disturb(self) -> np.ndarray:
         """
         Returns a sample of noise of length n.
+
+        :return: Numpy array of disturbances.
+        :raises AttributeError: If the disturbance model was not fitted before.
         """
 
         # Check if disturbance model was fitted
@@ -217,6 +220,7 @@ class BaseDynamicsModel(ABC):
         :param return_all_predictions: Whether to return intermediate predictions.
         :param disturb_pred: Whether to apply a disturbance to the prediction.
         :return: The predictions.
+        :raises ValueError: If n < 0 or n too large.
         """
 
         in_data, out_data = copy_arr_list(prepared_data)
