@@ -4,7 +4,8 @@ import tensorflow as tf
 from keras_util import *
 from keras import backend as K
 from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, \
-    Lambda, Subtract, BatchNormalization, Layer, Concatenate
+    Lambda, Subtract, BatchNormalization, Layer, Concatenate, GaussianNoise
+from dm_LSTM import SeriesConstraint
 
 
 class ReduceMax2D(Layer):
@@ -118,7 +119,8 @@ class PrepInput(Layer):
 
 class SeqInput(Layer):
     """
-    Dummy Layer.
+    Dummy Layer, it lets you specify the input shape
+    when used as a first layer in a Sequential model.
     """
 
     def __init__(self, **kwargs):
@@ -129,6 +131,46 @@ class SeqInput(Layer):
 
     def call(self, x):
         return x
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
+
+
+class ConstrainedNoise(Layer):
+    """
+    Constrained noise layer.
+    """
+
+    consts: Sequence[SeriesConstraint]  #: Sequence of constraints
+    input_noise_std: float  #: The std of the Gaussian noise to add
+
+    def __init__(self, input_noise_std: float = 0, consts: Sequence[SeriesConstraint] = None, **kwargs):
+        super(ConstrainedNoise, self).__init__(**kwargs)
+        self.input_noise_std = input_noise_std
+        self.consts = consts
+
+    def build(self, input_shape):
+        pass
+
+    def call(self, x):
+        if self.input_noise_std == 0:
+            return x
+        gn_layer = GaussianNoise(self.input_noise_std)
+        if self.consts is None:
+            return gn_layer(x)
+        else:
+            noise_x = gn_layer(x)
+            for ct, c in enumerate(self.consts):
+                if c[0] is None:
+                    continue
+                elif c[0] == 'interval':
+                    iv = c[1]
+                    noise_x[:, :, ct] = K.clip(noise_x[:, :, ct], iv[0], iv[1])
+                elif c[0] == 'exact':
+                    noise_x[:, :, ct] = x[:, :, ct]
+                else:
+                    raise ValueError("Constraint type {} not supported!!".format(c[0]))
+            return noise_x
 
     def compute_output_shape(self, input_shape):
         return input_shape

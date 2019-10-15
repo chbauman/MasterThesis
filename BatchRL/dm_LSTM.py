@@ -1,18 +1,19 @@
-import keras
-
-from keras import backend as K
-from keras.models import Sequential, Model
-from keras.layers import GRU, LSTM, TimeDistributed, Dense, GaussianNoise, Input, Add, Lambda
-from keras.optimizers import Adam
-from keras.utils import plot_model
+from collections import namedtuple
 from functools import partial
 
+from keras import backend as K
+from keras.layers import GRU, LSTM, Dense, GaussianNoise, Input, Add, Lambda
+from keras.models import Sequential, Model
+from keras.optimizers import Adam
+
 from base_dynamics_model import BaseDynamicsModel
-from keras_layers import SeqInput
-from time_series import AR_Model
-from visualize import plot_train_history
 from data import Dataset
+from keras_layers import SeqInput
 from util import *
+from visualize import plot_train_history
+
+#: Constraint class, `type_str` needs to be in [None, 'interval', 'exact']
+SeriesConstraint = namedtuple("SeriesConstraint", ['type_str', 'extra_dat'])
 
 
 def weighted_loss(y_true, y_pred, weights):
@@ -76,7 +77,8 @@ class RNNDynamicModel(BaseDynamicsModel):
                  input_noise_std: Optional[float] = None,
                  use_ar_process: bool = False,
                  residual_learning: bool = False,
-                 lr: float = 0.001):
+                 lr: float = 0.001,
+                 constraint_list: Sequence[SeriesConstraint] = None):
 
         """
         Constructor, defines all the network parameters.
@@ -92,7 +94,9 @@ class RNNDynamicModel(BaseDynamicsModel):
         :param residual_learning: Whether to use residual learning
         :param weight_vec: Weight vector for weighted loss
         :param input_noise_std: Standard deviation of input noise.
+        :param constraint_list: The constraints on the data series.
         """
+
         name = constr_name(name, hidden_sizes,
                            n_iter_max, lr, gru,
                            residual_learning, weight_vec, input_noise_std)
@@ -104,6 +108,7 @@ class RNNDynamicModel(BaseDynamicsModel):
         self.out_dim = self.n_pred
 
         # Store parameters
+        self.constraint_list = constraint_list
         self.hidden_sizes = np.array(hidden_sizes, dtype=np.int32)
         self.n_iter_max = n_iter_max
         self.gru = gru
