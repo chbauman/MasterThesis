@@ -1417,6 +1417,16 @@ class SeriesConstraint:
     extra_dat: np.ndarray = None  #: The interval for the `interval` type.
 
     def __init__(self, name: str = None, extra_dat: Union[List, np.ndarray] = None):
+        """
+        Initialization of the constraint.
+
+        Args:
+            name: The string specifying the type of constraint.
+            extra_dat: The interval if `name` is 'interval'.
+        Raises:
+            ValueError: If the string is not one of the defined ones or `extra_dat` is not
+                None when `name` is not 'interval'.
+        """
 
         if name not in self.allowed_names:
             raise ValueError("Invalid name!")
@@ -1428,6 +1438,19 @@ class SeriesConstraint:
             self.extra_dat = np.array(extra_dat)
 
     def __getitem__(self, item):
+        """
+        For backwards compatibility since first a namedtuple
+        was used.
+
+        Args:
+            item: Either 0 or 1
+
+        Returns:
+            The name (0) or the extra data (1).
+
+        Raises:
+            IndexError: If item is not 0 or 1.
+        """
 
         if item < 0 or item >= 2:
             raise IndexError("Index out of range!!")
@@ -2241,7 +2264,7 @@ def test_dataset_artificially() -> None:
     """
 
     dat = np.array([0, 2, 3, 7, 8,
-                    1, 3, 4, 7, 9,
+                    1, 3, 4, 8, 9,
                     1, 4, 5, 7, 8,
                     2, 5, 6, 7, 9], dtype=np.float32).reshape((4, -1))
     n_series = dat.shape[1]
@@ -2288,8 +2311,8 @@ def test_dataset_artificially() -> None:
         raise AssertionError("Standardizing failed!")
 
     ds.transform_c_list(c_list)
-    if not np.allclose(c_list[0].extra_dat, np.array(-1.0, 0.0)):
+    if not np.allclose(c_list[0].extra_dat[1],  0.0):
         raise AssertionError("Interval transformation failed!")
 
-    print("Test passed :)")
+    print("Dataset test passed :)")
 
