@@ -161,17 +161,23 @@ class ConstrainedNoise(Layer):
             return gn_layer(x)
         else:
             noise_x = gn_layer(x)
+            n_feats = len(self.consts)
+
+            # Split features
+            feature_tensors = [noise_x[:, :, ct:(ct + 1)] for ct in range(n_feats)]
             for ct, c in enumerate(self.consts):
                 if c[0] is None:
                     continue
                 elif c[0] == 'interval':
                     iv = c[1]
-                    noise_x = noise_x[:, :, ct].assign(K.clip(noise_x[:, :, ct], iv[0], iv[1]))
+                    feature_tensors[ct] = K.clip(feature_tensors[ct], iv[0], iv[1])
                 elif c[0] == 'exact':
-                    noise_x[:, :, ct] = x[:, :, ct]
+                    feature_tensors[ct] = x[:, :, ct:(ct + 1)]
                 else:
                     raise ValueError("Constraint type {} not supported!!".format(c[0]))
-            return noise_x
+
+            # Concatenate again
+            return K.concatenate(feature_tensors, axis=2)
 
     def compute_output_shape(self, input_shape):
         return input_shape
@@ -219,15 +225,15 @@ def test_layers() -> None:
         SeriesConstraint('exact'),
         SeriesConstraint('exact'),
             ]
-    noise_level = 1.0
+    noise_level = 5.0
     const_layer = ConstrainedNoise(noise_level, consts)
     model.add(const_layer)
     out = model.output
     k_fun = K.function([inp, K.learning_phase()], [out])
-    layer_out = k_fun([seq_input, 1.0])
-    print(layer_out)
-    if not np.allclose(layer_out, seq_input):
-        raise AssertionError("SeqInput layer not implemented correctly!!")
-
+    layer_out = k_fun([seq_input, 1.0])[0]
+    if not np.allclose(layer_out[:, :, 2:], seq_input[:, :, 2:]):
+        raise AssertionError("Exact constraint in Constrained Noise layer not implemented correctly!!")
+    if not check_in_range(layer_out[:, :, 0], 0.0, 1.00001):
+        raise AssertionError("Interval constraint in Constrained Noise layer not implemented correctly!!")
     print("Keras Layers test passed :)")
 

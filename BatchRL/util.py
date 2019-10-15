@@ -349,13 +349,18 @@ def add_dt_and_tinit(m: Sequence, dt_mins, dt_init):
 #######################################################################################################
 # Os functions
 
-def create_dir(dirname: str):
+def create_dir(dirname: str) -> None:
     """
     Creates directory if it doesn't exist already.
+
+    Args:
+        dirname: The directory to create.
+
+    Returns:
+        None
     """
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    return
 
 
 #######################################################################################################
