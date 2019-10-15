@@ -1,12 +1,10 @@
-import numpy as np
 import tensorflow as tf
-
-from util import *
-from keras_util import *
 from keras import backend as K
-from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, \
-    Lambda, Subtract, BatchNormalization, Layer, Concatenate, GaussianNoise, namedtuple
+from keras.layers import Layer, GaussianNoise
+
 from data import SeriesConstraint
+from keras_util import *
+from util import *
 
 
 class ReduceMax2D(Layer):
@@ -303,4 +301,3 @@ def test_layers() -> None:
     if not np.allclose(layer_out_test[:, :, 1:], seq_input[:, :, 1:]):
         raise AssertionError("Noise layer during testing still active!!")
     print("Keras Layers tests passed :)")
-
