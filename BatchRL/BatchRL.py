@@ -62,13 +62,11 @@ def main():
 
     # # Do tests
     test_layers()
-    test_numpy_functions()
+    # test_numpy_functions()
     # test_rest_client()
     # get_data_test()
     # test_align()
-    test_dataset_artificially()
-    return
-    # compute_DFAB_energy_usage()
+    # test_dataset_artificially()
     # return
 
     # Dataset
@@ -87,14 +85,15 @@ def main():
     w = np.ones((ds.d - ds.n_c,), dtype=np.float32)
     w[ds.p_inds_prep[0]] = 2.0  # Weight temperature twice
     rnn_consts = [
+        SeriesConstraint('interval', [-15.0, 40.0]),
+        SeriesConstraint('interval', [0.0, 1300.0]),
+        SeriesConstraint('interval', [-10.0, 100.0]),
         SeriesConstraint('interval', [0.0, 1.0]),
-        SeriesConstraint(),
-        SeriesConstraint(),
-        SeriesConstraint(),
-        SeriesConstraint(),
+        SeriesConstraint('interval', [0.0, 40.0]),
         SeriesConstraint('exact'),
         SeriesConstraint('exact'),
                   ]
+    ds.transform_c_list(rnn_consts)
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(100, 100),
                           n_iter_max=200,

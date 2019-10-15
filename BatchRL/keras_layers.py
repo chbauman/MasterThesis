@@ -140,6 +140,7 @@ class SeqInput(Layer):
 class ConstrainedNoise(Layer):
     """
     Constrained noise layer.
+    Note that the clipping will be active during testing.
     """
 
     consts: Sequence[SeriesConstraint]  #: Sequence of constraints
@@ -235,6 +236,8 @@ def test_layers() -> None:
         raise AssertionError("Exact constraint in Constrained Noise layer not implemented correctly!!")
     if not check_in_range(layer_out[:, :, 0], 0.0, 1.00001):
         raise AssertionError("Interval constraint in Constrained Noise layer not implemented correctly!!")
-
+    layer_out_test = k_fun([seq_input, 0.0])[0]
+    if not np.allclose(layer_out_test[:, :, 1:], seq_input[:, :, 1:]):
+        raise AssertionError("Noise layer during testing still active!!")
     print("Keras Layers tests passed :)")
 
