@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
+from util import *
 from keras_util import *
 from keras import backend as K
 from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, \
@@ -165,7 +166,7 @@ class ConstrainedNoise(Layer):
                     continue
                 elif c[0] == 'interval':
                     iv = c[1]
-                    noise_x[:, :, ct] = K.clip(noise_x[:, :, ct], iv[0], iv[1])
+                    noise_x = noise_x[:, :, ct].assign(K.clip(noise_x[:, :, ct], iv[0], iv[1]))
                 elif c[0] == 'exact':
                     noise_x[:, :, ct] = x[:, :, ct]
                 else:
@@ -174,3 +175,59 @@ class ConstrainedNoise(Layer):
 
     def compute_output_shape(self, input_shape):
         return input_shape
+
+
+def test_layers() -> None:
+    """
+    Test the custom layers.
+
+    :return: None
+    :raises AssertionError: If a test fails.
+    """
+    seq_input = np.array([
+        [[1, 2, 3, 4], [2, 3, 4, 5]],
+        [[5, 5, 5, 5], [3, 3, 3, 3]],
+    ])
+    output = np.array([
+        [2, 3],
+        [3, 3],
+    ])
+
+    in_shape = seq_input.shape
+    out_shape = output.shape
+    batch_size, seq_len, n_in_feat = in_shape
+    n_out_feat = out_shape[1]
+
+    # Initialize model
+    model = Sequential()
+
+    # Test SeqInput
+    inp_layer = SeqInput(input_shape=(seq_len, n_in_feat))
+    model.add(inp_layer)
+    inp = model.input
+
+    out = model.output
+    k_fun = K.function([inp, K.learning_phase()], [out])
+    layer_out = k_fun([seq_input, 1.0])
+    if not np.allclose(layer_out, seq_input):
+        raise AssertionError("SeqInput layer not implemented correctly!!")
+
+    # Test Constrain Layer
+    consts = [
+        SeriesConstraint('interval', [0.0, 1.0]),
+        SeriesConstraint(),
+        SeriesConstraint('exact'),
+        SeriesConstraint('exact'),
+            ]
+    noise_level = 1.0
+    const_layer = ConstrainedNoise(noise_level, consts)
+    model.add(const_layer)
+    out = model.output
+    k_fun = K.function([inp, K.learning_phase()], [out])
+    layer_out = k_fun([seq_input, 1.0])
+    print(layer_out)
+    if not np.allclose(layer_out, seq_input):
+        raise AssertionError("SeqInput layer not implemented correctly!!")
+
+    print("Keras Layers test passed :)")
+

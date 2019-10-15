@@ -11,6 +11,7 @@ from dm_Const import ConstModel
 from battery_model import BatteryModel
 from dm_Time import SCTimeModel
 from dm_TimePeriodic import Periodic1DayModel
+from keras_layers import test_layers
 from simple_battery_test import SimpleBatteryTest
 # Environments for debugging
 from cart_pole import CartPole
@@ -24,7 +25,7 @@ from data import WeatherData, TestData, \
     get_DFAB_heating_data, \
     compute_DFAB_energy_usage, get_weather_data, generate_room_datasets, \
     analyze_room_energy_consumption, Dataset, test_align, test_dataset_artificially, no_inds, \
-    generate_sin_cos_time_ds, test_rest_client
+    generate_sin_cos_time_ds, test_rest_client, SeriesConstraint
 
 
 def simple_battery_FQI():
@@ -60,6 +61,8 @@ def main():
     # pre_mod.analyze_6_days()
 
     # # Do tests
+    test_layers()
+    return
     test_numpy_functions()
     # test_rest_client()
     # get_data_test()
@@ -83,14 +86,24 @@ def main():
     # Room temperature model
     w = np.ones((ds.d - ds.n_c,), dtype=np.float32)
     w[ds.p_inds_prep[0]] = 2.0  # Weight temperature twice
+    rnn_consts = [
+        SeriesConstraint('interval', [0.0, 1.0]),
+        SeriesConstraint(),
+        SeriesConstraint(),
+        SeriesConstraint(),
+        SeriesConstraint(),
+        SeriesConstraint('exact'),
+        SeriesConstraint('exact'),
+                  ]
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(100, 100),
-                          n_iter_max=100,
+                          n_iter_max=200,
                           input_noise_std=0.0001,
                           lr=0.001,
                           residual_learning=True,
                           weight_vec=None,
-                          out_inds=np.array([0, 1, 2, 4], dtype=np.int32)
+                          out_inds=np.array([0, 1, 2, 4], dtype=np.int32),
+                          constraint_list=rnn_consts
                           )
 
     # Exogenous variable model

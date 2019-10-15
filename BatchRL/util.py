@@ -96,6 +96,7 @@ def has_duplicates(arr: np.ndarray) -> bool:
 def arr_eq(arr1: Arr, arr2: Arr) -> bool:
     """
     Tests if two arrays have all equal elements.
+    DEPRECATED: Use np.array_equal
 
     :param arr1: First array.
     :param arr2: Array to compare with.
@@ -432,15 +433,16 @@ def test_numpy_functions() -> None:
     Raises errors if the tests are not passed.
 
     :return: None
+    :raises AssertionError: If a test fails.
     """
 
     ind_arr = np.array([1, 2, 3, 4, 2, 3, 0], dtype=np.int32)
     ind_arr_no_dup = np.array([1, 2, 4, 3, 0], dtype=np.int32)
 
     if not has_duplicates(ind_arr) or has_duplicates(ind_arr_no_dup):
-        raise ValueError("Implementation of has_duplicates contains errors!")
+        raise AssertionError("Implementation of has_duplicates contains errors!")
 
     if arr_eq(ind_arr, ind_arr_no_dup) or not arr_eq(ind_arr, ind_arr):
-        raise ValueError("Implementation of arr_eq(...) contains errors!")
+        raise AssertionError("Implementation of arr_eq(...) contains errors!")
 
     print("Test passed :)")

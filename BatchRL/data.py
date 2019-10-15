@@ -1404,6 +1404,7 @@ def analyze_room_energy_consumption():
 
 #: Constraint class, `type_str` needs to be in [None, 'interval', 'exact']
 SeriesConstraint = namedtuple("SeriesConstraint", ['type_str', 'extra_dat'])
+SeriesConstraint.__new__.__defaults__ = (None, None)
 
 #: Empty index set
 no_inds = np.array([], dtype=np.int32)
