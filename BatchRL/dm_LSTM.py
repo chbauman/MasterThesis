@@ -124,7 +124,6 @@ class RNNDynamicModel(HyperOptimizableModel):
                  weight_vec: Optional[np.ndarray] = None,
                  gru: bool = False,
                  input_noise_std: Optional[float] = None,
-                 use_ar_process: bool = False,
                  residual_learning: bool = True,
                  lr: float = 0.001,
                  constraint_list: Sequence[SeriesConstraint] = None):
@@ -161,7 +160,6 @@ class RNNDynamicModel(HyperOptimizableModel):
         self.n_iter_max = n_iter_max
         self.gru = gru
         self.input_noise_std = input_noise_std
-        self.use_AR = use_ar_process
         self.weight_vec = weight_vec
         self.res_learn = residual_learning
         self.lr = lr

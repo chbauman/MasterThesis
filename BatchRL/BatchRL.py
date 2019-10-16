@@ -80,10 +80,12 @@ def main():
     # Time variable prediction
     time_model_ds = SCTimeModel(ds, 6)
     time_model_ds.analyze()
+    # time_model_ds.analyze_disturbed()
 
     # Constant model for water temperatures
-    mod_naive = ConstModel(ds, pred_inds=np.array([0, 1], dtype=np.int32))
+    mod_naive = ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
     mod_naive.analyze()
+    mod_naive.analyze_disturbed()
 
     # Room temperature model
     rnn_consts = [
@@ -126,11 +128,11 @@ def main():
                                 lr=0.001,
                                 residual_learning=True,
                                 weight_vec=None,
-                                out_inds=np.array([2, 3, 5], dtype=np.int32),
+                                out_inds=np.array([0, 1, 5], dtype=np.int32),
                                 constraint_list=rnn_consts
                                 )
 
-    m_to_use = mod_no_wt
+    m_to_use = mod_no_consts
     m_to_use.fit()
     m_to_use.analyze()
     m_to_use.analyze_disturbed("blah", 10)

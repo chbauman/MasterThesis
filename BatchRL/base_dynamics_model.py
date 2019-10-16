@@ -178,7 +178,9 @@ class BaseDynamicsModel(ABC):
 
         if self.use_AR:
             # Fit an AR process for each output dimension
-            self.dist_mod = [AR_Model(lag=self.N_LAG).fit(residuals[:, k]) for k in range(self.n_pred)]
+            self.dist_mod = [AR_Model(lag=self.N_LAG) for k in range(self.n_pred)]
+            for k, d in enumerate(self.dist_mod):
+                d.fit(residuals[:, k])
             self.init_pred = np.zeros((self.N_LAG, self.n_pred))
             self.disturb()
 

@@ -86,9 +86,3 @@ class SCTimeModel(BaseDynamicsModel):
         out_dat[:, 0] = s_new
         out_dat[:, 1] = c_new
         return out_dat
-
-    def disturb(self):
-        """
-        Returns a sample of noise of length n.
-        """
-        raise NotImplementedError("Disturbance for naive model not implemented!")

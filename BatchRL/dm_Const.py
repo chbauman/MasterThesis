@@ -39,11 +39,3 @@ class ConstModel(BaseDynamicsModel):
         :return: Same as input
         """
         return in_data[:, -1, self.out_inds]
-
-    def disturb(self) -> np.ndarray:
-        """
-        Returns a sample of noise of length n.
-
-        :return: Zero vector.
-        """
-        return np.zeros((self.n_pred,), dtype=np.float32)
