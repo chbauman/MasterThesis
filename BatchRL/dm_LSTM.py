@@ -1,15 +1,14 @@
 from functools import partial
+from typing import Dict
 
+from hyperopt import hp
+from hyperopt.pyll import scope as ho_scope
 from keras import backend as K
 from keras.layers import GRU, LSTM, Dense, Input, Add, Lambda
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 
-from hyperopt import fmin, hp, tpe, Trials, space_eval, STATUS_OK
-from hyperopt.pyll import scope as ho_scope
-from hyperopt.pyll.stochastic import sample as ho_sample
-
-from base_dynamics_model import BaseDynamicsModel
+from base_hyperopt import HyperOptimizableModel
 from data import Dataset
 from data import SeriesConstraint
 from keras_layers import SeqInput, ConstrainedNoise
@@ -60,10 +59,54 @@ def constr_name(name: str,
     return name + ep_s + arch + lrs + n_str + gru_str + res_str + w_str
 
 
-class RNNDynamicModel(BaseDynamicsModel):
+class RNNDynamicModel(HyperOptimizableModel):
     """
     Simple LSTM used for training a dynamics model.
     """
+
+    def get_space(self) -> Dict:
+        """
+        Defines the hyper parameter space.
+
+        Returns:
+            Dict specifying the hyper parameter space.
+        """
+        hp_space = {
+            'n_layers': ho_scope.int(hp.quniform('n_layers', low=1, high=5, q=1)),
+            'n_neurons': ho_scope.int(hp.quniform('n_neurons', low=20, high=500, q=20)),
+            'n_iter_max': ho_scope.int(hp.quniform('n_iter_max', low=20, high=500, q=20)),
+            'gru': hp.choice('gru', [True, False]),
+            'lr': hp.loguniform('lr', low=-6 * np.log(10), high=2 * np.log(10)),
+            'input_noise_std': hp.loguniform('input_noise_std', low=-9 * np.log(10), high=-2 * np.log(10)),
+        }
+        return hp_space
+
+    def conf_model(self, hp_sample: Dict) -> 'HyperOptimizableModel':
+        """
+        Returns a model of the same type with the same output and input
+        indices and the same constraints, but other hyper parameters.
+
+        Args:
+            hp_sample: Sample of hyper parameters to initialize the model with.
+
+        Returns:
+            New model.
+        """
+        n_layers = hp_sample['n_layers']
+        n_units = hp_sample['n_neurons']
+        hidden_sizes = [n_units for _ in range(n_layers)]
+        init_kwargs = {key: hp_sample[key] for key in hp_sample if key not in ['n_layers', 'n_neurons']}
+        new_mod = RNNDynamicModel(self.data,
+                                  in_inds=self.in_indices,
+                                  out_inds=self.out_inds,
+                                  constraint_list=self.constraint_list,
+                                  hidden_sizes=hidden_sizes,
+                                  **init_kwargs)
+        return new_mod
+
+    def hyper_objective(self) -> float:
+
+        return 0.0
 
     def __init__(self,
                  data: Dataset,
@@ -222,19 +265,3 @@ class RNNDynamicModel(BaseDynamicsModel):
         predictions = self.m.predict(input_data)
         predictions = predictions.reshape((n, -1))
         return predictions
-
-    @classmethod
-    def optimize_hyp(cls):
-
-        print("Optimizing hyper parameters!")
-
-        hp_space = {
-            'n_layers': ho_scope.int(hp.quniform('n_layers', low=1, high=5, q=1)),
-            'n_neurons': ho_scope.int(hp.quniform('n_neurons', low=20, high=500, q=20)),
-            'n_iter': ho_scope.int(hp.quniform('n_iter', low=20, high=500, q=20)),
-            'gru': hp.choice('gru', [True, False]),
-            'lr': hp.loguniform('lr', low=-6*np.log(10), high=2*np.log(10)),
-            'input_noise_std': hp.loguniform('input_noise_std', low=-9*np.log(10), high=-2*np.log(10)),
-        }
-
-        pass

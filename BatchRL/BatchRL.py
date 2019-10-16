@@ -104,6 +104,7 @@ def main():
                           out_inds=np.array([0, 1, 2, 4], dtype=np.int32),
                           constraint_list=rnn_consts
                           )
+    mod.optimize(2)
 
     # Exogenous variable model
     exo_inds = np.array([0, 1, 2], dtype=np.int32)
