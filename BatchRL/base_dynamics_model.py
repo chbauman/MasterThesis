@@ -5,17 +5,21 @@ from util import *
 from visualize import plot_dataset, model_plot_path
 
 
-def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray) -> Dataset:
+def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray, n_offs: int = 0) -> Dataset:
     """
     Creates a dataset with truth time series tr and parameters
     from the original dataset d. Intended for plotting after
     the first column of the data is set to the predicted series.
 
-    :param s: Shape of data of dataset.
-    :param tr: Ground truth time series.
-    :param d: Original dataset.
-    :param orig_p_ind: Prediction index relative to the original dataset.
-    :return: Dataset with ground truth series as second series.
+    Args:
+        n_offs: Number of time steps to offset t_init in the new dataset.
+        s: Shape of data of dataset.
+        tr: Ground truth time series.
+        d: Original dataset.
+        orig_p_ind: Prediction index relative to the original dataset.
+
+    Returns:
+        Dataset with ground truth series as second series.
     """
     plot_data = np.empty((s[0], 2), dtype=np.float32)
     if tr is not None:
@@ -23,9 +27,15 @@ def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray)
     scaling = np.array(repl(d.scaling[orig_p_ind], 2))
     scaling = scaling.reshape((-1, 2))
     is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype=np.bool)
+    if n_offs > 0:
+        dt_dt = n_mins_to_np_dt(d.dt)
+        np_dt = str_to_np_dt(d.t_init)
+        actual_dt = np_dt_to_str(np_dt + n_offs * dt_dt)
+    else:
+        actual_dt = d.t_init
     analysis_ds = Dataset(plot_data,
                           d.dt,
-                          d.t_init,
+                          actual_dt,
                           scaling,
                           is_scd,
                           ['Prediction', 'Ground Truth'])
@@ -293,7 +303,7 @@ class BaseDynamicsModel(ABC):
         return os.path.join(dir_name, name)
 
     def const_nts_plot(self, predict_data, n_list: List[int], ext: str = '', *,
-                       predict_ind: int = None) -> None:
+                       predict_ind: int = None, n_ts_off: int = 0) -> None:
         """
         Creates a plot that shows the performance of the
         trained model when predicting a fixed number of timesteps into
@@ -302,11 +312,15 @@ class BaseDynamicsModel(ABC):
         predicted are predicted simultaneously and each predicted
         series is plotted individually.
 
-        :param predict_data: The string specifying the data to predict.
-        :param n_list: The list of number of timesteps into the future.
-        :param ext: Extension for the name of the plot.
-        :param predict_ind: Which series to predict.
-        :return: None
+        Args:
+            predict_data: The string specifying the data to predict.
+            n_list: The list of number of timesteps into the future.
+            ext: Extension for the name of the plot.
+            predict_ind: Which series to predict.
+            n_ts_off: Number of time steps to shift the initial time for correct plotting.
+
+        Returns:
+            None
         """
         d = self.data
         in_d, out_d = predict_data
@@ -319,7 +333,7 @@ class BaseDynamicsModel(ABC):
             p_ind = d.to_prepared(np.array([orig_p_ind]))[0]
             tr = np.copy(out_d[:, p_ind])
 
-            analysis_ds = get_plot_ds(s, tr, d, orig_p_ind)
+            analysis_ds = get_plot_ds(s, tr, d, orig_p_ind, n_ts_off)
             desc = d.descriptions[orig_p_ind]
             for n_ts in n_list:
                 curr_ds = Dataset.copy(analysis_ds)
@@ -347,7 +361,7 @@ class BaseDynamicsModel(ABC):
                     k_orig = self.out_inds[k]
                     k_prep = self.data.to_prepared(np.array([k_orig]))[0]
                     k_orig_arr = np.array([k_orig])
-                    new_ds = get_plot_ds(s, np.copy(out_d[:, k_prep]), d, k_orig_arr)
+                    new_ds = get_plot_ds(s, np.copy(out_d[:, k_prep]), d, k_orig_arr, n_ts_off)
                     desc = d.descriptions[k_orig]
                     new_ds.data[(n_ts - 1):, 0] = np.copy(full_pred[:, k])
                     new_ds.data[:(n_ts - 1), 0] = np.nan
@@ -358,7 +372,8 @@ class BaseDynamicsModel(ABC):
                                  save_name=self.get_plt_path(time_str + 'Ahead_' + str(k) + "_" + ext))
 
     def one_week_pred_plot(self, dat_test, ext: str = None,
-                           predict_ind: int = None):
+                           predict_ind: int = None,
+                           n_ts_off: int = 0) -> None:
         """
         Makes a plot by continuously predicting with
         the fitted model and comparing it to the ground
@@ -366,10 +381,13 @@ class BaseDynamicsModel(ABC):
         predicted are predicted simultaneously and each predicted
         series is plotted individually.
 
-        :param predict_ind: The index of the series to be plotted. If None, all series are plotted.
-        :param dat_test: Data to use for making plots.
-        :param ext: String extension for the filename.
-        :return: None
+        Args:
+            predict_ind: The index of the series to be plotted. If None, all series are plotted.
+            dat_test: Data to use for making plots.
+            ext: String extension for the filename.
+            n_ts_off: Time step offset of data used.
+
+        Returns: None
         """
 
         ext = "_" if ext is None else "_" + ext
@@ -389,7 +407,7 @@ class BaseDynamicsModel(ABC):
                 k_orig = self.out_inds[k]
                 k_prep = self.data.to_prepared(np.array([k_orig]))[0]
                 k_orig_arr = np.array([k_orig])
-                new_ds = get_plot_ds(s, np.copy(out_dat_test[:, k_prep]), d, k_orig_arr)
+                new_ds = get_plot_ds(s, np.copy(out_dat_test[:, k_prep]), d, k_orig_arr, n_ts_off)
                 new_ds.data[:, 0] = np.copy(full_pred[0, :, k])
                 desc = d.descriptions[k_orig]
                 title_and_ylab = ['1 Week Continuous Predictions', desc]
@@ -400,7 +418,7 @@ class BaseDynamicsModel(ABC):
         else:
             # Construct dataset and plot
             orig_p_ind = self.out_inds[predict_ind]
-            analysis_ds = get_plot_ds(s, None, d, np.array([orig_p_ind]))
+            analysis_ds = get_plot_ds(s, None, d, np.array([orig_p_ind]), n_ts_off)
             orig_p_ind = self.out_inds[predict_ind]
             p_ind = d.to_prepared(np.array([orig_p_ind]))[0]
             desc = d.descriptions[orig_p_ind]
@@ -428,16 +446,16 @@ class BaseDynamicsModel(ABC):
         dat_train = d.get_prepared_data('train_streak')
         dat_val = d.get_prepared_data('val_streak')
 
-        # n_train = dat_train[2]
-        # n_val = dat_val[2]
+        n_train = dat_train[2]
+        n_val = dat_val[2]
         dat_train = [dat_train[0], dat_train[1]]
         dat_val = [dat_val[0], dat_val[1]]
 
         # Plot for fixed number of time-steps
         val_copy = copy_arr_list(dat_val)
         train_copy = copy_arr_list(dat_train)
-        self.const_nts_plot(val_copy, [1, 4, 20], ext='Validation_All')
-        self.const_nts_plot(train_copy, [1, 4, 20], ext='Train_All')
+        self.const_nts_plot(val_copy, [1, 4, 20], ext='Validation_All', n_ts_off=n_train)
+        self.const_nts_plot(train_copy, [1, 4, 20], ext='Train_All', n_ts_off=n_val)
 
         # Plot for continuous predictions
         self.one_week_pred_plot(copy_arr_list(dat_val), "Validation_All")

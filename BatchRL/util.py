@@ -393,7 +393,7 @@ def create_dir(dirname: str) -> None:
 #######################################################################################################
 # Datetime conversions
 
-def npdatetime_to_datetime(np_dt) -> datetime:
+def npdatetime_to_datetime(np_dt: np.datetime64) -> datetime:
     """
     Convert from numpy datetime to datetime.
     """
@@ -402,7 +402,7 @@ def npdatetime_to_datetime(np_dt) -> datetime:
     return dt
 
 
-def datetime_to_npdatetime(dt: datetime):
+def datetime_to_npdatetime(dt: datetime) -> np.datetime64:
     """
     Convert from datetime to numpy datetime.
     """
@@ -421,6 +421,35 @@ def string_to_dt(s: str) -> datetime:
     Convert string to datetime.
     """
     return datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
+
+
+def str_to_np_dt(s: str) -> np.datetime64:
+    """
+    Convert string to numpy datetime64.
+
+    Args:
+        s: Date string.
+
+    Returns:
+        np.datetime64
+    """
+    dt = string_to_dt(s)
+    return datetime_to_npdatetime(dt)
+
+
+def np_dt_to_str(np_dt: np.datetime64) -> str:
+    """
+    Converts a single datetime64 to a string.
+
+    Args:
+        np_dt: np.datetime64
+
+    Returns:
+        String
+    """
+
+    dt = npdatetime_to_datetime(np_dt)
+    return dt_to_string(dt)
 
 
 def mins_to_str(mins: int) -> str:
@@ -454,6 +483,10 @@ def floor_datetime_to_min(dt, mt: int) -> np.ndarray:
     dt -= np.timedelta64(secs, 's')
     dt -= np.timedelta64(minutes, 'm')
     return dt
+
+
+def n_mins_to_np_dt(mins: int) -> np.timedelta64:
+    return np.timedelta64(mins, 'm')
 
 
 #######################################################################################################

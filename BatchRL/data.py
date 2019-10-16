@@ -1278,7 +1278,8 @@ def compute_DFAB_energy_usage(show_plots=True):
     print("Non Negative Flow per valve with offset", x)
 
     # stack_compare_plot(A[usable][first_n_del:], [21 * b[usable][first_n_del:], 21 * fitted], title="Valve model")
-    stack_compare_plot(A[usable][first_n_del:], [21 * 0.0286 * np.ones(b[usable][first_n_del:].shape), 21 * fitted], title="Valve model")
+    stack_compare_plot(A[usable][first_n_del:], [21 * 0.0286 * np.ones(b[usable][first_n_del:].shape), 21 * fitted],
+                       title="Valve model")
     # PO
     x[:] = 0.0286
     if show_plots:
@@ -1466,7 +1467,12 @@ class Dataset:
     This class contains all infos about a given dataset.
     """
 
-    def __init__(self, all_data, dt, t_init, scaling, is_scaled, descs, c_inds=no_inds, p_inds=no_inds, name: str = ""):
+    def __init__(self, all_data: np.ndarray, dt: int, t_init, scaling: np.ndarray,
+                 is_scaled: np.ndarray,
+                 descs: Union[np.ndarray, List],
+                 c_inds: np.ndarray = no_inds,
+                 p_inds: np.ndarray = no_inds,
+                 name: str = ""):
         """
         Base constructor.
         """
@@ -2332,8 +2338,7 @@ def test_dataset_artificially() -> None:
         raise AssertionError("Standardizing failed!")
 
     ds.transform_c_list(c_list)
-    if not np.allclose(c_list[0].extra_dat[1],  0.0):
+    if not np.allclose(c_list[0].extra_dat[1], 0.0):
         raise AssertionError("Interval transformation failed!")
 
     print("Dataset test passed :)")
-

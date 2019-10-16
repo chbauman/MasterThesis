@@ -79,7 +79,8 @@ def main():
 
     # Time variable prediction
     time_model_ds = SCTimeModel(ds, 5)
-    # time_model_ds.analyze()
+    time_model_ds.analyze()
+    return
 
     # Room temperature model
     w = np.ones((ds.d - ds.n_c,), dtype=np.float32)
