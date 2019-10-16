@@ -425,8 +425,13 @@ class BaseDynamicsModel(ABC):
 
         # Prepare the data
         # dat_test = d.get_prepared_data('test')
-        dat_train, _ = d.get_prepared_data('train_streak')
-        dat_val, _ = d.get_prepared_data('val_streak')
+        dat_train = d.get_prepared_data('train_streak')
+        dat_val = d.get_prepared_data('val_streak')
+
+        # n_train = dat_train[2]
+        # n_val = dat_val[2]
+        dat_train = [dat_train[0], dat_train[1]]
+        dat_val = [dat_val[0], dat_val[1]]
 
         # Plot for fixed number of time-steps
         val_copy = copy_arr_list(dat_val)
