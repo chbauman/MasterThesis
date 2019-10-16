@@ -24,7 +24,7 @@ def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
     plot_data = np.empty((s[0], 2), dtype=np.float32)
     if tr is not None:
         plot_data[:, 1] = tr
-    scaling, is_scd = d.get_scaling_mul(orig_p_ind, 2)
+    scaling, is_scd = d.get_scaling_mul(orig_p_ind[0], 2)
     actual_dt = d.t_init if n_offs == 0 else d.get_shifted_t_init(n_offs)
     analysis_ds = Dataset(plot_data,
                           d.dt,
@@ -518,8 +518,8 @@ class BaseDynamicsModel(ABC):
 
         # Get the data
         d = self.data
-        dat_train = d.get_prepared_data('val_streak')
-        in_dat_test, out_dat_test, n_ts_off = dat_train
+        dat_val = d.get_prepared_data('val_streak')
+        in_dat_test, out_dat_test, n_ts_off = dat_val
 
         # Predict without noise
         s = in_dat_test.shape
@@ -537,6 +537,22 @@ class BaseDynamicsModel(ABC):
                                                      disturb_pred=True)
         mean_noise_preds = np.mean(all_noise_preds, axis=0)
         std_noise_preds = np.std(all_noise_preds, axis=0)
+
+        # Build dataset
+        plot_data = np.empty((s_pred[0], 5), dtype=np.float32)
+        scaling, is_scd = d.get_scaling_mul(0, 5)
+        actual_dt = d.get_shifted_t_init(n_ts_off)
+        analysis_ds = Dataset(plot_data,
+                              d.dt,
+                              actual_dt,
+                              scaling,
+                              is_scd,
+                              ['Prediction',
+                               'Ground Truth',
+                               'Mean Noisy Prediction',
+                               'Noisy Prediction +2 STD.',
+                               'Noisy Prediction -2 STD.',
+                               ])
         return
 
         ext = "_" if ext is None else "_" + ext
@@ -545,6 +561,8 @@ class BaseDynamicsModel(ABC):
             k_orig = self.out_inds[k]
             k_prep = self.data.to_prepared(np.array([k_orig]))[0]
             k_orig_arr = np.array([k_orig])
+            scaling, is_scd = d.get_scaling_mul(k_orig, 5)
+
             new_ds = get_plot_ds(s, np.copy(out_dat_test[:, k_prep]), d, k_orig_arr, n_ts_off)
             new_ds.data[:, 0] = np.copy(full_pred[0, :, k])
             desc = d.descriptions[k_orig]
