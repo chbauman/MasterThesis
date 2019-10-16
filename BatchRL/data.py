@@ -1556,7 +1556,7 @@ class Dataset:
         _, self.train_streak, self.train_streak_start = \
             extract_streak(np.copy(self.orig_train), s_len, self.seq_len - 1)
         _, self.val_streak, val_str_start = extract_streak(np.copy(self.orig_val), s_len, self.seq_len - 1)
-        self.val_streak_start = self.train_start + val_str_start
+        self.val_streak_start = self.val_start + val_str_start
 
         # Cut into sequences and save to self.
         self.test_data = cut_data_into_sequences(np.copy(self.orig_test), self.seq_len, interleave=True)
@@ -2012,8 +2012,8 @@ def generate_room_datasets() -> List[Dataset]:
 
     # Heating water temperature
     dfab_heat_water_temp_ds = dfab_dataset_list[n_rooms]
-    inlet_water_ds = dfab_heat_water_temp_ds[0]
-    inlet_water_and_weather = w_dataset + inlet_water_ds
+    heat_water_ds = dfab_heat_water_temp_ds[0:2]
+    inlet_water_and_weather = w_dataset + heat_water_ds
 
     out_ds_list = []
 
@@ -2048,8 +2048,7 @@ def generate_room_datasets() -> List[Dataset]:
 
         # Put all together
         full_ds = (inlet_water_and_weather + valves_avg_ds) + room_temp_ds
-        full_ds.c_inds = np.array([3], dtype=np.int32)
-        full_ds.p_inds = np.array([4], dtype=np.int32)
+        full_ds.c_inds = np.array([4], dtype=np.int32)
 
         # Add blinds
         if len(room_ds) == 5:

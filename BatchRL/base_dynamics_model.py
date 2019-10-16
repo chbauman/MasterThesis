@@ -454,12 +454,12 @@ class BaseDynamicsModel(ABC):
         # Plot for fixed number of time-steps
         val_copy = copy_arr_list(dat_val)
         train_copy = copy_arr_list(dat_train)
-        self.const_nts_plot(val_copy, [1, 4, 20], ext='Validation_All', n_ts_off=n_train)
-        self.const_nts_plot(train_copy, [1, 4, 20], ext='Train_All', n_ts_off=n_val)
+        self.const_nts_plot(val_copy, [1, 4, 20], ext='Validation_All', n_ts_off=n_val)
+        self.const_nts_plot(train_copy, [1, 4, 20], ext='Train_All', n_ts_off=n_train)
 
         # Plot for continuous predictions
-        self.one_week_pred_plot(copy_arr_list(dat_val), "Validation_All")
-        self.one_week_pred_plot(copy_arr_list(dat_train), "Train_All")
+        self.one_week_pred_plot(copy_arr_list(dat_val), "Validation_All", n_ts_off=n_val)
+        self.one_week_pred_plot(copy_arr_list(dat_train), "Train_All", n_ts_off=n_train)
 
         # Make more predictions
         # n_pred = len(self.out_inds)

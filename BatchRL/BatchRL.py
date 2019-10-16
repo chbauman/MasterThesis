@@ -53,7 +53,7 @@ def simple_battery_FQI():
 
 def main():
     # get_DFAB_heating_data()
-    # generate_room_datasets()
+    generate_room_datasets()
 
     # w_dat = get_weather_data()
     # w_dat.split_train_test()
@@ -80,14 +80,12 @@ def main():
     # Time variable prediction
     time_model_ds = SCTimeModel(ds, 5)
     time_model_ds.analyze()
-    return
 
     # Room temperature model
-    w = np.ones((ds.d - ds.n_c,), dtype=np.float32)
-    w[ds.p_inds_prep[0]] = 2.0  # Weight temperature twice
     rnn_consts = [
         SeriesConstraint('interval', [-15.0, 40.0]),
         SeriesConstraint('interval', [0.0, 1300.0]),
+        SeriesConstraint('interval', [-10.0, 100.0]),
         SeriesConstraint('interval', [-10.0, 100.0]),
         SeriesConstraint('interval', [0.0, 1.0]),
         SeriesConstraint('interval', [0.0, 40.0]),
@@ -102,15 +100,17 @@ def main():
                           lr=0.001,
                           residual_learning=True,
                           weight_vec=None,
-                          out_inds=np.array([0, 1, 2, 4], dtype=np.int32),
+                          out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
                           constraint_list=rnn_consts
                           )
-    mod.optimize(2)
+    mod.fit()
+    mod.analyze()
+    # mod.optimize(2)
 
     # Exogenous variable model
     exo_inds = np.array([0, 1, 2], dtype=np.int32)
     pre_mod = Periodic1DayModel(ds, exo_inds, alpha=0.1)
-    # pre_mod.analyze_6_days()
+    pre_mod.analyze_6_days()
 
     # Full model
     comp_model = CompositeModel(ds, [mod, time_model_ds], new_name="CompositeTimeRNNFull")
@@ -122,8 +122,8 @@ def main():
     # mod.disturb()
     # mod.analyze()
     # #
-    # mod_naive = ConstModel(ds)
-    # mod_naive.analyze()
+    mod_naive = ConstModel(ds)
+    mod_naive.analyze()
 
     # compute_DFAB_energy_usage()
 
