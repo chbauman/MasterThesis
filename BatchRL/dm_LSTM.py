@@ -51,8 +51,8 @@ def constr_name(name: str,
     """
     arch = '_L' + '-'.join(map(str, hidden_sizes))
     ep_s = '_E' + str(n_iter_max)
-    lrs = '_LR' + str(lr)
-    n_str = '' if input_noise_std is None else '_N' + str(input_noise_std)
+    lrs = '_LR' + "{:.4g}".format(lr)
+    n_str = '' if input_noise_std is None else '_N' + "{:.4g}".format(input_noise_std)
     gru_str = '' if not gru else '_GRU'
     res_str = '' if not res_learn else '_RESL'
     w_str = '' if weight_vec is None else '_W' + '-'.join(map(str, weight_vec))
@@ -73,8 +73,8 @@ class RNNDynamicModel(HyperOptimizableModel):
         """
         hp_space = {
             'n_layers': ho_scope.int(hp.quniform('n_layers', low=1, high=5, q=1)),
-            'n_neurons': ho_scope.int(hp.quniform('n_neurons', low=20, high=500, q=20)),
-            'n_iter_max': ho_scope.int(hp.quniform('n_iter_max', low=20, high=500, q=20)),
+            'n_neurons': ho_scope.int(hp.quniform('n_neurons', low=20, high=200, q=20)),
+            'n_iter_max': ho_scope.int(hp.quniform('n_iter_max', low=40, high=300, q=20)),
             'gru': hp.choice('gru', [True, False]),
             'lr': hp.loguniform('lr', low=-6 * np.log(10), high=2 * np.log(10)),
             'input_noise_std': hp.loguniform('input_noise_std', low=-9 * np.log(10), high=-2 * np.log(10)),
