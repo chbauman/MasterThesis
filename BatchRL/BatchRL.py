@@ -53,7 +53,7 @@ def simple_battery_FQI():
 
 def main():
     # get_DFAB_heating_data()
-    generate_room_datasets()
+    # generate_room_datasets()
 
     # w_dat = get_weather_data()
     # w_dat.split_train_test()
@@ -78,7 +78,7 @@ def main():
     ds.get_prepared_data()
 
     # Time variable prediction
-    time_model_ds = SCTimeModel(ds, 5)
+    time_model_ds = SCTimeModel(ds, 6)
     time_model_ds.analyze()
 
     # Room temperature model
@@ -105,6 +105,8 @@ def main():
                           )
     mod.fit()
     mod.analyze()
+    mod.analyze_disturbed("blah", 10)
+    return
     # mod.optimize(2)
 
     # Exogenous variable model

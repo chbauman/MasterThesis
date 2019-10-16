@@ -72,7 +72,7 @@ class RNNDynamicModel(HyperOptimizableModel):
             Dict specifying the hyper parameter space.
         """
         hp_space = {
-            'n_layers': ho_scope.int(hp.quniform('n_layers', low=1, high=5, q=1)),
+            'n_layers': ho_scope.int(hp.quniform('n_layers', low=1, high=4, q=1)),
             'n_neurons': ho_scope.int(hp.quniform('n_neurons', low=20, high=200, q=20)),
             'n_iter_max': ho_scope.int(hp.quniform('n_iter_max', low=40, high=300, q=20)),
             'gru': hp.choice('gru', [True, False]),
@@ -105,8 +105,13 @@ class RNNDynamicModel(HyperOptimizableModel):
         return new_mod
 
     def hyper_objective(self) -> float:
+        """
+        TODO: Implement this!
 
-        return 0.0
+        Returns:
+            Objective loss.
+        """
+        raise NotImplementedError("Not implemented!")
 
     def __init__(self,
                  data: Dataset,
@@ -149,7 +154,6 @@ class RNNDynamicModel(HyperOptimizableModel):
         # Store data
         self.train_seq_len = self.data.seq_len - 1
         self.n_feats = self.data.d
-        self.out_dim = self.n_pred
 
         # Store parameters
         self.constraint_list = constraint_list
@@ -191,15 +195,15 @@ class RNNDynamicModel(HyperOptimizableModel):
                           return_sequences=ret_seq))
 
         # Output layer
-        # model.add(TimeDistributed(Dense(self.out_dim, activation=None)))
+        # model.add(TimeDistributed(Dense(self.n_pred, activation=None)))
         out_constraints = [self.constraint_list[i] for i in self.out_inds]
         out_const_layer = ConstrainedNoise(0, consts=out_constraints, is_input=False)
-        model.add(Dense(self.out_dim, activation=None))
+        model.add(Dense(self.n_pred, activation=None))
         if self.res_learn:
             # Add last non-control input to output
             seq_input = Input(shape=(self.train_seq_len, self.n_feats))
             m_out = model(seq_input)
-            slicer = Lambda(lambda x: x[:, -1, :self.out_dim])
+            slicer = Lambda(lambda x: x[:, -1, :self.n_pred])
             last_input = slicer(seq_input)
             final_out = Add()([m_out, last_input])
             final_out = out_const_layer(final_out)

@@ -351,6 +351,20 @@ def make_periodic(arr_1d: np.ndarray, keep_start: bool = True, keep_min: bool = 
     return (arr_1d - min_val) * f + min_val
 
 
+def check_dim(a: np.ndarray, n: int) -> bool:
+    """
+    Check whether a is n-dimensional.
+
+    Args:
+        a: Numpy array.
+        n: Number of dimensions.
+
+    Returns:
+        True if a is n-dim else False
+    """
+    return len(a.shape) == n
+
+
 #######################################################################################################
 # NEST stuff
 

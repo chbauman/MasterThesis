@@ -49,9 +49,10 @@ class BaseDynamicsModel(ABC):
     """
 
     # Constants
-    N_LAG: int = 4
+    N_LAG: int = 6
     debug: bool = True
     model_path: str = "../Models/Dynamics/"
+    use_AR: bool = True
 
     #: Dataset containing all the data
     data: Dataset
@@ -63,6 +64,12 @@ class BaseDynamicsModel(ABC):
     plot_path: str  #: Path to the plot folder
     n_pred_full: int
     n_pred: int  #: Number of dimensions of the prediction
+
+    # Disturbance variables
+    modeled_disturbance: bool = False
+    res_std: Arr = None
+    dist_mod = None
+    init_pred: np.ndarray = None
 
     def __init__(self, ds: Dataset, name: str,
                  out_indices: np.ndarray = None,
@@ -108,13 +115,6 @@ class BaseDynamicsModel(ABC):
 
         self.plot_path = os.path.join(model_plot_path, self.name)
         create_dir(self.plot_path)
-
-        self.out_dim = None
-        self.use_AR = None
-        self.dist_mod = None
-        self.init_pred = None
-        self.res_std = None
-        self.modeled_disturbance = None
 
     @abstractmethod
     def fit(self):
@@ -173,7 +173,7 @@ class BaseDynamicsModel(ABC):
             return True
         return False
 
-    def model_disturbance(self, data_str: str = 'train_val'):
+    def model_disturbance(self, data_str: str = 'train'):
         """
         Models the uncertainties in the model
         by matching the distribution of the residuals.
@@ -181,13 +181,15 @@ class BaseDynamicsModel(ABC):
 
         # Compute residuals
         residuals = self.get_residuals(data_str)
+        self.modeled_disturbance = True
 
         if self.use_AR:
             # Fit an AR process for each output dimension
-            self.dist_mod = [AR_Model(lag=self.N_LAG).fit(residuals[:, k]) for k in range(self.out_dim)]
-            self.init_pred = np.zeros((self.N_LAG, self.out_dim))
+            self.dist_mod = [AR_Model(lag=self.N_LAG).fit(residuals[:, k]) for k in range(self.n_pred)]
+            self.init_pred = np.zeros((self.N_LAG, self.n_pred))
+            self.disturb()
+
         self.res_std = np.std(residuals, axis=0)
-        self.modeled_disturbance = True
 
     def disturb(self) -> np.ndarray:
         """
@@ -198,23 +200,19 @@ class BaseDynamicsModel(ABC):
         """
 
         # Check if disturbance model was fitted
-        try:
-            md = self.modeled_disturbance
-            if md is None:
-                raise AttributeError
-        except AttributeError as e:
-            raise AttributeError('Need to model the disturbance first: {}'.format(e))
+        if not self.modeled_disturbance:
+            raise AttributeError('Need to model the disturbance first!')
 
         # Compute next noise
         if self.use_AR:
-            next_noise = np.empty((self.out_dim,), dtype=np.float32)
-            for k in range(self.out_dim):
-                next_noise[k] = self.dist_mod.predict(self.init_pred[:, k])
+            next_noise = np.empty((self.n_pred,), dtype=np.float32)
+            for k in range(self.n_pred):
+                next_noise[k] = self.dist_mod[k].predict(self.init_pred[:, k])
 
             self.init_pred[:-1, :] = self.init_pred[1:, :]
             self.init_pred[-1, :] = next_noise
             return next_noise
-        return np.random.normal(0, 1, self.out_dim) * self.res_std
+        return np.random.normal(0, 1, self.n_pred) * self.res_std
 
     def n_step_predict(self, prepared_data: Sequence, n: int, *,
                        pred_ind: int = None,
@@ -230,7 +228,8 @@ class BaseDynamicsModel(ABC):
         :param return_all_predictions: Whether to return intermediate predictions.
         :param disturb_pred: Whether to apply a disturbance to the prediction.
         :return: The predictions.
-        :raises ValueError: If n < 0 or n too large.
+        :raises ValueError: If n < 0 or n too large or if the prepared data
+            does not have the right shape.
         """
 
         in_data, out_data = copy_arr_list(prepared_data)
@@ -259,6 +258,10 @@ class BaseDynamicsModel(ABC):
             raise ValueError("n: ({}) has to be larger than 0!".format(n))
         if n_out <= 0:
             raise ValueError("n: ({}) too large".format(n))
+        if in_data.shape[0] != out_data.shape[0]:
+            raise ValueError("Shape mismatch of prepared data.")
+        if in_data.shape[-1] != n_tot or out_data.shape[-1] != n_feat:
+            raise ValueError("Not the right number of dimensions in prepared data!")
 
         # Initialize values and reserve output array
         all_pred = None
@@ -499,6 +502,63 @@ class BaseDynamicsModel(ABC):
         self.one_week_pred_plot(copy_arr_list(dat_train_used), "6d_Train_All")
         self.init_1day(dat_val_init)
         self.one_week_pred_plot(copy_arr_list(dat_val_used), "6d_Validation_All")
+
+    def analyze_disturbed(self,
+                          ext: str = None,
+                          n_trials: int = 25) -> None:
+        """
+            Makes a plot by continuously predicting with
+            the fitted model and comparing it to the ground
+            truth. If predict_ind is None, all series that can be
+            predicted are predicted simultaneously and each predicted
+            series is plotted individually.
+
+            Args:
+                n_trials: Number of predictions with noise to average.
+                ext: String extension for the filename.
+
+            Returns: None
+            """
+
+        d = self.data
+
+        self.model_disturbance("train")
+
+        dat_train = d.get_prepared_data('val_streak')
+        in_dat_test, out_dat_test, n_ts_off = dat_train
+        print(out_dat_test.shape)
+
+        s = in_dat_test.shape
+
+        ext = "_" if ext is None else "_" + ext
+
+        # Continuous prediction
+        full_pred = self.n_step_predict([in_dat_test, out_dat_test], s[0],
+                                        pred_ind=None,
+                                        return_all_predictions=True)
+        s_pred = full_pred.shape
+        all_noise_preds = np.empty(())
+        print(full_pred.shape)
+
+        all_noise_preds = np.empty((n_trials, s_pred[1], s_pred[2]), dtype=full_pred.dtype)
+        for k in range(n_trials):
+            pass
+
+        return
+
+        for k in range(self.n_pred):
+            # Construct dataset and plot
+            k_orig = self.out_inds[k]
+            k_prep = self.data.to_prepared(np.array([k_orig]))[0]
+            k_orig_arr = np.array([k_orig])
+            new_ds = get_plot_ds(s, np.copy(out_dat_test[:, k_prep]), d, k_orig_arr, n_ts_off)
+            new_ds.data[:, 0] = np.copy(full_pred[0, :, k])
+            desc = d.descriptions[k_orig]
+            title_and_ylab = ['1 Week Continuous Predictions', desc]
+            plot_dataset(new_ds,
+                         show=False,
+                         title_and_ylab=title_and_ylab,
+                         save_name=self.get_plt_path('OneWeek_' + str(k) + "_" + ext))
 
     def get_residuals(self, data_str: str):
         """
