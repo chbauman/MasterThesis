@@ -38,7 +38,7 @@ class ConstModel(BaseDynamicsModel):
         :param in_data: Prepared data.
         :return: Same as input
         """
-        return in_data[:, -1, :-self.nc]
+        return in_data[:, -1, self.out_inds]
 
     def disturb(self) -> np.ndarray:
         """

@@ -196,7 +196,11 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         # Output layer
         # model.add(TimeDistributed(Dense(self.n_pred, activation=None)))
-        out_constraints = [self.constraint_list[i] for i in self.out_inds]
+        if self.constraint_list is not None:
+            # WHYYYYY????
+            out_constraints = [self.constraint_list[i] for i in self.out_inds]
+        else:
+            out_constraints = None
         out_const_layer = ConstrainedNoise(0, consts=out_constraints, is_input=False)
         model.add(Dense(self.n_pred, activation=None))
         if self.res_learn:

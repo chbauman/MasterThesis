@@ -81,6 +81,10 @@ def main():
     time_model_ds = SCTimeModel(ds, 6)
     time_model_ds.analyze()
 
+    # Constant model for water temperatures
+    mod_naive = ConstModel(ds, pred_inds=np.array([0, 1], dtype=np.int32))
+    mod_naive.analyze()
+
     # Room temperature model
     rnn_consts = [
         SeriesConstraint('interval', [-15.0, 40.0]),
@@ -91,7 +95,7 @@ def main():
         SeriesConstraint('interval', [0.0, 40.0]),
         SeriesConstraint('exact'),
         SeriesConstraint('exact'),
-                  ]
+    ]
     ds.transform_c_list(rnn_consts)
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(100, 100),
@@ -103,9 +107,33 @@ def main():
                           out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
                           constraint_list=rnn_consts
                           )
-    mod.fit()
-    mod.analyze()
-    mod.analyze_disturbed("blah", 10)
+    mod_no_consts = RNNDynamicModel(ds,
+                                    name="RNN_NoCsts",
+                                    hidden_sizes=(100, 100),
+                                    n_iter_max=100,
+                                    input_noise_std=0.001,
+                                    lr=0.001,
+                                    residual_learning=True,
+                                    weight_vec=None,
+                                    out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
+                                    constraint_list=None
+                                    )
+    mod_no_wt = RNNDynamicModel(ds,
+                                name="RNN_NoWT",
+                                hidden_sizes=(100, 100),
+                                n_iter_max=100,
+                                input_noise_std=0.001,
+                                lr=0.001,
+                                residual_learning=True,
+                                weight_vec=None,
+                                out_inds=np.array([2, 3, 5], dtype=np.int32),
+                                constraint_list=rnn_consts
+                                )
+
+    m_to_use = mod_no_wt
+    m_to_use.fit()
+    m_to_use.analyze()
+    m_to_use.analyze_disturbed("blah", 10)
     return
     # mod.optimize(2)
 
