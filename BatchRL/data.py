@@ -2021,7 +2021,6 @@ class Dataset:
             New scaling and new bool array is_scaled.
         """
         scaling = np.array(repl(self.scaling[ind], n))
-        scaling = np.copy(scaling.reshape((-1, n)))
         is_scd = np.copy(np.array(repl(self.is_scaled[ind], n), dtype=np.bool))
         return scaling, is_scd
 

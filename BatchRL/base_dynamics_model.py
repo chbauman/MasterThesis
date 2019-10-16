@@ -401,8 +401,8 @@ class BaseDynamicsModel(ABC):
             for k in range(n_pred):
                 # Construct dataset and plot
                 k_orig = self.out_inds[k]
-                k_prep = self.data.to_prepared(np.array([k_orig]))[0]
                 k_orig_arr = np.array([k_orig])
+                k_prep = self.data.to_prepared(k_orig_arr)[0]
                 new_ds = get_plot_ds(s, np.copy(out_dat_test[:, k_prep]), d, k_orig_arr, n_ts_off)
                 new_ds.data[:, 0] = np.copy(full_pred[0, :, k])
                 desc = d.descriptions[k_orig]
@@ -539,38 +539,40 @@ class BaseDynamicsModel(ABC):
         std_noise_preds = np.std(all_noise_preds, axis=0)
 
         # Build dataset
-        plot_data = np.empty((s_pred[0], 5), dtype=np.float32)
-        scaling, is_scd = d.get_scaling_mul(0, 5)
+        plot_data = np.empty((s_pred[1], 5), dtype=np.float32)
         actual_dt = d.get_shifted_t_init(n_ts_off)
-        analysis_ds = Dataset(plot_data,
-                              d.dt,
-                              actual_dt,
-                              scaling,
-                              is_scd,
-                              ['Prediction',
-                               'Ground Truth',
-                               'Mean Noisy Prediction',
-                               'Noisy Prediction +2 STD.',
-                               'Noisy Prediction -2 STD.',
-                               ])
-        return
-
+        descs = ['Prediction',
+                 'Ground Truth',
+                 'Mean Noisy Prediction',
+                 'Noisy Prediction +2 STD.',
+                 'Noisy Prediction -2 STD.']
         ext = "_" if ext is None else "_" + ext
+
         for k in range(self.n_pred):
             # Construct dataset and plot
             k_orig = self.out_inds[k]
             k_prep = self.data.to_prepared(np.array([k_orig]))[0]
-            k_orig_arr = np.array([k_orig])
             scaling, is_scd = d.get_scaling_mul(k_orig, 5)
+            plot_data[:, 0] = np.copy(full_pred[0, :, k])
+            plot_data[:, 1] = np.copy(out_dat_test[:, k_prep])
+            mean_pred = mean_noise_preds[:, k]
+            std_pred = std_noise_preds[:, k]
+            plot_data[:, 2] = np.copy(mean_pred)
+            plot_data[:, 3] = np.copy(mean_pred + 2 * std_pred)
+            plot_data[:, 4] = np.copy(mean_pred - 2 * std_pred)
 
-            new_ds = get_plot_ds(s, np.copy(out_dat_test[:, k_prep]), d, k_orig_arr, n_ts_off)
-            new_ds.data[:, 0] = np.copy(full_pred[0, :, k])
             desc = d.descriptions[k_orig]
-            title_and_ylab = ['1 Week Continuous Predictions', desc]
-            plot_dataset(new_ds,
+            title_and_ylab = ['1 Week Predictions', desc]
+            analysis_ds = Dataset(plot_data,
+                                  d.dt,
+                                  actual_dt,
+                                  scaling,
+                                  is_scd,
+                                  descs)
+            plot_dataset(analysis_ds,
                          show=False,
                          title_and_ylab=title_and_ylab,
-                         save_name=self.get_plt_path('OneWeek_' + str(k) + "_" + ext))
+                         save_name=self.get_plt_path('OneWeek_WithNoise_' + str(k) + "_" + ext))
 
     def get_residuals(self, data_str: str):
         """

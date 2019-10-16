@@ -95,8 +95,8 @@ def main():
     ds.transform_c_list(rnn_consts)
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(100, 100),
-                          n_iter_max=70,
-                          input_noise_std=0.0001,
+                          n_iter_max=100,
+                          input_noise_std=0.001,
                           lr=0.001,
                           residual_learning=True,
                           weight_vec=None,
