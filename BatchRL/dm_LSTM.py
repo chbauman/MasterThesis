@@ -1,17 +1,20 @@
-from collections import namedtuple
 from functools import partial
 
 from keras import backend as K
-from keras.layers import GRU, LSTM, Dense, GaussianNoise, Input, Add, Lambda
+from keras.layers import GRU, LSTM, Dense, Input, Add, Lambda
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 
+from hyperopt import fmin, hp, tpe, Trials, space_eval, STATUS_OK
+from hyperopt.pyll import scope as ho_scope
+from hyperopt.pyll.stochastic import sample as ho_sample
+
 from base_dynamics_model import BaseDynamicsModel
 from data import Dataset
+from data import SeriesConstraint
 from keras_layers import SeqInput, ConstrainedNoise
 from util import *
 from visualize import plot_train_history
-from data import SeriesConstraint
 
 
 def weighted_loss(y_true, y_pred, weights):
@@ -74,7 +77,7 @@ class RNNDynamicModel(BaseDynamicsModel):
                  gru: bool = False,
                  input_noise_std: Optional[float] = None,
                  use_ar_process: bool = False,
-                 residual_learning: bool = False,
+                 residual_learning: bool = True,
                  lr: float = 0.001,
                  constraint_list: Sequence[SeriesConstraint] = None):
 
@@ -118,9 +121,9 @@ class RNNDynamicModel(BaseDynamicsModel):
 
         # Build model
         self.m = None
-        self.build_model()
+        self._build_model()
 
-    def build_model(self) -> None:
+    def _build_model(self) -> None:
         """
         Builds the keras LSTM model and saves it
         to self.
@@ -219,3 +222,19 @@ class RNNDynamicModel(BaseDynamicsModel):
         predictions = self.m.predict(input_data)
         predictions = predictions.reshape((n, -1))
         return predictions
+
+    @classmethod
+    def optimize_hyp(cls):
+
+        print("Optimizing hyper parameters!")
+
+        hp_space = {
+            'n_layers': ho_scope.int(hp.quniform('n_layers', low=1, high=5, q=1)),
+            'n_neurons': ho_scope.int(hp.quniform('n_neurons', low=20, high=500, q=20)),
+            'n_iter': ho_scope.int(hp.quniform('n_iter', low=20, high=500, q=20)),
+            'gru': hp.choice('gru', [True, False]),
+            'lr': hp.loguniform('lr', low=-6*np.log(10), high=2*np.log(10)),
+            'input_noise_std': hp.loguniform('input_noise_std', low=-9*np.log(10), high=-2*np.log(10)),
+        }
+
+        pass

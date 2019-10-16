@@ -1,3 +1,4 @@
+hyperopt
 statsmodels
 absl-py==0.7.0
 altgraph==0.16.1
