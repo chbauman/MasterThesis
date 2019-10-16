@@ -263,15 +263,23 @@ def check_in_range(arr: np.ndarray, low: Num, high: Num) -> bool:
     return np.max(arr) < high and np.min(arr) >= low
 
 
-def split_arr(arr: np.ndarray, frac2: float) -> Tuple[Any, Any]:
+def split_arr(arr: np.ndarray, frac2: float) -> Tuple[Any, Any, int]:
     """
     Splits an array along the first axis, s.t.
     in the second part a fraction of 'frac2'
     is contained.
+
+    Args:
+        arr: The array to split into two parts.
+        frac2: The fraction of data contained in the second part.
+
+    Returns:
+        Both parts of the array and the index where the second part
+        starts relative to the whole array.
     """
     n: int = arr.shape[0]
     n_1: int = int((1.0 - frac2) * n)
-    return arr[:n_1], arr[n_1:]
+    return arr[:n_1], arr[n_1:], n_1
 
 
 def copy_arr_list(arr_list: Sequence[Arr]) -> Sequence[Arr]:

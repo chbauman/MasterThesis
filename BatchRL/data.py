@@ -939,7 +939,7 @@ def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True) -> 
     return out_dat
 
 
-def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarray, np.ndarray]:
+def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarray, np.ndarray, int]:
     """
     Finds the last sequence where all data is available
     for at least s_len + lag timesteps. Then splits the
@@ -948,7 +948,8 @@ def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarr
     :param all_data: The data.
     :param s_len: The sequence length.
     :param lag: The number of sequences the streak should contain.
-    :return: The data before the streak and the streak data.
+    :return: The data before the streak and the streak data and the index
+        pointing to the start of the streak data
     """
 
     tot_s_len = s_len + lag
@@ -967,11 +968,11 @@ def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarr
     # Extract
     first_dat = all_data[:last_seq_start, :]
     streak_dat = all_data[last_seq_start:(last_seq_start + tot_s_len), :]
-    return first_dat, streak_dat
+    return first_dat, streak_dat, last_seq_start
 
 
 def cut_and_split(dat: np.ndarray, seq_len: int, streak_len: int,
-                  ret_orig: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+                  ret_orig: bool = False) -> Tuple[np.ndarray, np.ndarray, int]:
     """
     Finds the latest series of 'streak_len' timesteps
     where all data is valid and splits the data there.
@@ -983,12 +984,12 @@ def cut_and_split(dat: np.ndarray, seq_len: int, streak_len: int,
     :param ret_orig: Whether to return the original cut data without sequencing it.
     :return: Training and streak data.
     """
-    dat_train, dat_test = extract_streak(dat, streak_len, seq_len - 1)
+    dat_train, dat_test, n = extract_streak(dat, streak_len, seq_len - 1)
     if ret_orig:
-        return dat_train, dat_test
+        return dat_train, dat_test, n
     cut_train_dat = cut_data_into_sequences(dat_train, seq_len, interleave=True)
     cut_test_dat = cut_data_into_sequences(dat_test, seq_len, interleave=True)
-    return cut_train_dat, cut_test_dat
+    return cut_train_dat, cut_test_dat, n
 
 
 #######################################################################################################
@@ -1131,7 +1132,7 @@ def get_weather_data(save_plots=True) -> 'Dataset':
     return w_dataset
 
 
-def get_UMAR_heating_data() -> 'Dataset':
+def get_UMAR_heating_data() -> List['Dataset']:
     """
     Load and interpolate all the necessary data.
 
@@ -1164,7 +1165,7 @@ def get_UMAR_heating_data() -> 'Dataset':
     return all_ds
 
 
-def get_DFAB_heating_data() -> 'Dataset':
+def get_DFAB_heating_data() -> List['Dataset']:
     """
     Loads or creates all data from DFAB then returns
     a list of all datasets. 4 for the rooms, one for the heating water
@@ -1402,10 +1403,6 @@ def analyze_room_energy_consumption():
 #######################################################################################################
 # Dataset definition and generation
 
-# #: Constraint class, `type_str` needs to be in [None, 'interval', 'exact']
-# SeriesConstraint = namedtuple("SeriesConstraint", ['type_str', 'extra_dat'])
-# SeriesConstraint.__new__.__defaults__ = (None, None)
-
 class SeriesConstraint:
     """
     The class defining constraints for single data series.
@@ -1507,18 +1504,32 @@ class Dataset:
 
         # Variables for later use
         self.streak_len = None
-        self.orig_train_val = None
+
+        # Test data
         self.orig_test = None
-        self.orig_train = None
-        self.orig_val = None
-        self.train_streak = None
         self.test_data = None
+        self.test_start = None
+
+        # Train val data
+        self.orig_train_val = None
         self.train_val_data = None
+        self.train_val_start = None
+
+        # Training data
+        self.orig_train = None
         self.train_data = None
-        self.val_data = None
+        self.train_start = 0
+        self.train_streak = None
         self.train_streak_data = None
+        self.train_streak_start = None
+
+        # Validation data
+        self.orig_val = None
+        self.val_data = None
+        self.val_start = None
         self.val_streak = None
         self.val_streak_data = None
+        self.val_streak_start = None
 
         self.c_inds_prep = None
         self.p_inds_prep = None
@@ -1532,10 +1543,14 @@ class Dataset:
         # split data        
         s_len = int(60 / self.dt * 24 * streak_len)
         self.streak_len = s_len
-        self.orig_train_val, self.orig_test = cut_and_split(np.copy(self.data), self.seq_len, s_len, ret_orig=True)
-        self.orig_train, self.orig_val = split_arr(np.copy(self.orig_train_val), self.val_percent)
-        _, self.train_streak = extract_streak(np.copy(self.orig_train), s_len, self.seq_len - 1)
-        _, self.val_streak = extract_streak(np.copy(self.orig_val), s_len, self.seq_len - 1)
+        self.orig_train_val, self.orig_test, self.test_start = \
+            cut_and_split(np.copy(self.data), self.seq_len, s_len, ret_orig=True)
+        self.orig_train, self.orig_val, self.val_start = \
+            split_arr(np.copy(self.orig_train_val), self.val_percent)
+        _, self.train_streak, self.train_streak_start = \
+            extract_streak(np.copy(self.orig_train), s_len, self.seq_len - 1)
+        _, self.val_streak, val_str_start = extract_streak(np.copy(self.orig_val), s_len, self.seq_len - 1)
+        self.val_streak_start = self.train_start + val_str_start
 
         # Cut into sequences and save to self.
         self.test_data = cut_data_into_sequences(np.copy(self.orig_test), self.seq_len, interleave=True)
@@ -1545,24 +1560,30 @@ class Dataset:
         self.train_streak_data = cut_data_into_sequences(np.copy(self.train_streak), self.seq_len, interleave=True)
         self.val_streak_data = cut_data_into_sequences(np.copy(self.val_streak), self.seq_len, interleave=True)
 
-    def get_prepared_data(self, what_data: str = 'train', *, get_all_preds: bool = False):
+    def get_prepared_data(self, what_data: str = 'train', *,
+                          get_all_preds: bool = False) -> Tuple[np.ndarray, np.ndarray, int]:
         """
         Prepares the data for supervised learning.
         """
 
         # Get the right data
+        n_offset = 0
         if what_data == 'train':
             data_to_use = self.train_data
         elif what_data == 'val':
             data_to_use = self.val_data
+            n_offset = self.val_start
         elif what_data == 'test':
             data_to_use = self.test_data
+            n_offset = self.test_start
         elif what_data == 'train_val':
             data_to_use = self.train_val_data
         elif what_data == 'train_streak':
             data_to_use = self.train_streak_data
+            n_offset = self.train_streak_start
         elif what_data == 'val_streak':
             data_to_use = self.val_streak_data
+            n_offset = self.val_streak_start
         else:
             raise ValueError("No such data available: " + what_data)
         data_to_use = np.copy(data_to_use)
@@ -1595,7 +1616,7 @@ class Dataset:
         for c_ind in self.c_inds:
             self.p_inds_prep[self.p_inds_prep > c_ind] -= 1
 
-        return input_data, output_data
+        return input_data, output_data, n_offset
 
     @classmethod
     def fromRaw(cls, all_data: np.ndarray, m: List, name: str,

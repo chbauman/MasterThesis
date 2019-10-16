@@ -132,7 +132,7 @@ class BaseDynamicsModel(ABC):
         :param data_name: The string specifying which portion of the data to use.
         :return: The input and output data for supervised learning.
         """
-        in_dat, out_dat = self.data.get_prepared_data(data_name)
+        in_dat, out_dat, n = self.data.get_prepared_data(data_name)
         res_in_dat = in_dat[:, :, self.p_in_indices]
         res_out_dat_out = out_dat[:, self.p_out_inds]
         return res_in_dat, res_out_dat_out
@@ -425,8 +425,8 @@ class BaseDynamicsModel(ABC):
 
         # Prepare the data
         # dat_test = d.get_prepared_data('test')
-        dat_train = d.get_prepared_data('train_streak')
-        dat_val = d.get_prepared_data('val_streak')
+        dat_train, _ = d.get_prepared_data('train_streak')
+        dat_val, _ = d.get_prepared_data('val_streak')
 
         # Plot for fixed number of time-steps
         val_copy = copy_arr_list(dat_val)
@@ -459,8 +459,8 @@ class BaseDynamicsModel(ABC):
 
         # Prepare the data
         # dat_test = d.get_prepared_data('test')
-        dat_train_in, dat_train_out = d.get_prepared_data('train_streak')
-        dat_val_in, dat_val_out = d.get_prepared_data('val_streak')
+        dat_train_in, dat_train_out, _ = d.get_prepared_data('train_streak')
+        dat_val_in, dat_val_out, _ = d.get_prepared_data('val_streak')
         n_feat = dat_train_out.shape[-1]
 
         # Extract first day
@@ -484,7 +484,7 @@ class BaseDynamicsModel(ABC):
         :param data_str: String defining which part of the data to use.
         :return: Residuals.
         """
-        input_data, output_data = self.data.get_prepared_data(data_str)
+        input_data, output_data, n = self.data.get_prepared_data(data_str)
         prep_inds = self.data.to_prepared(self.out_inds)
         residuals = self.predict(input_data) - output_data[:, prep_inds]
         return residuals

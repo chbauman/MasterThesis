@@ -143,7 +143,7 @@ def main():
 
     # GP Model
     seq_len_gp = 4
-    train_heat, test_heat = cut_and_split(dat_heat, seq_len_gp, 96 * 7)
+    train_heat, test_heat, _ = cut_and_split(dat_heat, seq_len_gp, 96 * 7)
     mod = GPR_DM(alpha=5.0)
     mod.fit(train_heat)
     mod.analyze(test_heat)
