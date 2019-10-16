@@ -963,7 +963,7 @@ def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarr
     inds = np.where(tmp == tot_s_len)[0]
     if len(inds) < 1:
         raise IndexError("No fucking streak of length {} found!!!".format(tot_s_len))
-    last_seq_start = inds[-1]
+    last_seq_start = inds[-1] + lag
 
     # Extract
     first_dat = all_data[:last_seq_start, :]
@@ -1213,14 +1213,14 @@ def compute_DFAB_energy_usage(show_plots=True):
     # Load data from Dataset
     w_name = "DFAB_Extra"
     w_dataset = Dataset.loadDataset(w_name)
-    w_dat = w_dataset.getUnscaledData()
+    w_dat = w_dataset.get_unscaled_data()
     t_init_w = w_dataset.t_init
     dt = w_dataset.dt
 
     v_name = "DFAB_Valves"
     dfab_rooms_plot_path = os.path.join(preprocess_plot_path, "DFAB")
     v_dataset = Dataset.loadDataset(v_name)
-    v_dat = v_dataset.getUnscaledData()
+    v_dat = v_dataset.get_unscaled_data()
     t_init_v = v_dataset.t_init
 
     # Align data
@@ -1835,7 +1835,7 @@ class Dataset:
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
 
-    def getUnscaledData(self) -> np.ndarray:
+    def get_unscaled_data(self) -> np.ndarray:
         """
         Adds the mean and std back to every column and returns
         the data.
@@ -1993,6 +1993,37 @@ class Dataset:
                     iv = sc[1]
                     iv_trf = trf_mean_and_std(iv, mas, remove_mean)
                     const_list[ct] = SeriesConstraint('interval', iv_trf)
+
+    def get_shifted_t_init(self, n: int) -> str:
+        """
+        Shifts t_init of the dataset n timesteps into the future.
+
+        Args:
+            n: The number of time steps to shift.
+
+        Returns:
+            A new t_init string with the shifted time.
+        """
+        dt_dt = n_mins_to_np_dt(self.dt)
+        np_dt = str_to_np_dt(self.t_init)
+        return np_dt_to_str(np_dt + n * dt_dt)
+
+    def get_scaling_mul(self, ind: int, n: int) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Returns the scaling information of series with index `ind`
+        for a possible new dataset with `n` series.
+
+        Args:
+            ind: The series to take the scaling from.
+            n: Number of times to repeat scaling info.
+
+        Returns:
+            New scaling and new bool array is_scaled.
+        """
+        scaling = np.array(repl(self.scaling[ind], n))
+        scaling = np.copy(scaling.reshape((-1, n)))
+        is_scd = np.copy(np.array(repl(d.is_scaled[ind], n), dtype=np.bool))
+        return scaling, is_scd
 
 
 def generate_room_datasets() -> List[Dataset]:

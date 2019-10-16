@@ -325,7 +325,7 @@ def plot_dataset(dataset, show=True, title_and_ylab=None, save_name=None):
     """
     Plots the unscaled series in a dataset.
     """
-    all_data = dataset.getUnscaledData()
+    all_data = dataset.get_unscaled_data()
     n_series = all_data.shape[1]
     all_series = [np.copy(all_data[:, i]) for i in range(n_series)]
     labs = [d for d in dataset.descriptions]

@@ -24,15 +24,8 @@ def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
     plot_data = np.empty((s[0], 2), dtype=np.float32)
     if tr is not None:
         plot_data[:, 1] = tr
-    scaling = np.array(repl(d.scaling[orig_p_ind], 2))
-    scaling = scaling.reshape((-1, 2))
-    is_scd = np.array(repl(d.is_scaled[orig_p_ind], 2), dtype=np.bool)
-    if n_offs > 0:
-        dt_dt = n_mins_to_np_dt(d.dt)
-        np_dt = str_to_np_dt(d.t_init)
-        actual_dt = np_dt_to_str(np_dt + n_offs * dt_dt)
-    else:
-        actual_dt = d.t_init
+    scaling, is_scd = d.get_scaling_mul(orig_p_ind, 2)
+    actual_dt = d.t_init if n_offs == 0 else d.get_shifted_t_init(n_offs)
     analysis_ds = Dataset(plot_data,
                           d.dt,
                           actual_dt,
@@ -520,32 +513,33 @@ class BaseDynamicsModel(ABC):
             Returns: None
             """
 
-        d = self.data
-
+        # Model the disturbance
         self.model_disturbance("train")
 
+        # Get the data
+        d = self.data
         dat_train = d.get_prepared_data('val_streak')
         in_dat_test, out_dat_test, n_ts_off = dat_train
-        print(out_dat_test.shape)
 
+        # Predict without noise
         s = in_dat_test.shape
-
-        ext = "_" if ext is None else "_" + ext
-
-        # Continuous prediction
         full_pred = self.n_step_predict([in_dat_test, out_dat_test], s[0],
                                         pred_ind=None,
                                         return_all_predictions=True)
-        s_pred = full_pred.shape
-        all_noise_preds = np.empty(())
-        print(full_pred.shape)
 
+        # Predict with noise
+        s_pred = full_pred.shape
         all_noise_preds = np.empty((n_trials, s_pred[1], s_pred[2]), dtype=full_pred.dtype)
         for k in range(n_trials):
-            pass
-
+            all_noise_preds[k] = self.n_step_predict([in_dat_test, out_dat_test], s[0],
+                                                     pred_ind=None,
+                                                     return_all_predictions=True,
+                                                     disturb_pred=True)
+        mean_noise_preds = np.mean(all_noise_preds, axis=0)
+        std_noise_preds = np.std(all_noise_preds, axis=0)
         return
 
+        ext = "_" if ext is None else "_" + ext
         for k in range(self.n_pred):
             # Construct dataset and plot
             k_orig = self.out_inds[k]
