@@ -389,6 +389,7 @@ def cut_into_fixed_len(col_has_nan: np.ndarray, seq_len: int = 20, interleave: b
     """
     Cuts the time series into pieces of length 'seq_len'
     for training of dynamic model.
+    DEPRECATED since not efficient!
 
     :param col_has_nan: 1D bool array with True where there are nans in a row.
     :param seq_len: Length of sequences to extract.
@@ -532,6 +533,39 @@ def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True) -> 
     for k in range(n_seqs):
         out_dat[k, :, :] = all_data[seq_inds[:, k], :]
     return out_dat
+
+
+def cut_data(all_data, seq_len: int) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Cuts the data into sequences of length `seq_len` where
+    there are no nans in the row of `all_data`.
+    Also returns the indices where to find the sequences in `all_data`.
+
+    Args:
+        all_data: The 2D numpy array containing the data series.
+        seq_len: The length of the sequences to extract.
+
+    Returns:
+        3D array with sequences and 1D int array with indices where the
+        sequences start with respect to `all_data`.
+    """
+    # Check input
+    if len(all_data.shape) > 2:
+        raise ValueError("Data array has too many dimensions!")
+
+    # Find sequences
+    nans = find_rows_with_nans(all_data)
+    all_inds = find_all_streaks(nans, seq_len)
+
+    # Get shapes
+    n_seqs = len(all_inds)
+    n_feat = get_shape1(all_data)
+
+    # Extract sequences
+    out_dat = np.empty((n_seqs, seq_len, n_feat), dtype=np.float32)
+    for ct, k in enumerate(all_inds):
+        out_dat[ct] = all_data[k:(k + seq_len)]
+    return out_dat, all_inds
 
 
 #######################################################################################################
@@ -731,14 +765,19 @@ def test_numpy_functions() -> None:
         raise AssertionError("extract_streak not working correctly!!")
 
     # Test sequence cutting
-    cut_data = cut_data_into_sequences(data_array_with_nans, 2)
+    cut_seq_dat = cut_data_into_sequences(data_array_with_nans, 2)
     cut_dat_exp = np.array([
         data_array_with_nans[1:3],
         data_array_with_nans[5:7],
         data_array_with_nans[6:8],
     ])
-    if not np.array_equal(cut_data, cut_dat_exp):
+    if not np.array_equal(cut_seq_dat, cut_dat_exp):
         raise AssertionError("cut_data_into_sequences not working correctly!!")
+
+    c_dat, inds = cut_data(data_array_with_nans, 2)
+    inds_exp = np.array([1, 5, 6])
+    if not np.array_equal(c_dat, cut_dat_exp) or not np.array_equal(inds_exp, inds):
+        raise AssertionError("cut_data not working correctly!!")
 
     bool_vec = np.array([True,
                          False,
