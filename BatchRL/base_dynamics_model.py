@@ -178,7 +178,7 @@ class BaseDynamicsModel(ABC):
 
         if self.use_AR:
             # Fit an AR process for each output dimension
-            self.dist_mod = [AR_Model(lag=self.N_LAG) for k in range(self.n_pred)]
+            self.dist_mod = [AR_Model(lag=self.N_LAG) for _ in range(self.n_pred)]
             for k, d in enumerate(self.dist_mod):
                 d.fit(residuals[:, k])
             self.init_pred = np.zeros((self.N_LAG, self.n_pred))
@@ -500,6 +500,7 @@ class BaseDynamicsModel(ABC):
 
     def analyze_disturbed(self,
                           ext: str = None,
+                          data_str: str = "val_streak",
                           n_trials: int = 25) -> None:
         """
             Makes a plot by continuously predicting with
@@ -509,6 +510,7 @@ class BaseDynamicsModel(ABC):
             series is plotted individually.
 
             Args:
+                data_str: The string specifying the data to use.
                 n_trials: Number of predictions with noise to average.
                 ext: String extension for the filename.
 
@@ -520,7 +522,7 @@ class BaseDynamicsModel(ABC):
 
         # Get the data
         d = self.data
-        dat_val = d.get_prepared_data('val_streak')
+        dat_val = d.get_prepared_data(data_str)
         in_dat_test, out_dat_test, n_ts_off = dat_val
 
         # Predict without noise

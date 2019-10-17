@@ -1,4 +1,3 @@
-import numpy as np
 
 from FQI import NFQI
 from LSPI import LSPI
@@ -79,13 +78,13 @@ def main():
 
     # Time variable prediction
     time_model_ds = SCTimeModel(ds, 6)
-    time_model_ds.analyze()
+    # time_model_ds.analyze()
     # time_model_ds.analyze_disturbed()
 
     # Constant model for water temperatures
     mod_naive = ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
-    mod_naive.analyze()
-    mod_naive.analyze_disturbed()
+    # mod_naive.analyze()
+    # mod_naive.analyze_disturbed()
 
     # Room temperature model
     rnn_consts = [
@@ -110,7 +109,7 @@ def main():
                           constraint_list=rnn_consts
                           )
     mod_no_consts = RNNDynamicModel(ds,
-                                    name="RNN_NoCsts",
+                                    name="RNN_No_Consts",
                                     hidden_sizes=(100, 100),
                                     n_iter_max=100,
                                     input_noise_std=0.001,
@@ -129,13 +128,14 @@ def main():
                                 residual_learning=True,
                                 weight_vec=None,
                                 out_inds=np.array([0, 1, 5], dtype=np.int32),
-                                constraint_list=rnn_consts
-                                )
+                                constraint_list=rnn_consts)
 
-    m_to_use = mod_no_consts
-    m_to_use.fit()
-    m_to_use.analyze()
-    m_to_use.analyze_disturbed("blah", 10)
+    mods = [mod, mod_no_consts, mod_no_wt]
+    for m_to_use in mods:
+        m_to_use.fit()
+        m_to_use.analyze()
+        m_to_use.analyze_disturbed("Valid", 'val_streak', 10)
+        m_to_use.analyze_disturbed("Train", 'train_streak', 10)
     return
     # mod.optimize(2)
 
@@ -170,18 +170,6 @@ def main():
     bat_mod.analyze()
     bat_mod_naive = ConstModel(bat_ds)
     bat_mod_naive.analyze()
-    return
-
-    # Parameters
-    seq_len = 20
-
-    # GP Model
-    seq_len_gp = 4
-    train_heat, test_heat, _ = cut_and_split(dat_heat, seq_len_gp, 96 * 7)
-    mod = GPR_DM(alpha=5.0)
-    mod.fit(train_heat)
-    mod.analyze(test_heat)
-
     return
 
     # simple_battery_FQI()
