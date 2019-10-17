@@ -1893,6 +1893,8 @@ class Dataset:
         return scaling, is_scd
 
 
+
+
 class ModelDataView:
     """
     Container for dataset specifying parts of
@@ -1952,34 +1954,50 @@ class ModelDataView:
         """
         return self._get_data(self.n, self.n + self.n_len)
 
-    def extract_streak(self, n_timesteps: int, take_last: bool = True):
-        """
-        Extracts a sequence of length `n_timesteps` from the
-        data not containing nans.
+    # def extract_streak(self, n_timesteps: int, take_last: bool = True) -> np.ndarray:
+    #     """
+    #     Extracts a sequence of length `n_timesteps` from the
+    #     data not containing nans.
+    #
+    #     Args:
+    #         n_timesteps: Length of required sequence.
+    #         take_last: Whether to choose the last of such sequence or the first.
+    #
+    #     Returns:
+    #         3D Array with sequence data.
+    #     """
+    #     # Check if it was extracted before
+    #     if n_timesteps in self.streak_n_list:
+    #         # Return from list
+    #         i = self.streak_n_list.index(n_timesteps)
+    #         return self.streak_data_list[i]
+    #     else:
+    #         # Find ans store in list
+    #         nans = find_rows_with_nans(self.get_rel_data())
+    #         inds = find_all_streaks(nans, n_timesteps)
+    #         if len(inds) < 1:
+    #             raise ValueError("No streak of length {} found!!".format(n_timesteps))
+    #         i = inds[-1] if take_last else inds[0]
+    #         ret_data, _ = cut_data(self.get_rel_data(), self.s_len)
+    #         self.streak_n_list += [i]
+    #         self.streak_data_list += [ret_data]
+    #         return ret_data
 
-        Args:
-            n_timesteps: Length of required sequence.
-            take_last: Whether to choose the last of such sequence or the first.
+    @CacheDecoratorFactory(streak_n_list, streak_data_list)
+    def extract_streak(self, n_timesteps: int, take_last: bool = True) -> np.ndarray:
 
-        Returns:
-            3D Array with sequence data.
-        """
-        # Check if it was extracted before
-        if n_timesteps in self.streak_n_list:
-            # Return from list
-            i = self.streak_n_list.index(n_timesteps)
-            return self.streak_data_list[i]
-        else:
-            # Find ans store in list
-            nans = find_rows_with_nans(self.get_rel_data())
-            inds = find_all_streaks(nans, n_timesteps)
-            if len(inds) < 1:
-                raise ValueError("No streak of length {} found!!".format(n_timesteps))
-            i = inds[-1] if take_last else inds[0]
-            ret_data, _ = cut_data(self.get_rel_data(), self.s_len)
-            self.streak_n_list += [i]
-            self.streak_data_list += [ret_data]
-            return ret_data
+        nans = find_rows_with_nans(self.get_rel_data())
+        inds = find_all_streaks(nans, n_timesteps)
+        if len(inds) < 1:
+            raise ValueError("No streak of length {} found!!".format(n_timesteps))
+        i = inds[-1] if take_last else inds[0]
+        data = self.get_rel_data()[i:(i + n_timesteps)]
+        ret_data, _ = cut_data(data, self.s_len)
+        return ret_data
+
+    def extract_disjoint_streaks(self, streak_len: int, n_offs: int) -> np.ndarray:
+
+        pass
 
 
 def generate_room_datasets() -> List[Dataset]:

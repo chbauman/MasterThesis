@@ -63,6 +63,7 @@ def main():
     test_layers()
     test_numpy_functions()
     test_rest_client()
+    test_python_stuff()
     # get_data_test()
     # test_align()
     test_dataset_artificially()

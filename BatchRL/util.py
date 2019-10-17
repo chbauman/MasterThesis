@@ -77,6 +77,27 @@ def b_cast(l_or_el, n: int) -> List:
     return repl(l_or_el, n)
 
 
+class CacheDecoratorFactory(object):
+
+    def __init__(self, n_list, data_list):
+        self.n = n_list
+        self.d = data_list
+
+    def __call__(self, f):
+
+        def decorated(n: int, *args, **kwargs):
+            if n in self.n:
+                i = self.n.index(n)
+                return self.d[i]
+            else:
+                dat = f(n, *args, **kwargs)
+                self.n += [n]
+                self.d += [dat]
+                return dat
+
+        return decorated
+
+
 #######################################################################################################
 # Numerical stuff
 
@@ -837,3 +858,35 @@ def test_numpy_functions() -> None:
 
     # Tests are done
     print("Numpy test passed :)")
+
+
+def test_python_stuff() -> None:
+    """
+    Tests some of the python functions.
+    Raises errors if one of the tests is not passed.
+
+    Returns: None
+
+    Raises:
+        AssertionError: If a test fails.
+    """
+    # Test the caching decorator
+    n_list = []
+    data_list = []
+    @CacheDecoratorFactory(n_list, data_list)
+    def fun(n: int, k: int):
+        return k * k
+    try:
+        if not fun(1, k=3) == 9:
+            raise AssertionError
+        if not fun(2, 3) == 9:
+            raise AssertionError
+        if not fun(1, k=4) == 9:
+            raise AssertionError
+    except AssertionError as e:
+        print("Cache Decorator Test failed!!")
+        raise e
+    except Exception as e:
+        raise AssertionError("Some error happened: {}".format(e))
+
+    pass
