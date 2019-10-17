@@ -384,6 +384,106 @@ def find_rows_with_nans(all_data: np.ndarray) -> np.ndarray:
 
     return col_has_nan
 
+
+def cut_into_fixed_len(col_has_nan: np.ndarray, seq_len: int = 20, interleave: bool = True) -> np.ndarray:
+    """
+    Cuts the time series into pieces of length 'seq_len'
+    for training of dynamic model.
+
+    :param col_has_nan: 1D bool array with True where there are nans in a row.
+    :param seq_len: Length of sequences to extract.
+    :param interleave: Whether to overlap the extracted sequences.
+    :return: Index array specifying ranges of rows that do not contain nans.
+    """
+
+    n = col_has_nan.shape[0]
+    indices = np.arange(0, n)
+
+    # Initialize and find first non-NaN
+    max_n_seq = n if interleave else n // seq_len
+    seqs = np.empty((seq_len, max_n_seq), dtype=np.int32)
+    ct = np.where(col_has_nan == False)[0][0]
+    seq_count = 0
+
+    while True:
+        # Find next NaN
+        zeros = np.where(col_has_nan[ct:])[0]
+        curr_seq_len = n - ct if zeros.shape[0] == 0 else zeros[0]
+
+        # Add sequences
+        if interleave:
+            n_seq_curr = curr_seq_len - seq_len + 1
+            for k in range(n_seq_curr):
+                seqs[:, seq_count] = indices[(ct + k):(ct + k + seq_len)]
+                seq_count += 1
+        else:
+            n_seq_curr = curr_seq_len // seq_len
+            for k in range(n_seq_curr):
+                seqs[:, seq_count] = indices[(ct + k * seq_len):(ct + (k + 1) * seq_len)]
+                seq_count += 1
+
+        # Find next non-NaN
+        ct += curr_seq_len
+        non_zs = np.where(col_has_nan[ct:] == False)[0]
+
+        # Break if none found
+        if non_zs.shape[0] == 0:
+            break
+        ct += non_zs[0]
+
+    # Return all found sequences
+    return seqs[:, :seq_count]
+
+
+def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarray, np.ndarray, int]:
+    """
+    Finds the last sequence where all data is available
+    for at least s_len + lag timesteps. Then splits the
+    data before that last sequence and returns both parts.
+
+    :param all_data: The data.
+    :param s_len: The sequence length.
+    :param lag: The number of sequences the streak should contain.
+    :return: The data before the streak and the streak data and the index
+        pointing to the start of the streak data
+    """
+
+    tot_s_len = s_len + lag
+    not_nans = np.logical_not(find_rows_with_nans(all_data))
+    rwn = np.int32(not_nans)
+    true_seq = np.empty((tot_s_len,), dtype=np.int32)
+    true_seq.fill(1)
+
+    # Find sequences of length tot_s_len
+    tmp = np.convolve(rwn, true_seq, 'valid')
+    inds = np.where(tmp == tot_s_len)[0]
+    if len(inds) < 1:
+        raise IndexError("No fucking streak of length {} found!!!".format(tot_s_len))
+    last_seq_start = inds[-1]
+
+    # Extract
+    first_dat = all_data[:last_seq_start, :]
+    streak_dat = all_data[last_seq_start:(last_seq_start + tot_s_len), :]
+    return first_dat, streak_dat, last_seq_start + lag
+
+
+def nan_array_equal(a: np.ndarray, b: np.ndarray) -> bool:
+    """
+    Analog for np.array_equal but this time ignoring nans.
+
+    Args:
+        a: First array.
+        b: Second array to compare.
+
+    Returns:
+        True if the arrays contain the exact same elements else False.
+    """
+    try:
+        np.testing.assert_equal(a, b)
+    except AssertionError:
+        return False
+    return True
+
 #######################################################################################################
 # NEST stuff
 
@@ -554,19 +654,50 @@ def test_numpy_functions() -> None:
     data_array_with_nans = np.array([
         [1.0, np.nan, 2.0],
         [2.0, 2.0, 5.0],
+        [2.0, 2.0, 5.0],
         [2.0, 2.0, np.nan],
         [2.0, np.nan, np.nan],
+        [2.0, 2.0, 5.0],
+        [2.0, 2.0, 5.0],
         [3.0, -1.0, 2.0]])
 
     # Test data functions
     d1, d2, n = split_arr(data_array, 0.1)
     d1_exp = data_array[:3]
-    if not np.array_equal(d1, d1_exp) or not n == 1:
+    if not np.array_equal(d1, d1_exp) or n != 3:
         raise AssertionError("split_arr not working correctly!!")
 
     nans_bool_arr = find_rows_with_nans(data_array_with_nans)
-    nans_exp = np.array([True, False, True, True, False])
+    nans_exp = np.array([True, False, False, True, True, False, False, False])
     if not np.array_equal(nans_exp, nans_bool_arr):
         raise AssertionError("find_rows_with_nans not working correctly!!")
 
+    d1, d2, n = extract_streak(data_array_with_nans, 1, 1)
+    d2_exp = data_array_with_nans[6:8]
+    d1_exp = data_array_with_nans[:6]
+    print(np.array_equal(d2, d2_exp))
+    print(d1)
+    print(d1_exp)
+    if not np.nan_array_equal(d2, d2_exp) or n != 7 or not np.nan_array_equal(d1, d1_exp):
+        raise AssertionError("extract_streak not working correctly!!")
+
+    bool_vec = np.array([True,
+                         False,
+                         False,
+                         False,
+                         True,
+                         False,
+                         False,
+                         True])
+
+    exp_out = np.array([[1, 2, 5],
+                        [2, 3, 6],
+                        ])
+    fix_len_seq = cut_into_fixed_len(bool_vec, 2)
+    if not np.array_equal(exp_out, fix_len_seq):
+        raise AssertionError("cut_into_fixed_len not working correctly!!")
+
+
+
+    # Tests are done
     print("Numpy test passed :)")

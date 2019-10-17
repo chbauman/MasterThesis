@@ -838,56 +838,6 @@ def standardize(data: np.ndarray, m: List[Dict]) -> Tuple[np.ndarray, List[Dict]
     return proc_data, m
 
 
-def cut_into_fixed_len(col_has_nan: np.ndarray, seq_len: int = 20, interleave: bool = True) -> np.ndarray:
-    """
-    Cuts the time series into pieces of length 'seq_len'
-    for training of dynamic model.
-
-    :param col_has_nan: 1D bool array with True where there are nans in a row.
-    :param seq_len: Length of sequences to extract.
-    :param interleave: Whether to overlap the extracted sequences.
-    :return: Index array specifying ranges of rows that do not contain nans.
-    """
-
-    n = col_has_nan.shape[0]
-    indices = np.arange(0, n)
-
-    # Initialize and find first non-NaN
-    max_n_seq = n if interleave else n // seq_len
-    seqs = np.empty((seq_len, max_n_seq), dtype=np.int32)
-    ct = np.where(col_has_nan == False)[0][0]
-    seq_count = 0
-
-    while True:
-        # Find next NaN
-        zeros = np.where(col_has_nan[ct:])[0]
-        curr_seq_len = n - ct if zeros.shape[0] == 0 else zeros[0]
-
-        # Add sequences
-        if interleave:
-            n_seq_curr = curr_seq_len - seq_len + 1
-            for k in range(n_seq_curr):
-                seqs[:, seq_count] = indices[(ct + k):(ct + k + seq_len)]
-                seq_count += 1
-        else:
-            n_seq_curr = curr_seq_len // seq_len
-            for k in range(n_seq_curr):
-                seqs[:, seq_count] = indices[(ct + k * seq_len):(ct + (k + 1) * seq_len)]
-                seq_count += 1
-
-        # Find next non-NaN
-        ct += curr_seq_len
-        non_zs = np.where(col_has_nan[ct:] == False)[0]
-
-        # Break if none found
-        if non_zs.shape[0] == 0:
-            break
-        ct += non_zs[0]
-
-    # Return all found sequences
-    return seqs[:, :seq_count]
-
-
 def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True) -> np.ndarray:
     """
     Use the two functions above to cut the data into
@@ -918,38 +868,6 @@ def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True) -> 
     for k in range(n_seqs):
         out_dat[k, :, :] = all_data[seq_inds[:, k], :]
     return out_dat
-
-
-def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarray, np.ndarray, int]:
-    """
-    Finds the last sequence where all data is available
-    for at least s_len + lag timesteps. Then splits the
-    data before that last sequence and returns both parts.
-
-    :param all_data: The data.
-    :param s_len: The sequence length.
-    :param lag: The number of sequences the streak should contain.
-    :return: The data before the streak and the streak data and the index
-        pointing to the start of the streak data
-    """
-
-    tot_s_len = s_len + lag
-    not_nans = np.logical_not(find_rows_with_nans(all_data))
-    rwn = np.int32(not_nans)
-    true_seq = np.empty((tot_s_len,), dtype=np.int32)
-    true_seq.fill(1)
-
-    # Find sequences of length tot_s_len
-    tmp = np.convolve(rwn, true_seq, 'valid')
-    inds = np.where(tmp == tot_s_len)[0]
-    if len(inds) < 1:
-        raise IndexError("No fucking streak of length {} found!!!".format(tot_s_len))
-    last_seq_start = inds[-1] + lag
-
-    # Extract
-    first_dat = all_data[:last_seq_start, :]
-    streak_dat = all_data[last_seq_start:(last_seq_start + tot_s_len), :]
-    return first_dat, streak_dat, last_seq_start
 
 
 def cut_and_split(dat: np.ndarray, seq_len: int, streak_len: int,
