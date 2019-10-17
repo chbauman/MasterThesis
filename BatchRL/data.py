@@ -1965,9 +1965,49 @@ class ModelDataView:
         ret_data, _ = cut_data(data, self.s_len)
         return ret_data
 
-    def extract_disjoint_streaks(self, streak_len: int, n_offs: int) -> np.ndarray:
+    def extract_disjoint_streaks(self, streak_len: int, n_offs: int) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Extracts disjoint streaks of length `streak_len` + seq_len - 1 and
+        turns them into sequences for the use in dynamics models.
+        Uses caching for same calls.
 
-        pass
+        Args:
+            streak_len: The length of the disjoint streaks.
+            n_offs: The offset in time steps.
+
+        Returns:
+            The sequenced streak data and the offset indices for all streaks
+            relative to the associated data.
+        """
+        return self._extract_disjoint_streaks((streak_len, n_offs))
+
+    @CacheDecoratorFactory()
+    def _extract_disjoint_streaks(self, n: Tuple[int, int]) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        This function does actually do stuff.
+
+        Args:
+            n: The arguments in a tuple.
+
+        Returns:
+            See `extract_disjoint_streaks`.
+        """
+        # Extract parameters
+        streak_len, n_offs = n
+
+        # Find offset
+        nans = find_rows_with_nans(self.get_rel_data())
+        dis_streaks = find_disjoint_streaks(nans, self.s_len, streak_len, n_offs)
+        tot_len = streak_len + self.s_len - 1
+        data = self.get_rel_data()
+        n_streaks = len(dis_streaks)
+
+        # Put data together and cut it into sequences
+        res_dat = np.empty((n_streaks,))
+        for ct, k in dis_streaks:
+            str_dat = data[k:(k + tot_len)]
+            res_dat[k] = cut_data(str_dat, self.s_len)
+        return res_dat, dis_streaks
 
 
 def generate_room_datasets() -> List[Dataset]:
