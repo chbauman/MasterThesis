@@ -1955,7 +1955,16 @@ class ModelDataView:
 
     @CacheDecoratorFactory(streak_n_list, streak_data_list)
     def extract_streak(self, n_timesteps: int, take_last: bool = True) -> np.ndarray:
+        """
+        Blah blah, this is decorated away :(
 
+        Args:
+            n_timesteps: The required length of the streak.
+            take_last: Whether to use the last possible streak or the first.
+
+        Returns:
+            A streak of length `n_timesteps`.
+        """
         nans = find_rows_with_nans(self.get_rel_data())
         inds = find_all_streaks(nans, n_timesteps)
         if len(inds) < 1:
