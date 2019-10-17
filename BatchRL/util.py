@@ -112,7 +112,7 @@ class CacheDecoratorFactory(object):
             The decorated function.
         """
 
-        def decorated(n: int, *args, **kwargs):
+        def decorated(n: Union[Tuple, int], *args, **kwargs):
 
             if n in self.n:
                 i = self.n.index(n)

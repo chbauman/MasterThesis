@@ -2021,12 +2021,14 @@ class ModelDataView:
         tot_len = streak_len + self.s_len - 1
         data = self.get_rel_data()
         n_streaks = len(dis_streaks)
+        n_feats = get_shape1(data)
 
         # Put data together and cut it into sequences
-        res_dat = np.empty((n_streaks,))
-        for ct, k in dis_streaks:
+        res_dat = np.empty((n_streaks, streak_len, self.s_len, n_feats), dtype=data.dtype)
+        for ct, k in enumerate(dis_streaks):
             str_dat = data[k:(k + tot_len)]
-            res_dat[k] = cut_data(str_dat, self.s_len)
+            cut_dat, _ = cut_data(str_dat, self.s_len)
+            res_dat[ct] = cut_dat
         return res_dat, dis_streaks
 
 
@@ -2140,6 +2142,7 @@ class TestDataSynthetic:
     Imitates a DataStruct.
     """
 
+    @staticmethod
     def getData(self):
         # First Time series
         dict1 = {'description': "Synthetic Data Series 1: Base Series", 'unit': "Test Unit 1"}
@@ -2387,15 +2390,15 @@ def test_dataset_artificially() -> None:
     # Test ModelDataView
     dat_nan = np.array([0, 2, 3, 7, 8,
                         1, 3, 4, 8, np.nan,
-                        1, 3, 4, 8, np.nan,
-                        1, 3, 4, 8, np.nan,
-                        1, 4, 5, 7, 8,
-                        1, 4, 5, 7, 8,
-                        1, 4, 5, 7, 8,
-                        1, 4, 5, 7, 8,
-                        1, 4, np.nan, 7, 8,
-                        1, 4, np.nan, 7, 8,
-                        2, 5, 6, 7, 9], dtype=np.float32).reshape((-1, 5))
+                        2, 3, 4, 8, np.nan,
+                        3, 3, 4, 8, np.nan,
+                        4, 4, 5, 7, 8,
+                        5, 4, 5, 7, 8,
+                        6, 4, 5, 7, 8,
+                        7, 4, 5, 7, 8,
+                        8, 4, np.nan, 7, 8,
+                        9, 4, np.nan, 7, 8,
+                        10, 5, 6, 7, 9], dtype=np.float32).reshape((-1, 5))
     ds_nan = Dataset(dat_nan, dt, t_init, sc, is_sc, descs, c_inds, name="SyntheticTest")
     ds_nan.seq_len = 2
 
@@ -2414,9 +2417,14 @@ def test_dataset_artificially() -> None:
     ])
     if not np.array_equal(str_dat, exp_dat):
         raise AssertionError("Something in extract_streak is fucking wrong!!")
-    ds_nan.data[5:7] = dat_nan[0:2]  # 'Invalidate' cache
-    str_dat = mdv.extract_streak(3)
-    if not np.array_equal(str_dat, exp_dat):
-        raise AssertionError("Caching does not work!!")
+
+    # Test disjoint streak extraction
+    dis_dat, dis_inds = mdv.extract_disjoint_streaks(2, 1)
+    exp_dis = np.array([[
+        dat_nan[4:6],
+        dat_nan[5:7],
+    ]])
+    if not np.array_equal(dis_dat, exp_dis) or not np.array_equal(dis_inds, np.array([2])):
+        raise AssertionError("Something in extract_disjoint_streaks is fucking wrong!!")
 
     print("Dataset test passed :)")
