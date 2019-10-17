@@ -1953,10 +1953,11 @@ class ModelDataView:
         """
         return self._get_data(self.n, self.n + self.n_len)
 
-    @CacheDecoratorFactory(streak_n_list, streak_data_list)
     def extract_streak(self, n_timesteps: int, take_last: bool = True) -> np.ndarray:
         """
-        Blah blah, this is decorated away :(
+        Extracts a streak of length `n_timesteps` from the associated
+        data. If `take_last` is True, then the last such streak is returned,
+        else the first. Uses caching for multiple calls with same signature.
 
         Args:
             n_timesteps: The required length of the streak.
@@ -1965,11 +1966,21 @@ class ModelDataView:
         Returns:
             A streak of length `n_timesteps`.
         """
+        return self._extract_streak((n_timesteps, take_last))
+
+    @CacheDecoratorFactory(streak_n_list, streak_data_list)
+    def _extract_streak(self, n: Tuple[int, bool]) -> np.ndarray:
+        # Extract parameters
+        n_timesteps, take_last = n
+
+        # Find nans and all streaks
         nans = find_rows_with_nans(self.get_rel_data())
         inds = find_all_streaks(nans, n_timesteps)
         if len(inds) < 1:
             raise ValueError("No streak of length {} found!!".format(n_timesteps))
         i = inds[-1] if take_last else inds[0]
+
+        # Get the data, cut and return
         data = self.get_rel_data()[i:(i + n_timesteps)]
         ret_data, _ = cut_data(data, self.s_len)
         return ret_data
