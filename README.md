@@ -28,7 +28,7 @@ To generate it first install Sphinx and then use:
 $ cd ..
 $ mkdir Docs
 $ cd Docs
-$ sphinx-apidoc.exe -F -H 'BatchRL' -A 'Chris' -o . '..\MasterThesis\BatchRL\'
+$ sphinx-apidoc.exe -F -H 'BatchRL' -A 'Chris' -o . '../MasterThesis/BatchRL/'
 $ cp ../MasterThesis/conf.py .
 $ ./make html
 ```
