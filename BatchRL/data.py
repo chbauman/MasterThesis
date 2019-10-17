@@ -1621,7 +1621,7 @@ class Dataset:
                                   self.t_init,
                                   np.array([0.0, 1.0]),
                                   np.array([False]),
-                                  np.array(["Time of day [" + dt + " mins.]"]),
+                                  np.array(["Time of day [{} mins.]".format(dt)]),
                                   no_inds,
                                   no_inds,
                                   "Time")
@@ -2192,13 +2192,13 @@ TestData2 = TestDataSynthetic()
 
 
 # Tests
-def test_rest_client():
+def test_rest_client() -> None:
     """
     Tests the REST client by requesting test data,
     saving it locally, reading it locally and deleting
     it again.
 
-    :return: None
+    Returns: None
     """
 
     # Load using REST api and locally
@@ -2323,8 +2323,11 @@ def test_dataset_artificially() -> None:
     Tests the plotting and the index conversion of the dataset.
     Throws an exception if a test fails.
 
-    :return: None
-    :raises AssertionError: If a test is not passed.
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If a test is not passed.
     """
 
     dat = np.array([0, 2, 3, 7, 8,

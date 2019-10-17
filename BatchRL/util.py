@@ -63,8 +63,8 @@ def repl(el, n: int) -> List:
 
 def b_cast(l_or_el, n: int) -> List:
     """
-    Checks if 'l_or_el' is a list or not.
-    If not returns a list with 'n' repeated elements 'l_or_el'.
+    Checks if `l_or_el` is a list or not.
+    If not returns a list with `n` repeated elements `l_or_el`.
 
     :param l_or_el: List of elements or element.
     :param n: Length of list.
@@ -134,8 +134,11 @@ def has_duplicates(arr: np.ndarray) -> bool:
     Returns true if arr contains duplicate values else
     False.
 
-    :param arr: Array to check for duplicates.
-    :return: Whether it has duplicates.
+    Args:
+        arr: Array to check for duplicates.
+
+    Returns:
+        Whether it has duplicates.
     """
     m = np.zeros_like(arr, dtype=bool)
     m[np.unique(arr, return_index=True)[1]] = True
@@ -154,12 +157,21 @@ def arr_eq(arr1: Arr, arr2: Arr) -> bool:
     return np.sum(arr1 != arr2) == 0
 
 
-def fit_linear_1d(x: np.ndarray, y: np.ndarray, x_new: Optional[np.ndarray] = None):
+def fit_linear_1d(x: np.ndarray, y: np.ndarray, x_new: np.ndarray = None):
     """
     Fit a linear model y = c * x + m.
     Returns coefficients m and c. If x_new
     is not None, returns the evaluated linear
     fit at x_new.
+
+    Args:
+        x_new: Where to evaluate the fitted model.
+        y: Y values.
+        x: X values.
+
+    Returns:
+        The parameters m and c if `x_new` is None, else
+        the model evaluated at `x_new`.
     """
 
     n = x.shape[0]
@@ -168,7 +180,7 @@ def fit_linear_1d(x: np.ndarray, y: np.ndarray, x_new: Optional[np.ndarray] = No
     ls_mat[:, 1] = x
     m, c = np.linalg.lstsq(ls_mat, y, rcond=None)[0]
     if x_new is None:
-        return [m, c]
+        return m, c
     else:
         return c * x_new + m
 
@@ -571,7 +583,6 @@ def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True) -> 
     seq_inds = cut_into_fixed_len(nans, seq_len, interleave)
 
     # Get shapes
-    n = all_data.shape[0]
     n_feat = all_data.shape[1]
     n_seqs = seq_inds.shape[1]
 
@@ -654,13 +665,19 @@ def clean_desc(nest_desc: str) -> str:
     """
     Removes the measurement code from the string containing
     the description of the measurement series.
+
+    Args:
+        nest_desc: The description from the database.
+
+    Returns:
+        The clean description.
     """
     if nest_desc[:4] == "65NT":
         return nest_desc.split(" ", 1)[1]
     return nest_desc
 
 
-def add_dt_and_tinit(m: Sequence, dt_mins, dt_init):
+def add_dt_and_tinit(m: Sequence, dt_mins: int, dt_init: np.datetime64) -> None:
     """
     Adds dt and t_init to the metadata dictionary m.
     """
@@ -903,13 +920,13 @@ def test_python_stuff() -> None:
     data_list = []
     @CacheDecoratorFactory(n_list, data_list)
     def fun(n: int, k: int):
-        return k * k
+        return n + k * k
     try:
-        if not fun(1, k=3) == 9:
+        if not fun(1, k=3) == 10:
             raise AssertionError
-        if not fun(2, 3) == 9:
+        if not fun(2, 3) == 11:
             raise AssertionError
-        if not fun(1, k=4) == 9:
+        if not fun(1, k=4) == 10:
             raise AssertionError
     except AssertionError as e:
         print("Cache Decorator Test failed!!")
