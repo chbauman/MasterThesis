@@ -568,6 +568,23 @@ def cut_data(all_data, seq_len: int) -> Tuple[np.ndarray, np.ndarray]:
     return out_dat, all_inds
 
 
+def find_disjoint_streaks(nans: np.ndarray, seq_len: int, streak_len: int, n_ts_offs: int = 0) -> np.ndarray:
+
+    n = len(nans)
+    tot_len = streak_len + seq_len - 1
+    start = (n_ts_offs - seq_len + 1 + streak_len) % streak_len
+    n_max = (n - n_ts_offs) // streak_len
+    inds = np.empty((n_max,), dtype=np.int32)
+    ct = 0
+    for k in range(n_max):
+        k_start = start + k * streak_len
+        curr_dat = nans[k_start: (k_start + tot_len)]
+        if not np.any(curr_dat):
+            inds[ct] = k_start
+            ct += 1
+    return inds[:ct]
+
+
 #######################################################################################################
 # NEST stuff
 
@@ -779,14 +796,8 @@ def test_numpy_functions() -> None:
     if not np.array_equal(c_dat, cut_dat_exp) or not np.array_equal(inds_exp, inds):
         raise AssertionError("cut_data not working correctly!!")
 
-    bool_vec = np.array([True,
-                         False,
-                         False,
-                         False,
-                         True,
-                         False,
-                         False,
-                         True])
+    bool_vec = np.array([True, False, False, False, True, False, False, True])
+    bool_vec_2 = np.array([True, False, False, False, False, True, False, False, False, False, True])
 
     exp_out = np.array([[1, 2, 5],
                         [2, 3, 6],
@@ -799,6 +810,17 @@ def test_numpy_functions() -> None:
     s_exp = np.array([1, 2, 5])
     if not np.array_equal(s_exp, streaks):
         raise AssertionError("find_all_streaks not working correctly!!")
+
+    # Test find_disjoint_streaks
+    dis_s = find_disjoint_streaks(bool_vec, 2, 1)
+    if not np.array_equal(dis_s, s_exp):
+        raise AssertionError("find_disjoint_streaks not working correctly!!")
+    dis_s = find_disjoint_streaks(bool_vec_2, 2, 2, 1)
+    if not np.array_equal(dis_s, np.array([2, 6])):
+        raise AssertionError("find_disjoint_streaks not working correctly!!")
+    dis_s = find_disjoint_streaks(bool_vec_2, 2, 2, 0)
+    if not np.array_equal(dis_s, np.array([1, 7])):
+        raise AssertionError("find_disjoint_streaks not working correctly!!")
 
     # Tests are done
     print("Numpy test passed :)")

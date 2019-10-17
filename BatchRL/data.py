@@ -1910,7 +1910,7 @@ class ModelDataView:
     sequences: np.ndarray  #: 3D array: the relevant data cut into sequences.
     seq_inds: np.ndarray  #: 1D int array: the indices describing the offset to each sequence.
 
-    # Data for analysis
+    # Single streak data for analysis
     streak_n_list: List[int] = []
     streak_data_list: List[np.ndarray] = []
 
@@ -1955,7 +1955,7 @@ class ModelDataView:
     def extract_streak(self, n_timesteps: int, take_last: bool = True):
         """
         Extracts a sequence of length `n_timesteps` from the
-        data.
+        data not containing nans.
 
         Args:
             n_timesteps: Length of required sequence.
