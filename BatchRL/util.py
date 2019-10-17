@@ -569,7 +569,20 @@ def cut_data(all_data, seq_len: int) -> Tuple[np.ndarray, np.ndarray]:
 
 
 def find_disjoint_streaks(nans: np.ndarray, seq_len: int, streak_len: int, n_ts_offs: int = 0) -> np.ndarray:
+    """
+    Finds streaks that are only overlapping by `seq_len` - 1 steps.
+    They will be a multiple of `streak_len` from each other relative
+    to the `nans` vector.
 
+    Args:
+        nans: Boolean array indicating that there is a nan if entry is true.
+        seq_len: The required sequence length.
+        streak_len: The length of the streak that is disjoint.
+        n_ts_offs: The number of timesteps that the start is offset.
+
+    Returns:
+        Indices pointing to the start of the disjoint streaks.
+    """
     n = len(nans)
     tot_len = streak_len + seq_len - 1
     start = (n_ts_offs - seq_len + 1 + streak_len) % streak_len
@@ -729,7 +742,7 @@ def n_mins_to_np_dt(mins: int) -> np.timedelta64:
 def test_numpy_functions() -> None:
     """
     Tests some of the numpy functions.
-    Raises errors if the tests are not passed.
+    Raises errors if one of the tests is not passed.
 
     Returns: None
 
