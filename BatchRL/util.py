@@ -447,16 +447,10 @@ def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarr
     :return: The data before the streak and the streak data and the index
         pointing to the start of the streak data
     """
-
     tot_s_len = s_len + lag
-    not_nans = np.logical_not(find_rows_with_nans(all_data))
-    rwn = np.int32(not_nans)
-    true_seq = np.empty((tot_s_len,), dtype=np.int32)
-    true_seq.fill(1)
 
-    # Find sequences of length tot_s_len
-    tmp = np.convolve(rwn, true_seq, 'valid')
-    inds = np.where(tmp == tot_s_len)[0]
+    # Find last sequence of length tot_s_len
+    inds = find_all_streaks(find_rows_with_nans(all_data), tot_s_len)
     if len(inds) < 1:
         raise IndexError("No fucking streak of length {} found!!!".format(tot_s_len))
     last_seq_start = inds[-1]
@@ -483,6 +477,62 @@ def nan_array_equal(a: np.ndarray, b: np.ndarray) -> bool:
     except AssertionError:
         return False
     return True
+
+
+def find_all_streaks(col_has_nan: np.ndarray, s_len: int) -> np.ndarray:
+    """
+    Finds all sequences of length `s_len` where `col_has_nan`
+    is never False. Then returns all indices of the start of
+    these sequences in `col_has_nan`.
+
+    Args:
+        col_has_nan: Bool vector specifying where nans are.
+        s_len: The length of the sequences.
+
+    Returns:
+        Index vector specifying the start of the sequences.
+    """
+    # Define True filter
+    true_seq = np.empty((s_len,), dtype=np.int32)
+    true_seq.fill(1)
+
+    # Find sequences of length s_len
+    tmp = np.convolve(np.logical_not(col_has_nan), true_seq, 'valid')
+    inds = np.where(tmp == s_len)[0]
+    return inds
+
+
+def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True) -> np.ndarray:
+    """
+    Use the two functions above to cut the data into
+    sequences for dynamic model learning.
+
+    :param all_data: The 2D numpy array containing the data series.
+    :param seq_len: The length of the sequences to extract.
+    :param interleave: See cut_into_fixed_len
+    :return: 3D array with sequences.
+    """
+    # Check input
+    if len(all_data.shape) > 2:
+        raise ValueError("Data array has too many dimensions!")
+
+    # Use helper functions
+    nans = find_rows_with_nans(all_data)
+    seq_inds = cut_into_fixed_len(nans, seq_len, interleave)
+
+    # Get shapes
+    n = all_data.shape[0]
+    n_feat = all_data.shape[1]
+    n_seqs = seq_inds.shape[1]
+
+    # Initialize empty data
+    out_dat = np.empty((n_seqs, seq_len, n_feat), dtype=np.float32)
+
+    # Fill and return
+    for k in range(n_seqs):
+        out_dat[k, :, :] = all_data[seq_inds[:, k], :]
+    return out_dat
+
 
 #######################################################################################################
 # NEST stuff
@@ -661,25 +711,34 @@ def test_numpy_functions() -> None:
         [2.0, 2.0, 5.0],
         [3.0, -1.0, 2.0]])
 
-    # Test data functions
+    # Test array splitting
     d1, d2, n = split_arr(data_array, 0.1)
     d1_exp = data_array[:3]
     if not np.array_equal(d1, d1_exp) or n != 3:
         raise AssertionError("split_arr not working correctly!!")
 
+    # Test finding rows with nans
     nans_bool_arr = find_rows_with_nans(data_array_with_nans)
     nans_exp = np.array([True, False, False, True, True, False, False, False])
     if not np.array_equal(nans_exp, nans_bool_arr):
         raise AssertionError("find_rows_with_nans not working correctly!!")
 
+    # Test last streak extraction
     d1, d2, n = extract_streak(data_array_with_nans, 1, 1)
     d2_exp = data_array_with_nans[6:8]
     d1_exp = data_array_with_nans[:6]
-    print(np.array_equal(d2, d2_exp))
-    print(d1)
-    print(d1_exp)
-    if not np.nan_array_equal(d2, d2_exp) or n != 7 or not np.nan_array_equal(d1, d1_exp):
+    if not nan_array_equal(d2, d2_exp) or n != 7 or not nan_array_equal(d1, d1_exp):
         raise AssertionError("extract_streak not working correctly!!")
+
+    # Test sequence cutting
+    cut_data = cut_data_into_sequences(data_array_with_nans, 2)
+    cut_dat_exp = np.array([
+        data_array_with_nans[1:3],
+        data_array_with_nans[5:7],
+        data_array_with_nans[6:8],
+    ])
+    if not np.array_equal(cut_data, cut_dat_exp):
+        raise AssertionError("cut_data_into_sequences not working correctly!!")
 
     bool_vec = np.array([True,
                          False,
@@ -697,7 +756,10 @@ def test_numpy_functions() -> None:
     if not np.array_equal(exp_out, fix_len_seq):
         raise AssertionError("cut_into_fixed_len not working correctly!!")
 
-
+    streaks = find_all_streaks(bool_vec, 2)
+    s_exp = np.array([1, 2, 5])
+    if not np.array_equal(s_exp, streaks):
+        raise AssertionError("find_all_streaks not working correctly!!")
 
     # Tests are done
     print("Numpy test passed :)")

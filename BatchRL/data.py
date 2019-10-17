@@ -838,38 +838,6 @@ def standardize(data: np.ndarray, m: List[Dict]) -> Tuple[np.ndarray, List[Dict]
     return proc_data, m
 
 
-def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True) -> np.ndarray:
-    """
-    Use the two functions above to cut the data into
-    sequences for dynamic model learning.
-
-    :param all_data: The 2D numpy array containing the data series.
-    :param seq_len: The length of the sequences to extract.
-    :param interleave: See cut_into_fixed_len
-    :return: 3D array with sequences.
-    """
-    # Check input
-    if len(all_data.shape) > 2:
-        raise ValueError("Data array has too many dimensions!")
-
-    # Use helper functions
-    nans = find_rows_with_nans(all_data)
-    seq_inds = cut_into_fixed_len(nans, seq_len, interleave)
-
-    # Get shapes
-    n = all_data.shape[0]
-    n_feat = all_data.shape[1]
-    n_seqs = seq_inds.shape[1]
-
-    # Initialize empty data
-    out_dat = np.empty((n_seqs, seq_len, n_feat), dtype=np.float32)
-
-    # Fill and return
-    for k in range(n_seqs):
-        out_dat[k, :, :] = all_data[seq_inds[:, k], :]
-    return out_dat
-
-
 def cut_and_split(dat: np.ndarray, seq_len: int, streak_len: int,
                   ret_orig: bool = False) -> Tuple[np.ndarray, np.ndarray, int]:
     """
