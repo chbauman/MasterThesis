@@ -1893,8 +1893,6 @@ class Dataset:
         return scaling, is_scd
 
 
-
-
 class ModelDataView:
     """
     Container for dataset specifying parts of
@@ -1921,6 +1919,7 @@ class ModelDataView:
         # Store parameters
         self._d_ref = d_ref
         self.n = n_init
+        self.n_len = n_len
         self.name = name
         self.s_len = d_ref.seq_len
 
@@ -1953,35 +1952,6 @@ class ModelDataView:
             Data array.
         """
         return self._get_data(self.n, self.n + self.n_len)
-
-    # def extract_streak(self, n_timesteps: int, take_last: bool = True) -> np.ndarray:
-    #     """
-    #     Extracts a sequence of length `n_timesteps` from the
-    #     data not containing nans.
-    #
-    #     Args:
-    #         n_timesteps: Length of required sequence.
-    #         take_last: Whether to choose the last of such sequence or the first.
-    #
-    #     Returns:
-    #         3D Array with sequence data.
-    #     """
-    #     # Check if it was extracted before
-    #     if n_timesteps in self.streak_n_list:
-    #         # Return from list
-    #         i = self.streak_n_list.index(n_timesteps)
-    #         return self.streak_data_list[i]
-    #     else:
-    #         # Find ans store in list
-    #         nans = find_rows_with_nans(self.get_rel_data())
-    #         inds = find_all_streaks(nans, n_timesteps)
-    #         if len(inds) < 1:
-    #             raise ValueError("No streak of length {} found!!".format(n_timesteps))
-    #         i = inds[-1] if take_last else inds[0]
-    #         ret_data, _ = cut_data(self.get_rel_data(), self.s_len)
-    #         self.streak_n_list += [i]
-    #         self.streak_data_list += [ret_data]
-    #         return ret_data
 
     @CacheDecoratorFactory(streak_n_list, streak_data_list)
     def extract_streak(self, n_timesteps: int, take_last: bool = True) -> np.ndarray:
@@ -2353,5 +2323,40 @@ def test_dataset_artificially() -> None:
         raise AssertionError("get_scaling_mul failed!")
     if not np.allclose(sc_mean_exp, scaling[:, 0]):
         raise AssertionError("get_scaling_mul failed!")
+
+    # Test ModelDataView
+    dat_nan = np.array([0, 2, 3, 7, 8,
+                        1, 3, 4, 8, np.nan,
+                        1, 3, 4, 8, np.nan,
+                        1, 3, 4, 8, np.nan,
+                        1, 4, 5, 7, 8,
+                        1, 4, 5, 7, 8,
+                        1, 4, 5, 7, 8,
+                        1, 4, 5, 7, 8,
+                        1, 4, np.nan, 7, 8,
+                        1, 4, np.nan, 7, 8,
+                        2, 5, 6, 7, 9], dtype=np.float32).reshape((-1, 5))
+    ds_nan = Dataset(dat_nan, dt, t_init, sc, is_sc, descs, c_inds, name="SyntheticTest")
+    ds_nan.seq_len = 2
+
+    # Test get_rel_data
+    mdv = ModelDataView(ds_nan, "Test", 2, 7)
+    mod_dat = mdv.get_rel_data()
+    if not nan_array_equal(mod_dat, dat_nan[2:9]):
+        raise AssertionError("Something's fucking wrong!!")
+
+    # Test streak extraction
+    mdv.extract_streak(3)
+    str_dat = mdv.extract_streak(3)
+    exp_dat = np.array([
+        dat_nan[5:7],
+        dat_nan[6:8],
+    ])
+    if not np.array_equal(str_dat, exp_dat):
+        raise AssertionError("Something in extract_streak is fucking wrong!!")
+    ds_nan.data[5:7] = dat_nan[0:2]  # 'Invalidate' cache
+    str_dat = mdv.extract_streak(3)
+    if not np.array_equal(str_dat, exp_dat):
+        raise AssertionError("Caching does not work!!")
 
     print("Dataset test passed :)")
