@@ -206,17 +206,21 @@ def extract_date_interval(dates, values, d1, d2):
     return dates_new, values_new, dt_init_new
 
 
-def analyze_data(dat):
+def analyze_data(dat: Sequence) -> None:
     """
-    Analyzes the provided data.
-    DEPRECATED!
-    """
+    Analyzes the provided raw data series and prints
+    some information to the console.
 
+    Args:
+        dat: The raw data series to analyze.
+
+    Returns:
+        None
+    """
     values, dates = dat
     n_data_p = len(values)
-
-    tot_time_span = dates[-1] - dates[0]
-    print("Data ranges from ", dates[0], "to", dates[-1])
+    print("Total: {} data points.".format(n_data_p))
+    print("Data ranges from {} to {}".format(dates[0],  dates[-1]))
 
     t_diffs = dates[1:] - dates[:-1]
     max_t_diff = np.max(t_diffs)
@@ -225,7 +229,6 @@ def analyze_data(dat):
     print("Mean gap:", np.timedelta64(mean_t_diff, 'm'), "or", np.timedelta64(mean_t_diff, 's'))
 
     print("Positive differences:", np.all(t_diffs > np.timedelta64(0, 'ns')))
-    return
 
 
 def clean_data(dat, rem_values=(), n_cons_least: int = 60, const_excepts=()):
@@ -435,7 +438,6 @@ def fill_holes_linear_interpolate(time_series: np.ndarray, max_width: int = 1) -
     :return: None
     """
 
-    n = time_series.shape[0]
     nan_bool = np.isnan(time_series)
 
     # Return if there are no NaNs
@@ -452,7 +454,6 @@ def fill_holes_linear_interpolate(time_series: np.ndarray, max_width: int = 1) -
 
     # Initialize iterators
     ind_ind = 0
-    s_ind = all_nans[ind_ind][0]
 
     while ind_ind < all_nans.shape[0]:
         s_ind = all_nans[ind_ind][0]
@@ -472,7 +473,7 @@ def fill_holes_linear_interpolate(time_series: np.ndarray, max_width: int = 1) -
 
 
 def remove_outliers(time_series: np.ndarray, grad_clip: Num = 100.0,
-                    clip_int: Optional[Sequence] = None) -> np.ndarray:
+                    clip_int: Optional[Sequence] = None) -> None:
     """
     Removes data points that lie outside
     the specified interval 'clip_int' and ones
@@ -481,7 +482,7 @@ def remove_outliers(time_series: np.ndarray, grad_clip: Num = 100.0,
     :param time_series: The time series to process.
     :param grad_clip: The maximum gradient magnitude.
     :param clip_int: The interval where the data has to lie within.
-    :return: A copy of the series without the outlliers.
+    :return: None.
     """
 
     # Helper functions
@@ -835,26 +836,6 @@ def standardize(data: np.ndarray, m: List[Dict]) -> Tuple[np.ndarray, List[Dict]
         m[k]['mean_and_std'] = [f_mean[0, k], f_std[0, k]]
 
     return proc_data, m
-
-
-def find_rows_with_nans(all_data: np.ndarray) -> np.ndarray:
-    """
-    Returns a boolean vector indicating which
-    rows of 'all_dat' contain NaNs.
-
-    :param all_data: Numpy array with data series as columns.
-    :return: 1D array of bool specifying rows containing nans.
-    """
-
-    n = all_data.shape[0]
-    m = all_data.shape[1]
-    col_has_nan = np.empty((n,), dtype=np.bool)
-    col_has_nan.fill(False)
-
-    for k in range(m):
-        col_has_nan = np.logical_or(col_has_nan, np.isnan(all_data[:, k]))
-
-    return col_has_nan
 
 
 def cut_into_fixed_len(col_has_nan: np.ndarray, seq_len: int = 20, interleave: bool = True) -> np.ndarray:
@@ -1503,7 +1484,7 @@ class Dataset:
         self.c_inds = c_inds
         self.p_inds = p_inds
 
-        # Actual data
+        # Full data
         self.data = all_data
         if self.d == 1:
             self.data = np.reshape(self.data, (-1, 1))
@@ -1546,7 +1527,7 @@ class Dataset:
         Split dataset into train, validation and test set.
         """
 
-        # split data        
+        # split data
         s_len = int(60 / self.dt * 24 * streak_len)
         self.streak_len = s_len
         self.orig_train_val, self.orig_test, self.test_start = \
@@ -2334,9 +2315,9 @@ def test_dataset_artificially() -> None:
     ds = Dataset(dat, dt, t_init, sc, is_sc, descs, c_inds, name="SyntheticTest")
 
     ds.save()
-    plot_dataset(ds, True, ["Test", "Fuck"])
+    plot_dataset(ds, False, ["Test", "Fuck"])
 
-    # Specify tests
+    # Specify index tests
     test_list = [
         (np.array([2, 4], dtype=np.int32), np.array([1, 2], dtype=np.int32), ds.to_prepared),
         (np.array([2, 3], dtype=np.int32), np.array([1, 4], dtype=np.int32), ds.to_prepared),
@@ -2345,7 +2326,7 @@ def test_dataset_artificially() -> None:
         (np.array([2, 3, 4], dtype=np.int32), np.array([4, 1, 3], dtype=np.int32), ds.from_prepared),
     ]
 
-    # Run tests
+    # Run index tests
     for t in test_list:
         inp, sol, fun = t
         out = fun(inp)
@@ -2369,5 +2350,14 @@ def test_dataset_artificially() -> None:
     ds.transform_c_list(c_list)
     if not np.allclose(c_list[0].extra_dat[1], 0.0):
         raise AssertionError("Interval transformation failed!")
+
+    # Test get_scaling_mul
+    scaling, is_sc = ds.get_scaling_mul(0, 3)
+    is_sc_exp = np.array([True, True, True])
+    sc_mean_exp = np.array([1.0, 1.0, 1.0])
+    if not np.array_equal(is_sc_exp, is_sc):
+        raise AssertionError("get_scaling_mul failed!")
+    if not np.allclose(sc_mean_exp, scaling[:, 0]):
+        raise AssertionError("get_scaling_mul failed!")
 
     print("Dataset test passed :)")

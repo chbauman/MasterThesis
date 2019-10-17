@@ -19,7 +19,7 @@ from pendulum import Pendulum
 from util import *
 
 from data import WeatherData, TestData, \
-    analyze_data, get_UMAR_heating_data, get_data_test, \
+    get_UMAR_heating_data, get_data_test, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
     get_DFAB_heating_data, \
     compute_DFAB_energy_usage, get_weather_data, generate_room_datasets, \
@@ -61,12 +61,12 @@ def main():
 
     # # Do tests
     test_layers()
-    # test_numpy_functions()
-    # test_rest_client()
+    test_numpy_functions()
+    test_rest_client()
     # get_data_test()
     # test_align()
-    # test_dataset_artificially()
-    # return
+    test_dataset_artificially()
+    return
 
     # Dataset
     name_ds = 'Model_Room43'

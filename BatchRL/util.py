@@ -365,6 +365,25 @@ def check_dim(a: np.ndarray, n: int) -> bool:
     return len(a.shape) == n
 
 
+def find_rows_with_nans(all_data: np.ndarray) -> np.ndarray:
+    """
+    Returns a boolean vector indicating which
+    rows of 'all_dat' contain NaNs.
+
+    :param all_data: Numpy array with data series as columns.
+    :return: 1D array of bool specifying rows containing nans.
+    """
+
+    n = all_data.shape[0]
+    m = all_data.shape[1]
+    col_has_nan = np.empty((n,), dtype=np.bool)
+    col_has_nan.fill(False)
+
+    for k in range(m):
+        col_has_nan = np.logical_or(col_has_nan, np.isnan(all_data[:, k]))
+
+    return col_has_nan
+
 #######################################################################################################
 # NEST stuff
 
@@ -515,13 +534,39 @@ def test_numpy_functions() -> None:
     :raises AssertionError: If a test fails.
     """
 
+    # Define some index arrays
     ind_arr = np.array([1, 2, 3, 4, 2, 3, 0], dtype=np.int32)
     ind_arr_no_dup = np.array([1, 2, 4, 3, 0], dtype=np.int32)
 
+    # Test index functions
     if not has_duplicates(ind_arr) or has_duplicates(ind_arr_no_dup):
         raise AssertionError("Implementation of has_duplicates contains errors!")
 
     if arr_eq(ind_arr, ind_arr_no_dup) or not arr_eq(ind_arr, ind_arr):
         raise AssertionError("Implementation of arr_eq(...) contains errors!")
 
-    print("Test passed :)")
+    # Define data arrays
+    data_array = np.array([
+        [1.0, 1.0, 2.0],
+        [2.0, 2.0, 5.0],
+        [2.0, 2.0, 5.0],
+        [3.0, -1.0, 2.0]])
+    data_array_with_nans = np.array([
+        [1.0, np.nan, 2.0],
+        [2.0, 2.0, 5.0],
+        [2.0, 2.0, np.nan],
+        [2.0, np.nan, np.nan],
+        [3.0, -1.0, 2.0]])
+
+    # Test data functions
+    d1, d2, n = split_arr(data_array, 0.1)
+    d1_exp = data_array[:3]
+    if not np.array_equal(d1, d1_exp) or not n == 1:
+        raise AssertionError("split_arr not working correctly!!")
+
+    nans_bool_arr = find_rows_with_nans(data_array_with_nans)
+    nans_exp = np.array([True, False, True, True, False])
+    if not np.array_equal(nans_exp, nans_bool_arr):
+        raise AssertionError("find_rows_with_nans not working correctly!!")
+
+    print("Numpy test passed :)")
