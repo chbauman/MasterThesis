@@ -78,14 +78,42 @@ def b_cast(l_or_el, n: int) -> List:
 
 
 class CacheDecoratorFactory(object):
+    """
+    Decorator for caching results of a function.
+    Function output and function input is stored in a list
+    and returned if the same input is given to the decorated function.
+    """
 
-    def __init__(self, n_list, data_list):
-        self.n = n_list
-        self.d = data_list
+    n: List = []  #: List of function arguments.
+    d: List = []  #: List of function outputs.
+
+    def __init__(self, n_list: List = None, data_list: List = None):
+        """
+        Initialize the decorator. If no lists are provided, the
+        results are stored in this class.
+
+        Args:
+            n_list: List where the input is stored.
+            data_list: List where the function output is stored.
+        """
+        if n_list is not None:
+            self.n = n_list
+        if data_list is not None:
+            self.d = data_list
 
     def __call__(self, f):
+        """
+        Decorates the function `f`.
+
+        Args:
+            f: The function to be decorated.
+
+        Returns:
+            The decorated function.
+        """
 
         def decorated(n: int, *args, **kwargs):
+
             if n in self.n:
                 i = self.n.index(n)
                 return self.d[i]
