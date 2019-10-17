@@ -18,7 +18,7 @@ class CompositeModel(BaseDynamicsModel):
         :param dataset: Dataset.
         :param model_list: A list of dynamics models defined for the same dataset.
         :param new_name: The name to give to this model, default produces very long names.
-        :raises ValueError: If the model in list do not have access to :param:`dataset`.
+        :raises ValueError: If the model in list do not have access to `dataset`.
         """
         # Compute name and check datasets
         name = dataset.name + "Composite"

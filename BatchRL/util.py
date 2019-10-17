@@ -671,7 +671,7 @@ def np_dt_to_str(np_dt: np.datetime64) -> str:
 
 def mins_to_str(mins: int) -> str:
     """
-    Converts the integer 'mins' to a string.
+    Converts the integer `mins` to a string.
 
     :param mins: Number of minutes.
     :return: String
@@ -714,10 +714,11 @@ def test_numpy_functions() -> None:
     Tests some of the numpy functions.
     Raises errors if the tests are not passed.
 
-    :return: None
-    :raises AssertionError: If a test fails.
-    """
+    Returns: None
 
+    Raises:
+        AssertionError: If a test fails.
+    """
     # Define some index arrays
     ind_arr = np.array([1, 2, 3, 4, 2, 3, 0], dtype=np.int32)
     ind_arr_no_dup = np.array([1, 2, 4, 3, 0], dtype=np.int32)
@@ -773,7 +774,6 @@ def test_numpy_functions() -> None:
     ])
     if not np.array_equal(cut_seq_dat, cut_dat_exp):
         raise AssertionError("cut_data_into_sequences not working correctly!!")
-
     c_dat, inds = cut_data(data_array_with_nans, 2)
     inds_exp = np.array([1, 5, 6])
     if not np.array_equal(c_dat, cut_dat_exp) or not np.array_equal(inds_exp, inds):

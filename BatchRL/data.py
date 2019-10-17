@@ -220,7 +220,7 @@ def analyze_data(dat: Sequence) -> None:
     values, dates = dat
     n_data_p = len(values)
     print("Total: {} data points.".format(n_data_p))
-    print("Data ranges from {} to {}".format(dates[0],  dates[-1]))
+    print("Data ranges from {} to {}".format(dates[0], dates[-1]))
 
     t_diffs = dates[1:] - dates[:-1]
     max_t_diff = np.max(t_diffs)
@@ -1271,6 +1271,7 @@ def analyze_room_energy_consumption():
 #######################################################################################################
 # Dataset definition and generation
 
+
 class SeriesConstraint:
     """
     The class defining constraints for single data series.
@@ -1890,6 +1891,95 @@ class Dataset:
         scaling = np.array(repl(self.scaling[ind], n))
         is_scd = np.copy(np.array(repl(self.is_scaled[ind], n), dtype=np.bool))
         return scaling, is_scd
+
+
+class ModelDataView:
+    """
+    Container for dataset specifying parts of
+    the original data in the dataset. Usable for
+    train, val and test splits.
+    """
+
+    _d_ref: Dataset  #: Reference to dataset
+
+    name: str  #: Name of part of data
+    n: int  #: Offset in elements wrt the data in `_d_ref`
+    n_len: int  #: Number of elements
+
+    # Data for model training
+    sequences: np.ndarray  #: 3D array: the relevant data cut into sequences.
+    seq_inds: np.ndarray  #: 1D int array: the indices describing the offset to each sequence.
+
+    # Data for analysis
+    streak_n_list: List[int] = []
+    streak_data_list: List[np.ndarray] = []
+
+    def __init__(self, d_ref: Dataset, name: str, n_init: int, n_len: int):
+
+        # Store parameters
+        self._d_ref = d_ref
+        self.n = n_init
+        self.name = name
+        self.s_len = d_ref.seq_len
+
+        # Cut the relevant data
+        self.sequences, self.seq_inds = cut_data(self.get_rel_data(), self.s_len)
+
+    def _get_data(self, n1: int, n2: int) -> np.ndarray:
+        """
+        Returns a copy of the data[n1: n2]
+        Args:
+            n1: First index
+            n2: Second index
+
+        Returns:
+            Numpy array of data.
+        Raises:
+            IndexError: If indices are out of bound.
+        """
+        dat_len = self._d_ref.data.shape[0]
+        if n1 < 0 or n2 < 0 or n1 > dat_len or n2 > dat_len or n1 > n2:
+            raise IndexError("Invalid indices!")
+        return np.copy(self._d_ref.data[n1: n2])
+
+    def get_rel_data(self) -> np.ndarray:
+        """
+        Returns the data that this class uses.
+        Should not be modified.
+
+        Returns:
+            Data array.
+        """
+        return self._get_data(self.n, self.n + self.n_len)
+
+    def extract_streak(self, n_timesteps: int, take_last: bool = True):
+        """
+        Extracts a sequence of length `n_timesteps` from the
+        data.
+
+        Args:
+            n_timesteps: Length of required sequence.
+            take_last: Whether to choose the last of such sequence or the first.
+
+        Returns:
+            3D Array with sequence data.
+        """
+        # Check if it was extracted before
+        if n_timesteps in self.streak_n_list:
+            # Return from list
+            i = self.streak_n_list.index(n_timesteps)
+            return self.streak_data_list[i]
+        else:
+            # Find ans store in list
+            nans = find_rows_with_nans(self.get_rel_data())
+            inds = find_all_streaks(nans, n_timesteps)
+            if len(inds) < 1:
+                raise ValueError("No streak of length {} found!!".format(n_timesteps))
+            i = inds[-1] if take_last else inds[0]
+            ret_data, _ = cut_data(self.get_rel_data(), self.s_len)
+            self.streak_n_list += [i]
+            self.streak_data_list += [ret_data]
+            return ret_data
 
 
 def generate_room_datasets() -> List[Dataset]:
