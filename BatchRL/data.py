@@ -1529,7 +1529,7 @@ class Dataset:
         # Extract, prepare and return
         sequences, streak_offs = mdv.extract_disjoint_streaks(self._day_len, n_off_dis)
         in_out_list = [prepare_supervised_control(s, self.c_inds, False) for s in sequences]
-        return in_out_list, streak_offs
+        return in_out_list, streak_offs + mdv.n
 
     def get_prepared_data(self, what_data: str = 'train', *,
                           get_all_preds: bool = False) -> Tuple[np.ndarray, np.ndarray, int]:
@@ -2540,8 +2540,12 @@ def test_dataset_artificially() -> None:
         raise AssertionError("Something in split_data is fucking wrong!!")
 
     # Test get_day
-    day_dat = ds_nan.get_days('val')
-    print(ds_nan._offs)
-    print(day_dat)
+    day_dat, ns = ds_nan.get_days('val')
+    exp_first_out_dat = np.array([
+        [5, 5.0, 8.0],
+        [6, 5.0, 8.0],
+    ], dtype=np.float32)
+    if ns[0] != 4 or not np.array_equal(day_dat[0][1], exp_first_out_dat):
+        raise AssertionError("get_days not implemented correctly!!")
 
     print("Dataset test passed :)")

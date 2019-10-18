@@ -16,7 +16,7 @@ from cart_pole import CartPole
 from mount_car_cont import MountCarCont
 from pendulum import Pendulum
 from util import *
-
+from dynamics_env import DynEnv
 from data import WeatherData, TestData, \
     get_UMAR_heating_data, get_data_test, \
     cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
@@ -52,6 +52,9 @@ def simple_battery_FQI():
 def main():
     # get_DFAB_heating_data()
     # generate_room_datasets()
+
+    d = DynEnv()
+    d.step(0)
 
     # w_dat = get_weather_data()
     # w_dat.split_train_test()
