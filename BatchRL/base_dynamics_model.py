@@ -589,7 +589,7 @@ class BaseDynamicsModel(ABC):
         :param data_str: String defining which part of the data to use.
         :return: Residuals.
         """
-        input_data, output_data, n = self.data.get_prepared_data(data_str)
+        input_data, output_data, n = self.data.get_split(data_str)
         prep_inds = self.data.to_prepared(self.out_inds)
         residuals = self.predict(input_data) - output_data[:, prep_inds]
         return residuals

@@ -58,7 +58,8 @@ def main():
     # pre_mod = Periodic1DayModel(w_dat, None, alpha=0.1)
     # pre_mod.analyze_6_days()
 
-    # # Do tests
+    # Do tests
+    test_time_stuff()
     test_layers()
     test_numpy_functions()
     test_rest_client()
@@ -72,9 +73,7 @@ def main():
     ds = Dataset.loadDataset(name_ds)
     ds = ds.add_time()
     ds.standardize()
-    ds.split_train_test(7)
     ds.split_data()
-    ds.get_prepared_data()
 
     # Time variable prediction
     time_model_ds = SCTimeModel(ds, 6)
@@ -143,9 +142,9 @@ def main():
     mods = [mod_test]  # mod, mod_no_consts, mod_no_wt]
     for m_to_use in mods:
         m_to_use.fit()
-        # m_to_use.analyze()
-        # m_to_use.analyze_disturbed("Valid", 'val', 10)
-        # m_to_use.analyze_disturbed("Train", 'train', 10)
+        m_to_use.analyze()
+        m_to_use.analyze_disturbed("Valid", 'val', 10)
+        m_to_use.analyze_disturbed("Train", 'train', 10)
     return
     # mod.optimize(2)
 

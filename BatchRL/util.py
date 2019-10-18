@@ -854,6 +854,26 @@ def ts_per_day(n_min: int) -> int:
     return 24 * 60 // n_min
 
 
+def day_offset_ts(t_init: str, mins: int = 15) -> int:
+    """
+    Computes the number of timesteps of length `mins` minutes
+    until the next day starts.
+
+    Args:
+        t_init: The reference time.
+        mins: The number of minutes in a timestep.
+
+    Returns:
+        Number of timesteps until next day.
+    """
+    np_t_init = str_to_np_dt(t_init)
+    t_0 = np.datetime64(np_t_init, 'D')
+    dt_int = np.timedelta64(mins, 'm')
+    n_ts_passed = int((np_t_init - t_0) / dt_int)
+    tot_n_ts = int(np.timedelta64(1, 'D') / dt_int)
+    return tot_n_ts - n_ts_passed
+
+
 #######################################################################################################
 # Tests
 
@@ -1015,3 +1035,20 @@ def test_python_stuff() -> None:
         raise AssertionError("Some error happened: {}".format(e))
 
     pass
+
+
+def test_time_stuff() -> None:
+
+    # Define data
+    dt1 = np.datetime64('2000-01-01T00:00', 'm')
+    dt2 = np.datetime64('2000-01-01T01:45', 'm')
+    dt3 = np.datetime64('2000-01-01T22:45', 'm')
+    n_mins = 15
+    t_init_str = np_dt_to_str(dt3)
+
+    # Test day_offset_ts
+    n_ts = day_offset_ts(t_init_str, n_mins)
+    if n_ts != 5:
+        raise AssertionError("Fuck you!!")
+
+    print("Time tests passed! :)")
