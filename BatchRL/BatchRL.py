@@ -53,9 +53,6 @@ def main():
     # get_DFAB_heating_data()
     # generate_room_datasets()
 
-    d = DynEnv()
-    d.step(0)
-
     # w_dat = get_weather_data()
     # w_dat.split_train_test()
     # pre_mod = Periodic1DayModel(w_dat, None, alpha=0.1)

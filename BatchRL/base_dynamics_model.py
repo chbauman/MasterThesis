@@ -5,7 +5,8 @@ from util import *
 from visualize import plot_dataset, model_plot_path
 
 
-def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray, n_offs: int = 0) -> Dataset:
+def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
+                n_offs: int = 0) -> Dataset:
     """
     Creates a dataset with truth time series tr and parameters
     from the original dataset d. Intended for plotting after
