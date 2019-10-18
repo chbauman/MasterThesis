@@ -1,17 +1,32 @@
-###################################################################################################
-# Name: rest client
-# Version: 0.1
-# Description: This client provides a possible solution if you want to
-# connect to our REST API of the nest database from your local computer
+"""REST client for data retrieval from NEST database.
 
+This module can be used to download and save data
+from the NEST database. Returns the values and the
+timesteps in numpy format for each defined data series.
+The following example shows how to use this module.
 
-# Activities:                                   Author:                         Date:
-# Initial comment                               RK                              20190425
-# Modified timestamp                            RK                              20190529
-# Fixed conversion to datetime, added local 
-# data storage and added password GUI.          CB                              20190821
-# Added meta data retrieval                     CB                              20190904
-###################################################################################################
+Example usage::
+
+    # Define data.
+    test_data = DataStruct(
+        id_list=[421100171, 421100172],
+        name="Test",
+        start_date='2019-08-08',
+        end_date='2019-08-09'
+    )
+
+    # Get data from SQL database
+    data, metadata = test_data.getData()
+
+    # Get data corresponding to first ID (421100171)
+    values, timestamps = data[0]
+
+    # Do something with the data
+    # Add your code here...
+    print(values, timestamps)
+
+Written by Christian Baumann ans Ralf Knechtle @ Empa, 2019
+"""
 
 import os
 import time
@@ -22,41 +37,45 @@ import numpy as np
 import pandas as pd
 import requests
 
-USE_CL: bool = True
+USE_CL: bool = True  #: Whether to use the command line for the login.
 if not USE_CL:
     from pw_gui import get_pw
 else:
     from pw_cl import get_pw
 
-# Where to put the local copy of the data
+#: Where to put the local copy of the data.
 save_dir: str = '../Data/'
 
 
-def get_data_folder(name: str, start_date: str, end_date: str) -> str:
+def _get_data_folder(name: str, start_date: str, end_date: str) -> str:
     """
     Defines the naming of the data directory given
     the name and the dates.
 
-    :param name: Name of data.
-    :param start_date: Start of data collection.
-    :param end_date: End of data collection.
-    :return: Full path of data defined by params.
+    Args:
+        name: Name of data.
+        start_date: Start of data collection.
+        end_date: End of data collection.
+
+    Returns:
+        Full path of data defined by params.
     """
     ext = start_date + "__" + end_date + "__"
     data_dir = os.path.join(save_dir, ext + name)
     return data_dir
 
 
-class Client(object):
-    """
-    Client for data retrieval from local disk or
+class _Client(object):
+    """Client for data retrieval.
+
+    Reads from local disk if it already exists or else
     from SQL data base of NEST. Once loaded from the
     server, it can be stored to and reloaded from
     the local disk.
     """
 
-    domain: str = 'nest.local'
-    url: str = 'https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/'
+    _DOMAIN: str = 'nest.local'
+    _URL: str = 'https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/'
 
     def __init__(self,
                  name,
@@ -82,8 +101,11 @@ class Client(object):
         Reads data defined by the list of column IDs df_data
         that was acquired between startDate and endDate.
 
-        :param df_data: List of IDs in string format.
-        :return: (List[(Values, Dates)], List[Metadata])
+        Args:
+            df_data: List of IDs in string format.
+
+        Returns:
+            (List[(Values, Dates)], List[Metadata])
         """
 
         # https://github.com/brandond/requests-negotiate-sspi/blob/master/README.md
@@ -91,16 +113,15 @@ class Client(object):
 
         # Check Login
         username, pw = get_pw()
-        self.auth = HttpNegotiateAuth(domain=self.domain,
+        self.auth = HttpNegotiateAuth(domain=self._DOMAIN,
                                       username=username,
                                       password=pw)
         s = requests.Session()
         try:
             # This fails if the username exists but the password
             # is wrong, but not if the username does not exist?!!
-            r = s.get(url=self.url, auth=self.auth)
+            r = s.get(url=self._URL, auth=self.auth)
         except TypeError as e:
-            print(e)
             print("Login failed, invalid password!")
             return None
         except Exception as e:
@@ -116,7 +137,7 @@ class Client(object):
 
         # Iterate over column IDs
         for ct, column in enumerate(df_data):
-            url = self.url + column
+            url = self._URL + column
             meta_data = s.get(url=url).json()
             self.meta_data += [meta_data]
             url += '/timeline?startDate=' + self.start_date + '&endDate=' + self.end_date
@@ -127,20 +148,20 @@ class Client(object):
             ts = pd.to_datetime(df.loc[:, "timestamp"])
             ts = ts.to_numpy(dtype=np.datetime64)
             self.np_data += [(values, ts)]
-            print("Added column", ct + 1, "with ID", column)
+            print("Added column {} with ID {}.".format(ct + 1, column))
 
         print(time.ctime() + ' REST client data acquired')
         return self.np_data, self.meta_data
 
     def read_offline(self) -> Tuple[List, List]:
-        """
-        Read numpy data that has already been created.
+        """Read numpy and text data that has already been created.
 
-        :return: values, dates and metadata.
+        Returns:
+             values, dates and metadata.
         """
 
         # Get folder name
-        data_dir = get_data_folder(self.name, self.start_date, self.end_date)
+        data_dir = _get_data_folder(self.name, self.start_date, self.end_date)
 
         # Count files
         ct = 0
@@ -168,8 +189,11 @@ class Client(object):
         Writes the read data in numpy format
         to files.
 
-        :param overwrite: Whether to overwrite existing data with same name.
-        :return: None
+        Args:
+            overwrite: Whether to overwrite existing data with same name.
+
+        Returns:
+            None
         """
         name = self.name
         print("Writing Data to local disk.")
@@ -177,7 +201,7 @@ class Client(object):
         # Create directory
         if self.start_date is None:
             raise ValueError("Read data first!!")
-        data_dir = get_data_folder(name, self.start_date, self.end_date)
+        data_dir = _get_data_folder(name, self.start_date, self.end_date)
         if not os.path.isdir(data_dir):
             os.mkdir(data_dir)
         elif overwrite:
@@ -200,9 +224,13 @@ class Client(object):
 
 
 class DataStruct:
-    """
-    Base Class for different sets of data columns
-    defined by successive IDs, a name and a date range.
+    """Main Class for data retrieval from NEST database.
+
+    The data is defined when initializing the class
+    by a list of IDs, a name and a date range.
+    The method `getData` then retrieves the data when needed.
+    Once read, the data is cached in `save_dir` for faster
+    access if read again.
     """
 
     def __init__(self,
@@ -210,39 +238,43 @@ class DataStruct:
                  name: str,
                  start_date: str = '2019-01-01',
                  end_date: str = '2019-12-31'):
-        """
-        Initialize DataStruct.
+        """Initialize DataStruct.
 
-        :param id_list: IDs of the data series.
-        :param name: Name of the collection of data series.
-        :param start_date: Begin of time interval.
-        :param end_date: End of time interval.
+        Args:
+            id_list: IDs of the data series.
+            name: Name of the collection of data series.
+            start_date: Begin of time interval.
+            end_date: End of time interval.
         """
         # Initialize values
         self.name = name
         self.start_date = start_date
         self.end_date = end_date
-        self.REST = Client(self.name, self.start_date, self.end_date)
+        self.REST = _Client(self.name, self.start_date, self.end_date)
 
         # Convert elements of id_list to strings.
         self.data_ids = [str(e) for e in id_list]
 
     def get_data_folder(self) -> str:
-        """
+        """Returns path to data.
+
         Returns the path of the directory where
         the data has been / will be stored.
 
-        :return: Full path to directory of data.
+        Returns:
+            Full path to directory of data.
         """
-        return get_data_folder(self.name, self.start_date, self.end_date)
+        return _get_data_folder(self.name, self.start_date, self.end_date)
 
     def getData(self) -> Optional[Tuple[List, List]]:
-        """
+        """Get the data associated with the DataStruct
+
         If the data is not found locally it is
-        retrieved from the SQL database, otherwise
+        retrieved from the SQL database and saved locally, otherwise
         the local data is read and returned.
 
-        :return: (List[(values: np.ndarray, timestamps: np.ndarray)], List[metadata: Dict])
+        Returns:
+            (List[(values: np.ndarray, timestamps: np.ndarray)], List[metadata: Dict])
         """
 
         data_folder = self.get_data_folder()
@@ -256,14 +288,16 @@ class DataStruct:
             # Read locally
             ret_val, meta_data = self.REST.read_offline()
         return ret_val, meta_data
-    pass
 
 
 def example():
-    """
-    Example usage of above code.
+    """Example usage of REST client.
 
-    :return: None
+    Shows you how to use the `DataStruct` class
+    to define the data and retrieve it.
+
+    Returns:
+        None
     """
     # Example data.
     test_data = DataStruct(

@@ -1,20 +1,27 @@
+"""Login GUI to get login data from a user.
+
+The main function is `get_pw`, it uses the other classes
+to do all the stuff.
+"""
+
 from typing import Tuple
 
 import wx
 
 
 class LoginHolder:
-    """
-    Class that holds the login information.
+    """Class that holds the login information.
     """
 
+    login_data: Tuple[str, str] = None  #: The login information
+
     def __init__(self):
-        self.log_data = None
+        pass
 
 
 class LoginDialog(wx.Dialog):
-    """
-    Class used to define login dialog
+    """Class defining the login dialog GUI
+
     Adapted from: https://dzone.com/articles/wxpython-how-create-login
     """
 
@@ -23,7 +30,8 @@ class LoginDialog(wx.Dialog):
         Constructs the login dialog to ask for
         username and password.
 
-        :param lh: LoginHolder, class where the login data will be saved.
+        Args:
+            lh: LoginHolder, class where the login data will be saved.
         """
 
         wx.Dialog.__init__(self, None, title="Login")
@@ -43,10 +51,12 @@ class LoginDialog(wx.Dialog):
         self.password = wx.TextCtrl(self, style=wx.TE_PASSWORD | wx.TE_PROCESS_ENTER)
         p_sizer.Add(self.password, 0, wx.ALL, 5)
 
+        # Add text fields
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         main_sizer.Add(user_sizer, 0, wx.ALL, 5)
         main_sizer.Add(p_sizer, 0, wx.ALL, 5)
 
+        # Login button
         btn = wx.Button(self, label="Login")
         btn.Bind(wx.EVT_BUTTON, self.on_login)
         main_sizer.Add(btn, 0, wx.ALL | wx.CENTER, 5)
@@ -58,13 +68,16 @@ class LoginDialog(wx.Dialog):
         Saves login data to login holder and destroys dialog.
         Executed when the login button is clicked.
 
-        :param event: Not used.
-        :return: None
+        Args:
+            event: Not used
+        Returns:
+            None
         """
 
+        # Save login data and destroy
         user_password = self.password.GetValue()
         username = self.user.GetValue()
-        self.lh.log_data = (username, user_password)
+        self.lh.login_data = (username, user_password)
         self.Destroy()
 
 
@@ -91,13 +104,14 @@ class MainFrame(wx.Frame):
 
 
 def get_pw() -> Tuple[str, str]:
-    """
+    """The main function to get the login info.
+
     Opens GUI and retrieves the login information
     and returns it.
 
-    :return: Tuple containing username and password.
+    Returns:
+        Tuple containing username and password.
     """
-
     lh = LoginHolder()
     app = wx.App(False)
     frame = MainFrame(lh)
@@ -108,4 +122,4 @@ def get_pw() -> Tuple[str, str]:
     if frame:
         frame.Destroy()
 
-    return lh.log_data
+    return lh.login_data
