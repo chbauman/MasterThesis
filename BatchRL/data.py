@@ -1465,15 +1465,12 @@ class Dataset:
         streak_len_ts = streak_len * day_len + self.seq_len - 1
         # TODO: compute timestep offset for days
         offs = 0
+
+        # Save dict and sizes
         self._offs = offs
         self._day_len = day_len
         self._streak_len_ts = streak_len_ts
-
-        # Save dict and extract streaks
         self.split_dict = {p[0]: ModelDataView(*p) for p in pats_defs}
-        for k in self.split_dict:
-            self.split_dict[k].extract_streak(streak_len_ts)
-            self.split_dict[k].extract_disjoint_streaks(day_len, offs)
 
     def get_split(self,
                   str_desc: str,
@@ -2012,7 +2009,7 @@ class ModelDataView:
         """
         return self._get_data(self.n, self.n + self.n_len)
 
-    def extract_streak(self, n_timesteps: int, take_last: bool = True) -> np.ndarray:
+    def extract_streak(self, n_timesteps: int, take_last: bool = True) -> Tuple[np.ndarray, int]:
         """
         Extracts a streak of length `n_timesteps` from the associated
         data. If `take_last` is True, then the last such streak is returned,
@@ -2028,7 +2025,7 @@ class ModelDataView:
         return self._extract_streak((n_timesteps, take_last))
 
     @CacheDecoratorFactory(streak_n_list, streak_data_list)
-    def _extract_streak(self, n: Tuple[int, bool]) -> np.ndarray:
+    def _extract_streak(self, n: Tuple[int, bool]) -> Tuple[np.ndarray, int]:
         # Extract parameters
         n_timesteps, take_last = n
 
@@ -2042,7 +2039,7 @@ class ModelDataView:
         # Get the data, cut and return
         data = self.get_rel_data()[i:(i + n_timesteps)]
         ret_data, _ = cut_data(data, self.s_len)
-        return ret_data
+        return ret_data, i
 
     def extract_disjoint_streaks(self, streak_len: int, n_offs: int) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -2472,12 +2469,12 @@ def test_dataset_artificially() -> None:
 
     # Test streak extraction
     mdv.extract_streak(3)
-    str_dat = mdv.extract_streak(3)
+    str_dat, i = mdv.extract_streak(3)
     exp_dat = np.array([
         dat_nan[5:7],
         dat_nan[6:8],
     ])
-    if not np.array_equal(str_dat, exp_dat):
+    if not np.array_equal(str_dat, exp_dat) or not i == 3:
         raise AssertionError("Something in extract_streak is fucking wrong!!")
 
     # Test disjoint streak extraction
