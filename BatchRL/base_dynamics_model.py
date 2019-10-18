@@ -441,8 +441,10 @@ class BaseDynamicsModel(ABC):
 
         # Prepare the data
         # dat_test = d.get_prepared_data('test')
-        dat_train = d.get_prepared_data('train_streak')
-        dat_val = d.get_prepared_data('val_streak')
+        # dat_train = d.get_prepared_data('train_streak')
+        # dat_val = d.get_prepared_data('val_streak')
+        dat_train = d.get_streak('train')
+        dat_val = d.get_streak('val')
 
         n_train = dat_train[2]
         n_val = dat_val[2]
@@ -480,8 +482,10 @@ class BaseDynamicsModel(ABC):
 
         # Prepare the data
         # dat_test = d.get_prepared_data('test')
-        dat_train_in, dat_train_out, _ = d.get_prepared_data('train_streak')
-        dat_val_in, dat_val_out, _ = d.get_prepared_data('val_streak')
+        # dat_train_in, dat_train_out, _ = d.get_prepared_data('train_streak')
+        # dat_val_in, dat_val_out, _ = d.get_prepared_data('val_streak')
+        dat_train_in, dat_train_out, _ = d.get_streak('train')
+        dat_val_in, dat_val_out, _ = d.get_streak('val')
         n_feat = dat_train_out.shape[-1]
 
         # Extract first day
@@ -500,7 +504,7 @@ class BaseDynamicsModel(ABC):
 
     def analyze_disturbed(self,
                           ext: str = None,
-                          data_str: str = "val_streak",
+                          data_str: str = "val",
                           n_trials: int = 25) -> None:
         """
             Makes a plot by continuously predicting with
@@ -522,7 +526,7 @@ class BaseDynamicsModel(ABC):
 
         # Get the data
         d = self.data
-        dat_val = d.get_prepared_data(data_str)
+        dat_val = d.get_streak(data_str)
         in_dat_test, out_dat_test, n_ts_off = dat_val
 
         # Predict without noise

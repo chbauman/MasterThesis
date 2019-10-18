@@ -1417,6 +1417,7 @@ class Dataset:
     def split_train_test(self, streak_len: int = 7):
         """
         Split dataset into train, validation and test set.
+        DEPRECATED, use split_data!
         """
 
         # split data
@@ -1475,7 +1476,8 @@ class Dataset:
             n_days: Number of days in a streak.
 
         Returns:
-            Streak data prepared for supervised training.
+            Streak data prepared for supervised training and an offset in timesteps
+            to the first element in the streak.
         """
         # Get info about data split
         mdv = self.split_dict[str_desc]
@@ -1513,6 +1515,7 @@ class Dataset:
                           get_all_preds: bool = False) -> Tuple[np.ndarray, np.ndarray, int]:
         """
         Prepares the data for supervised learning.
+        DEPRECATED, use get_split or get_streak!
         """
 
         # Get the right data
