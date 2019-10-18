@@ -1038,7 +1038,16 @@ def test_python_stuff() -> None:
 
 
 def test_time_stuff() -> None:
+    """
+    Tests some of the functions concerned with datetime
+    formats.
+    Raises errors if one of the tests is not passed.
 
+    Returns: None
+
+    Raises:
+        AssertionError: If a test fails.
+    """
     # Define data
     dt1 = np.datetime64('2000-01-01T00:00', 'm')
     dt2 = np.datetime64('2000-01-01T01:45', 'm')

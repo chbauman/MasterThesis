@@ -1419,6 +1419,7 @@ class Dataset:
         Split dataset into train, validation and test set.
         DEPRECATED, use split_data!
         """
+        warnings.warn("You should not use this function!!")
 
         # split data
         s_len = int(60 / self.dt * 24 * streak_len)
@@ -1461,13 +1462,12 @@ class Dataset:
         ]
 
         # Save dict and sizes
-        # TODO: compute timestep offset for days
-        offs = 0
+        offs = day_offset_ts(self.t_init, self.dt)
         self._offs = offs
         self._day_len = ts_per_day(self.dt)
         self.split_dict = {p[0]: ModelDataView(self, *p) for p in pats_defs}
 
-    def get_streak(self, str_desc: str, n_days: int = 7):
+    def get_streak(self, str_desc: str, n_days: int = 7) -> Tuple[np.ndarray, np.ndarray, int]:
         """
         Extracts a streak from the selected part of the dataset.
 
@@ -1490,7 +1490,7 @@ class Dataset:
         input_data, output_data = prepare_supervised_control(sequences, self.c_inds, False)
         return input_data, output_data, n_off
 
-    def get_split(self, str_desc: str):
+    def get_split(self, str_desc: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Returns the required part of the data
         prepared for the supervised model training.
@@ -1511,12 +1511,33 @@ class Dataset:
         input_data, output_data = prepare_supervised_control(sequences, self.c_inds, False)
         return input_data, output_data, offs
 
+    def get_days(self, str_desc: str) -> Tuple[List[Tuple[np.ndarray, np.ndarray]], np.ndarray]:
+        """
+        Extracts all streaks of length one day that start at the beginning
+        of the day.
+
+        Args:
+            str_desc: The string specifying what data to use.
+
+        Returns:
+            List of prepared 1-day streaks and array of indices with offsets.
+        """
+        # Get info about data split
+        mdv = self.split_dict[str_desc]
+        n_off_dis = (mdv.n + self._offs) % self._day_len
+
+        # Extract, prepare and return
+        sequences, streak_offs = mdv.extract_disjoint_streaks(self._day_len, n_off_dis)
+        in_out_list = [prepare_supervised_control(s, self.c_inds, False) for s in sequences]
+        return in_out_list, streak_offs
+
     def get_prepared_data(self, what_data: str = 'train', *,
                           get_all_preds: bool = False) -> Tuple[np.ndarray, np.ndarray, int]:
         """
         Prepares the data for supervised learning.
         DEPRECATED, use get_split or get_streak!
         """
+        warnings.warn("You should not use this function!!")
 
         # Get the right data
         n_offset = 0
@@ -1718,7 +1739,7 @@ class Dataset:
                                   "Time")
         pass
 
-    def getSlice(self, ind_low: int, ind_high: int) -> 'Dataset':
+    def _get_slice(self, ind_low: int, ind_high: int) -> 'Dataset':
         """
         Returns a new dataset with the columns
         'ind_low' through 'ind_high'.
@@ -1766,8 +1787,8 @@ class Dataset:
         if isinstance(key, slice):
             if key.step is not None and key.step != 1:
                 raise NotImplementedError("Only implemented for contiguous ranges!")
-            return self.getSlice(key.start, key.stop)
-        return self.getSlice(key, key + 1)
+            return self._get_slice(key.start, key.stop)
+        return self._get_slice(key, key + 1)
 
     def save(self) -> None:
         """
@@ -2419,7 +2440,7 @@ def test_dataset_artificially() -> None:
     sc = np.empty((n_series, 2), dtype=np.float32)
 
     dt = 15
-    t_init = '2019-01-01 00:00:00'
+    t_init = '2019-01-01 00:12:00'
     ds = Dataset(dat, dt, t_init, sc, is_sc, descs, c_inds, name="SyntheticTest")
 
     ds.save()
