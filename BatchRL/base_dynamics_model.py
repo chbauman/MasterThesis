@@ -135,7 +135,7 @@ class BaseDynamicsModel(ABC):
         :param data_name: The string specifying which portion of the data to use.
         :return: The input and output data for supervised learning.
         """
-        in_dat, out_dat, n = self.data.get_prepared_data(data_name)
+        in_dat, out_dat, n = self.data.get_split(data_name)
         res_in_dat = in_dat[:, :, self.p_in_indices]
         res_out_dat_out = out_dat[:, self.p_out_inds]
         return res_in_dat, res_out_dat_out

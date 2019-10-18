@@ -1,4 +1,3 @@
-
 from FQI import NFQI
 from LSPI import LSPI
 from batchDDPG import bDDPG
@@ -80,12 +79,12 @@ def main():
     # Time variable prediction
     time_model_ds = SCTimeModel(ds, 6)
     # time_model_ds.analyze()
-    time_model_ds.analyze_disturbed()
+    # time_model_ds.analyze_disturbed()
 
     # Constant model for water temperatures
     mod_naive = ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
     # mod_naive.analyze()
-    mod_naive.analyze_disturbed()
+    # mod_naive.analyze_disturbed()
 
     # Room temperature model
     rnn_consts = [
@@ -99,6 +98,16 @@ def main():
         SeriesConstraint('exact'),
     ]
     ds.transform_c_list(rnn_consts)
+    mod_test = RNNDynamicModel(ds,
+                               name="Test",
+                               hidden_sizes=(10, 10),
+                               n_iter_max=5,
+                               input_noise_std=0.001,
+                               lr=0.01,
+                               residual_learning=True,
+                               weight_vec=None,
+                               out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
+                               constraint_list=rnn_consts)
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(100, 100),
                           n_iter_max=100,
@@ -131,12 +140,12 @@ def main():
                                 out_inds=np.array([0, 1, 5], dtype=np.int32),
                                 constraint_list=rnn_consts)
 
-    mods = [mod, mod_no_consts, mod_no_wt]
+    mods = [mod_test]  # mod, mod_no_consts, mod_no_wt]
     for m_to_use in mods:
         m_to_use.fit()
-        m_to_use.analyze()
-        m_to_use.analyze_disturbed("Valid", 'val', 10)
-        m_to_use.analyze_disturbed("Train", 'train', 10)
+        # m_to_use.analyze()
+        # m_to_use.analyze_disturbed("Valid", 'val', 10)
+        # m_to_use.analyze_disturbed("Train", 'train', 10)
     return
     # mod.optimize(2)
 

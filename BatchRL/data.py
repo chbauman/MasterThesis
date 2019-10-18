@@ -2515,5 +2515,4 @@ def test_dataset_artificially() -> None:
     if not nan_array_equal(test_dat, dat_nan[7:]):
         raise AssertionError("Something in split_data is fucking wrong!!")
 
-
     print("Dataset test passed :)")

@@ -404,6 +404,7 @@ def plot_train_history(hist, name=None):
     Plot training & validation loss values of 
     a history object returned by keras.Model.fit().
     """
+    plt.subplots()
     plt.plot(hist.history['loss'])
     plt.plot(hist.history['val_loss'])
     plt.yscale('log')
