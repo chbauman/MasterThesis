@@ -1332,8 +1332,14 @@ no_inds = np.array([], dtype=np.int32)
 
 class Dataset:
     """
-    This class contains all infos about a given dataset.
+    This class contains all infos about a given dataset and
+    offers some functionality for manipulating it.
     """
+
+    _offs: int
+    _day_len: int
+    _streak_len_ts: int
+    split_dict: Dict[str, 'ModelDataView'] = None  #: The saved splits
 
     def __init__(self, all_data: np.ndarray, dt: int, t_init, scaling: np.ndarray,
                  is_scaled: np.ndarray,
@@ -1433,6 +1439,59 @@ class Dataset:
         self.val_data = cut_data_into_sequences(np.copy(self.orig_val), self.seq_len, interleave=True)
         self.train_streak_data = cut_data_into_sequences(np.copy(self.train_streak), self.seq_len, interleave=True)
         self.val_streak_data = cut_data_into_sequences(np.copy(self.val_streak), self.seq_len, interleave=True)
+
+    def split_data(self, streak_len: int = 7, day_len: int = None) -> None:
+        """
+        Splits the data into train, validation and test set.
+
+        Returns:
+            None
+        """
+        # Get sizes
+        n = self.data.shape[0]
+        n_test = n_val = n - int((1.0 - self.val_percent) * n)
+        n_train = n - n_test - n_val
+
+        # Define parameters for splits
+        pats_defs = [
+            ('train', 0, n_train),
+            ('val', n_train, n_val),
+            ('train_val', 0, n_train + n_val),
+            ('test', n_train + n_val, n_test),
+        ]
+
+        # Compute streak sizes
+        day_len = 24 * 60 // self.dt if day_len is None else day_len
+        streak_len_ts = streak_len * day_len + self.seq_len - 1
+        # TODO: compute timestep offset for days
+        offs = 0
+        self._offs = offs
+        self._day_len = day_len
+        self._streak_len_ts = streak_len_ts
+
+        # Save dict and extract streaks
+        self.split_dict = {p[0]: ModelDataView(*p) for p in pats_defs}
+        for k in self.split_dict:
+            self.split_dict[k].extract_streak(streak_len_ts)
+            self.split_dict[k].extract_disjoint_streaks(day_len, offs)
+
+    def get_split(self,
+                  str_desc: str,
+                  streak_len: int = 0,
+                  days: bool = False):
+
+        mdv = self.split_dict[str_desc]
+
+        if streak_len > 0:
+            sequences, _ = mdv.extract_streak(self._streak_len_ts)
+        elif days:
+            pass
+        else:
+            sequences = mdv.sequences
+
+        pass
+
+        pass
 
     def get_prepared_data(self, what_data: str = 'train', *,
                           get_all_preds: bool = False) -> Tuple[np.ndarray, np.ndarray, int]:
