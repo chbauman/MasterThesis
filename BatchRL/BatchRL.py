@@ -67,6 +67,7 @@ def main():
     # get_data_test()
     # test_align()
     test_dataset_artificially()
+    return
 
     # Dataset
     name_ds = 'Model_Room43'

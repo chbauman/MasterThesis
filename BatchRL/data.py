@@ -2115,17 +2115,17 @@ class ModelDataView:
         streak_len, n_offs = n
 
         # Find offset
-        nans = find_rows_with_nans(self.get_rel_data())
+        rel_data = self.get_rel_data()
+        nans = find_rows_with_nans(rel_data)
         dis_streaks = find_disjoint_streaks(nans, self.s_len, streak_len, n_offs)
         tot_len = streak_len + self.s_len - 1
-        data = self.get_rel_data()
         n_streaks = len(dis_streaks)
-        n_feats = get_shape1(data)
+        n_feats = get_shape1(rel_data)
 
         # Put data together and cut it into sequences
-        res_dat = np.empty((n_streaks, streak_len, self.s_len, n_feats), dtype=data.dtype)
+        res_dat = np.empty((n_streaks, streak_len, self.s_len, n_feats), dtype=rel_data.dtype)
         for ct, k in enumerate(dis_streaks):
-            str_dat = data[k:(k + tot_len)]
+            str_dat = rel_data[k:(k + tot_len)]
             cut_dat, _ = cut_data(str_dat, self.s_len)
             res_dat[ct] = cut_dat
         return res_dat, dis_streaks
@@ -2439,8 +2439,8 @@ def test_dataset_artificially() -> None:
     is_sc = np.array([False for _ in range(n_series)])
     sc = np.empty((n_series, 2), dtype=np.float32)
 
-    dt = 15
-    t_init = '2019-01-01 00:12:00'
+    dt = 60 * 12  # Two timesteps per day
+    t_init = '2019-01-01 12:00:00'
     ds = Dataset(dat, dt, t_init, sc, is_sc, descs, c_inds, name="SyntheticTest")
 
     ds.save()
@@ -2533,7 +2533,15 @@ def test_dataset_artificially() -> None:
     ds_nan.val_percent = 0.33
     ds_nan.split_data()
     test_dat = ds_nan.split_dict['test'].get_rel_data()
+    val_dat = ds_nan.split_dict['val'].get_rel_data()
     if not nan_array_equal(test_dat, dat_nan[7:]):
         raise AssertionError("Something in split_data is fucking wrong!!")
+    if not nan_array_equal(val_dat, dat_nan[3:7]):
+        raise AssertionError("Something in split_data is fucking wrong!!")
+
+    # Test get_day
+    day_dat = ds_nan.get_days('val')
+    print(ds_nan._offs)
+    print(day_dat)
 
     print("Dataset test passed :)")

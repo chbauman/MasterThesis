@@ -646,7 +646,7 @@ def find_disjoint_streaks(nans: np.ndarray, seq_len: int, streak_len: int, n_ts_
     n = len(nans)
     tot_len = streak_len + seq_len - 1
     start = (n_ts_offs - seq_len + 1 + streak_len) % streak_len
-    n_max = (n - n_ts_offs) // streak_len
+    n_max = (n - start) // streak_len
     inds = np.empty((n_max,), dtype=np.int32)
     ct = 0
     for k in range(n_max):
@@ -949,6 +949,7 @@ def test_numpy_functions() -> None:
 
     bool_vec = np.array([True, False, False, False, True, False, False, True])
     bool_vec_2 = np.array([True, False, False, False, False, True, False, False, False, False, True])
+    bool_vec_3 = np.array([True, False, False, False])
 
     exp_out = np.array([[1, 2, 5],
                         [2, 3, 6],
@@ -971,6 +972,9 @@ def test_numpy_functions() -> None:
         raise AssertionError("find_disjoint_streaks not working correctly!!")
     dis_s = find_disjoint_streaks(bool_vec_2, 2, 2, 0)
     if not np.array_equal(dis_s, np.array([1, 7])):
+        raise AssertionError("find_disjoint_streaks not working correctly!!")
+    dis_s = find_disjoint_streaks(bool_vec_3, 2, 2, 0)
+    if not np.array_equal(dis_s, np.array([1])):
         raise AssertionError("find_disjoint_streaks not working correctly!!")
 
     # Sequence data
