@@ -658,6 +658,30 @@ def find_disjoint_streaks(nans: np.ndarray, seq_len: int, streak_len: int, n_ts_
     return inds[:ct]
 
 
+def prepare_supervised_control(sequences: np.ndarray,
+                               c_inds: np.array,
+                               sequence_pred: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    n_feat = sequences.shape[-1]
+
+    # Get inverse mask
+    mask = np.ones((n_feat,), np.bool)
+    mask[c_inds] = 0
+
+    # Extract and concatenate input data
+    arr_list = [sequences[:, :-1, mask],
+                sequences[:, 1:, c_inds]]
+    input_dat = np.concatenate(arr_list, axis=-1)
+
+    # Extract output data
+    if not sequence_pred:
+        output_data = sequences[:, -1, mask]
+    else:
+        output_data = sequences[:, 1:, mask]
+
+    # Return
+    return input_dat, output_data
+
+
 #######################################################################################################
 # NEST stuff
 
@@ -901,6 +925,32 @@ def test_numpy_functions() -> None:
     if not np.array_equal(dis_s, np.array([1, 7])):
         raise AssertionError("find_disjoint_streaks not working correctly!!")
 
+    # Sequence data
+    sequences = np.array([
+        [[1, 2, 3],
+         [1, 2, 3],
+         [2, 3, 4]],
+        [[3, 2, 3],
+         [1, 2, 3],
+         [4, 3, 4]],
+    ])
+    c_inds = np.array([1])
+
+    # Test prepare_supervised_control
+    in_arr_exp = np.array([
+        [[1, 3, 2],
+         [1, 3, 3]],
+        [[3, 3, 2],
+         [1, 3, 3]],
+    ])
+    out_arr_exp = np.array([
+         [2, 4],
+         [4, 4],
+    ])
+    in_arr, out_arr = prepare_supervised_control(sequences, c_inds, False)
+    if not np.array_equal(in_arr, in_arr_exp) or not np.array_equal(out_arr, out_arr_exp):
+        raise AssertionError("Problems encountered in prepare_supervised_control")
+
     # Tests are done
     print("Numpy test passed :)")
 
@@ -918,9 +968,11 @@ def test_python_stuff() -> None:
     # Test the caching decorator
     n_list = []
     data_list = []
+
     @CacheDecoratorFactory(n_list, data_list)
     def fun(n: int, k: int):
         return n + k * k
+
     try:
         if not fun(1, k=3) == 10:
             raise AssertionError

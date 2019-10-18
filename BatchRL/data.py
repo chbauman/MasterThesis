@@ -1486,7 +1486,7 @@ class Dataset:
         else:
             sequences = mdv.sequences
 
-        pass
+        input_data, output_data = prepare_supervised_control(sequences, self.c_inds, False)
 
         pass
 
