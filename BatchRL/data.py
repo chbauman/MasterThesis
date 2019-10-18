@@ -1337,8 +1337,7 @@ class Dataset:
     """
 
     _offs: int
-    _day_len: int
-    _streak_len_ts: int
+    _day_len: int = None
     split_dict: Dict[str, 'ModelDataView'] = None  #: The saved splits
 
     def __init__(self, all_data: np.ndarray, dt: int, t_init, scaling: np.ndarray,
@@ -1440,7 +1439,7 @@ class Dataset:
         self.train_streak_data = cut_data_into_sequences(np.copy(self.train_streak), self.seq_len, interleave=True)
         self.val_streak_data = cut_data_into_sequences(np.copy(self.val_streak), self.seq_len, interleave=True)
 
-    def split_data(self, streak_len: int = 7, day_len: int = None) -> None:
+    def split_data(self) -> None:
         """
         Splits the data into train, validation and test set.
 
@@ -1460,35 +1459,55 @@ class Dataset:
             ('test', n_train + n_val, n_test),
         ]
 
-        # Compute streak sizes
-        day_len = 24 * 60 // self.dt if day_len is None else day_len
-        streak_len_ts = streak_len * day_len + self.seq_len - 1
+        # Save dict and sizes
         # TODO: compute timestep offset for days
         offs = 0
-
-        # Save dict and sizes
         self._offs = offs
-        self._day_len = day_len
-        self._streak_len_ts = streak_len_ts
-        self.split_dict = {p[0]: ModelDataView(*p) for p in pats_defs}
+        self._day_len = ts_per_day(self.dt)
+        self.split_dict = {p[0]: ModelDataView(self, *p) for p in pats_defs}
 
-    def get_split(self,
-                  str_desc: str,
-                  streak_len: int = 0,
-                  days: bool = False):
+    def get_streak(self, str_desc: str, n_days: int = 7):
+        """
+        Extracts a streak from the selected part of the dataset.
 
+        Args:
+            str_desc: Part of the dataset, in ['train', 'val', 'test']
+            n_days: Number of days in a streak.
+
+        Returns:
+            Streak data prepared for supervised training.
+        """
+        # Get info about data split
         mdv = self.split_dict[str_desc]
+        n_off = mdv.n
+        s_len_curr = n_days * self._day_len + self.seq_len - 1
 
-        if streak_len > 0:
-            sequences, _ = mdv.extract_streak(self._streak_len_ts)
-        elif days:
-            pass
-        else:
-            sequences = mdv.sequences
-
+        # Extract, prepare and return
+        sequences, streak_offs = mdv.extract_streak(s_len_curr)
+        n_off += streak_offs
         input_data, output_data = prepare_supervised_control(sequences, self.c_inds, False)
+        return input_data, output_data, n_off
 
-        pass
+    def get_split(self, str_desc: str):
+        """
+        Returns the required part of the data
+        prepared for the supervised model training.
+
+        Args:
+            str_desc: The string describing the part of the data,
+                one of: ['train', 'val', 'train_val', 'test']
+
+        Returns:
+            Data prepared for training.
+        """
+        # Get sequences and offsets
+        mdv = self.split_dict[str_desc]
+        sequences = mdv.sequences
+        offs = mdv.seq_inds
+
+        # Prepare and return
+        input_data, output_data = prepare_supervised_control(sequences, self.c_inds, False)
+        return input_data, output_data, offs
 
     def get_prepared_data(self, what_data: str = 'train', *,
                           get_all_preds: bool = False) -> Tuple[np.ndarray, np.ndarray, int]:
@@ -2485,5 +2504,13 @@ def test_dataset_artificially() -> None:
     ]])
     if not np.array_equal(dis_dat, exp_dis) or not np.array_equal(dis_inds, np.array([2])):
         raise AssertionError("Something in extract_disjoint_streaks is fucking wrong!!")
+
+    # Test split_data
+    ds_nan.val_percent = 0.33
+    ds_nan.split_data()
+    test_dat = ds_nan.split_dict['test'].get_rel_data()
+    if not nan_array_equal(test_dat, dat_nan[7:]):
+        raise AssertionError("Something in split_data is fucking wrong!!")
+
 
     print("Dataset test passed :)")

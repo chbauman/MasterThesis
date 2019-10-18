@@ -661,6 +661,20 @@ def find_disjoint_streaks(nans: np.ndarray, seq_len: int, streak_len: int, n_ts_
 def prepare_supervised_control(sequences: np.ndarray,
                                c_inds: np.array,
                                sequence_pred: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Transforms a batch of sequences of constant length to
+    prepare it for supervised model training. Removes control indices
+    to the end of the features and shifts them to the past for one
+    time step.
+
+    Args:
+        sequences: Batch of sequences of same length.
+        c_inds: Indices determining the features to control.
+        sequence_pred: Whether to use sequence output.
+
+    Returns:
+        The prepared input and output data.
+    """
     n_feat = sequences.shape[-1]
 
     # Get inverse mask
@@ -826,6 +840,20 @@ def n_mins_to_np_dt(mins: int) -> np.timedelta64:
     return np.timedelta64(mins, 'm')
 
 
+def ts_per_day(n_min: int) -> int:
+    """
+    Returns the number of time steps in a day when
+    one timestep is `n_min` minutes.
+
+    Args:
+        n_min: Length of timestep in minutes.
+
+    Returns:
+        Number of timesteps in a day.
+    """
+    return 24 * 60 // n_min
+
+
 #######################################################################################################
 # Tests
 
@@ -944,8 +972,8 @@ def test_numpy_functions() -> None:
          [1, 3, 3]],
     ])
     out_arr_exp = np.array([
-         [2, 4],
-         [4, 4],
+        [2, 4],
+        [4, 4],
     ])
     in_arr, out_arr = prepare_supervised_control(sequences, c_inds, False)
     if not np.array_equal(in_arr, in_arr_exp) or not np.array_equal(out_arr, out_arr_exp):
