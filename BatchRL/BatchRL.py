@@ -1,3 +1,10 @@
+"""The main script of this project.
+
+The `main` function runs all the necessary high-level
+functions. The complicated stuff is hidden in the other
+modules.
+"""
+
 from FQI import NFQI
 from LSPI import LSPI
 from batchDDPG import bDDPG
