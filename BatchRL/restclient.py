@@ -25,7 +25,7 @@ Example usage::
     # Add your code here...
     print(values, timestamps)
 
-Written by Christian Baumann ans Ralf Knechtle @ Empa, 2019
+Written by Christian Baumann and Ralf Knechtle @ Empa, 2019
 """
 
 import os
