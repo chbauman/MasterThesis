@@ -141,4 +141,5 @@ def test_test_env():
         r, over = test_env.step(0.0)
         if over:
             test_env.reset()
-    pass
+
+    print("Model environment test passed :)")

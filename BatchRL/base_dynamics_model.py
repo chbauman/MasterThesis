@@ -639,6 +639,7 @@ class TestModel(BaseDynamicsModel):
                  ds: Dataset):
         name = "TestModel"
         super(TestModel, self).__init__(ds, name)
+        self.use_AR = False
 
         if ds.n_c != 1:
             raise ValueError("Only one control variable allowed!!")
@@ -650,9 +651,9 @@ class TestModel(BaseDynamicsModel):
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
 
-        rel_out_dat = in_data[:, -1, :self.n_pred]
-        rel_out_dat[:, 1] = self.n_prediction
-        rel_out_dat[:, 2] = rel_out_dat[:, 2] + 1
+        rel_out_dat = -0.9 * in_data[:, -1, :self.n_pred]
+        # rel_out_dat[:, 1] = -0.9 * rel_out_dat[:, 1]
+        # rel_out_dat[:, 2] = -0.9 * rel_out_dat[:, 2]
 
         self.n_prediction += 1
         return rel_out_dat
@@ -662,12 +663,12 @@ def construct_test_ds(n: int = 201) -> Dataset:
     # Define dataset
     dat = np.empty((n, 4), dtype=np.float32)
     dat[:, 0] = np.arange(n)
-    dat[:, 1] = np.arange(n) + 1
-    dat[:, 2] = np.arange(n) + 2
+    dat[:, 1] = np.reciprocal(1.0 + np.arange(n))
+    dat[:, 2] = np.reciprocal(1.0 + np.arange(n))
     dat[:, 3] = 1
     c_inds = np.array([3])
     ds = get_test_ds(dat, c_inds, dt=60 * 6, name="SyntheticModelData")
-    ds.seq_len = 5
+    ds.seq_len = 8
     ds.val_percent = 0.3
     ds.split_data()
     return ds
@@ -695,7 +696,7 @@ def test_dyn_model() -> None:
     n_streak_offset = n_train_seqs - n_streak
 
     # Check sizes
-    dat_in_train, _, _ = ds.get_split("train")
+    dat_in_train, dat_out_train, _ = ds.get_split("train")
     if len(dat_in_train) != n_train_seqs:
         raise AssertionError("Something baaaaad!")
     dat_in, dat_out, n_str = ds.get_streak("train")
@@ -710,10 +711,16 @@ def test_dyn_model() -> None:
     # Initialize, fit and analyze model
     test_mod = TestModel(ds)
     test_mod.fit()
+    test_mod.analyze()
+
+    # Test prediction and residuals
     sample_pred_inp = ds.data[:(ds.seq_len - 1)]
     sample_pred_inp = sample_pred_inp.reshape((1, sample_pred_inp.shape[0], -1))
     test_mod.predict(sample_pred_inp)
-    test_mod.analyze()
+    mod_out_test = test_mod.predict(dat_in_train)
+    res = test_mod.get_residuals("train")
+    if not np.allclose(mod_out_test - dat_out_train, res):
+        raise AssertionError("Residual computation wrong!!")
 
     print("First point in week plot should be at: {}".format(t_init_streak))
 
