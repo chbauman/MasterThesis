@@ -2517,7 +2517,7 @@ def test_dataset_artificially() -> None:
                         8, 4, np.nan, 7, 8,
                         9, 4, np.nan, 7, 8,
                         10, 5, 6, 7, 9], dtype=np.float32).reshape((-1, 5))
-    ds_nan = Dataset(dat_nan, dt, t_init, sc, is_sc, descs, c_inds, name="SyntheticTest")
+    ds_nan = get_test_ds(dat_nan, c_inds, name="SyntheticTest")
     ds_nan.seq_len = 2
 
     # Test get_rel_data

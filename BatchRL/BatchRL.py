@@ -66,7 +66,6 @@ def main():
     # pre_mod.analyze_6_days()
 
     test_dyn_model()
-    return
     # Do tests
     test_time_stuff()
     test_layers()

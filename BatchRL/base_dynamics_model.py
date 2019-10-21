@@ -620,7 +620,7 @@ class TestModel(BaseDynamicsModel):
     def __init__(self,
                  ds: Dataset):
         name = "TestModel"
-        super(TestModel).__init__(ds, name)
+        super(TestModel, self).__init__(ds, name)
 
         if ds.n_c != 1:
             raise ValueError("Only one control variable allowed!!")
@@ -630,7 +630,7 @@ class TestModel(BaseDynamicsModel):
     def fit(self) -> None:
         pass
 
-    def predict(self, in_data):
+    def predict(self, in_data: np.ndarray) -> np.ndarray:
 
         rel_out_dat = in_data[:, -1, :self.n_pred]
         rel_out_dat[:, 1] = self.n_prediction
@@ -638,18 +638,22 @@ class TestModel(BaseDynamicsModel):
 
         self.n_prediction += 1
 
+        return rel_out_dat
+
 
 def test_dyn_model():
 
     # Define dataset
-    n = 101
+    n = 201
     dat = np.empty((n, 4), dtype=np.float32)
     dat[:, 0] = np.arange(n)
     dat[:, 1] = np.arange(n) + 1
     dat[:, 2] = np.arange(n) + 2
     dat[:, 3] = 1
     c_inds = np.array([3])
-    ds = get_test_ds(dat, c_inds, name="SyntheticModelData")
+    ds = get_test_ds(dat, c_inds, dt=60 * 8, name="SyntheticModelData")
+    ds.seq_len = 5
+    ds.val_percent = 0.3
     ds.split_data()
 
     test_mod = TestModel(ds)

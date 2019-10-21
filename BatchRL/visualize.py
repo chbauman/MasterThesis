@@ -338,7 +338,8 @@ def plot_dataset(dataset, show=True, title_and_ylab=None, save_name=None):
                         timestep_offset_list=[0 for i in range(n_series)],
                         dt_init_str_list=[t_init for i in range(n_series)],
                         show_last=show,
-                        title_and_ylab=title_and_ylab)
+                        title_and_ylab=title_and_ylab,
+                        dt_mins=dataset.dt)
     save_figure(save_name, show)
 
 
