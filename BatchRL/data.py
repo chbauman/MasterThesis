@@ -2228,13 +2228,14 @@ def generate_sin_cos_time_ds(other: Dataset) -> Dataset:
 #######################################################################################################
 # Testing
 
-# Test Data
+# Test DataStruct
 TestData = DataStruct(id_list=[421100171, 421100172],
                       name="Test",
                       start_date='2019-08-08',
                       end_date='2019-08-09')
 
 
+# Synthetic class imitating a DataStruct
 class TestDataSynthetic:
     """
     Synthetic and short dataset to be used for debugging.

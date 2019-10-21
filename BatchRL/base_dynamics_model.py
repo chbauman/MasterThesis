@@ -133,8 +133,11 @@ class BaseDynamicsModel(ABC):
         Returns the required data for fitting the model
         taking care of choosing the right series by indexing.
 
-        :param data_name: The string specifying which portion of the data to use.
-        :return: The input and output data for supervised learning.
+        Args:
+            data_name: The string specifying which portion of the data to use.
+
+        Returns:
+            The input and output data for supervised learning.
         """
         in_dat, out_dat, n = self.data.get_split(data_name)
         res_in_dat = in_dat[:, :, self.p_in_indices]
@@ -146,8 +149,11 @@ class BaseDynamicsModel(ABC):
         Returns the path where the model parameters
         are stored. Used for keras models only.
 
-        :param name: Model name.
-        :return: Model parameter file path.
+        Args:
+            name: Model name.
+
+        Returns:
+            Model parameter file path.
         """
         return self.model_path + name + ".h5"
 
@@ -190,8 +196,11 @@ class BaseDynamicsModel(ABC):
         """
         Returns a sample of noise of length n.
 
-        :return: Numpy array of disturbances.
-        :raises AttributeError: If the disturbance model was not fitted before.
+        Returns:
+            Numpy array of disturbances.
+
+        Raises:
+            AttributeError: If the disturbance model was not fitted before.
         """
 
         # Check if disturbance model was fitted
@@ -439,9 +448,10 @@ class BaseDynamicsModel(ABC):
     def analyze(self) -> None:
         """
         Analyzes the trained model and makes some
-        plots.
+        plots using the fitted model and the streak data.
 
-        :return: None
+        Returns:
+            None
         """
 
         print("Analyzing model {}".format(self.name))
@@ -613,7 +623,15 @@ class BaseDynamicsModel(ABC):
             print(*args)
 
 
+##########################################################################
+# Testing stuff
 class TestModel(BaseDynamicsModel):
+    """Dummy dynamics model class for testing.
+
+    Does not fit anything. Works only with datasets
+    that have exactly 3 series to predict and one
+    control variable series.
+    """
     n_prediction: int = 0
     n_pred: int = 3
 
@@ -637,11 +655,18 @@ class TestModel(BaseDynamicsModel):
         rel_out_dat[:, 2] = rel_out_dat[:, 2] + 1
 
         self.n_prediction += 1
-
         return rel_out_dat
 
 
-def test_dyn_model():
+def test_dyn_model() -> None:
+    """Tests the dynamic model base class with the TestModel.
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError: If a test fails.
+    """
 
     # Define dataset
     n = 201
@@ -671,14 +696,16 @@ def test_dyn_model():
     if n_streak_offset != n_str:
         raise AssertionError("Streak offset fucking wrong!!")
 
+    # Find time of initial output
     n_streak_output_offset = n_streak_offset + ds.seq_len - 1
     dt_offset = n_mins_to_np_dt(ds.dt * n_streak_output_offset)
     t_init_streak = str_to_np_dt(ds.t_init) + dt_offset
 
-    print("First point in week plot should be at: {}".format(t_init_streak))
-
+    # Initialize, fit and analyze model
     test_mod = TestModel(ds)
     test_mod.fit()
     test_mod.analyze()
 
-    pass
+    print("First point in week plot should be at: {}".format(t_init_streak))
+
+    print("Dynamic model test passed :)")
