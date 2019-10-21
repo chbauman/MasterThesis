@@ -81,7 +81,7 @@ class DynEnv(ABC):
             True if episode is over, else false
         """
         return False
-    
+
     def step(self, action) -> Tuple[float, bool]:
         """Evolve the model with the given control input `action`.
 
@@ -107,7 +107,10 @@ class DynEnv(ABC):
         """Resets the environment.
 
         Needs to be called if the episode is over.
-        TODO: Reset noise for the noisy predictions.
-        TODO: Sample new day.
         """
         self.n_ts = 0
+
+        self.m.reset_disturbance()
+
+        start_data_ind = np.random.randint(self.n_start_data)
+        self.hist = self.train_data[start_data_ind]

@@ -2416,6 +2416,30 @@ def test_align() -> None:
     return
 
 
+def get_test_ds(dat: np.ndarray, c_inds: np.ndarray,
+                name: str = "SyntheticTest",
+                dt: int = 60 * 12,
+                t_init: str = '2019-01-01 12:00:00'):
+    """Constructs a test dataset.
+
+    Args:
+        dat: The data array.
+        c_inds: The control indices.
+        name: The name of the dataset.
+        dt: Timestep in minutes.
+        t_init: Initial time.
+
+    Returns:
+        New dataset with dummy descriptions and unscaled data.
+    """
+    n_series = dat.shape[1]
+    descs = np.array([str(i) for i in range(n_series)])
+    is_sc = np.array([False for _ in range(n_series)])
+    sc = np.empty((n_series, 2), dtype=np.float32)
+    ds = Dataset(dat, dt, t_init, sc, is_sc, descs, c_inds, name=name)
+    return ds
+
+
 def test_dataset_artificially() -> None:
     """
     Constructs a small synthetic dataset and makes tests.
@@ -2433,16 +2457,8 @@ def test_dataset_artificially() -> None:
                     1, 3, 4, 8, 9,
                     1, 4, 5, 7, 8,
                     2, 5, 6, 7, 9], dtype=np.float32).reshape((4, -1))
-    n_series = dat.shape[1]
     c_inds = np.array([1, 3])
-    descs = np.array([str(i) for i in range(n_series)])
-    is_sc = np.array([False for _ in range(n_series)])
-    sc = np.empty((n_series, 2), dtype=np.float32)
-
-    dt = 60 * 12  # Two timesteps per day
-    t_init = '2019-01-01 12:00:00'
-    ds = Dataset(dat, dt, t_init, sc, is_sc, descs, c_inds, name="SyntheticTest")
-
+    ds = get_test_ds(dat, c_inds)
     ds.save()
     plot_dataset(ds, False, ["Test", "Fuck"])
 

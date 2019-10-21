@@ -7,6 +7,7 @@ modules.
 
 from FQI import NFQI
 from LSPI import LSPI
+from base_dynamics_model import test_dyn_model
 from batchDDPG import bDDPG
 from dm_Composite import CompositeModel
 
@@ -64,6 +65,8 @@ def main():
     # pre_mod = Periodic1DayModel(w_dat, None, alpha=0.1)
     # pre_mod.analyze_6_days()
 
+    test_dyn_model()
+    return
     # Do tests
     test_time_stuff()
     test_layers()

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from data import Dataset
+from data import Dataset, get_test_ds
 from time_series import AR_Model
 from util import *
 from visualize import plot_dataset, model_plot_path
@@ -182,8 +182,7 @@ class BaseDynamicsModel(ABC):
             self.dist_mod = [AR_Model(lag=self.N_LAG) for _ in range(self.n_pred)]
             for k, d in enumerate(self.dist_mod):
                 d.fit(residuals[:, k])
-            self.init_pred = np.zeros((self.N_LAG, self.n_pred))
-            self.disturb()
+            self.reset_disturbance()
 
         self.res_std = np.std(residuals, axis=0)
 
@@ -209,6 +208,14 @@ class BaseDynamicsModel(ABC):
             self.init_pred[-1, :] = next_noise
             return next_noise
         return np.random.normal(0, 1, self.n_pred) * self.res_std
+
+    def reset_disturbance(self) -> None:
+        """Resets the disturbance to zero.
+
+        Returns:
+            None
+        """
+        self.init_pred = np.zeros((self.N_LAG, self.n_pred), dtype=np.float32)
 
     def n_step_predict(self, prepared_data: Sequence, n: int, *,
                        pred_ind: int = None,
@@ -604,3 +611,49 @@ class BaseDynamicsModel(ABC):
         """
         if self.debug:
             print(*args)
+
+
+class TestModel(BaseDynamicsModel):
+    n_prediction: int = 0
+    n_pred: int = 3
+
+    def __init__(self,
+                 ds: Dataset):
+        name = "TestModel"
+        super(TestModel).__init__(ds, name)
+
+        if ds.n_c != 1:
+            raise ValueError("Only one control variable allowed!!")
+        if ds.d - 1 != self.n_pred:
+            raise ValueError("Dataset needs exactly 3 non-controllable state variables!")
+
+    def fit(self) -> None:
+        pass
+
+    def predict(self, in_data):
+
+        rel_out_dat = in_data[:, -1, :self.n_pred]
+        rel_out_dat[:, 1] = self.n_prediction
+        rel_out_dat[:, 2] = rel_out_dat[:, 2] + 1
+
+        self.n_prediction += 1
+
+
+def test_dyn_model():
+
+    # Define dataset
+    n = 101
+    dat = np.empty((n, 4), dtype=np.float32)
+    dat[:, 0] = np.arange(n)
+    dat[:, 1] = np.arange(n) + 1
+    dat[:, 2] = np.arange(n) + 2
+    dat[:, 3] = 1
+    c_inds = np.array([3])
+    ds = get_test_ds(dat, c_inds, name="SyntheticModelData")
+    ds.split_data()
+
+    test_mod = TestModel(ds)
+    test_mod.fit()
+    test_mod.analyze()
+
+    pass
