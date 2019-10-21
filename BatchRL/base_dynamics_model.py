@@ -111,7 +111,7 @@ class BaseDynamicsModel(ABC):
         create_dir(self.plot_path)
 
     @abstractmethod
-    def fit(self):
+    def fit(self) -> None:
         pass
 
     @abstractmethod

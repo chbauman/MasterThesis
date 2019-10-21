@@ -11,7 +11,6 @@ from batchDDPG import bDDPG
 from dm_Composite import CompositeModel
 
 from dm_LSTM import RNNDynamicModel
-from dm_GPR import GPR_DM
 from dm_Const import ConstModel
 from battery_model import BatteryModel
 from dm_Time import SCTimeModel
@@ -26,7 +25,7 @@ from util import *
 from dynamics_env import DynEnv
 from data import WeatherData, TestData, \
     get_UMAR_heating_data, get_data_test, \
-    cut_data_into_sequences, extract_streak, get_battery_data, cut_and_split, \
+    get_battery_data, \
     get_DFAB_heating_data, \
     compute_DFAB_energy_usage, get_weather_data, generate_room_datasets, \
     analyze_room_energy_consumption, Dataset, test_align, test_dataset_artificially, no_inds, \
