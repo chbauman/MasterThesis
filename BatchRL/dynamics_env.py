@@ -2,14 +2,11 @@
 
 Use this class if you want to build an environment
 based on a model of class `BaseDynamicsModel`.
-
-Todo:
-    * Reset with random day sampling.
 """
 
 from abc import ABC, abstractmethod
 
-from base_dynamics_model import BaseDynamicsModel
+from base_dynamics_model import BaseDynamicsModel, TestModel, construct_test_ds
 from util import *
 
 
@@ -49,13 +46,14 @@ class DynEnv(ABC):
             m: Full model predicting all the non-control features.
             max_eps: Number of continuous predictions in an episode.
         """
+        m.model_disturbance()
         self.m = m
         self.act_dim = m.data.n_c
         self.state_dim = m.data.d
         self.n_ts_per_eps = 100 if max_eps is None else max_eps
-        self.hist = np.empty((m.data.seq_len, self.state_dim), dtype=np.float32)
         self.train_data, _, self.train_indices = m.data.get_split("train")
         self.n_start_data = len(self.train_data)
+        self.reset()
 
     @abstractmethod
     def compute_reward(self, curr_pred: np.ndarray, action: np.ndarray) -> float:
@@ -93,7 +91,8 @@ class DynEnv(ABC):
             determining if the episode is over.
         """
         self.hist[-1, -self.act_dim:] = action
-        curr_pred = self.m.predict(self.hist)
+        pred_sh = (1, -1, self.state_dim)
+        curr_pred = self.m.predict(self.hist.reshape(pred_sh))
         curr_pred += self.m.disturb()
         self.hist[:-1, :] = self.hist[1:, :]
         self.hist[-1, :-self.act_dim] = curr_pred
@@ -114,3 +113,32 @@ class DynEnv(ABC):
 
         start_data_ind = np.random.randint(self.n_start_data)
         self.hist = self.train_data[start_data_ind]
+
+
+##########################################################################
+# Testing stuff
+
+class TestDynEnv(DynEnv):
+
+    def __init__(self, m: BaseDynamicsModel, max_eps: int = None):
+        super(TestDynEnv, self).__init__(m, max_eps)
+
+    def compute_reward(self, curr_pred: np.ndarray, action: np.ndarray) -> float:
+        return 1.0
+
+    def episode_over(self, curr_pred: np.ndarray) -> bool:
+        return False
+
+
+def test_test_env():
+
+    n = 201
+    test_ds = construct_test_ds(n)
+    test_mod = TestModel(test_ds)
+    test_env = TestDynEnv(test_mod, 10)
+
+    for k in range(30):
+        r, over = test_env.step(0.0)
+        if over:
+            test_env.reset()
+    pass

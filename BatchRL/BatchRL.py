@@ -23,7 +23,7 @@ from cart_pole import CartPole
 from mount_car_cont import MountCarCont
 from pendulum import Pendulum
 from util import *
-from dynamics_env import DynEnv
+from dynamics_env import DynEnv, test_test_env
 from data import WeatherData, TestData, \
     get_UMAR_heating_data, get_data_test, \
     get_battery_data, \
@@ -66,6 +66,7 @@ def main():
     # pre_mod.analyze_6_days()
 
     test_dyn_model()
+    test_test_env()
     # Do tests
     test_time_stuff()
     test_layers()

@@ -658,6 +658,21 @@ class TestModel(BaseDynamicsModel):
         return rel_out_dat
 
 
+def construct_test_ds(n: int = 201) -> Dataset:
+    # Define dataset
+    dat = np.empty((n, 4), dtype=np.float32)
+    dat[:, 0] = np.arange(n)
+    dat[:, 1] = np.arange(n) + 1
+    dat[:, 2] = np.arange(n) + 2
+    dat[:, 3] = 1
+    c_inds = np.array([3])
+    ds = get_test_ds(dat, c_inds, dt=60 * 6, name="SyntheticModelData")
+    ds.seq_len = 5
+    ds.val_percent = 0.3
+    ds.split_data()
+    return ds
+
+
 def test_dyn_model() -> None:
     """Tests the dynamic model base class with the TestModel.
 
@@ -670,16 +685,7 @@ def test_dyn_model() -> None:
 
     # Define dataset
     n = 201
-    dat = np.empty((n, 4), dtype=np.float32)
-    dat[:, 0] = np.arange(n)
-    dat[:, 1] = np.arange(n) + 1
-    dat[:, 2] = np.arange(n) + 2
-    dat[:, 3] = 1
-    c_inds = np.array([3])
-    ds = get_test_ds(dat, c_inds, dt=60 * 6, name="SyntheticModelData")
-    ds.seq_len = 5
-    ds.val_percent = 0.3
-    ds.split_data()
+    ds = construct_test_ds(n)
 
     # Compute sizes
     n_val = n - int((1.0 - ds.val_percent) * n)
@@ -704,6 +710,9 @@ def test_dyn_model() -> None:
     # Initialize, fit and analyze model
     test_mod = TestModel(ds)
     test_mod.fit()
+    sample_pred_inp = ds.data[:(ds.seq_len - 1)]
+    sample_pred_inp = sample_pred_inp.reshape((1, sample_pred_inp.shape[0], -1))
+    test_mod.predict(sample_pred_inp)
     test_mod.analyze()
 
     print("First point in week plot should be at: {}".format(t_init_streak))
