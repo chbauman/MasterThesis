@@ -26,7 +26,7 @@ def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
     if tr is not None:
         plot_data[:, 1] = tr
     scaling, is_scd = d.get_scaling_mul(orig_p_ind[0], 2)
-    actual_dt = d.t_init if n_offs == 0 else d.get_shifted_t_init(n_offs)
+    actual_dt = d.t_init if n_offs == 0 else d.get_shifted_t_init(n_offs + d.seq_len - 1)
     analysis_ds = Dataset(plot_data,
                           d.dt,
                           actual_dt,
@@ -651,10 +651,31 @@ def test_dyn_model():
     dat[:, 2] = np.arange(n) + 2
     dat[:, 3] = 1
     c_inds = np.array([3])
-    ds = get_test_ds(dat, c_inds, dt=60 * 8, name="SyntheticModelData")
+    ds = get_test_ds(dat, c_inds, dt=60 * 6, name="SyntheticModelData")
     ds.seq_len = 5
     ds.val_percent = 0.3
     ds.split_data()
+
+    # Compute sizes
+    n_val = n - int((1.0 - ds.val_percent) * n)
+    n_train = n - 2 * n_val
+    n_train_seqs = n_train - ds.seq_len + 1
+    n_streak = 7 * 24 * 60 // ds.dt
+    n_streak_offset = n_train_seqs - n_streak
+
+    # Check sizes
+    dat_in_train, _, _ = ds.get_split("train")
+    if len(dat_in_train) != n_train_seqs:
+        raise AssertionError("Something baaaaad!")
+    dat_in, dat_out, n_str = ds.get_streak("train")
+    if n_streak_offset != n_str:
+        raise AssertionError("Streak offset fucking wrong!!")
+
+    n_streak_output_offset = n_streak_offset + ds.seq_len - 1
+    dt_offset = n_mins_to_np_dt(ds.dt * n_streak_output_offset)
+    t_init_streak = str_to_np_dt(ds.t_init) + dt_offset
+
+    print("First point in week plot should be at: {}".format(t_init_streak))
 
     test_mod = TestModel(ds)
     test_mod.fit()
