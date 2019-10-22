@@ -86,5 +86,15 @@ class CompositeModel(BaseDynamicsModel):
         """
         Returns a sample of noise of length n.
         """
-        
-        raise NotImplementedError("Disturbance for naive model not implemented!")
+        seq_len = self.data.seq_len - 1
+        out_dat = np.empty((seq_len, self.n_pred), dtype=np.float32)
+
+        # Disturb with all the models
+        curr_ind = 0
+        for m in self.model_list:
+            n_pred_m = m.n_pred
+            preds = m.disturb()
+            out_dat[:, curr_ind: (curr_ind + n_pred_m)] = preds
+            curr_ind += n_pred_m
+
+        return out_dat
