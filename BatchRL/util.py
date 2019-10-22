@@ -126,6 +126,47 @@ class CacheDecoratorFactory(object):
         return decorated
 
 
+class TestDecoratorFactory(object):
+    """Testing decorator.
+
+    Prints different messages for AssertionErrors
+    and other errors.
+    """
+
+    def __init__(self, msg: str = "Test failed!"):
+        """
+        Initialize the decorator.
+
+        Args:
+            msg: Error message .
+        """
+        self.m = msg
+
+    def __call__(self, f):
+        """
+        Decorates the function `f`.
+
+        Args:
+            f: The function to be decorated.
+
+        Returns:
+            The decorated function.
+        """
+
+        def decorated(*args, **kwargs):
+
+            try:
+                f(*args, **kwargs)
+            except AssertionError as a:
+                print("{}-test failed!".format(self.m))
+                raise a
+            except Exception as e:
+                print("Exception: {}".format(e))
+                raise AssertionError("Unexpected error happened in test {}".format(self.m))
+
+        return decorated
+
+
 #######################################################################################################
 # Numerical stuff
 

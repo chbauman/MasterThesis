@@ -130,15 +130,19 @@ class TestDynEnv(DynEnv):
         return False
 
 
+@TestDecoratorFactory("ModelEnvironment")
 def test_test_env():
 
     n = 201
     test_ds = construct_test_ds(n)
     test_mod = TestModel(test_ds)
+    n_ts_per_episode = 10
     test_env = TestDynEnv(test_mod, 10)
 
     for k in range(30):
         r, over = test_env.step(0.0)
+        if (k + 1) % n_ts_per_episode == 0 and not over:
+            raise AssertionError("Episode should be over!!")
         if over:
             test_env.reset()
 
