@@ -9,6 +9,7 @@ class FullRoomEnv(DynEnv):
     alpha: float = 1.0  #: Weight factor for reward.
     temp_bounds: Sequence = (22.0, 26.0)  #: The requested temperature range.
     bound_violation_penalty: float = 10.0  #: The penalty in the reward for temperatures out of bound.
+    control_mas: np.ndarray = None
 
     def __init__(self, m: BaseDynamicsModel, temp_bounds: Sequence = None, n_disc_actions: int = 11):
         max_eps = 24 * 60 // m.data.dt
@@ -17,6 +18,9 @@ class FullRoomEnv(DynEnv):
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds
         self.nb_actions = n_disc_actions
+        c_ind = d.c_inds[0]
+        if d.is_scaled[c_ind]:
+            self.control_mas = d.scaling[c_ind]
 
         # Check model
         assert len(m.out_inds) == d.d - d.n_c, "Model not suited for this environment!!"
@@ -25,7 +29,10 @@ class FullRoomEnv(DynEnv):
         assert d.d == 8 and d.n_c == 1, "Not the correct number of series in dataset!"
 
     def _to_continuous(self, action):
-        return action / (self.nb_actions - 1)
+        zero_one_action = action / (self.nb_actions - 1)
+        if self.control_mas is None:
+            return zero_one_action
+        return rem_mean_and_std(zero_one_action, self.control_mas)
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
 
