@@ -9,7 +9,7 @@ class FullRoomEnv(DynEnv):
     alpha: float = 1.0  #: Weight factor for reward.
     temp_bounds: Sequence = (22.0, 26.0)  #: The requested temperature range.
     bound_violation_penalty: float = 10.0  #: The penalty in the reward for temperatures out of bound.
-    control_mas: np.ndarray = None
+    scaling: np.ndarray = None
 
     def __init__(self, m: BaseDynamicsModel, temp_bounds: Sequence = None, n_disc_actions: int = 11):
         max_eps = 24 * 60 // m.data.dt
@@ -18,9 +18,9 @@ class FullRoomEnv(DynEnv):
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds
         self.nb_actions = n_disc_actions
-        c_ind = d.c_inds[0]
-        if d.is_scaled[c_ind]:
-            self.control_mas = d.scaling[c_ind]
+        self.c_ind = d.c_inds[0]
+        if np.all(d.is_scaled):
+            self.scaling = d.scaling
 
         # Check model
         assert len(m.out_inds) == d.d - d.n_c, "Model not suited for this environment!!"
@@ -30,9 +30,9 @@ class FullRoomEnv(DynEnv):
 
     def _to_continuous(self, action):
         zero_one_action = action / (self.nb_actions - 1)
-        if self.control_mas is None:
+        if self.scaling is None:
             return zero_one_action
-        return rem_mean_and_std(zero_one_action, self.control_mas)
+        return rem_mean_and_std(zero_one_action, self.scaling[self.c_ind])
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
 
@@ -42,14 +42,16 @@ class FullRoomEnv(DynEnv):
 
         # Compute energy used
         action_rescaled = action
-        if self.control_mas is not None:
-            action_rescaled = add_mean_and_std(action, self.control_mas)
+        if self.scaling is not None:
+            action_rescaled = add_mean_and_std(action, self.scaling[self.c_ind])
         d_temp = np.abs(curr_pred[2] - curr_pred[3])
         energy_used = action_rescaled * d_temp * self.alpha
         assert 0.0 <= action_rescaled <= 1.0, "Fucking wrong"
 
         # Penalty for constraint violation
         r_temp = curr_pred[4]
+        if self.scaling is not None:
+            r_temp = add_mean_and_std(r_temp, self.scaling[5])
         t_bounds = self.temp_bounds
         too_low_penalty = 0.0 if r_temp > t_bounds[0] else t_bounds[0] - r_temp
         too_high_penalty = 0.0 if r_temp < t_bounds[1] else r_temp - t_bounds[1]
