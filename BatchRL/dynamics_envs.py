@@ -22,7 +22,7 @@ class FullRoomEnv(DynEnv):
         assert len(m.out_inds) == d.d - d.n_c, "Model not suited for this environment!!"
 
         # Check underlying dataset
-        assert d.d == 7 and d.n_c == 1, "Not the correct number of series in dataset!"
+        assert d.d == 8 and d.n_c == 1, "Not the correct number of series in dataset!"
 
     def _to_continuous(self, action):
         return action / (self.nb_actions - 1)

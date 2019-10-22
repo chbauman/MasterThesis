@@ -150,7 +150,7 @@ def main():
                                 out_inds=np.array([0, 1, 5], dtype=np.int32),
                                 constraint_list=rnn_consts)
 
-    mods = [mod_test]  # mod, mod_no_consts, mod_no_wt]
+    mods = [] # [mod_test]  # mod, mod_no_consts, mod_no_wt]
     for m_to_use in mods:
         m_to_use.fit()
         m_to_use.analyze()

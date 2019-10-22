@@ -1,5 +1,6 @@
 import numpy as np
 import gym
+from keras import Input, Model
 
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Flatten
@@ -16,7 +17,10 @@ def test_env(env):
 
     # Next, we build a very simple model.
     nb_actions = env.nb_actions
-    model = getMLPModel()
+    inputs = Input(shape=(8,))
+    model = getMLPModel(out_dim=nb_actions)
+    model = Model(inputs=inputs, outputs=model(inputs))
+    model.summary()
 
     # Finally, we configure and compile our agent. You can use every built-in Keras optimizer and
     # even the metrics!

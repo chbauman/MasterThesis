@@ -104,10 +104,13 @@ class DynEnv(ABC, gym.Env):
         ep_over = self.n_ts == self.n_ts_per_eps or self.episode_over(curr_pred)
         return curr_pred, r, ep_over, None
 
-    def reset(self) -> None:
+    def reset(self) -> np.ndarray:
         """Resets the environment.
 
         Needs to be called if the episode is over.
+
+        Returns:
+            A new initial state.
         """
         self.n_ts = 0
 
@@ -115,6 +118,8 @@ class DynEnv(ABC, gym.Env):
 
         start_data_ind = np.random.randint(self.n_start_data)
         self.hist = self.train_data[start_data_ind]
+
+        return self.hist[-1, :]
 
     def render(self, mode='human'):
         print("Rendering not implemented!")
