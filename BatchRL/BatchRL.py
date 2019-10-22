@@ -16,7 +16,9 @@ from dm_Const import ConstModel
 from battery_model import BatteryModel
 from dm_Time import SCTimeModel
 from dm_TimePeriodic import Periodic1DayModel
+from dynamics_envs import FullRoomEnv
 from keras_layers import test_layers
+from keras_rl_wrap import test_env
 from simple_battery_test import SimpleBatteryTest
 # Environments for debugging
 from cart_pole import CartPole
@@ -65,18 +67,17 @@ def main():
     # pre_mod = Periodic1DayModel(w_dat, None, alpha=0.1)
     # pre_mod.analyze_6_days()
 
-    test_dyn_model()
-    test_test_env()
     # Do tests
-    test_time_stuff()
-    test_layers()
-    test_numpy_functions()
-    test_rest_client()
-    test_python_stuff()
-    # get_data_test()
-    # test_align()
-    test_dataset_artificially()
-    return
+    # test_dyn_model()
+    # test_test_env()
+    # test_time_stuff()
+    # test_layers()
+    # test_numpy_functions()
+    # test_rest_client()
+    # test_python_stuff()
+    # # get_data_test()
+    # # test_align()
+    # test_dataset_artificially()
 
     # Dataset
     name_ds = 'Model_Room43'
@@ -155,6 +156,13 @@ def main():
         m_to_use.analyze()
         m_to_use.analyze_disturbed("Valid", 'val', 10)
         m_to_use.analyze_disturbed("Train", 'train', 10)
+
+    # Full test model
+    comp_model = CompositeModel(ds, [mod_test, time_model_ds], new_name="CompositeTimeRNNFull")
+    comp_model.fit()
+    env = FullRoomEnv(comp_model)
+    test_env(env)
+
     return
     # mod.optimize(2)
 
@@ -163,9 +171,6 @@ def main():
     pre_mod = Periodic1DayModel(ds, exo_inds, alpha=0.1)
     pre_mod.analyze_6_days()
 
-    # Full model
-    comp_model = CompositeModel(ds, [mod, time_model_ds], new_name="CompositeTimeRNNFull")
-    comp_model.fit()
     comp_model.analyze_6_days()
 
     # mod.fit()

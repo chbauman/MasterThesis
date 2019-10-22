@@ -6,11 +6,13 @@ based on a model of class `BaseDynamicsModel`.
 
 from abc import ABC, abstractmethod
 
+import gym
+
 from base_dynamics_model import BaseDynamicsModel, TestModel, construct_test_ds
 from util import *
 
 
-class DynEnv(ABC):
+class DynEnv(ABC, gym.Env):
     """The environment wrapper class for `BaseDynamicsModel`.
 
     Takes an instance of `BaseDynamicsModel` and adds
@@ -80,7 +82,7 @@ class DynEnv(ABC):
         """
         return False
 
-    def step(self, action) -> Tuple[float, bool]:
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
         """Evolve the model with the given control input `action`.
 
         Args:
@@ -100,7 +102,7 @@ class DynEnv(ABC):
 
         r = self.compute_reward(curr_pred, action)
         ep_over = self.n_ts == self.n_ts_per_eps or self.episode_over(curr_pred)
-        return r, ep_over
+        return curr_pred, r, ep_over, None
 
     def reset(self) -> None:
         """Resets the environment.
@@ -114,6 +116,9 @@ class DynEnv(ABC):
         start_data_ind = np.random.randint(self.n_start_data)
         self.hist = self.train_data[start_data_ind]
 
+    def render(self, mode='human'):
+        print("Rendering not implemented!")
+
 
 ##########################################################################
 # Testing stuff
@@ -123,7 +128,7 @@ class TestDynEnv(DynEnv):
     def __init__(self, m: BaseDynamicsModel, max_eps: int = None):
         super(TestDynEnv, self).__init__(m, max_eps)
         d = m.data
-        assert d.n_c == 1 and d.d == 4, "Dataset needs 4 series of which is one controllable!!"
+        assert d.n_c == 1 and d.d == 4, "Dataset needs 4 series of which one is controllable!!"
 
     def compute_reward(self, curr_pred: np.ndarray, action: np.ndarray) -> float:
         assert curr_pred.shape == (3,), "Shape of prediction not correct!"
@@ -135,7 +140,6 @@ class TestDynEnv(DynEnv):
 
 @TestDecoratorFactory("ModelEnvironment")
 def test_test_env():
-
     n = 201
     test_ds = construct_test_ds(n)
     test_mod = TestModel(test_ds)

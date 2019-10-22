@@ -10,18 +10,26 @@ class FullRoomEnv(DynEnv):
     temp_bounds: Sequence = (22.0, 26.0)  #: The requested temperature range.
     bound_violation_penalty: float = 10.0  #: The penalty in the reward for temperatures out of bound.
 
-    def __init__(self, m: BaseDynamicsModel, temp_bounds: Sequence = None):
+    def __init__(self, m: BaseDynamicsModel, temp_bounds: Sequence = None, n_disc_actions: int = 11):
         max_eps = 24 * 60 // m.data.dt
         super(FullRoomEnv, self).__init__(m, max_eps)
         d = m.data
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds
+        self.nb_actions = n_disc_actions
 
         # Check model
         assert len(m.out_inds) == d.d - d.n_c, "Model not suited for this environment!!"
 
         # Check underlying dataset
         assert d.d == 7 and d.n_c == 1, "Not the correct number of series in dataset!"
+
+    def _to_continuous(self, action):
+        return action / (self.nb_actions - 1)
+
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
+
+        return super(FullRoomEnv, self).step(self._to_continuous(action))
 
     def compute_reward(self, curr_pred: np.ndarray, action: np.ndarray) -> float:
 
