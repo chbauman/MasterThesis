@@ -118,39 +118,39 @@ def main():
                                weight_vec=None,
                                out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
                                constraint_list=rnn_consts)
-    mod = RNNDynamicModel(ds,
-                          hidden_sizes=(100, 100),
-                          n_iter_max=100,
-                          input_noise_std=0.001,
-                          lr=0.001,
-                          residual_learning=True,
-                          weight_vec=None,
-                          out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
-                          constraint_list=rnn_consts
-                          )
-    mod_no_consts = RNNDynamicModel(ds,
-                                    name="RNN_No_Consts",
-                                    hidden_sizes=(100, 100),
-                                    n_iter_max=100,
-                                    input_noise_std=0.001,
-                                    lr=0.001,
-                                    residual_learning=True,
-                                    weight_vec=None,
-                                    out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
-                                    constraint_list=None
-                                    )
-    mod_no_wt = RNNDynamicModel(ds,
-                                name="RNN_NoWT",
-                                hidden_sizes=(100, 100),
-                                n_iter_max=100,
-                                input_noise_std=0.001,
-                                lr=0.001,
-                                residual_learning=True,
-                                weight_vec=None,
-                                out_inds=np.array([0, 1, 5], dtype=np.int32),
-                                constraint_list=rnn_consts)
+    # mod = RNNDynamicModel(ds,
+    #                       hidden_sizes=(100, 100),
+    #                       n_iter_max=100,
+    #                       input_noise_std=0.001,
+    #                       lr=0.001,
+    #                       residual_learning=True,
+    #                       weight_vec=None,
+    #                       out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
+    #                       constraint_list=rnn_consts
+    #                       )
+    # mod_no_consts = RNNDynamicModel(ds,
+    #                                 name="RNN_No_Consts",
+    #                                 hidden_sizes=(100, 100),
+    #                                 n_iter_max=100,
+    #                                 input_noise_std=0.001,
+    #                                 lr=0.001,
+    #                                 residual_learning=True,
+    #                                 weight_vec=None,
+    #                                 out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
+    #                                 constraint_list=None
+    #                                 )
+    # mod_no_wt = RNNDynamicModel(ds,
+    #                             name="RNN_NoWT",
+    #                             hidden_sizes=(100, 100),
+    #                             n_iter_max=100,
+    #                             input_noise_std=0.001,
+    #                             lr=0.001,
+    #                             residual_learning=True,
+    #                             weight_vec=None,
+    #                             out_inds=np.array([0, 1, 5], dtype=np.int32),
+    #                             constraint_list=rnn_consts)
 
-    mods = [] # [mod_test]  # mod, mod_no_consts, mod_no_wt]
+    mods = []  # [mod_test]  # mod, mod_no_consts, mod_no_wt]
     for m_to_use in mods:
         m_to_use.fit()
         m_to_use.analyze()

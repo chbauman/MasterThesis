@@ -31,11 +31,11 @@ class FullRoomEnv(DynEnv):
 
         return super(FullRoomEnv, self).step(self._to_continuous(action))
 
-    def compute_reward(self, curr_pred: np.ndarray, action: np.ndarray) -> float:
+    def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
 
         # Compute energy used
         d_temp = np.abs(curr_pred[2] - curr_pred[3])
-        energy_used = action * d_temp * self.alpha
+        energy_used = self._to_continuous(action) * d_temp * self.alpha
 
         # Penalty for constraint violation
         r_temp = curr_pred[4]

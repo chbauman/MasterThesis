@@ -86,4 +86,5 @@ class CompositeModel(BaseDynamicsModel):
         """
         Returns a sample of noise of length n.
         """
+        
         raise NotImplementedError("Disturbance for naive model not implemented!")

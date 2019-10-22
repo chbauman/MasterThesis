@@ -119,7 +119,9 @@ class DynEnv(ABC, gym.Env):
         start_data_ind = np.random.randint(self.n_start_data)
         self.hist = self.train_data[start_data_ind]
 
-        return self.hist[-1, :]
+        print(self.hist[-1, :].shape)
+
+        return self.hist[-1, :-self.act_dim]
 
     def render(self, mode='human'):
         print("Rendering not implemented!")
@@ -152,10 +154,12 @@ def test_test_env():
     test_env = TestDynEnv(test_mod, 10)
 
     for k in range(30):
-        r, over = test_env.step(0.0)
+        next_state, r, over, _ = test_env.step(0.0)
+        assert next_state.shape == (3,), "Prediction does not have the right shape!"
         if (k + 1) % n_ts_per_episode == 0 and not over:
             raise AssertionError("Episode should be over!!")
         if over:
-            test_env.reset()
+            init_state = test_env.reset()
+            assert init_state.shape == (3,), "Prediction does not have the right shape!"
 
     print("Model environment test passed :)")
