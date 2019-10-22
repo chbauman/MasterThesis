@@ -102,7 +102,7 @@ class DynEnv(ABC, gym.Env):
 
         r = self.compute_reward(curr_pred, action)
         ep_over = self.n_ts == self.n_ts_per_eps or self.episode_over(curr_pred)
-        return curr_pred, r, ep_over, None
+        return curr_pred, r, ep_over, {}
 
     def reset(self) -> np.ndarray:
         """Resets the environment.
