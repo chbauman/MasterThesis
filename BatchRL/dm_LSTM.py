@@ -234,7 +234,8 @@ class RNNDynamicModel(HyperOptimizableModel):
         Fit the model if it hasn't been fitted before.
         Otherwise load the trained model.
 
-        :return: None
+        Returns:
+             None
         """
 
         loaded = self.load_if_exists(self.m, self.name)

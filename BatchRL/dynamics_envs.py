@@ -41,8 +41,12 @@ class FullRoomEnv(DynEnv):
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
 
         # Compute energy used
+        action_rescaled = action
+        if self.control_mas is None:
+            action_rescaled = add_mean_and_std(action, self.control_mas)
         d_temp = np.abs(curr_pred[2] - curr_pred[3])
-        energy_used = self._to_continuous(action) * d_temp * self.alpha
+        energy_used = action_rescaled * d_temp * self.alpha
+        assert 0.0 <= action_rescaled <= 1.0, "Fucking wrong"
 
         # Penalty for constraint violation
         r_temp = curr_pred[4]
