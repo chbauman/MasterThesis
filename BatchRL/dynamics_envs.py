@@ -42,7 +42,7 @@ class FullRoomEnv(DynEnv):
 
         # Compute energy used
         action_rescaled = action
-        if self.control_mas is None:
+        if self.control_mas is not None:
             action_rescaled = add_mean_and_std(action, self.control_mas)
         d_temp = np.abs(curr_pred[2] - curr_pred[3])
         energy_used = action_rescaled * d_temp * self.alpha
