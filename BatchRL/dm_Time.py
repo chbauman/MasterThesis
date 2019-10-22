@@ -71,6 +71,10 @@ class SCTimeModel(BaseDynamicsModel):
             c = add_mean_and_std(c, self.c_scale)
 
         # Compute new
+        if np.max(c) > 1.0 or np.min(c) < -1.0:
+            print(np.max(c))
+            print(np.min(c))
+            raise ValueError("Invalid value encountered!")
         x = np.arccos(c)
         x = np.where(s < 0, -x, x) + self.dx
         s_new = np.sin(x)
@@ -86,3 +90,11 @@ class SCTimeModel(BaseDynamicsModel):
         out_dat[:, 0] = s_new
         out_dat[:, 1] = c_new
         return out_dat
+
+    def model_disturbance(self, data_str: str = 'train'):
+
+        self.modeled_disturbance = True
+
+    def disturb(self) -> np.ndarray:
+
+        return np.zeros((self.n_pred,), dtype=np.float32)
