@@ -92,7 +92,7 @@ class DynEnv(ABC):
         """
         self.hist[-1, -self.act_dim:] = action
         pred_sh = (1, -1, self.state_dim)
-        curr_pred = self.m.predict(self.hist.reshape(pred_sh))
+        curr_pred = self.m.predict(self.hist.reshape(pred_sh))[0]
         curr_pred += self.m.disturb()
         self.hist[:-1, :] = self.hist[1:, :]
         self.hist[-1, :-self.act_dim] = curr_pred
@@ -122,9 +122,12 @@ class TestDynEnv(DynEnv):
 
     def __init__(self, m: BaseDynamicsModel, max_eps: int = None):
         super(TestDynEnv, self).__init__(m, max_eps)
+        d = m.data
+        assert d.n_c == 1 and d.d == 4, "Dataset needs 4 series of which is one controllable!!"
 
     def compute_reward(self, curr_pred: np.ndarray, action: np.ndarray) -> float:
-        return 1.0
+        assert curr_pred.shape == (3,), "Shape of prediction not correct!"
+        return curr_pred[2] * action
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
         return False
