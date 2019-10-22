@@ -30,13 +30,13 @@ def test_env(env):
     policy = BoltzmannQPolicy()
     dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=10,
                    target_model_update=1e-2, policy=policy)
-    dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+    dqn.compile(Adam(lr=1e-5), metrics=['mae'])
 
     # Okay, now it's time to learn something! We visualize the training here for show, but this
     # slows down training quite a lot. You can always safely abort the training prematurely using
     # Ctrl + C.
-    hist = dqn.fit(env, nb_steps=200, visualize=False, verbose=2)
-    plot_train_history(hist, val=True)
+    hist = dqn.fit(env, nb_steps=20000, visualize=False, verbose=2)
+    # plot_train_history(hist, val=True)
 
     # After training is done, we save the final weights.
     # dqn.save_weights('dqn_{}_weights.h5f'.format(env.m.name), overwrite=True)
