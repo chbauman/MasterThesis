@@ -183,7 +183,7 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         # Initialize
         n_lstm = len(self.hidden_sizes)
-        model = Sequential()
+        model = Sequential(name="rnn")
         input_shape_dict = {'input_shape': (self.train_seq_len, self.n_feats)}
 
         # Add noise layer
