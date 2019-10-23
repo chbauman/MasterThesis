@@ -306,6 +306,15 @@ class FeatureSlice(Layer):
         return s[0], s[1], self.n_feats
 
 
+def get_test_layer_output(layer: Layer, np_input, learning_phase: float = 1.0):
+    m = Sequential()
+    m.add(layer)
+    out, inp = m.output, m.input
+    k_fun = K.function([inp, K.learning_phase()], [out])
+    layer_out = k_fun([np_input, learning_phase])[0]
+    return layer_out
+
+
 def test_layers() -> None:
     """
     Test the custom layers.
@@ -351,16 +360,20 @@ def test_layers() -> None:
         SeriesConstraint('exact'),
     ]
     noise_level = 5.0
-    const_layer = ConstrainedNoise(noise_level, consts)
-    model.add(const_layer)
-    out = model.output
-    k_fun = K.function([inp, K.learning_phase()], [out])
-    layer_out = k_fun([seq_input, 1.0])[0]
+    const_layer = ConstrainedNoise(noise_level, consts, input_shape=(seq_len, n_in_feat))
+    layer_out = get_test_layer_output(const_layer, seq_input, 1.0)
+    layer_out_test = get_test_layer_output(const_layer, seq_input, 0.0)
     if not np.allclose(layer_out[:, :, 2:], seq_input[:, :, 2:]):
         raise AssertionError("Exact constraint in Constrained Noise layer not implemented correctly!!")
     if not check_in_range(layer_out[:, :, 0], 0.0, 1.00001):
         raise AssertionError("Interval constraint in Constrained Noise layer not implemented correctly!!")
-    layer_out_test = k_fun([seq_input, 0.0])[0]
     if not np.allclose(layer_out_test[:, :, 1:], seq_input[:, :, 1:]):
         raise AssertionError("Noise layer during testing still active!!")
     print("Keras Layers tests passed :)")
+
+    # Test FeatureSlice layer
+    indices = [0, 2]
+    lay = FeatureSlice(np.array(indices), input_shape=(seq_len, n_in_feat))
+    layer_out = get_test_layer_output(lay, seq_input)
+    if not np.array_equal(layer_out, seq_input[:, -1, indices]):
+        raise AssertionError("FeatureSlice layer not working!!")
