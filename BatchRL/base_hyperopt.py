@@ -92,4 +92,5 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             algo=tpe.suggest,
             max_evals=n
         )
+
         return best

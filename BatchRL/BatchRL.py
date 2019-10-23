@@ -150,8 +150,11 @@ def main():
                                 out_inds=np.array([0, 1, 5], dtype=np.int32),
                                 constraint_list=rnn_consts)
 
-    mod.optimize(2)
-    print(mod.param_list)
+    opt_params = mod.optimize(2)
+    print("All tried parameter combinations: {}.".format(mod.param_list))
+    print("Optimal parameters: {}.".format(opt_params))
+    return
+
     mods = [mod, mod_no_consts]  # [mod_test]  # mod, mod_no_consts, mod_no_wt]
     for m_to_use in mods:
         m_to_use.fit()
@@ -166,9 +169,7 @@ def main():
     comp_model.fit()
     env = FullRoomEnv(comp_model)
     test_env(env)
-
     return
-    # mod.optimize(2)
 
     # Exogenous variable model
     exo_inds = np.array([0, 1, 2], dtype=np.int32)

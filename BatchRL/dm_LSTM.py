@@ -145,12 +145,13 @@ class RNNDynamicModel(HyperOptimizableModel):
         :param weight_vec: Weight vector for weighted loss
         :param input_noise_std: Standard deviation of input noise.
         :param constraint_list: The constraints on the data series.
+        :param verbose: The verbosity level, 0, 1 or 2.
         """
 
         name = constr_name(name, hidden_sizes,
                            n_iter_max, lr, gru,
                            residual_learning, weight_vec, input_noise_std)
-        super(RNNDynamicModel, self).__init__(data, name, out_inds, in_inds)
+        super(RNNDynamicModel, self).__init__(data, name, out_inds, in_inds, verbose)
 
         # Store data
         self.train_seq_len = self.data.seq_len - 1
@@ -165,7 +166,6 @@ class RNNDynamicModel(HyperOptimizableModel):
         self.weight_vec = weight_vec
         self.res_learn = residual_learning
         self.lr = lr
-        self.verbose = verbose
 
         # Build model
         self.m = None
@@ -244,7 +244,8 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         loaded = self.load_if_exists(self.m, self.name)
         if not loaded:
-            self.deb("Fitting Model...")
+            if self.verbose:
+                self.deb("Fitting Model...")
 
             # Prepare the data
             input_data, output_data = self.get_fit_data('train_val')

@@ -48,14 +48,17 @@ class BaseDynamicsModel(ABC):
     model_path: str = "../Models/Dynamics/"
     use_AR: bool = True
 
+    # Parameters
+    verbose: int = 1  #: Verbosity level
+    name: str  #: Name of the model
+    plot_path: str  #: Path to the plot folder
+
     #: Dataset containing all the data
     data: Dataset
     out_inds: np.ndarray
     p_out_inds: np.ndarray
     in_indices: np.ndarray
     p_in_indices: np.ndarray
-    name: str  #: Name of the model
-    plot_path: str  #: Path to the plot folder
     n_pred_full: int
     n_pred: int  #: Number of dimensions of the prediction
 
@@ -67,20 +70,27 @@ class BaseDynamicsModel(ABC):
 
     def __init__(self, ds: Dataset, name: str,
                  out_indices: np.ndarray = None,
-                 in_indices: np.ndarray = None):
+                 in_indices: np.ndarray = None,
+                 verbose: int = None):
         """
         Constructor for the base of every dynamics model.
         If out_indices is None, all series are predicted.
         If in_indices is None, all series are used as input to the model.
 
-        :param ds: Dataset containing all the data.
-        :param name: Name of the model.
-        :param out_indices: Indices specifying the series in the data that the model predicts.
-        :param in_indices: Indices specifying the series in the data that the model takes as input.
+        Args:
+            ds: Dataset containing all the data.
+            name: Name of the model.
+            out_indices: Indices specifying the series in the data that the model predicts.
+            in_indices: Indices specifying the series in the data that the model takes as input.
+            verbose: The verbosity level.
         """
 
         # Set dataset
         self.data = ds
+
+        # Verbosity
+        if verbose is not None:
+            self.verbose = verbose
 
         # Indices
         out_inds_str = ""
@@ -162,9 +172,12 @@ class BaseDynamicsModel(ABC):
         Loads the keras model if it exists.
         Returns true if it could be loaded, else False.
 
-        :param m: Model to be loaded.
-        :param name: Name of model.
-        :return: True if model could be loaded else False.
+        Args:
+            m: Model to be loaded.
+            name: Name of model.
+
+        Returns:
+             True if model could be loaded else False.
         """
         full_path = self.get_path(name)
 
@@ -173,10 +186,13 @@ class BaseDynamicsModel(ABC):
             return True
         return False
 
-    def model_disturbance(self, data_str: str = 'train'):
+    def model_disturbance(self, data_str: str = 'train') -> None:
         """
         Models the uncertainties in the model
         by matching the distribution of the residuals.
+
+        Returns:
+            None
         """
 
         # Compute residuals
