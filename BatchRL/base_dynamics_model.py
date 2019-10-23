@@ -600,6 +600,35 @@ class BaseDynamicsModel(ABC):
                          title_and_ylab=title_and_ylab,
                          save_name=self.get_plt_path('OneWeek_WithNoise_' + str(k) + "_" + ext))
 
+    def hyper_obj(self, n_ts: int = 16, series_ind: Arr = None) -> float:
+        """Defines the objective for the hyperparameter optimization.
+
+        Uses multistep prediction to define the performance for
+        the hyperparameter optimization. Objective needs to be minimized.
+
+        Args:
+            n_ts: Number of timesteps to predict.
+            series_ind: The indices of the series to predict.
+
+        Returns:
+            The numerical value of the objective.
+        """
+        d = self.data
+
+        # Transform indices and get data
+        if isinstance(series_ind, (int, float)):
+            series_ind = d.to_prepared(np.array([series_ind]))
+        elif series_ind is None:
+            series_ind = self.p_out_inds
+        in_d, out_d, _ = d.get_streak('val')
+        tr = np.copy(out_d[:, series_ind])
+
+        # Predict and compute residuals
+        one_h_pred = self.n_step_predict(copy_arr_list([in_d, out_d]), n_ts,
+                                         pred_ind=None)
+        residuals = tr[(n_ts - 1):] - one_h_pred[:, series_ind]
+        return float(np.sum(residuals * residuals))
+
     def get_residuals(self, data_str: str):
         """
         Computes the residuals using the fitted model.

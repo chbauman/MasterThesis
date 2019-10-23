@@ -106,12 +106,12 @@ class RNNDynamicModel(HyperOptimizableModel):
 
     def hyper_objective(self) -> float:
         """
-        TODO: Implement this!
+        Uses the hyperparameter objective from the base class.
 
         Returns:
             Objective loss.
         """
-        raise NotImplementedError("Not implemented!")
+        return self.hyper_obj()
 
     def __init__(self,
                  data: Dataset,
@@ -173,7 +173,8 @@ class RNNDynamicModel(HyperOptimizableModel):
         Builds the keras LSTM model and saves it
         to self.
 
-        :return: None
+        Returns:
+             None
         """
 
         # Initialize
@@ -195,7 +196,6 @@ class RNNDynamicModel(HyperOptimizableModel):
         # Output layer
         # model.add(TimeDistributed(Dense(self.n_pred, activation=None)))
         if self.constraint_list is not None:
-            # WHYYYYY????
             out_constraints = [self.constraint_list[i] for i in self.out_inds]
         else:
             out_constraints = None
