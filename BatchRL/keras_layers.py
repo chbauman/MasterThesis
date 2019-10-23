@@ -307,6 +307,20 @@ class FeatureSlice(Layer):
 
 
 def get_test_layer_output(layer: Layer, np_input, learning_phase: float = 1.0):
+    """Test a keras layer.
+
+    Builds a model with only the layer given and
+    returns the output when given `np.input` as input.
+
+    Args:
+        layer: The keras layer.
+        np_input: The input to the layer.
+        learning_phase: Whether learning is active or not.
+
+    Returns:
+        The layer output.
+    """
+    # Construct sequential model with only one layer
     m = Sequential()
     m.add(layer)
     out, inp = m.output, m.input
@@ -324,6 +338,7 @@ def test_layers() -> None:
     Raises:
         AssertionError: If a test fails.
     """
+    # Define data
     seq_input = np.array([
         [[1, 2, 3, 4], [2, 3, 4, 5]],
         [[5, 5, 5, 5], [3, 3, 3, 3]],
@@ -333,22 +348,15 @@ def test_layers() -> None:
         [3, 3],
     ])
 
+    # Get shapes
     in_shape = seq_input.shape
     out_shape = output.shape
     batch_size, seq_len, n_in_feat = in_shape
     n_out_feat = out_shape[1]
 
-    # Initialize model
-    model = Sequential()
-
     # Test SeqInput
     inp_layer = SeqInput(input_shape=(seq_len, n_in_feat))
-    model.add(inp_layer)
-    inp = model.input
-
-    out = model.output
-    k_fun = K.function([inp, K.learning_phase()], [out])
-    layer_out = k_fun([seq_input, 1.0])
+    layer_out = get_test_layer_output(inp_layer, seq_input, 1.0)
     if not np.allclose(layer_out, seq_input):
         raise AssertionError("SeqInput layer not implemented correctly!!")
 
