@@ -150,10 +150,12 @@ def main():
                                 out_inds=np.array([0, 1, 5], dtype=np.int32),
                                 constraint_list=rnn_consts)
 
+    mod.optimize(2)
+    print(mod.param_list)
     mods = [mod, mod_no_consts]  # [mod_test]  # mod, mod_no_consts, mod_no_wt]
     for m_to_use in mods:
         m_to_use.fit()
-        print("12 Timestep performance: {}".format(m_to_use.hyper_objective()))
+        print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))
         # m_to_use.analyze()
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)

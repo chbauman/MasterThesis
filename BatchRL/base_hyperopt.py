@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 from hyperopt import fmin, hp, tpe, Trials, space_eval, STATUS_OK
 from hyperopt.pyll import scope as ho_scope
@@ -10,6 +10,8 @@ from base_dynamics_model import BaseDynamicsModel
 
 
 class HyperOptimizableModel(BaseDynamicsModel, ABC):
+
+    param_list: List[Dict] = []  #: List of tried parameters.
 
     @abstractmethod
     def get_space(self) -> Dict:
@@ -24,7 +26,8 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
 
     @abstractmethod
     def conf_model(self, hp_sample: Dict) -> 'HyperOptimizableModel':
-        """
+        """Configure new model with given parameters.
+
         Initializes another model with the parameters as
         specified by the sample, which is a sample of the specified
         hyperopt space.
@@ -64,10 +67,21 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             The optimized hyper parameters.
         """
         hp_space = self.get_space()
+        self.param_list = []
 
         # Define final objective function
         def f(hp_sample: Dict) -> float:
+            """Fits model and evaluates it.
+
+            Args:
+                hp_sample: Model parameters.
+
+            Returns:
+                Value of the objective.
+            """
+            print(hp_sample)
             mod = self.conf_model(hp_sample)
+            self.param_list += [hp_sample]
             mod.fit()
             return mod.hyper_objective()
 

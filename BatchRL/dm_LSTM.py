@@ -73,11 +73,11 @@ class RNNDynamicModel(HyperOptimizableModel):
         """
         hp_space = {
             'n_layers': ho_scope.int(hp.quniform('n_layers', low=1, high=4, q=1)),
-            'n_neurons': ho_scope.int(hp.quniform('n_neurons', low=20, high=200, q=20)),
-            'n_iter_max': ho_scope.int(hp.quniform('n_iter_max', low=40, high=300, q=20)),
+            'n_neurons': ho_scope.int(hp.quniform('n_neurons', low=5, high=100, q=5)),
+            'n_iter_max': ho_scope.int(hp.quniform('n_iter_max', low=5, high=10, q=5)),
             'gru': hp.choice('gru', [True, False]),
-            'lr': hp.loguniform('lr', low=-6 * np.log(10), high=2 * np.log(10)),
-            'input_noise_std': hp.loguniform('input_noise_std', low=-9 * np.log(10), high=-2 * np.log(10)),
+            'lr': hp.loguniform('lr', low=-5 * np.log(10), high=1 * np.log(10)),
+            'input_noise_std': hp.loguniform('input_noise_std', low=-6 * np.log(10), high=-1 * np.log(10)),
         }
         return hp_space
 
@@ -101,6 +101,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                                   out_inds=self.out_inds,
                                   constraint_list=self.constraint_list,
                                   hidden_sizes=hidden_sizes,
+                                  verbose=0,
                                   **init_kwargs)
         return new_mod
 
@@ -126,7 +127,8 @@ class RNNDynamicModel(HyperOptimizableModel):
                  input_noise_std: Optional[float] = None,
                  residual_learning: bool = True,
                  lr: float = 0.001,
-                 constraint_list: Sequence[SeriesConstraint] = None):
+                 constraint_list: Sequence[SeriesConstraint] = None,
+                 verbose: int = 1):
 
         """
         Constructor, defines all the network parameters.
@@ -163,6 +165,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         self.weight_vec = weight_vec
         self.res_learn = residual_learning
         self.lr = lr
+        self.verbose = verbose
 
         # Build model
         self.m = None
@@ -224,7 +227,8 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         opt = Adam(lr=self.lr)
         model.compile(loss=loss, optimizer=opt)
-        model.summary()
+        if self.verbose:
+            model.summary()
         self.m = model
         # pth = self.get_plt_path("Model.png")
         # plot_model(model, to_file=pth)
@@ -250,7 +254,8 @@ class RNNDynamicModel(HyperOptimizableModel):
                            epochs=self.n_iter_max,
                            initial_epoch=0,
                            batch_size=128,
-                           validation_split=self.data.val_percent)
+                           validation_split=self.data.val_percent,
+                           verbose=self.verbose)
             pth = self.get_plt_path("TrainHist")
             plot_train_history(h, pth)
             create_dir(self.model_path)
