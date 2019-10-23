@@ -12,7 +12,7 @@ from keras.utils import plot_model
 from base_hyperopt import HyperOptimizableModel
 from data import Dataset
 from data import SeriesConstraint
-from keras_layers import SeqInput, ConstrainedNoise
+from keras_layers import SeqInput, ConstrainedNoise, FeatureSlice
 from util import *
 from visualize import plot_train_history
 
@@ -218,7 +218,7 @@ class RNNDynamicModel(HyperOptimizableModel):
             seq_input = Input(shape=(self.train_seq_len, self.n_feats),
                               name="input_sequences")
             m_out = model(seq_input)
-            slicer = Lambda(lambda x: x[:, -1, :self.n_pred], name="get_previous_state")
+            slicer = FeatureSlice(self.p_out_inds, name="get_previous_output")
             last_input = slicer(seq_input)
             final_out = Add(name="add_previous_state")([m_out, last_input])
             final_out = out_const_layer(final_out)

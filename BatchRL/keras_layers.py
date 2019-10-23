@@ -197,7 +197,6 @@ class ConstrainedNoise(Layer):
         Returns:
             The output of the layer satisfying the constraints.
         """
-
         x_modify = x
 
         # Add noise if std > 0
@@ -244,6 +243,67 @@ class ConstrainedNoise(Layer):
         return input_shape
 
 
+class FeatureSlice(Layer):
+    """Extracts specified features from tensor.
+
+    TODO: Make it more efficient by considering not single slices but
+        multiple consecutive ones.
+    """
+
+    slicing_indices: np.ndarray  #: The array with the indices.
+    n_feats: int  #: The number of selected features.
+    n_dims: int  #: The number of dimensions of the input tensor.
+    return_last_seq: bool  #: Whether to only return the last slice of each sequence.
+
+    def __init__(self, s_inds: np.ndarray,
+                 n_dims: int = 3,
+                 return_last_seq: bool = True,
+                 **kwargs):
+        """Initialize layer.
+
+        Args:
+            s_inds: The array with the indices.
+            n_dims: The number of dimensions of the input tensor.
+            **kwargs: The kwargs for super(), e.g. `name`.
+        """
+        super(FeatureSlice, self).__init__(**kwargs)
+        self.slicing_indices = s_inds
+        self.n_feats = len(s_inds)
+        self.n_dims = n_dims
+        self.return_last_seq = return_last_seq
+
+        if n_dims == 2:
+            raise NotImplementedError("Not implemented for 2D tensors!")
+
+    def call(self, x):
+        """
+        Builds the layer given the input x. Selects the features
+        specified in `slicing_indices` and concatenates them.
+
+        Args:
+            x: The input to the layer.
+
+        Returns:
+            The output of the layer containing the slices.
+        """
+        s = -1 if self.return_last_seq else slice(None)
+        feature_tensors = [x[:, s, ct:(ct + 1)] for ct in self.slicing_indices]
+        return K.concatenate(feature_tensors, axis=-1)
+
+    def compute_output_shape(self, input_shape):
+        """
+        The shape only changes in the feature dimension.
+
+        Args:
+            input_shape: The shape of the input.
+
+        Returns:
+            Same as input with the last dimension changed.
+        """
+        s = input_shape
+        return s[0], s[1], self.n_feats
+
+
 def test_layers() -> None:
     """
     Test the custom layers.
@@ -287,7 +347,7 @@ def test_layers() -> None:
         SeriesConstraint(),
         SeriesConstraint('exact'),
         SeriesConstraint('exact'),
-            ]
+    ]
     noise_level = 5.0
     const_layer = ConstrainedNoise(noise_level, consts)
     model.add(const_layer)
