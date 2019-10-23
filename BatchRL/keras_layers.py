@@ -1,11 +1,17 @@
 import tensorflow as tf
-# from tensorflow.keras import backend as K
 from keras import backend as K
 from keras.layers import Layer, GaussianNoise
 
 from data import SeriesConstraint
 from keras_util import *
 from util import *
+
+"""Custom keras layers.
+
+Define your custom keras layers here.
+There is also a function that tests the layers
+for some example input.
+"""
 
 
 class ReduceMax2D(Layer):
@@ -333,7 +339,8 @@ def test_layers() -> None:
     """
     Test the custom layers.
 
-    Returns: None
+    Returns:
+        None
 
     Raises:
         AssertionError: If a test fails.
@@ -377,7 +384,6 @@ def test_layers() -> None:
         raise AssertionError("Interval constraint in Constrained Noise layer not implemented correctly!!")
     if not np.allclose(layer_out_test[:, :, 1:], seq_input[:, :, 1:]):
         raise AssertionError("Noise layer during testing still active!!")
-    print("Keras Layers tests passed :)")
 
     # Test FeatureSlice layer
     indices = [0, 2]
@@ -385,3 +391,5 @@ def test_layers() -> None:
     layer_out = get_test_layer_output(lay, seq_input)
     if not np.array_equal(layer_out, seq_input[:, -1, indices]):
         raise AssertionError("FeatureSlice layer not working!!")
+
+    print("Keras Layers tests passed :)")
