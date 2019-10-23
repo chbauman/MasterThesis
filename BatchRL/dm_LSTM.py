@@ -193,7 +193,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         rnn = GRU if self.gru else LSTM
         for k in range(n_lstm):
             ret_seq = k != n_lstm - 1
-            model.add(rnn(self.hidden_sizes[k],
+            model.add(rnn(int(self.hidden_sizes[k]),
                           return_sequences=ret_seq))
 
         # Output layer
