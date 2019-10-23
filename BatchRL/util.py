@@ -7,6 +7,9 @@ import scipy.optimize.nnls
 
 from datetime import datetime
 
+# Determine platform, assuming we are on Euler if it is not a windows platform
+EULER = not os.name == 'nt'
+
 #######################################################################################################
 # Typing
 

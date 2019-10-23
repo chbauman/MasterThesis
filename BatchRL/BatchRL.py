@@ -149,7 +149,7 @@ def main():
                                 weight_vec=None,
                                 out_inds=np.array([0, 1, 5], dtype=np.int32),
                                 constraint_list=rnn_consts)
-
+    return
     opt_params = mod.optimize(2)
     print("All tried parameter combinations: {}.".format(mod.param_list))
     print("Optimal parameters: {}.".format(opt_params))

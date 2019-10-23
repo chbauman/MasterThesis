@@ -7,6 +7,7 @@ from keras import backend as K
 from keras.layers import GRU, LSTM, Dense, Input, Add, Lambda
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
+from keras.utils import plot_model
 
 from base_hyperopt import HyperOptimizableModel
 from data import Dataset
@@ -230,8 +231,10 @@ class RNNDynamicModel(HyperOptimizableModel):
         if self.verbose:
             model.summary()
         self.m = model
-        # pth = self.get_plt_path("Model.png")
-        # plot_model(model, to_file=pth)
+        if not EULER:
+            pth = self.get_plt_path("Model.png")
+            plot_model(model, to_file=pth,
+                       show_shapes=True,)
 
     def fit(self) -> None:
         """

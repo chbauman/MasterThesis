@@ -1,19 +1,13 @@
-import datetime
-import os
-
-import numpy as np
 import matplotlib as mpl
+from pandas.plotting import register_matplotlib_converters
 
-if not os.name == 'nt':
+from util import *
+
+if EULER:
     print("No fucking windows!!")
     mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as mpl_colors
-
-from matplotlib.dates import DateFormatter
-from pandas.plotting import register_matplotlib_converters
-
-from util import *
 
 register_matplotlib_converters()
 
