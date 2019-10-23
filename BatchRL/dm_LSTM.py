@@ -184,18 +184,24 @@ class RNNDynamicModel(HyperOptimizableModel):
         # Initialize
         n_lstm = len(self.hidden_sizes)
         model = Sequential()
-        model.add(SeqInput(input_shape=(self.train_seq_len, self.n_feats)))
+        input_shape_dict = {'input_shape': (self.train_seq_len, self.n_feats)}
 
         # Add noise layer
         if self.input_noise_std is not None:
-            model.add(ConstrainedNoise(self.input_noise_std, consts=self.constraint_list))
+            model.add(ConstrainedNoise(self.input_noise_std, consts=self.constraint_list,
+                                       name="constrain_input",
+                                       **input_shape_dict))
+            input_shape_dict = {}
 
         # Add layers
         rnn = GRU if self.gru else LSTM
         for k in range(n_lstm):
             ret_seq = k != n_lstm - 1
             model.add(rnn(int(self.hidden_sizes[k]),
-                          return_sequences=ret_seq))
+                          return_sequences=ret_seq,
+                          name="rnn_layer_{}".format(k),
+                          **input_shape_dict))
+            input_shape_dict = {}
 
         # Output layer
         # model.add(TimeDistributed(Dense(self.n_pred, activation=None)))
@@ -203,15 +209,18 @@ class RNNDynamicModel(HyperOptimizableModel):
             out_constraints = [self.constraint_list[i] for i in self.out_inds]
         else:
             out_constraints = None
-        out_const_layer = ConstrainedNoise(0, consts=out_constraints, is_input=False)
-        model.add(Dense(self.n_pred, activation=None))
+        out_const_layer = ConstrainedNoise(0, consts=out_constraints,
+                                           is_input=False,
+                                           name="constrain_output")
+        model.add(Dense(self.n_pred, activation=None, name="dense_reduce"))
         if self.res_learn:
             # Add last non-control input to output
-            seq_input = Input(shape=(self.train_seq_len, self.n_feats))
+            seq_input = Input(shape=(self.train_seq_len, self.n_feats),
+                              name="input_sequences")
             m_out = model(seq_input)
-            slicer = Lambda(lambda x: x[:, -1, :self.n_pred])
+            slicer = Lambda(lambda x: x[:, -1, :self.n_pred], name="get_previous_state")
             last_input = slicer(seq_input)
-            final_out = Add()([m_out, last_input])
+            final_out = Add(name="add_previous_state")([m_out, last_input])
             final_out = out_const_layer(final_out)
             model = Model(inputs=seq_input, outputs=final_out)
         else:
