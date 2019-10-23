@@ -301,6 +301,8 @@ class FeatureSlice(Layer):
             Same as input with the last dimension changed.
         """
         s = input_shape
+        if self.return_last_seq:
+            return s[0], self.n_feats
         return s[0], s[1], self.n_feats
 
 
