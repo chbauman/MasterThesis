@@ -7,9 +7,14 @@ everything.
 
 When running on Euler, first run:
 
-- module load python
-- module load hdf5
+```console
+$ module load python
+$ module load hdf5
+```
 
 to load the necessary libraries. 
 You might need to install some additional
 python libraries, do this using the flag `--user`.
+Also remember to copy the data if it has changed 
+since the last time. The command for doing this
+is in [Data](../Data).
