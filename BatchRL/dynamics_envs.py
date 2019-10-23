@@ -1,6 +1,5 @@
 from base_dynamics_env import DynEnv
 from base_dynamics_model import BaseDynamicsModel
-from data import Dataset
 from util import *
 
 

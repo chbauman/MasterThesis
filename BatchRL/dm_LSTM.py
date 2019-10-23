@@ -234,7 +234,9 @@ class RNNDynamicModel(HyperOptimizableModel):
         if not EULER:
             pth = self.get_plt_path("Model.png")
             plot_model(model, to_file=pth,
-                       show_shapes=True,)
+                       show_shapes=True,
+                       expand_nested=True,
+                       dpi=500)
 
     def fit(self) -> None:
         """
