@@ -23,6 +23,19 @@ Arr = Union[Num, np.ndarray]
 #######################################################################################################
 # Python stuff
 
+def rem_first(t: Tuple) -> Tuple:
+    """Removes first element from tuple.
+
+    Args:
+        t: Original tuple.
+
+    Returns:
+        New tuple without first value.
+    """
+    lis = [i for i in t]
+    return tuple(lis[1:])
+
+
 def get_if_nnone(lst: Sequence, indx: int, default=None):
     """
     Returns a list element if list is not None,
@@ -1082,7 +1095,8 @@ def test_python_stuff() -> None:
     except Exception as e:
         raise AssertionError("Some error happened: {}".format(e))
 
-    pass
+    assert rem_first((1, 2, 3)) == (2, 3), "rem_first not working correctly!"
+    assert rem_first((1, 2)) == (1,), "rem_first not working correctly!"
 
 
 def test_time_stuff() -> None:

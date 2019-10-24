@@ -355,9 +355,10 @@ class ExtractInput(Layer):
         x_in, x_out = x
         if len(x_out.shape) == 2:
             x_out = K.reshape(x_out, (-1, 1, self.n_feats))
+
         x_s = x_in.shape
-        x_prev = x[:, self.curr_ind: (end_ind - 1), :]
-        x_next = x[:, end_ind: (end_ind + 1), :]
+        x_prev = x_in[:, self.curr_ind: (end_ind - 1), :]
+        x_next = x_in[:, end_ind: (end_ind + 1), :]
 
         # Extract slices
         pred_ind = np.zeros((x_s[-1],), dtype=np.bool)
@@ -366,14 +367,14 @@ class ExtractInput(Layer):
         ct = 0
         for k in range(x_s[-1]):
             if not pred_ind[k]:
-                feat_tensor_list += [x_next[:, :, k]]
+                feat_tensor_list += [x_next[:, :, k: (k + 1)]]
             else:
-                feat_tensor_list += [x_out[:, :, k]]
+                feat_tensor_list += [x_out[:, :, ct: (ct + 1)]]
                 ct += 1
 
         # Concatenate
         out_next = K.concatenate(feat_tensor_list, axis=-1)
-        return K.concatenate([x_prev, out_next])
+        return K.concatenate([x_prev, out_next], axis=-2)
 
     def compute_output_shape(self, input_shape):
         """
@@ -385,10 +386,17 @@ class ExtractInput(Layer):
         Returns:
             Same as input with the second dimension set to sequence length.
         """
-        s = input_shape
-        if len(s) != 3:
-            raise NotImplementedError("Only implemented for 3D tensors!")
-        return s[0], self.seq_len, s[2]
+        s0 = input_shape
+        if isinstance(s0, list):
+            if len(s0) != 2:
+                raise ValueError("Need exactly two tensors if there are multiple!")
+            if s0[1][1] != self.n_feats:
+                raise ValueError("Invalid indices or tensor shape!")
+            s0 = s0[0]
+        if len(s0) != 3:
+            raise ValueError("Only implemented for 3D tensors!")
+
+        return s0[0], self.seq_len, s0[2]
 
 
 def get_test_layer_output(layer: Layer, np_input, learning_phase: float = 1.0):
@@ -425,8 +433,13 @@ def get_multi_input_layer_output(layer: Layer, inp_list, learning_phase: float =
     Returns:
         The processed input.
     """
-    inputs = [Input(shape=el.shape) for el in inp_list]
-    layer_out_tensor = layer(inputs)
+    if not isinstance(inp_list, list):
+        inp_list = [inp_list]
+    inputs = [Input(shape=rem_first(el.shape)) for el in inp_list if el is not None]
+    if len(inputs) == 1:
+        layer_out_tensor = layer(*inputs)
+    else:
+        layer_out_tensor = layer(inputs)
     k_fun = K.function([*inputs, K.learning_phase()], [layer_out_tensor])
     layer_out = k_fun([*inp_list, learning_phase])[0]
     return layer_out
@@ -447,12 +460,20 @@ def test_layers() -> None:
         [[1, 2, 3, 4], [2, 3, 4, 5]],
         [[5, 5, 5, 5], [3, 3, 3, 3]],
     ])
+    seq_input_long = np.array([
+        [[0, 2, 3, 4], [1, 3, 4, 5], [2, 3, 4, 5], [3, 3, 4, 5], [4, 3, 4, 5], [5, 3, 4, 5]],
+        [[1, 5, 5, 5], [3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3]],
+    ])
     output = np.array([
         [2, 3],
         [3, 3],
     ])
-    id_1 = np.array([1, 2, 3])
-    id_2 = np.array([2, 2, 2])
+    output2 = np.array([
+        [-2, 0],
+        [0, -3],
+    ])
+    id_1 = np.array([[1, 2, 3]])
+    id_2 = np.array([[2, 2, 2]])
 
     # Get shapes
     in_shape = seq_input.shape
@@ -495,5 +516,17 @@ def test_layers() -> None:
     layer_out = get_test_layer_output(lay, seq_input)
     if not np.array_equal(layer_out, seq_input[:, -1, indices]):
         raise AssertionError("FeatureSlice layer not working!!")
+
+    # Test ExtractInput layer
+    lay = ExtractInput(indices, seq_len=3, curr_ind=1)
+    l_out = get_multi_input_layer_output(lay, [seq_input_long, output2])
+    l_out2 = get_multi_input_layer_output(lay, [seq_input_long, None])
+    l_out3 = get_multi_input_layer_output(lay, seq_input_long)
+    exp_out32 = np.copy(seq_input_long)[:, 1:4, :]
+    exp_out = np.copy(exp_out32)
+    exp_out[:, -1, indices] = output2
+    assert np.array_equal(l_out, exp_out), "ExtractInput layer not working!"
+    assert np.array_equal(l_out2, exp_out32), "ExtractInput layer not working!"
+    assert np.array_equal(l_out3, exp_out32), "ExtractInput layer not working!"
 
     print("Keras Layers tests passed :)")
