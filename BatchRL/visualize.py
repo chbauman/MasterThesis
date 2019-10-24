@@ -1,5 +1,3 @@
-from typing import Dict
-
 import matplotlib as mpl
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf
@@ -50,12 +48,9 @@ def save_figure(save_name, show=False, vector_format=True):
     return
 
 
-# Base plot function defining the style
-def plot_helper(x, y, m_col='blue', label=None, dates=False):
+def _plot_helper(x, y, m_col='blue', label: str = None, dates: bool = False):
+    """Defining basic plot style for all plots.
     """
-    Basic plot style for all plots.
-    """
-
     ls = ':'
     marker = '^'
     ms = 2
@@ -69,7 +64,7 @@ def plot_helper(x, y, m_col='blue', label=None, dates=False):
 
 
 # Plotting raw data series
-def plot_time_series(x, y, m, show=True, lab=None, series_index=0, title=None, save_name=None):
+def plot_time_series(x, y, m, show=True, series_index=0, title=None, save_name=None):
     """
     Plots a time-series where x are the dates and
     y are the values.
@@ -78,8 +73,8 @@ def plot_time_series(x, y, m, show=True, lab=None, series_index=0, title=None, s
     # Define plot
     lab = clean_desc(m['description'])
     if series_index == 0:
-        fig, ax = plt.subplots()
-    plot_helper(x, y, clr_map[series_index], label=lab, dates=True)
+        plt.subplots()
+    _plot_helper(x, y, clr_map[series_index], label=lab, dates=True)
     if title:
         plt.title(title)
     plt.ylabel(m['unit'])
@@ -120,13 +115,13 @@ def plot_ip_time_series(y, lab=None, m=None, show=True, init=None, mean_and_stds
     """
 
     # Define plot
-    fig, ax = plt.subplots()
+    plt.subplots()
     if isinstance(y, list):
         n = y[0].shape[0]
         n_init = 0 if init is None else init.shape[0]
         if init is not None:
             x_init = [15 * i for i in range(n_init)]
-            plot_helper(x_init, init, m_col='k')
+            _plot_helper(x_init, init, m_col='k')
             # plt.plot(x_init, init, linestyle=':', marker='^', color='red', markersize=5, mfc = 'k', mec = 'k')
 
         if use_time:
@@ -142,13 +137,13 @@ def plot_ip_time_series(y, lab=None, m=None, show=True, init=None, mean_and_stds
                 ts = mean_and_stds[ct][1] * ts + mean_and_stds[ct][0]
             clr = clr_map[ct % n_cols]
             curr_lab = None if lab is None else lab[ct]
-            plot_helper(x, ts, m_col=clr, label=curr_lab, dates=use_time)
+            _plot_helper(x, ts, m_col=clr, label=curr_lab, dates=use_time)
     else:
         y_curr = y
         if mean_and_stds is not None:
             y_curr = mean_and_stds[1] * y + mean_and_stds[0]
         x = range(len(y_curr))
-        plot_helper(x, y_curr, m_col='blue', label=lab, dates=use_time)
+        _plot_helper(x, y_curr, m_col='blue', label=lab, dates=use_time)
 
         if m is not None:
             plt.title(m['description'])
@@ -206,8 +201,8 @@ def plot_ip_ts(y,
     """
 
     if series_index == 0:
-        # Define plot
-        fig, ax = plt.subplots()
+        # Define new plot
+        plt.subplots()
 
     n = len(y)
     y_curr = np.copy(y)
@@ -228,7 +223,7 @@ def plot_ip_ts(y,
     else:
         x = range(n)
 
-    plot_helper(x, y_curr, m_col=clr_map[series_index], label=clean_desc(lab), dates=use_time)
+    _plot_helper(x, y_curr, m_col=clr_map[series_index], label=clean_desc(lab), dates=use_time)
 
     if last_series:
         if title_and_ylab is not None:
@@ -311,7 +306,7 @@ def plot_all(all_data, m, use_time=True, show=True, title_and_ylab=None, scale_b
                         lab_list=[m[i].get('description') for i in range(n_series)],
                         mean_and_std_list=mean_and_std_list,
                         use_time=use_time,
-                        timestep_offset_list=[0 for i in range(n_series)],
+                        timestep_offset_list=[0 for _ in range(n_series)],
                         dt_init_str_list=[m[i].get('t_init') for i in range(n_series)],
                         show_last=show,
                         title_and_ylab=title_and_ylab,
@@ -338,8 +333,8 @@ def plot_dataset(dataset: Dataset, show: bool = True, title_and_ylab=None, save_
                         lab_list=labs,
                         mean_and_std_list=None,
                         use_time=True,
-                        timestep_offset_list=[0 for i in range(n_series)],
-                        dt_init_str_list=[t_init for i in range(n_series)],
+                        timestep_offset_list=[0 for _ in range(n_series)],
+                        dt_init_str_list=[t_init for _ in range(n_series)],
                         show_last=show,
                         title_and_ylab=title_and_ylab,
                         dt_mins=dataset.dt)
@@ -360,7 +355,7 @@ def scatter_plot(x, y, *,
     Scatter Plot. 
     """
 
-    fig, ax = plt.subplots()
+    plt.subplots()
 
     # Transform data back to original mean and std.
     x_curr = x
