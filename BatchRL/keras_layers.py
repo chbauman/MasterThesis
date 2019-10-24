@@ -455,8 +455,7 @@ def get_multi_input_layer_output(layer: Layer, inp_list, learning_phase: float =
 
 
 def test_layers() -> None:
-    """
-    Test the custom layers.
+    """Test the custom layers.
 
     Returns:
         None
@@ -521,7 +520,7 @@ def test_layers() -> None:
         raise AssertionError("FeatureSlice layer not working!!")
 
     # Test ExtractInput layer
-    lay = ExtractInput(indices, seq_len=3, curr_ind=1)
+    lay = ExtractInput(np.array(indices), seq_len=3, curr_ind=1)
     l_out = get_multi_input_layer_output(lay, [seq_input_long, output])
     l_out2 = get_multi_input_layer_output(lay, [seq_input_long, None])
     l_out3 = get_multi_input_layer_output(lay, seq_input_long)

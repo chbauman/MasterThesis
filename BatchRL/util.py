@@ -35,26 +35,30 @@ def rem_first(t: Tuple) -> Tuple:
 
 
 def get_if_not_none(lst: Sequence, indx: int, default=None):
-    """
-    Returns a list element if list is not None,
-    else the default value.
+    """Returns a list element if list is not None, else the default value.
 
-    :param lst: List of elements or None
-    :param indx: List index.
-    :param default: Default return value
-    :return: List element at position indx if lst is not None, else default.
+    Args:
+        lst: List of elements or None
+        indx: List index.
+        default: Default return value
+
+    Returns:
+        List element at position indx if lst is not None, else default.
     """
     return default if lst is None else lst[indx]
 
 
 def apply(list_or_el, fun):
-    """
-    Applies the function fun to each element of list_or_el
-    if it is a list, else it is applied directly to list_or_el.
+    """Applies the function fun to each element of `list_or_el`.
 
-    :param list_or_el: List of elements or single element.
-    :param fun: Function to apply to elements.
-    :return: List or element with function applied.
+    If it is a list, else it is applied directly to `list_or_el`.
+
+    Args:
+        list_or_el: List of elements or single element.
+        fun: Function to apply to elements.
+
+    Returns:
+        List or element with function applied.
     """
     if isinstance(list_or_el, list):
         return [fun(k) for k in list_or_el]
@@ -63,26 +67,36 @@ def apply(list_or_el, fun):
 
 
 def repl(el, n: int) -> List:
-    """
-    Constructs a list with n equal elements 'el'.
+    """Constructs a list with `n` equal elements 'el'.
+
     If el is not a primitive type, then it might
     give a list with views on el.
 
-    :param el: Element to repeat.
-    :param n: Number of times.
-    :return: New list with elements.
+    Args:
+        el: Element to repeat.
+        n: Number of times.
+
+    Returns:
+        New list with `n` elements.
     """
     return [el for _ in range(n)]
 
 
 def b_cast(l_or_el, n: int) -> List:
-    """
-    Checks if `l_or_el` is a list or not.
-    If not returns a list with `n` repeated elements `l_or_el`.
+    """Returns a list with `n` repeated elements `l_or_el`.
 
-    :param l_or_el: List of elements or element.
-    :param n: Length of list.
-    :return: list
+    Checks if `l_or_el` is a list or not, if it is and
+    it already has length `n`, it is returned.
+
+    Args:
+        l_or_el: List of elements or element.
+        n: Length of list.
+
+    Returns:
+        list
+
+    Raises:
+        ValueError: If `l_or_el` is a list and does not have `n` elements.
     """
     if isinstance(l_or_el, list):
         if len(l_or_el) == n:
@@ -102,8 +116,9 @@ class CacheDecoratorFactory(object):
     d: List = []  #: List of function outputs.
 
     def __init__(self, n_list: List = None, data_list: List = None):
-        """
-        Initialize the decorator. If no lists are provided, the
+        """Initialize the decorator.
+
+        If no lists are provided, the
         results are stored in this class.
 
         Args:
@@ -116,8 +131,7 @@ class CacheDecoratorFactory(object):
             self.d = data_list
 
     def __call__(self, f):
-        """
-        Decorates the function `f`.
+        """Decorates the function `f`.
 
         Args:
             f: The function to be decorated.
@@ -148,8 +162,7 @@ class TestDecoratorFactory(object):
     """
 
     def __init__(self, msg: str = "Test failed!"):
-        """
-        Initialize the decorator.
+        """Initialize the decorator.
 
         Args:
             msg: Error message .
@@ -157,8 +170,7 @@ class TestDecoratorFactory(object):
         self.m = msg
 
     def __call__(self, f):
-        """
-        Decorates the function `f`.
+        """Decorates the function `f`.
 
         Args:
             f: The function to be decorated.
@@ -185,9 +197,9 @@ class TestDecoratorFactory(object):
 # Numerical stuff
 
 def has_duplicates(arr: np.ndarray) -> bool:
-    """
-    Returns true if arr contains duplicate values else
-    False.
+    """Checks if `arr` contains duplicates.
+
+    Returns true if arr contains duplicate values else False.
 
     Args:
         arr: Array to check for duplicates.
@@ -201,8 +213,8 @@ def has_duplicates(arr: np.ndarray) -> bool:
 
 
 def fit_linear_1d(x: np.ndarray, y: np.ndarray, x_new: np.ndarray = None):
-    """
-    Fit a linear model y = c * x + m.
+    """Fit a linear model y = c * x + m.
+
     Returns coefficients m and c. If x_new
     is not None, returns the evaluated linear
     fit at x_new.
@@ -216,7 +228,6 @@ def fit_linear_1d(x: np.ndarray, y: np.ndarray, x_new: np.ndarray = None):
         The parameters m and c if `x_new` is None, else
         the model evaluated at `x_new`.
     """
-
     n = x.shape[0]
     ls_mat = np.empty((n, 2), dtype=np.float32)
     ls_mat[:, 0] = 1
@@ -229,8 +240,8 @@ def fit_linear_1d(x: np.ndarray, y: np.ndarray, x_new: np.ndarray = None):
 
 
 def fit_linear_bf_1d(x: np.ndarray, y: np.ndarray, b_fun, offset: bool = False) -> np.ndarray:
-    """
-    Fits a linear model y = \alpha^T f(x).
+    """Fits a linear model y = alpha^T f(x).
+
     TODO: implement with offset!
     """
 
@@ -253,9 +264,10 @@ def fit_linear_bf_1d(x: np.ndarray, y: np.ndarray, b_fun, offset: bool = False) 
 
 
 def get_shape1(arr: np.ndarray) -> int:
-    """
+    """Save version of .shape[1]
+
     Returns the shape of the second dimension
-    of a matrix. If it is a vector returns 1.
+    of an array. If it is a vector returns 1.
     """
     s = arr.shape
     if len(s) < 2:
@@ -264,10 +276,21 @@ def get_shape1(arr: np.ndarray) -> int:
         return s[1]
 
 
-def align_ts(ts_1: np.ndarray, ts_2: np.ndarray, t_init1, t_init2, dt):
-    """
+def align_ts(ts_1: np.ndarray, ts_2: np.ndarray, t_init1: str, t_init2: str, dt: int) -> Tuple[np.ndarray, str]:
+    """Aligns two time series.
+
     Aligns the two time series with given initial time
     and constant timestep by padding by np.nan.
+
+    Args:
+        ts_1: First time series.
+        ts_2: Second time series.
+        t_init1: Initial time string of series 1.
+        t_init2: Initial time string of series 2.
+        dt: Number of minutes in a timestep.
+
+    Returns:
+        The combined data array and the new initial time string.
     """
 
     # Get shapes
@@ -277,19 +300,19 @@ def align_ts(ts_1: np.ndarray, ts_2: np.ndarray, t_init1, t_init2, dt):
     d_2 = get_shape1(ts_2)
 
     # Compute relative offset
-    interv = np.timedelta64(dt, 'm')
+    interval = np.timedelta64(dt, 'm')
     ti1 = datetime_to_np_datetime(string_to_dt(t_init2))
     ti2 = datetime_to_np_datetime(string_to_dt(t_init1))
 
     # Ugly bug-fix
     if ti1 < ti2:
-        dout, t = align_ts(ts_2, ts_1, t_init2, t_init1, dt)
-        dout_real = np.copy(dout)
-        dout_real[:, :d_1] = dout[:, d_2:]
-        dout_real[:, d_1:] = dout[:, :d_2]
-        return dout_real, t
+        d_out, t = align_ts(ts_2, ts_1, t_init2, t_init1, dt)
+        d_out_real = np.copy(d_out)
+        d_out_real[:, :d_1] = d_out[:, d_2:]
+        d_out_real[:, d_1:] = d_out[:, :d_2]
+        return d_out_real, t
 
-    offset = np.int(np.round((ti2 - ti1) / interv))
+    offset = np.int(np.round((ti2 - ti1) / interval))
 
     # Compute length
     out_len = np.maximum(n_2 - offset, n_1)
@@ -314,8 +337,7 @@ def align_ts(ts_1: np.ndarray, ts_2: np.ndarray, t_init1, t_init2, dt):
 
 
 def trf_mean_and_std(ts: Arr, mean_and_std: Sequence, remove: bool = True) -> Arr:
-    """
-    Adds or removes mean and std from time series.
+    """Adds or removes given  mean and std from time series.
 
     Args:
         ts: The time series.
@@ -325,7 +347,6 @@ def trf_mean_and_std(ts: Arr, mean_and_std: Sequence, remove: bool = True) -> Ar
     Returns:
         New time series with mean and std removed or added.
     """
-
     if remove:
         return rem_mean_and_std(ts, mean_and_std)
     else:
