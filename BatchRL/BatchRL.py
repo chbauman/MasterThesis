@@ -11,9 +11,9 @@ from base_dynamics_model import test_dyn_model
 from batchDDPG import bDDPG
 from dm_Composite import CompositeModel
 
+from battery_model import BatteryModel
 from dm_LSTM import RNNDynamicModel
 from dm_Const import ConstModel
-from battery_model import BatteryModel
 from dm_Time import SCTimeModel
 from dm_TimePeriodic import Periodic1DayModel
 from dynamics_envs import FullRoomEnv

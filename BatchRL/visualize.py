@@ -1,3 +1,5 @@
+from typing import Dict
+
 import matplotlib as mpl
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
@@ -13,25 +15,31 @@ import matplotlib.colors as mpl_colors
 register_matplotlib_converters()
 
 plt.rc('font', family='serif')
-# plt.rc('text', usetex=True) # Makes Problems with the Celsius sign
+# plt.rc('text', usetex=True)  # Makes Problems with the Celsius sign
 
 # Plotting colors
 colors = mpl_colors.TABLEAU_COLORS
 names = list(colors)
 clr_map = [colors[name] for name in names]
-n_cols = len(clr_map)
+n_cols: int = len(clr_map)  #: Number of colors in colormap.
 
 # Saving
-plot_dir = '../Plots'
-preprocess_plot_path = os.path.join(plot_dir, "Preprocessing")
-model_plot_path = os.path.join(plot_dir, "Models")
+plot_dir = '../Plots'  #: Base plot folder.
+preprocess_plot_path = os.path.join(plot_dir, "Preprocessing")  #: Data processing plot folder.
+model_plot_path = os.path.join(plot_dir, "Models")  #: Dynamics modeling plot folder.
+
+# Create folders if they do not exist
 create_dir(preprocess_plot_path)
 create_dir(model_plot_path)
 
 
-def save_figure(save_name, show=False, vector_format=True):
-    """
-    Saves the current figure.
+def save_figure(save_name, show: bool = False, vector_format: bool = True) -> None:
+    """Saves the current figure.
+
+    Args:
+        save_name: Path where to save the plot.
+        show: If true, does nothing.
+        vector_format: Whether to save image in vector format.
     """
     if save_name is not None and not show:
         # Set figure size
@@ -44,11 +52,17 @@ def save_figure(save_name, show=False, vector_format=True):
         save_kwargs = {'bbox_inches': 'tight'}
         plt.savefig(save_name + save_format, **save_kwargs)
         plt.close()
-    return
 
 
-def _plot_helper(x, y, m_col='blue', label: str = None, dates: bool = False):
+def _plot_helper(x, y, m_col='blue', label: str = None, dates: bool = False) -> None:
     """Defining basic plot style for all plots.
+
+    Args:
+        x: X values
+        y: Y values
+        m_col: Marker and line color.
+        label: The label of the current series.
+        dates: Whether to use datetimes in x-axis.
     """
     ls = ':'
     marker = '^'
@@ -63,15 +77,17 @@ def _plot_helper(x, y, m_col='blue', label: str = None, dates: bool = False):
 
 
 # Plotting raw data series
-def plot_time_series(x, y, m, show=True, series_index=0, title=None, save_name=None):
-    """
-    Plots a time-series where x are the dates and
-    y are the values.
+def plot_time_series(x, y, m: Dict, show: bool = True,
+                     series_index: int = 0,
+                     title: str = None,
+                     save_name: str = None):
+    """Plots a raw time-series where x are the dates and y are the values.
     """
 
     # Define plot
     lab = clean_desc(m['description'])
     if series_index == 0:
+        # Init new plot
         plt.subplots()
     _plot_helper(x, y, clr_map[series_index], label=lab, dates=True)
     if title:
@@ -88,9 +104,11 @@ def plot_time_series(x, y, m, show=True, series_index=0, title=None, save_name=N
     save_figure(save_name, show, vector_format=False)
 
 
-def plot_multiple_time_series(x_list, y_list, m_list, *, show=True, title_and_ylab=None, save_name=None):
-    """
-    Plots multiple raw time series.
+def plot_multiple_time_series(x_list, y_list, m_list, *,
+                              show: bool = True,
+                              title_and_ylab: Sequence = None,
+                              save_name: str = None):
+    """Plots multiple raw time series.
     """
     n = len(x_list)
     for ct, x in enumerate(x_list):
