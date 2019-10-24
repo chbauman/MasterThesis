@@ -389,9 +389,9 @@ def check_in_range(arr: np.ndarray, low: Num, high: Num) -> bool:
 
 
 def split_arr(arr: np.ndarray, frac2: float) -> Tuple[Any, Any, int]:
-    """
-    Splits an array along the first axis, s.t.
-    in the second part a fraction of 'frac2'
+    """Splits an array along the first axis.
+
+    In the second part a fraction of 'frac2' elements
     is contained.
 
     Args:
@@ -408,23 +408,40 @@ def split_arr(arr: np.ndarray, frac2: float) -> Tuple[Any, Any, int]:
 
 
 def copy_arr_list(arr_list: Sequence[Arr]) -> Sequence[Arr]:
-    """
-    Copies a list of numpy arrays.
+    """Copies a list of numpy arrays.
+
+    Args:
+        arr_list: The sequence of numpy arrays.
+
+    Returns:
+        A list with all the copied elements.
     """
     copied_arr_list = [np.copy(a) for a in arr_list]
     return copied_arr_list
 
 
-def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False, non_neg: bool = False, ret_fit: bool = False):
-    """
-    Solves the least squares problem min_x ||Ax = b||.
+def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False,
+             non_neg: bool = False,
+             ret_fit: bool = False):
+    """Solves the least squares problem min_x ||Ax = b||.
+
     If offset is true, then a bias term is added.
     If non_neg is true, then the regression coefficients are
     constrained to be positive.
     If ret_fit is true, then a tuple (params, fit_values)
     is returned.
-    """
 
+    Args:
+        a_mat: The system matrix.
+        b: The RHS vector.
+        offset: Whether to include an offset.
+        non_neg: Whether to use non-negative regression.
+        ret_fit: Whether to additionally return the fitted values.
+
+    Returns:
+        The fitted parameters and optionally the fitted values.
+    """
+    # Choose least squares solver
     def ls_fun(a_mat_temp, b_temp):
         if non_neg:
             return scipy.optimize.nnls(a_mat_temp, b_temp)[0]
@@ -441,6 +458,7 @@ def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False, non_neg: bo
 
     ret_val = ls_fun(a_mat, b)
     if ret_fit:
+        # Add fitted values to return value
         fit_values = np.matmul(a_mat, ret_val)
         ret_val = (ret_val, fit_values)
 
@@ -477,8 +495,7 @@ def make_periodic(arr_1d: np.ndarray, keep_start: bool = True, keep_min: bool = 
 
 
 def check_dim(a: np.ndarray, n: int) -> bool:
-    """
-    Check whether a is n-dimensional.
+    """Check whether a is n-dimensional.
 
     Args:
         a: Numpy array.
@@ -491,7 +508,8 @@ def check_dim(a: np.ndarray, n: int) -> bool:
 
 
 def find_rows_with_nans(all_data: np.ndarray) -> np.ndarray:
-    """
+    """Finds nans in the data.
+
     Returns a boolean vector indicating which
     rows of 'all_dat' contain NaNs.
 
@@ -513,16 +531,23 @@ def find_rows_with_nans(all_data: np.ndarray) -> np.ndarray:
 
 
 def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarray, np.ndarray, int]:
-    """
+    """Extracts a streak where all data is available.
+
     Finds the last sequence where all data is available
-    for at least s_len + lag timesteps. Then splits the
+    for at least `s_len` + `lag` timesteps. Then splits the
     data before that last sequence and returns both parts.
 
-    :param all_data: The data.
-    :param s_len: The sequence length.
-    :param lag: The number of sequences the streak should contain.
-    :return: The data before the streak and the streak data and the index
-        pointing to the start of the streak data
+    Args:
+        all_data: The data.
+        s_len: The sequence length.
+        lag: The number of sequences the streak should contain.
+
+    Returns:
+        The data before the streak, the streak data and the index
+        pointing to the start of the streak data.
+
+    Raises:
+        IndexError: If there is no streak of specified length found.
     """
     tot_s_len = s_len + lag
 
@@ -556,7 +581,8 @@ def nan_array_equal(a: np.ndarray, b: np.ndarray) -> bool:
 
 
 def find_all_streaks(col_has_nan: np.ndarray, s_len: int) -> np.ndarray:
-    """
+    """Finds all streak of length `s_len`.
+
     Finds all sequences of length `s_len` where `col_has_nan`
     is never False. Then returns all indices of the start of
     these sequences in `col_has_nan`.
@@ -578,9 +604,10 @@ def find_all_streaks(col_has_nan: np.ndarray, s_len: int) -> np.ndarray:
     return inds
 
 
-def cut_data(all_data, seq_len: int) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Cuts the data into sequences of length `seq_len` where
+def cut_data(all_data: np.ndarray, seq_len: int) -> Tuple[np.ndarray, np.ndarray]:
+    """Cut the data into sequences.
+
+    Cuts the data contained in `all_data` into sequences of length `seq_len` where
     there are no nans in the row of `all_data`.
     Also returns the indices where to find the sequences in `all_data`.
 
@@ -611,9 +638,10 @@ def cut_data(all_data, seq_len: int) -> Tuple[np.ndarray, np.ndarray]:
     return out_dat, all_inds
 
 
-def find_disjoint_streaks(nans: np.ndarray, seq_len: int, streak_len: int, n_ts_offs: int = 0) -> np.ndarray:
-    """
-    Finds streaks that are only overlapping by `seq_len` - 1 steps.
+def find_disjoint_streaks(nans: np.ndarray, seq_len: int, streak_len: int,
+                          n_ts_offs: int = 0) -> np.ndarray:
+    """Finds streaks that are only overlapping by `seq_len` - 1 steps.
+
     They will be a multiple of `streak_len` from each other relative
     to the `nans` vector.
 
@@ -684,7 +712,8 @@ def prepare_supervised_control(sequences: np.ndarray,
 # NEST stuff
 
 def clean_desc(nest_desc: str) -> str:
-    """
+    """Cleans a description string of the NEST database.
+
     Removes the measurement code from the string containing
     the description of the measurement series.
 
@@ -700,8 +729,12 @@ def clean_desc(nest_desc: str) -> str:
 
 
 def add_dt_and_t_init(m: Sequence, dt_mins: int, dt_init: np.datetime64) -> None:
-    """
-    Adds dt and t_init to the metadata dictionary `m`.
+    """Adds dt and t_init to each metadata dictionary in `m`.
+
+    Args:
+        m: List with all the metadata dictionaries.
+        dt_mins: Number of minutes in a timestep.
+        dt_init: Time of first timestep.
     """
     for ct, e in enumerate(m):
         m[ct]['t_init'] = dt_to_string(np_datetime_to_datetime(dt_init))
@@ -712,14 +745,10 @@ def add_dt_and_t_init(m: Sequence, dt_mins: int, dt_init: np.datetime64) -> None
 # Os functions
 
 def create_dir(dirname: str) -> None:
-    """
-    Creates directory if it doesn't exist already.
+    """Creates directory if it doesn't exist already.
 
     Args:
         dirname: The directory to create.
-
-    Returns:
-        None
     """
     if not os.path.exists(dirname):
         os.makedirs(dirname)
@@ -729,8 +758,13 @@ def create_dir(dirname: str) -> None:
 # Datetime conversions
 
 def np_datetime_to_datetime(np_dt: np.datetime64) -> datetime:
-    """
-    Convert from numpy datetime to datetime.
+    """Convert from numpy datetime to datetime.
+
+    Args:
+        np_dt: Numpy datetime.
+
+    Returns:
+        Python datetime.
     """
     ts = (np_dt - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
     dt = datetime.utcfromtimestamp(ts)
@@ -738,22 +772,27 @@ def np_datetime_to_datetime(np_dt: np.datetime64) -> datetime:
 
 
 def datetime_to_np_datetime(dt: datetime) -> np.datetime64:
-    """
-    Convert from datetime to numpy datetime.
+    """Convert from datetime to numpy datetime.
+
+    Args:
+        dt: Python datetime.
+
+    Returns:
+        Numpy datetime object.
     """
     return np.datetime64(dt)
 
 
 def dt_to_string(dt: datetime) -> str:
-    """
-    Convert datetime to string.
+    """Convert datetime to string.
     """
     return str(dt)
 
 
 def string_to_dt(s: str) -> datetime:
-    """
-    Convert string to datetime.
+    """Convert string to datetime.
+
+    Assumes smallest unit of time in string are seconds.
     """
     return datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
 
@@ -798,20 +837,26 @@ def mins_to_str(mins: int) -> str:
 
 
 def floor_datetime_to_min(dt, mt: int) -> np.ndarray:
-    """
-    Rounds deltatime64 dt down to mt minutes.
-    In a really fucking cumbersome way.
+    """Rounds deltatime64 dt down to mt minutes.
 
-    :param dt: Original deltatime.
-    :param mt: Number of minutes.
-    :return: Floored deltatime.
-    """
-    assert 60 % mt == 0
+    In a really fucking cumbersome way!
 
+    Args:
+        dt: Original deltatime.
+        mt: Number of minutes.
+
+    Returns:
+        Floored deltatime.
+    """
+    assert 60 % mt == 0, "Not implemented for more than 60 minutes!"
+
+    # Convert to python datetime
     dt = np.array(dt, dtype='datetime64[s]')
     dt64 = np.datetime64(dt)
     ts = (dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
     pdt = datetime.utcfromtimestamp(ts)
+
+    # Subtract remainder minutes and seconds
     minutes = pdt.minute
     minutes = minutes % mt
     secs = pdt.second
@@ -825,7 +870,8 @@ def n_mins_to_np_dt(mins: int) -> np.timedelta64:
 
 
 def ts_per_day(n_min: int) -> int:
-    """
+    """Computes the number of timesteps in a day.
+
     Returns the number of time steps in a day when
     one timestep is `n_min` minutes.
 
@@ -834,14 +880,17 @@ def ts_per_day(n_min: int) -> int:
 
     Returns:
         Number of timesteps in a day.
+
+    Raises:
+        ValueError: If the result would be a float.
     """
+    if (24 * 69) % n_min != 0:
+        raise ValueError(f"Number of mins in a day not divisible by n_min: {n_min}")
     return 24 * 60 // n_min
 
 
 def day_offset_ts(t_init: str, mins: int = 15) -> int:
-    """
-    Computes the number of timesteps of length `mins` minutes
-    until the next day starts.
+    """Computes the number of timesteps of length `mins` minutes until the next day starts.
 
     Args:
         t_init: The reference time.

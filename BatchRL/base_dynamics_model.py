@@ -468,14 +468,14 @@ class BaseDynamicsModel(ABC):
                          save_name=self.get_plt_path('OneWeek' + ext))
 
     def analyze(self) -> None:
-        """
-        Analyzes the trained model and makes some
-        plots using the fitted model and the streak data.
+        """Analyzes the trained model.
+
+        Makes some plots using the fitted model and the streak data.
+        Also plots the acf and the partial acf of the residuals.
 
         Returns:
             None
         """
-
         print("Analyzing model {}".format(self.name))
         d = self.data
 

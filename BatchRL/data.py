@@ -1613,12 +1613,15 @@ class Dataset:
                    dataset.name)
 
     def __add__(self, other: 'Dataset') -> 'Dataset':
-        """
-        Merges dataset other into self.
+        """Merges dataset other into self.
+
         Does not commute!
 
-        :param other: The dataset to merge self with.
-        :return: A new dataset with the combined data.
+        Args:
+            other: The dataset to merge self with.
+
+        Returns:
+            A new dataset with the combined data.
         """
         # Check compatibility
         if self.dt != other.dt:
@@ -1641,11 +1644,13 @@ class Dataset:
         return Dataset(data, self.dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
 
     def add_time(self, sine_cos: bool = True) -> 'Dataset':
-        """
-        Adds time to current dataset.
+        """Adds time to current dataset.
 
-        :param sine_cos: Whether to use sin(t) and cos(t) instead of t directly.
-        :return: self + the time dataset.
+        Args:
+            sine_cos: Whether to use sin(t) and cos(t) instead of t directly.
+
+        Returns:
+            self + the time dataset.
         """
         dt = self.dt
         t_init = datetime_to_np_datetime(string_to_dt(self.t_init))
@@ -1684,7 +1689,9 @@ class Dataset:
         pass
 
     def _get_slice(self, ind_low: int, ind_high: int) -> 'Dataset':
-        """
+        """Returns a slice of the dataset.
+
+        Helper function for `__getitem__`.
         Returns a new dataset with the columns
         'ind_low' through 'ind_high'.
 
