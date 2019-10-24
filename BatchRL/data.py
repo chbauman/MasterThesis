@@ -1648,7 +1648,7 @@ class Dataset:
         :return: self + the time dataset.
         """
         dt = self.dt
-        t_init = datetime_to_npdatetime(string_to_dt(self.t_init))
+        t_init = datetime_to_np_datetime(string_to_dt(self.t_init))
         one_day = np.timedelta64(1, 'D')
         dt_td64 = np.timedelta64(dt, 'm')
         n_tint_per_day = int(one_day / dt_td64)

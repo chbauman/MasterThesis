@@ -1,5 +1,4 @@
 import os
-import warnings
 from datetime import datetime
 from typing import Union, List, Tuple, Any, Sequence
 
@@ -279,8 +278,8 @@ def align_ts(ts_1: np.ndarray, ts_2: np.ndarray, t_init1, t_init2, dt):
 
     # Compute relative offset
     interv = np.timedelta64(dt, 'm')
-    ti1 = datetime_to_npdatetime(string_to_dt(t_init2))
-    ti2 = datetime_to_npdatetime(string_to_dt(t_init1))
+    ti1 = datetime_to_np_datetime(string_to_dt(t_init2))
+    ti2 = datetime_to_np_datetime(string_to_dt(t_init1))
 
     # Ugly bug-fix
     if ti1 < ti2:
@@ -684,7 +683,7 @@ def add_dt_and_t_init(m: Sequence, dt_mins: int, dt_init: np.datetime64) -> None
     Adds dt and t_init to the metadata dictionary `m`.
     """
     for ct, e in enumerate(m):
-        m[ct]['t_init'] = dt_to_string(npdatetime_to_datetime(dt_init))
+        m[ct]['t_init'] = dt_to_string(np_datetime_to_datetime(dt_init))
         m[ct]['dt'] = dt_mins
 
 
@@ -708,7 +707,7 @@ def create_dir(dirname: str) -> None:
 #######################################################################################################
 # Datetime conversions
 
-def npdatetime_to_datetime(np_dt: np.datetime64) -> datetime:
+def np_datetime_to_datetime(np_dt: np.datetime64) -> datetime:
     """
     Convert from numpy datetime to datetime.
     """
@@ -717,7 +716,7 @@ def npdatetime_to_datetime(np_dt: np.datetime64) -> datetime:
     return dt
 
 
-def datetime_to_npdatetime(dt: datetime) -> np.datetime64:
+def datetime_to_np_datetime(dt: datetime) -> np.datetime64:
     """
     Convert from datetime to numpy datetime.
     """
@@ -749,7 +748,7 @@ def str_to_np_dt(s: str) -> np.datetime64:
         np.datetime64
     """
     dt = string_to_dt(s)
-    return datetime_to_npdatetime(dt)
+    return datetime_to_np_datetime(dt)
 
 
 def np_dt_to_str(np_dt: np.datetime64) -> str:
@@ -763,7 +762,7 @@ def np_dt_to_str(np_dt: np.datetime64) -> str:
         String
     """
 
-    dt = npdatetime_to_datetime(np_dt)
+    dt = np_datetime_to_datetime(np_dt)
     return dt_to_string(dt)
 
 
@@ -842,11 +841,10 @@ def day_offset_ts(t_init: str, mins: int = 15) -> int:
 # Tests
 
 def test_numpy_functions() -> None:
-    """
-    Tests some of the numpy functions.
-    Raises errors if one of the tests is not passed.
+    """Tests some of the numpy functions.
 
-    Returns: None
+    Returns:
+        None
 
     Raises:
         AssertionError: If a test fails.
@@ -962,11 +960,10 @@ def test_numpy_functions() -> None:
 
 
 def test_python_stuff() -> None:
-    """
-    Tests some of the python functions.
-    Raises errors if one of the tests is not passed.
+    """Tests some of the python functions.
 
-    Returns: None
+    Returns:
+        None
 
     Raises:
         AssertionError: If a test fails.
@@ -997,26 +994,25 @@ def test_python_stuff() -> None:
 
 
 def test_time_stuff() -> None:
-    """
-    Tests some of the functions concerned with datetime
-    formats.
-    Raises errors if one of the tests is not passed.
+    """Tests some of the functions concerned with datetime formats.
 
-    Returns: None
+    Returns:
+        None
 
     Raises:
         AssertionError: If a test fails.
     """
     # Define data
     dt1 = np.datetime64('2000-01-01T00:00', 'm')
-    dt2 = np.datetime64('2000-01-01T01:45', 'm')
     dt3 = np.datetime64('2000-01-01T22:45', 'm')
     n_mins = 15
     t_init_str = np_dt_to_str(dt3)
 
+    # Test time conversion
+    assert str_to_np_dt(np_dt_to_str(dt1)) == dt1, "Time conversion not working"
+
     # Test day_offset_ts
     n_ts = day_offset_ts(t_init_str, n_mins)
-    if n_ts != 5:
-        raise AssertionError("Fuck you!!")
+    assert n_ts == 5, "Fuck you!!"
 
     print("Time tests passed! :)")

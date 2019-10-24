@@ -144,7 +144,7 @@ def plot_ip_time_series(y, lab=None, m=None, show=True, init=None, mean_and_stds
         if use_time:
             mins = m[0]['dt']
             interval = np.timedelta64(mins, 'm')
-            dt_init = datetime_to_npdatetime(string_to_dt(m[0]['t_init']))
+            dt_init = datetime_to_np_datetime(string_to_dt(m[0]['t_init']))
             x = [dt_init + i * interval for i in range(n)]
         else:
             x = [15 * i for i in range(n_init, n_init + n)]
@@ -235,7 +235,7 @@ def plot_ip_ts(y,
 
         mins = dt_mins
         interval = np.timedelta64(mins, 'm')
-        dt_init = datetime_to_npdatetime(string_to_dt(dt_init_str))
+        dt_init = datetime_to_np_datetime(string_to_dt(dt_init_str))
         x = [dt_init + (timestep_offset + i) * interval for i in range(n)]
     else:
         x = range(n)
