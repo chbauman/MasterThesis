@@ -1,5 +1,6 @@
 import matplotlib as mpl
 from pandas.plotting import register_matplotlib_converters
+from statsmodels.graphics.tsaplots import plot_acf
 
 from util import *
 
@@ -451,6 +452,32 @@ def stack_compare_plot(stack_y, y_compare, title=None, name=None):
 
     if title is not None:
         plt.title(title)
+    if name is not None:
+        save_figure(name, False)
+    else:
+        plt.show()
+
+
+def plot_residuals_acf(residuals: np.ndarray, name: str = None, lags: int = 50) -> None:
+    """Plots the ACF of the residuals given.
+
+    Args:
+        residuals: The array with the residuals for one series.
+        name: The filename for saving the plot.
+        lags: The number of lags to consider.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: If residuals do not have the right shape.
+    """
+    if len(residuals.shape) != 1:
+        raise ValueError("Residuals needs to be a vector!")
+
+    plt.subplots()
+    plot_acf(residuals, lags=lags)
+    plt.title("Autocorrelation of Residuals")
     if name is not None:
         save_figure(name, False)
     else:

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from data import Dataset, get_test_ds
 from time_series import AR_Model
 from util import *
-from visualize import plot_dataset, model_plot_path
+from visualize import plot_dataset, model_plot_path, plot_residuals_acf
 
 
 def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
@@ -472,6 +472,11 @@ class BaseDynamicsModel(ABC):
 
         print("Analyzing model {}".format(self.name))
         d = self.data
+
+        # Get residuals and plot autocorrelation
+        res = self.get_residuals("train")
+        for k in range(get_shape1(res)):
+            plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResACF_{k}'))
 
         # Prepare the data
         # dat_test = d.get_prepared_data('test')

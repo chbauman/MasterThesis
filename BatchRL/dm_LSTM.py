@@ -62,7 +62,7 @@ def constr_name(name: str,
 
 class RNNDynamicModel(HyperOptimizableModel):
     """
-    Simple LSTM used for training a dynamics model.
+    Simple RNN used for training a dynamics model.
     """
 
     def get_space(self) -> Dict:
