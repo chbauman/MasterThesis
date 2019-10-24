@@ -173,9 +173,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         self._build_model()
 
     def _build_model(self) -> None:
-        """
-        Builds the keras LSTM model and saves it
-        to self.
+        """Builds the keras LSTM model and saves it to self.
 
         Returns:
              None
@@ -279,8 +277,7 @@ class RNNDynamicModel(HyperOptimizableModel):
             self.deb("Restored trained model")
 
     def predict(self, input_data: np.ndarray) -> np.ndarray:
-        """
-        Predicts a batch of sequences using the fitted model.
+        """Predicts a batch of sequences using the fitted model.
 
         :param input_data: 3D numpy array with input data.
         :return: 2D numpy array with the predictions.
@@ -292,3 +289,20 @@ class RNNDynamicModel(HyperOptimizableModel):
         predictions = self.m.predict(input_data)
         predictions = predictions.reshape((n, -1))
         return predictions
+
+
+class RNNDynamicOvershootModel(RNNDynamicModel):
+
+    m: Any = None
+    overshoot_model: Any = None
+
+    def __init__(self, **kwargs):
+        """Initialize model
+
+        Args:
+            kwargs: Kwargs for super class.
+        """
+        super(RNNDynamicOvershootModel, self).__init__(**kwargs)
+
+
+    pass
