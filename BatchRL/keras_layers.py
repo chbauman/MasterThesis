@@ -313,14 +313,17 @@ class FeatureSlice(Layer):
 
 
 class ExtractInput(Layer):
-    """
-    TODO
+    """Input extraction layer.
+
+    Given a tensor with a large sequence length,
+    this layer constructs the next input for the RNN
+    with the previous output of the RNN.
     """
 
     slicing_indices: np.ndarray  #: The array with the indices.
-    n_feats: int  #: The number of selected features.
-    seq_len: int  #:
-    curr_ind: int  #:
+    n_feats: int  #: The number of selected features that are predicted.
+    seq_len: int  #: The sequence length.
+    curr_ind: int  #: The current prediction index.
 
     def __init__(self, s_inds: np.ndarray,
                  seq_len: int,
@@ -330,6 +333,8 @@ class ExtractInput(Layer):
 
         Args:
             s_inds: The array with the indices.
+            seq_len: The sequence length.
+            curr_ind: The current offset.
             **kwargs: The kwargs for super(), e.g. `name`.
         """
         super(ExtractInput, self).__init__(**kwargs)
@@ -340,17 +345,19 @@ class ExtractInput(Layer):
 
     def call(self, x):
         """
-        Builds the layer given the input x. Selects the features
-        specified in `slicing_indices` and concatenates them.
+        Builds the layer given the full data and the
+        last prediction.
 
         Args:
-            x: The input to the layer.
+            x: A list with the full data and the last prediction. If there is
+                only one input, we will just return the input slice.
 
         Returns:
-            The output of the layer containing the slices.
+            The output of the layer that can be fed to the basic RNN.
         """
         end_ind = self.curr_ind + self.seq_len
         if not isinstance(x, list):
+            # No prediction from last step given.
             return x[:, self.curr_ind: end_ind, :]
         x_in, x_out = x
         if len(x_out.shape) == 2:
@@ -385,6 +392,9 @@ class ExtractInput(Layer):
 
         Returns:
             Same as input with the second dimension set to sequence length.
+
+        Raises:
+            ValueError: If the tensor shapes are incompatible with the layer.
         """
         s0 = input_shape
         if isinstance(s0, list):
@@ -395,7 +405,6 @@ class ExtractInput(Layer):
             s0 = s0[0]
         if len(s0) != 3:
             raise ValueError("Only implemented for 3D tensors!")
-
         return s0[0], self.seq_len, s0[2]
 
 
