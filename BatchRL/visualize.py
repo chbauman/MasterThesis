@@ -1,7 +1,10 @@
+from typing import Dict
+
 import matplotlib as mpl
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf
 
+from data import Dataset
 from util import *
 
 if EULER:
@@ -316,9 +319,14 @@ def plot_all(all_data, m, use_time=True, show=True, title_and_ylab=None, scale_b
     save_figure(save_name, show)
 
 
-def plot_dataset(dataset, show=True, title_and_ylab=None, save_name=None):
-    """
-    Plots the unscaled series in a dataset.
+def plot_dataset(dataset: Dataset, show: bool = True, title_and_ylab=None, save_name: str = None) -> None:
+    """Plots the unscaled series in a dataset.
+
+    Args:
+        dataset: The dataset to plot.
+        show: Whether to show the plot.
+        title_and_ylab: List with title and y-label.
+        save_name: The file path for saving the plot.
     """
     all_data = dataset.get_unscaled_data()
     n_series = all_data.shape[1]
@@ -395,10 +403,16 @@ def scatter_plot(x, y, *,
     save_figure(save_name, show)
 
 
-def plot_train_history(hist, name=None, val=True):
-    """
+def plot_train_history(hist, name: str = None, val: bool = True) -> None:
+    """Visualizes the training of a keras model.
+
     Plot training & validation loss values of 
     a history object returned by keras.Model.fit().
+
+    Args:
+        hist: The history object returned by the fit method.
+        name: The path of the plot file if saving it.
+        val: Whether to include the validation curve.
     """
     plt.subplots()
     plt.plot(hist.history['loss'])
@@ -425,7 +439,7 @@ def plot_simple_ts(y_list, title=None, name=None):
     n = len(y_list[0])
     x = range(n)
 
-    fig, ax = plt.subplots()
+    plt.subplots()
     for y in y_list:
         plt.plot(x, y)
 
