@@ -477,6 +477,7 @@ class BaseDynamicsModel(ABC):
         res = self.get_residuals("train")
         for k in range(get_shape1(res)):
             plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResACF_{k}'))
+            plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResPACF_{k}'), partial=True)
 
         # Prepare the data
         # dat_test = d.get_prepared_data('test')

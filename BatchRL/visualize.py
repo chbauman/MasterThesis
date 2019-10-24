@@ -1,8 +1,7 @@
 import matplotlib as mpl
 from pandas.plotting import register_matplotlib_converters
-from statsmodels.graphics.tsaplots import plot_acf
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from data import Dataset
 from util import *
 
 if EULER:
@@ -314,7 +313,7 @@ def plot_all(all_data, m, use_time=True, show=True, title_and_ylab=None, scale_b
     save_figure(save_name, show)
 
 
-def plot_dataset(dataset: Dataset, show: bool = True, title_and_ylab=None, save_name: str = None) -> None:
+def plot_dataset(dataset, show: bool = True, title_and_ylab=None, save_name: str = None) -> None:
     """Plots the unscaled series in a dataset.
 
     Args:
@@ -467,13 +466,16 @@ def stack_compare_plot(stack_y, y_compare, title=None, name=None):
         plt.show()
 
 
-def plot_residuals_acf(residuals: np.ndarray, name: str = None, lags: int = 50) -> None:
+def plot_residuals_acf(residuals: np.ndarray, name: str = None,
+                       lags: int = 50,
+                       partial: bool = False) -> None:
     """Plots the ACF of the residuals given.
 
     Args:
         residuals: The array with the residuals for one series.
         name: The filename for saving the plot.
         lags: The number of lags to consider.
+        partial: Whether to use the partial ACF.
 
     Returns:
         None
@@ -484,8 +486,9 @@ def plot_residuals_acf(residuals: np.ndarray, name: str = None, lags: int = 50) 
     if len(residuals.shape) != 1:
         raise ValueError("Residuals needs to be a vector!")
 
+    plot_fun = plot_pacf if partial else plot_acf
     plt.subplots()
-    plot_acf(residuals, lags=lags)
+    plot_fun(residuals, lags=lags)
     plt.title("Autocorrelation of Residuals")
     if name is not None:
         save_figure(name, False)
