@@ -1,6 +1,6 @@
 import tensorflow as tf
-from keras import backend as K
-from keras.layers import Layer, GaussianNoise
+from keras import backend as K, Input, Model
+from keras.layers import Layer, GaussianNoise, Add
 
 from data import SeriesConstraint
 from keras_util import *
@@ -312,6 +312,85 @@ class FeatureSlice(Layer):
         return s[0], s[1], self.n_feats
 
 
+class ExtractInput(Layer):
+    """
+    TODO
+    """
+
+    slicing_indices: np.ndarray  #: The array with the indices.
+    n_feats: int  #: The number of selected features.
+    seq_len: int  #:
+    curr_ind: int  #:
+
+    def __init__(self, s_inds: np.ndarray,
+                 seq_len: int,
+                 curr_ind: int = 0,
+                 **kwargs):
+        """Initialize layer.
+
+        Args:
+            s_inds: The array with the indices.
+            **kwargs: The kwargs for super(), e.g. `name`.
+        """
+        super(ExtractInput, self).__init__(**kwargs)
+        self.slicing_indices = s_inds
+        self.n_feats = len(s_inds)
+        self.seq_len = seq_len
+        self.curr_ind = curr_ind
+
+    def call(self, x):
+        """
+        Builds the layer given the input x. Selects the features
+        specified in `slicing_indices` and concatenates them.
+
+        Args:
+            x: The input to the layer.
+
+        Returns:
+            The output of the layer containing the slices.
+        """
+        end_ind = self.curr_ind + self.seq_len
+        if not isinstance(x, list):
+            return x[:, self.curr_ind: end_ind, :]
+        x_in, x_out = x
+        if len(x_out.shape) == 2:
+            x_out = K.reshape(x_out, (-1, 1, self.n_feats))
+        x_s = x_in.shape
+        x_prev = x[:, self.curr_ind: (end_ind - 1), :]
+        x_next = x[:, end_ind: (end_ind + 1), :]
+
+        # Extract slices
+        pred_ind = np.zeros((x_s[-1],), dtype=np.bool)
+        pred_ind[self.slicing_indices] = True
+        feat_tensor_list = []
+        ct = 0
+        for k in range(x_s[-1]):
+            if not pred_ind[k]:
+                feat_tensor_list += [x_next[:, :, k]]
+            else:
+                feat_tensor_list += [x_out[:, :, k]]
+                ct += 1
+
+        # Concatenate
+        out_next = K.concatenate(feat_tensor_list, axis=-1)
+        return K.concatenate([x_prev, out_next])
+
+    def compute_output_shape(self, input_shape):
+        """
+        The sequence length changes to `seq_len`.
+
+        Args:
+            input_shape: The shape of the input.
+
+        Returns:
+            Same as input with the second dimension set to sequence length.
+        """
+        s = input_shape
+        if len(s) != 3:
+            raise NotImplementedError("Only implemented for 3D tensors!")
+        return s[0], self.seq_len, s[2]
+
+
 def get_test_layer_output(layer: Layer, np_input, learning_phase: float = 1.0):
     """Test a keras layer.
 
@@ -335,6 +414,24 @@ def get_test_layer_output(layer: Layer, np_input, learning_phase: float = 1.0):
     return layer_out
 
 
+def get_multi_input_layer_output(layer: Layer, inp_list, learning_phase: float = 1.0):
+    """Tests layers with multiple input and / or output.
+
+    Args:
+        layer: The layer to test.
+        inp_list: The list with input arrays.
+        learning_phase: Whether to use learning or testing mode.
+
+    Returns:
+        The processed input.
+    """
+    inputs = [Input(shape=el.shape) for el in inp_list]
+    layer_out_tensor = layer(inputs)
+    k_fun = K.function([*inputs, K.learning_phase()], [layer_out_tensor])
+    layer_out = k_fun([*inp_list, learning_phase])[0]
+    return layer_out
+
+
 def test_layers() -> None:
     """
     Test the custom layers.
@@ -354,12 +451,19 @@ def test_layers() -> None:
         [2, 3],
         [3, 3],
     ])
+    id_1 = np.array([1, 2, 3])
+    id_2 = np.array([2, 2, 2])
 
     # Get shapes
     in_shape = seq_input.shape
     out_shape = output.shape
     batch_size, seq_len, n_in_feat = in_shape
     n_out_feat = out_shape[1]
+
+    # Test multi input test
+    add_out = get_multi_input_layer_output(Add(), [id_1, id_2])
+    exp_out = id_1 + id_2
+    assert np.array_equal(add_out, exp_out), "Multi Input layer test not working!"
 
     # Test SeqInput
     inp_layer = SeqInput(input_shape=(seq_len, n_in_feat))
