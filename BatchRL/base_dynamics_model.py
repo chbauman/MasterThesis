@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from typing import Optional
+
 from data import Dataset, get_test_ds
 from time_series import AR_Model
 from util import *

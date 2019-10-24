@@ -1,6 +1,6 @@
 import pickle
 import warnings
-from typing import Dict
+from typing import Dict, Optional
 
 import scipy
 

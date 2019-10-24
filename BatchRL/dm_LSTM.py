@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Dict
+from typing import Dict, Optional
 
 from hyperopt import hp
 from hyperopt.pyll import scope as ho_scope

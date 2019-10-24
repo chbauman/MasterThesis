@@ -474,10 +474,6 @@ def test_layers() -> None:
         [[1, 5, 5, 5], [3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3]],
     ])
     output = np.array([
-        [2, 3],
-        [3, 3],
-    ])
-    output2 = np.array([
         [-2, 0],
         [0, -3],
     ])
@@ -486,9 +482,7 @@ def test_layers() -> None:
 
     # Get shapes
     in_shape = seq_input.shape
-    out_shape = output.shape
     batch_size, seq_len, n_in_feat = in_shape
-    n_out_feat = out_shape[1]
 
     # Test multi input test
     add_out = get_multi_input_layer_output(Add(), [id_1, id_2])
@@ -528,12 +522,12 @@ def test_layers() -> None:
 
     # Test ExtractInput layer
     lay = ExtractInput(indices, seq_len=3, curr_ind=1)
-    l_out = get_multi_input_layer_output(lay, [seq_input_long, output2])
+    l_out = get_multi_input_layer_output(lay, [seq_input_long, output])
     l_out2 = get_multi_input_layer_output(lay, [seq_input_long, None])
     l_out3 = get_multi_input_layer_output(lay, seq_input_long)
     exp_out32 = np.copy(seq_input_long)[:, 1:4, :]
     exp_out = np.copy(exp_out32)
-    exp_out[:, -1, indices] = output2
+    exp_out[:, -1, indices] = output
     assert np.array_equal(l_out, exp_out), "ExtractInput layer not working!"
     assert np.array_equal(l_out2, exp_out32), "ExtractInput layer not working!"
     assert np.array_equal(l_out3, exp_out32), "ExtractInput layer not working!"

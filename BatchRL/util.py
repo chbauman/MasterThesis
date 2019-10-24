@@ -1,11 +1,9 @@
 import os
-from typing import Union, Optional, List, Tuple, Any, Sequence
+from datetime import datetime
+from typing import Union, List, Tuple, Any, Sequence
 
 import numpy as np
-
 import scipy.optimize.nnls
-
-from datetime import datetime
 
 # Determine platform, assuming we are on Euler if it is not a windows platform
 EULER = not os.name == 'nt'
@@ -36,7 +34,7 @@ def rem_first(t: Tuple) -> Tuple:
     return tuple(lis[1:])
 
 
-def get_if_nnone(lst: Sequence, indx: int, default=None):
+def get_if_not_none(lst: Sequence, indx: int, default=None):
     """
     Returns a list element if list is not None,
     else the default value.

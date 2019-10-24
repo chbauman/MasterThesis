@@ -272,10 +272,10 @@ def plot_multiple_ip_ts(y_list,
     """
     n = len(y_list)
     for k, y in enumerate(y_list):
-        ts_offset = get_if_nnone(timestep_offset_list, k, 0)
-        lab = get_if_nnone(lab_list, k)
-        m_a_s = get_if_nnone(mean_and_std_list, k)
-        dt_init_str = get_if_nnone(dt_init_str_list, k)
+        ts_offset = get_if_not_none(timestep_offset_list, k, 0)
+        lab = get_if_not_none(lab_list, k)
+        m_a_s = get_if_not_none(mean_and_std_list, k)
+        dt_init_str = get_if_not_none(dt_init_str_list, k)
 
         last_series = k == n - 1
         plot_ip_ts(y,
