@@ -639,7 +639,7 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_
                                               dt_mins,
                                               n_tot_cols=n_cols,
                                               **pipeline_kwargs)
-        add_dt_and_tinit(m, dt_mins, dt_init_new)
+        add_dt_and_t_init(m, dt_mins, dt_init_new)
     else:
         if dt_init is None:
             raise ValueError("dt_init cannot be None!")
@@ -828,27 +828,6 @@ def standardize(data: np.ndarray, m: List[Dict]) -> Tuple[np.ndarray, List[Dict]
     return proc_data, m
 
 
-def cut_and_split(dat: np.ndarray, seq_len: int, streak_len: int,
-                  ret_orig: bool = False) -> Tuple[np.ndarray, np.ndarray, int]:
-    """
-    Finds the latest series of 'streak_len' timesteps
-    where all data is valid and splits the data there.
-    The it cuts both parts it into sequences of length 'seq_len'.
-
-    :param dat: The data series in a numpy array.
-    :param seq_len: The sequence length.
-    :param streak_len: The streak length.
-    :param ret_orig: Whether to return the original cut data without sequencing it.
-    :return: Training and streak data.
-    """
-    dat_train, dat_test, n = extract_streak(dat, streak_len, seq_len - 1)
-    if ret_orig:
-        return dat_train, dat_test, n
-    cut_train_dat = cut_data_into_sequences(dat_train, seq_len, interleave=True)
-    cut_test_dat = cut_data_into_sequences(dat_test, seq_len, interleave=True)
-    return cut_train_dat, cut_test_dat, n
-
-
 #######################################################################################################
 # Full Data Retrieval and Pre-processing
 
@@ -950,7 +929,7 @@ def get_weather_data(save_plots=True) -> 'Dataset':
                                        hole_fill_args=fill_by_ip_max,
                                        n_tot_cols=2,
                                        gauss_sigma=filter_sigma)
-    add_dt_and_tinit(m, dt_mins, dt_init)
+    add_dt_and_t_init(m, dt_mins, dt_init)
     m_out += [m[0]]
 
     if save_plots:
@@ -1404,33 +1383,6 @@ class Dataset:
         self.p_inds_prep = None
         return
 
-    def split_train_test(self, streak_len: int = 7):
-        """
-        Split dataset into train, validation and test set.
-        DEPRECATED, use split_data!
-        """
-        warnings.warn("You should not use this function!!")
-
-        # split data
-        s_len = int(60 / self.dt * 24 * streak_len)
-        self.streak_len = s_len
-        self.orig_train_val, self.orig_test, self.test_start = \
-            cut_and_split(np.copy(self.data), self.seq_len, s_len, ret_orig=True)
-        self.orig_train, self.orig_val, self.val_start = \
-            split_arr(np.copy(self.orig_train_val), self.val_percent)
-        _, self.train_streak, self.train_streak_start = \
-            extract_streak(np.copy(self.orig_train), s_len, self.seq_len - 1)
-        _, self.val_streak, val_str_start = extract_streak(np.copy(self.orig_val), s_len, self.seq_len - 1)
-        self.val_streak_start = self.val_start + val_str_start
-
-        # Cut into sequences and save to self.
-        self.test_data = cut_data_into_sequences(np.copy(self.orig_test), self.seq_len, interleave=True)
-        self.train_val_data = cut_data_into_sequences(np.copy(self.orig_train_val), self.seq_len, interleave=True)
-        self.train_data = cut_data_into_sequences(np.copy(self.orig_train), self.seq_len, interleave=True)
-        self.val_data = cut_data_into_sequences(np.copy(self.orig_val), self.seq_len, interleave=True)
-        self.train_streak_data = cut_data_into_sequences(np.copy(self.train_streak), self.seq_len, interleave=True)
-        self.val_streak_data = cut_data_into_sequences(np.copy(self.val_streak), self.seq_len, interleave=True)
-
     def split_data(self) -> None:
         """
         Splits the data into train, validation and test set.
@@ -1480,12 +1432,13 @@ class Dataset:
         input_data, output_data = prepare_supervised_control(sequences, self.c_inds, False)
         return input_data, output_data, n_off
 
-    def get_split(self, str_desc: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def get_split(self, str_desc: str, seq_out: bool = False) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Returns the required part of the data
         prepared for the supervised model training.
 
         Args:
+            seq_out: Whether to return sequence output.
             str_desc: The string describing the part of the data,
                 one of: ['train', 'val', 'train_val', 'test']
 
@@ -1498,7 +1451,7 @@ class Dataset:
         offs = mdv.seq_inds
 
         # Prepare and return
-        input_data, output_data = prepare_supervised_control(sequences, self.c_inds, False)
+        input_data, output_data = prepare_supervised_control(sequences, self.c_inds, seq_out)
         return input_data, output_data, offs
 
     def get_days(self, str_desc: str) -> Tuple[List[Tuple[np.ndarray, np.ndarray]], np.ndarray]:
@@ -1528,6 +1481,7 @@ class Dataset:
         DEPRECATED, use get_split or get_streak!
         """
         warnings.warn("You should not use this function!!")
+        raise NotImplementedError("Deprecated!!!!")
 
         # Get the right data
         n_offset = 0
@@ -1620,10 +1574,10 @@ class Dataset:
         return ret_val
 
     def __len__(self) -> int:
-        """
-        Returns the number of features per sample per timestep.
+        """Returns the number of features per sample per timestep.
 
-        :return: Number of features.
+        Returns:
+            Number of features.
         """
         return self.d
 
@@ -1826,17 +1780,22 @@ class Dataset:
             return ds
 
     def standardize_col(self, col_ind: int) -> None:
-        """
-        Standardizes a certain column of the data.
-        Nans are ignored.
+        """Standardizes a certain column of the data.
 
-        :param col_ind: Index of the column to be standardized.
-        :return: None
+        Nans are ignored. If the data series is
+        already scaled, nothing is done.
+
+        Args:
+            col_ind: Index of the column to be standardized.
+        Raises:
+            IndexError: If `col_ind` is out of range.
         """
-        if col_ind >= self.d:
-            raise ValueError("Column index too big!")
+        if col_ind >= self.d or col_ind < 0:
+            raise IndexError("Column index too big!")
         if self.is_scaled[col_ind]:
             return
+
+        # Do the actual scaling
         m = np.nanmean(self.data[:, col_ind])
         std = np.nanstd(self.data[:, col_ind])
         self.data[:, col_ind] = (self.data[:, col_ind] - m) / std
@@ -1844,10 +1803,9 @@ class Dataset:
         self.scaling[col_ind] = np.array([m, std])
 
     def standardize(self) -> None:
-        """
-        Standardizes all columns in the data.
+        """Standardizes all columns in the data.
 
-        :return: None
+        Uses `standardize_col` on each column in the data.
         """
         for k in range(self.d):
             self.standardize_col(k)
@@ -1857,10 +1815,13 @@ class Dataset:
         Checks if the in or out indices are in a valid range,
         otherwise raises an exception.
 
-        :param inds: Indices to check.
-        :param include_c: Whether they may include control indices.
-        :param unique: Whether to require unique elements only.
-        :return: None
+        Args:
+            inds: Indices to check.
+            include_c: Whether they may include control indices.
+            unique: Whether to require unique elements only.
+
+        Raises:
+            ValueError: If indices are out of range.
         """
         upper_ind = self.d
         if not include_c:
@@ -1907,12 +1868,13 @@ class Dataset:
         return new_inds
 
     def visualize_nans(self, name_ext: str = "") -> None:
-        """
+        """Visualizes nans in the data.
+
         Visualizes where the holes are in the different
         time series (columns) of the data.
 
-        :param name_ext: Name extension.
-        :return: None
+        Args:
+            name_ext: Name extension.
         """
         nan_plot_dir = os.path.join(plot_dir, "NanPlots")
         create_dir(nan_plot_dir)
@@ -1952,8 +1914,7 @@ class Dataset:
                     const_list[ct] = SeriesConstraint('interval', iv_trf)
 
     def get_shifted_t_init(self, n: int) -> str:
-        """
-        Shifts t_init of the dataset n timesteps into the future.
+        """Shifts t_init of the dataset n timesteps into the future.
 
         Args:
             n: The number of time steps to shift.
@@ -1967,7 +1928,7 @@ class Dataset:
 
     def get_scaling_mul(self, ind: int, n: int) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Returns the scaling information of series with index `ind`
+        Returns the scaling information of the series with index `ind`
         for a possible new dataset with `n` series.
 
         Args:
@@ -2092,8 +2053,7 @@ class ModelDataView:
 
     @CacheDecoratorFactory()
     def _extract_disjoint_streaks(self, n: Tuple[int, int]) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        This function does actually do stuff.
+        """This function does actually do stuff.
 
         Args:
             n: The arguments in a tuple.
@@ -2233,7 +2193,7 @@ class TestDataSynthetic:
     """
 
     @staticmethod
-    def getData(self):
+    def getData():
         # First Time series
         dict1 = {'description': "Synthetic Data Series 1: Base Series", 'unit': "Test Unit 1"}
         val_1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
@@ -2329,14 +2289,6 @@ def get_data_test():
     print(all_dat)
     print(m)
 
-    # Test Sequence Cutting
-    c = find_rows_with_nans(all_dat)
-    print(c)
-    seq_inds = cut_into_fixed_len(c, 2, interleave=True)
-    print(seq_inds)
-    od = cut_data_into_sequences(all_dat, 2, interleave=True)
-    print(od)
-
     # Test hole filling by interpolation
     test_ts = np.array([np.nan, np.nan, 1, 2, 3.5, np.nan, 4.5, np.nan])
     test_ts2 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, np.nan, 7.0])
@@ -2357,7 +2309,7 @@ def get_data_test():
     dat, m = TestData2.getData()
 
     # Clean data
-    mod_dat = clean_data(dat[2], [0.0], 4, [3.3])
+    clean_data(dat[2], [0.0], 4, [3.3])
 
     # Interpolate
     [data1, dt_init1] = interpolate_time_series(dat[0], dt_mins)
@@ -2466,7 +2418,7 @@ def test_dataset_artificially() -> None:
     for t in test_list:
         inp, sol, fun = t
         out = fun(inp)
-        if not arr_eq(sol, out):
+        if not np.array_equal(sol, out):
             print("Test failed :(")
             raise AssertionError("Function: {} with input: {} not giving: {} but: {}!!!".format(fun, inp, sol, out))
 

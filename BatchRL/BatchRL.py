@@ -70,15 +70,15 @@ def main():
     # Do tests
     # test_dyn_model()
     # test_test_env()
-    # test_time_stuff()
+    test_time_stuff()
     test_layers()
-    return
-    # test_numpy_functions()
+    test_numpy_functions()
     # test_rest_client()
-    # test_python_stuff()
+    test_python_stuff()
     # # get_data_test()
     # # test_align()
-    # test_dataset_artificially()
+    test_dataset_artificially()
+    return
 
     # Dataset
     name_ds = 'Model_Room43'

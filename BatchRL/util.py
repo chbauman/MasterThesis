@@ -1,4 +1,5 @@
 import os
+import warnings
 from datetime import datetime
 from typing import Union, List, Tuple, Any, Sequence
 
@@ -198,18 +199,6 @@ def has_duplicates(arr: np.ndarray) -> bool:
     m = np.zeros_like(arr, dtype=bool)
     m[np.unique(arr, return_index=True)[1]] = True
     return np.sum(~m) > 0
-
-
-def arr_eq(arr1: Arr, arr2: Arr) -> bool:
-    """
-    Tests if two arrays have all equal elements.
-    DEPRECATED: Use np.array_equal
-
-    :param arr1: First array.
-    :param arr2: Array to compare with.
-    :return: Whether all the elements are the same.
-    """
-    return np.sum(arr1 != arr2) == 0
 
 
 def fit_linear_1d(x: np.ndarray, y: np.ndarray, x_new: np.ndarray = None):
@@ -486,70 +475,21 @@ def find_rows_with_nans(all_data: np.ndarray) -> np.ndarray:
     Returns a boolean vector indicating which
     rows of 'all_dat' contain NaNs.
 
-    :param all_data: Numpy array with data series as columns.
-    :return: 1D array of bool specifying rows containing nans.
-    """
+    Args:
+        all_data: Numpy array with data series as columns.
 
+    Returns:
+        1D array of bool specifying rows containing nans.
+    """
     n = all_data.shape[0]
     m = all_data.shape[1]
-    col_has_nan = np.empty((n,), dtype=np.bool)
-    col_has_nan.fill(False)
+    row_has_nan = np.empty((n,), dtype=np.bool)
+    row_has_nan.fill(False)
 
     for k in range(m):
-        col_has_nan = np.logical_or(col_has_nan, np.isnan(all_data[:, k]))
+        row_has_nan = np.logical_or(row_has_nan, np.isnan(all_data[:, k]))
 
-    return col_has_nan
-
-
-def cut_into_fixed_len(col_has_nan: np.ndarray, seq_len: int = 20, interleave: bool = True) -> np.ndarray:
-    """
-    Cuts the time series into pieces of length 'seq_len'
-    for training of dynamic model.
-    DEPRECATED since not efficient!
-
-    :param col_has_nan: 1D bool array with True where there are nans in a row.
-    :param seq_len: Length of sequences to extract.
-    :param interleave: Whether to overlap the extracted sequences.
-    :return: Index array specifying ranges of rows that do not contain nans.
-    """
-
-    n = col_has_nan.shape[0]
-    indices = np.arange(0, n)
-
-    # Initialize and find first non-NaN
-    max_n_seq = n if interleave else n // seq_len
-    seqs = np.empty((seq_len, max_n_seq), dtype=np.int32)
-    ct = np.where(col_has_nan == False)[0][0]
-    seq_count = 0
-
-    while True:
-        # Find next NaN
-        zeros = np.where(col_has_nan[ct:])[0]
-        curr_seq_len = n - ct if zeros.shape[0] == 0 else zeros[0]
-
-        # Add sequences
-        if interleave:
-            n_seq_curr = curr_seq_len - seq_len + 1
-            for k in range(n_seq_curr):
-                seqs[:, seq_count] = indices[(ct + k):(ct + k + seq_len)]
-                seq_count += 1
-        else:
-            n_seq_curr = curr_seq_len // seq_len
-            for k in range(n_seq_curr):
-                seqs[:, seq_count] = indices[(ct + k * seq_len):(ct + (k + 1) * seq_len)]
-                seq_count += 1
-
-        # Find next non-NaN
-        ct += curr_seq_len
-        non_zs = np.where(col_has_nan[ct:] == False)[0]
-
-        # Break if none found
-        if non_zs.shape[0] == 0:
-            break
-        ct += non_zs[0]
-
-    # Return all found sequences
-    return seqs[:, :seq_count]
+    return row_has_nan
 
 
 def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarray, np.ndarray, int]:
@@ -579,8 +519,7 @@ def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarr
 
 
 def nan_array_equal(a: np.ndarray, b: np.ndarray) -> bool:
-    """
-    Analog for np.array_equal but this time ignoring nans.
+    """Analog for np.array_equal but this time ignoring nans.
 
     Args:
         a: First array.
@@ -617,37 +556,6 @@ def find_all_streaks(col_has_nan: np.ndarray, s_len: int) -> np.ndarray:
     tmp = np.convolve(np.logical_not(col_has_nan), true_seq, 'valid')
     inds = np.where(tmp == s_len)[0]
     return inds
-
-
-def cut_data_into_sequences(all_data, seq_len: int, interleave: bool = True) -> np.ndarray:
-    """
-    Use the two functions above to cut the data into
-    sequences for dynamic model learning.
-
-    :param all_data: The 2D numpy array containing the data series.
-    :param seq_len: The length of the sequences to extract.
-    :param interleave: See cut_into_fixed_len
-    :return: 3D array with sequences.
-    """
-    # Check input
-    if len(all_data.shape) > 2:
-        raise ValueError("Data array has too many dimensions!")
-
-    # Use helper functions
-    nans = find_rows_with_nans(all_data)
-    seq_inds = cut_into_fixed_len(nans, seq_len, interleave)
-
-    # Get shapes
-    n_feat = all_data.shape[1]
-    n_seqs = seq_inds.shape[1]
-
-    # Initialize empty data
-    out_dat = np.empty((n_seqs, seq_len, n_feat), dtype=np.float32)
-
-    # Fill and return
-    for k in range(n_seqs):
-        out_dat[k, :, :] = all_data[seq_inds[:, k], :]
-    return out_dat
 
 
 def cut_data(all_data, seq_len: int) -> Tuple[np.ndarray, np.ndarray]:
@@ -716,7 +624,8 @@ def find_disjoint_streaks(nans: np.ndarray, seq_len: int, streak_len: int, n_ts_
 def prepare_supervised_control(sequences: np.ndarray,
                                c_inds: np.array,
                                sequence_pred: bool = False) -> Tuple[np.ndarray, np.ndarray]:
-    """
+    """Prepare data for supervised learning.
+
     Transforms a batch of sequences of constant length to
     prepare it for supervised model training. Removes control indices
     to the end of the features and shifts them to the past for one
@@ -734,7 +643,7 @@ def prepare_supervised_control(sequences: np.ndarray,
 
     # Get inverse mask
     mask = np.ones((n_feat,), np.bool)
-    mask[c_inds] = 0
+    mask[c_inds] = False
 
     # Extract and concatenate input data
     arr_list = [sequences[:, :-1, mask],
@@ -770,9 +679,9 @@ def clean_desc(nest_desc: str) -> str:
     return nest_desc
 
 
-def add_dt_and_tinit(m: Sequence, dt_mins: int, dt_init: np.datetime64) -> None:
+def add_dt_and_t_init(m: Sequence, dt_mins: int, dt_init: np.datetime64) -> None:
     """
-    Adds dt and t_init to the metadata dictionary m.
+    Adds dt and t_init to the metadata dictionary `m`.
     """
     for ct, e in enumerate(m):
         m[ct]['t_init'] = dt_to_string(npdatetime_to_datetime(dt_init))
@@ -950,7 +859,7 @@ def test_numpy_functions() -> None:
     if not has_duplicates(ind_arr) or has_duplicates(ind_arr_no_dup):
         raise AssertionError("Implementation of has_duplicates contains errors!")
 
-    if arr_eq(ind_arr, ind_arr_no_dup) or not arr_eq(ind_arr, ind_arr):
+    if np.array_equal(ind_arr, ind_arr_no_dup) or not np.array_equal(ind_arr, ind_arr):
         raise AssertionError("Implementation of arr_eq(...) contains errors!")
 
     # Define data arrays
@@ -989,14 +898,11 @@ def test_numpy_functions() -> None:
         raise AssertionError("extract_streak not working correctly!!")
 
     # Test sequence cutting
-    cut_seq_dat = cut_data_into_sequences(data_array_with_nans, 2)
     cut_dat_exp = np.array([
         data_array_with_nans[1:3],
         data_array_with_nans[5:7],
         data_array_with_nans[6:8],
     ])
-    if not np.array_equal(cut_seq_dat, cut_dat_exp):
-        raise AssertionError("cut_data_into_sequences not working correctly!!")
     c_dat, inds = cut_data(data_array_with_nans, 2)
     inds_exp = np.array([1, 5, 6])
     if not np.array_equal(c_dat, cut_dat_exp) or not np.array_equal(inds_exp, inds):
@@ -1005,13 +911,6 @@ def test_numpy_functions() -> None:
     bool_vec = np.array([True, False, False, False, True, False, False, True])
     bool_vec_2 = np.array([True, False, False, False, False, True, False, False, False, False, True])
     bool_vec_3 = np.array([True, False, False, False])
-
-    exp_out = np.array([[1, 2, 5],
-                        [2, 3, 6],
-                        ])
-    fix_len_seq = cut_into_fixed_len(bool_vec, 2)
-    if not np.array_equal(exp_out, fix_len_seq):
-        raise AssertionError("cut_into_fixed_len not working correctly!!")
 
     streaks = find_all_streaks(bool_vec, 2)
     s_exp = np.array([1, 2, 5])
@@ -1094,7 +993,7 @@ def test_python_stuff() -> None:
         raise AssertionError("Some error happened: {}".format(e))
 
     assert rem_first((1, 2, 3)) == (2, 3), "rem_first not working correctly!"
-    assert rem_first((1, 2)) == (1,), "rem_first not working correctly!"
+    assert rem_first((1, 2)) == (2,), "rem_first not working correctly!"
 
 
 def test_time_stuff() -> None:

@@ -140,20 +140,24 @@ class BaseDynamicsModel(ABC):
         """
         pass
 
-    def get_fit_data(self, data_name: str = "train"):
+    def get_fit_data(self, data_name: str = "train", *, seq_out: bool = False):
         """
         Returns the required data for fitting the model
         taking care of choosing the right series by indexing.
 
         Args:
             data_name: The string specifying which portion of the data to use.
+            seq_out: Whether to return the full output sequences.
 
         Returns:
             The input and output data for supervised learning.
         """
-        in_dat, out_dat, n = self.data.get_split(data_name)
+        in_dat, out_dat, n = self.data.get_split(data_name, seq_out)
         res_in_dat = in_dat[:, :, self.p_in_indices]
-        res_out_dat_out = out_dat[:, self.p_out_inds]
+        if not seq_out:
+            res_out_dat_out = out_dat[:, self.p_out_inds]
+        else:
+            res_out_dat_out = out_dat[:, :, self.p_out_inds]
         return res_in_dat, res_out_dat_out
 
     def get_path(self, name: str) -> str:
