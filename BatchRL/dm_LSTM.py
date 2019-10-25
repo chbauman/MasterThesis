@@ -351,13 +351,55 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
         all_out = [res_lay(0)(first_out)]
         for k in range(self.n_overshoot - 1):
             first_out = ExtractInput(inds, self.pred_seq_len, k + 1,
-                                     name=f"extraction_{k+1}")([full_input, first_out])
+                                     name=f"extraction_{k + 1}")([full_input, first_out])
             first_out = copy_mod(k + 1)(first_out)
             all_out += [res_lay(k + 1)(first_out)]
 
+        # Concatenate all outputs and make model
         full_out = Concatenate(axis=-2, name="final_concatenate")(all_out)
         train_mod = Model(inputs=full_input, outputs=full_out)
-        self._plot_model(train_mod, "TrainModel.png", expand=False)
+
+        # Define loss and compile
+        loss = 'mse'
+        opt = Adam(lr=self.lr)
+        train_mod.compile(loss=loss, optimizer=opt)
+        if self.verbose:
+            train_mod.summary()
+
+        # Plot and save
+        if not EULER:
+            self._plot_model(train_mod, "TrainModel.png", expand=False)
+        self.train_mod = train_mod
+
+    def fit(self) -> None:
+        """Fits the model using the data from the dataset.
+
+        TODO: Use decorator for 'loading if existing' to avoid duplicate
+            code!
+
+        Returns:
+            None
+        """
+        loaded = self.load_if_exists(self.m, self.name)
+        if not loaded:
+            if self.verbose:
+                self.deb("Fitting Model...")
+
+            fit_data, _ = self.data.split_dict['train_val'].get_sequences(self.tot_train_seq_len)
+            out_data = fit_data[:, self.pred_seq_len:, self.p_out_inds]
+            h = self.train_mod.fit(x=fit_data, y=out_data,
+                                   epochs=self.n_iter_max,
+                                   initial_epoch=0,
+                                   batch_size=128,
+                                   validation_split=self.data.val_percent,
+                                   verbose=self.verbose)
+
+            pth = self.get_plt_path("TrainHist")
+            plot_train_history(h, pth)
+            create_dir(self.model_path)
+            self.m.save_weights(self.get_path(self.name))
+        else:
+            self.deb("Restored trained model")
     pass
 
 
@@ -376,8 +418,7 @@ def test_rnn_models():
     ds.split_data()
 
     # Define model
-    test_kwargs = {'name': "Test",
-                   'hidden_sizes': (10, 10),
+    test_kwargs = {'hidden_sizes': (10, 10),
                    'n_iter_max': 5,
                    'input_noise_std': 0.001,
                    'lr': 0.01,
@@ -386,7 +427,11 @@ def test_rnn_models():
                    'out_inds': np.array([0, 1, 2, 3], dtype=np.int32),
                    'constraint_list': None,
                    }
-    mod_test = RNNDynamicModel(ds, **test_kwargs)
-    mod_test_overshoot = RNNDynamicOvershootModel(n_overshoot=5, data=ds, **test_kwargs)
-
+    # mod_test = RNNDynamicModel(ds, name="Test", **test_kwargs)
+    mod_test_overshoot = RNNDynamicOvershootModel(n_overshoot=5,
+                                                  data=ds,
+                                                  name="TestOvershoot",
+                                                  **test_kwargs)
+    mod_test_overshoot.fit()
+    mod_test_overshoot.fit()
     print("RNN models test passed :)")

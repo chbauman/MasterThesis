@@ -115,10 +115,12 @@ def b_cast(l_or_el, n: int) -> List:
 
 
 class CacheDecoratorFactory(object):
-    """
-    Decorator for caching results of a function.
+    """Decorator for caching results of a function.
+
     Function output and function input is stored in a list
     and returned if the same input is given to the decorated function.
+
+    TODO: Test more, make it work for non-member functions!!
     """
 
     n: List = []  #: List of function arguments.
@@ -149,13 +151,24 @@ class CacheDecoratorFactory(object):
             The decorated function.
         """
 
-        def decorated(n: Union[Tuple, int], *args, **kwargs):
+        def decorated(s, n: Union[Tuple, int], *args, **kwargs):
+            """The actual decorator.
 
+            Args:
+                s: Self of the class whose member function is decorated.
+                n: The unique input to the function.
+                *args: Arguments.
+                **kwargs: Keyword arguments.
+
+            Returns:
+                The decorated function.
+            """
+            print("Fucking n: ", n, str(n))
             if n in self.n:
                 i = self.n.index(n)
                 return self.d[i]
             else:
-                dat = f(n, *args, **kwargs)
+                dat = f(s, n, *args, **kwargs)
                 self.n += [n]
                 self.d += [dat]
                 return dat
@@ -921,7 +934,7 @@ def ts_per_day(n_min: int) -> int:
     Raises:
         ValueError: If the result would be a float.
     """
-    if (24 * 69) % n_min != 0:
+    if (24 * 60) % n_min != 0:
         raise ValueError(f"Number of mins in a day not divisible by n_min: {n_min}")
     return 24 * 60 // n_min
 

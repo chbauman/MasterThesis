@@ -2007,7 +2007,8 @@ class ModelDataView:
         if seq_len is None:
             seq_len = self.s_len
 
-        return self._get_sequences(seq_len)
+        ret_val = self._get_sequences(seq_len)
+        return ret_val
 
     @CacheDecoratorFactory()
     def _get_sequences(self, seq_len: int) -> Tuple[np.ndarray, np.ndarray]:
