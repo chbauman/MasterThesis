@@ -1596,11 +1596,13 @@ class Dataset:
 
     @classmethod
     def copy(cls, dataset: 'Dataset') -> 'Dataset':
-        """
-        Returns a deep copy of the passed Dataset.
+        """Returns a deep copy of the passed Dataset.
 
-        :param dataset: The dataset to copy.
-        :return: The new dataset.
+        Args:
+            dataset: The dataset to copy.
+
+        Returns:
+            The new dataset.
         """
         return cls(np.copy(dataset.data),
                    dataset.dt,
@@ -1727,12 +1729,16 @@ class Dataset:
                            self.name + "[" + str(low) + "]")
 
     def __getitem__(self, key) -> 'Dataset':
-        """
-        Allows for slicing. Returns a copy not a view.
+        """Allows for slicing.
+
+        Returns a copy not a view.
         Slice must be contiguous, no strides.
 
-        :param key: Specifies which series to return.
-        :return: New dataset containing series specified by key.
+        Args:
+            key: Specifies which series to return.
+
+        Returns:
+            New dataset containing series specified by key.
         """
 
         if isinstance(key, slice):
@@ -1742,10 +1748,9 @@ class Dataset:
         return self._get_slice(key, key + 1)
 
     def save(self) -> None:
-        """
-        Save the class object to a file.
+        """Save the class object to a file.
 
-        :return: None
+        Uses pickle to store the instance.
         """
         create_dir(dataset_data_path)
 
@@ -1754,17 +1759,15 @@ class Dataset:
             pickle.dump(self, f)
 
     def get_unscaled_data(self) -> np.ndarray:
-        """
-        Adds the mean and std back to every column and returns
-        the data.
+        """Adds the mean and std back to every column and returns the data.
 
-        :return: Data array with original mean and std added back.
+        Returns:
+             Data array with original mean and std added back.
         """
         data_out = np.copy(self.data)
         for k in range(self.d):
             if self.is_scaled[k]:
                 data_out[:, k] = add_mean_and_std(data_out[:, k], self.scaling[k, :])
-
         return data_out
 
     @staticmethod
@@ -1773,11 +1776,13 @@ class Dataset:
 
     @staticmethod
     def loadDataset(name: str) -> 'Dataset':
-        """
-        Load a saved Dataset object.
+        """Load a saved Dataset object.
 
-        :param name: Name of dataset.
-        :return: Loaded dataset.
+        Args:
+            name: Name of dataset.
+
+        Returns:
+            Loaded dataset.
         """
         f_name = Dataset.get_filename(name)
         if not os.path.isfile(f_name):
@@ -1818,9 +1823,7 @@ class Dataset:
             self.standardize_col(k)
 
     def check_inds(self, inds: np.ndarray, include_c: bool = True, unique: bool = True) -> None:
-        """
-        Checks if the in or out indices are in a valid range,
-        otherwise raises an exception.
+        """Checks if the in or out indices are in a valid range.
 
         Args:
             inds: Indices to check.
@@ -1934,7 +1937,8 @@ class Dataset:
         return np_dt_to_str(np_dt + n * dt_dt)
 
     def get_scaling_mul(self, ind: int, n: int) -> Tuple[np.ndarray, np.ndarray]:
-        """
+        """Repeats scaling info of a specific series.
+
         Returns the scaling information of the series with index `ind`
         for a possible new dataset with `n` series.
 
@@ -1951,10 +1955,9 @@ class Dataset:
 
 
 class ModelDataView:
-    """
-    Container for dataset specifying parts of
-    the original data in the dataset. Usable for
-    train, val and test splits.
+    """Container for dataset specifying parts of the original data in the dataset.
+
+    Usable for train, val and test splits.
     """
 
     _d_ref: Dataset  #: Reference to dataset
@@ -1981,17 +1984,43 @@ class ModelDataView:
         self.s_len = d_ref.seq_len
 
         # Cut the relevant data
-        self.sequences, self.seq_inds = cut_data(self.get_rel_data(), self.s_len)
+        self.sequences, self.seq_inds = self.get_sequences()
+
+    def get_sequences(self, seq_len: int = None) -> Tuple[np.ndarray, np.ndarray]:
+        """Extracts sequences of length `seq_len` from the data.
+
+        If `seq_len` is None, the sequence length of the associated
+        dataset is used. Uses caching for multiple calls with
+        same `seq_len`.
+
+        Args:
+            seq_len: The sequence length.
+
+        Returns:
+            The sequences and the corresponding indices.
+        """
+        # Use default if None
+        if seq_len is None:
+            seq_len = self.s_len
+
+        return self._get_sequences(seq_len)
+
+    @CacheDecoratorFactory()
+    def _get_sequences(self, seq_len: int) -> Tuple[np.ndarray, np.ndarray]:
+        # Extract sequences and return
+        sequences, seq_inds = cut_data(self.get_rel_data(), seq_len)
+        return sequences, seq_inds
 
     def _get_data(self, n1: int, n2: int) -> np.ndarray:
-        """
-        Returns a copy of the data[n1: n2]
+        """Returns a copy of the data[n1: n2]
+
         Args:
             n1: First index
             n2: Second index
 
         Returns:
             Numpy array of data.
+
         Raises:
             IndexError: If indices are out of bound.
         """
@@ -2001,9 +2030,9 @@ class ModelDataView:
         return np.copy(self._d_ref.data[n1: n2])
 
     def get_rel_data(self) -> np.ndarray:
-        """
-        Returns the data that this class uses.
-        Should not be modified.
+        """Returns the data that this class uses.
+
+        The returned data should not be modified!
 
         Returns:
             Data array.
@@ -2011,9 +2040,9 @@ class ModelDataView:
         return self._get_data(self.n, self.n + self.n_len)
 
     def extract_streak(self, n_timesteps: int, take_last: bool = True) -> Tuple[np.ndarray, int]:
-        """
-        Extracts a streak of length `n_timesteps` from the associated
-        data. If `take_last` is True, then the last such streak is returned,
+        """Extracts a streak of length `n_timesteps` from the associated data.
+
+        If `take_last` is True, then the last such streak is returned,
         else the first. Uses caching for multiple calls with same signature.
 
         Args:

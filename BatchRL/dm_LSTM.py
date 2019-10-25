@@ -4,7 +4,7 @@ from typing import Dict, Optional
 from hyperopt import hp
 from hyperopt.pyll import scope as ho_scope
 from keras import backend as K
-from keras.layers import GRU, LSTM, Dense, Input, Add, Lambda
+from keras.layers import GRU, LSTM, Dense, Input, Add
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 from keras.utils import plot_model
@@ -12,7 +12,7 @@ from keras.utils import plot_model
 from base_hyperopt import HyperOptimizableModel
 from data import Dataset
 from data import SeriesConstraint
-from keras_layers import SeqInput, ConstrainedNoise, FeatureSlice
+from keras_layers import ConstrainedNoise, FeatureSlice
 from util import *
 from visualize import plot_train_history
 
@@ -61,8 +61,10 @@ def constr_name(name: str,
 
 
 class RNNDynamicModel(HyperOptimizableModel):
-    """
-    Simple RNN used for training a dynamics model.
+    """Simple RNN used for training a dynamics model.
+
+    All parameters are defined in `__init__`. Implements
+    the `HyperOptimizableModel` for hyperparameter optimization.
     """
 
     def get_space(self) -> Dict:
@@ -131,8 +133,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                  constraint_list: Sequence[SeriesConstraint] = None,
                  verbose: int = 1):
 
-        """
-        Constructor, defines all the network parameters.
+        """Constructor, defines all the network parameters.
 
         :param name: Base name
         :param data: Dataset
@@ -169,14 +170,15 @@ class RNNDynamicModel(HyperOptimizableModel):
         self.lr = lr
 
         # Build model
-        self.m = None
-        self._build_model()
+        self.m = self._build_model()
 
-    def _build_model(self) -> None:
-        """Builds the keras LSTM model and saves it to self.
+    def _build_model(self) -> Any:
+        """Builds the keras LSTM model and returns it.
+
+        The parameters how to build it were passed to `__init__`.
 
         Returns:
-             None
+             The built keras model.
         """
 
         # Initialize
@@ -237,13 +239,13 @@ class RNNDynamicModel(HyperOptimizableModel):
         model.compile(loss=loss, optimizer=opt)
         if self.verbose:
             model.summary()
-        self.m = model
         if not EULER:
             pth = self.get_plt_path("Model.png")
             plot_model(model, to_file=pth,
                        show_shapes=True,
                        expand_nested=True,
                        dpi=500)
+        return model
 
     def fit(self) -> None:
         """
@@ -293,16 +295,23 @@ class RNNDynamicModel(HyperOptimizableModel):
 
 class RNNDynamicOvershootModel(RNNDynamicModel):
 
-    m: Any = None
-    overshoot_model: Any = None
+    m: Any = None  #: The base model used for prediction.
+    overshoot_model: Any = None  #: The overshoot model used for training.
+    n_overshoot: int
 
-    def __init__(self, **kwargs):
+    def __init__(self, n_overshoot: int = 10, **kwargs):
         """Initialize model
 
         Args:
+            n_overshoot: The number of timesteps to consider in overshoot model.
             kwargs: Kwargs for super class.
         """
         super(RNNDynamicOvershootModel, self).__init__(**kwargs)
 
+        self.n_overshoot = n_overshoot
+
+    def _build(self):
+
+        self.m = self._build_model()
 
     pass
