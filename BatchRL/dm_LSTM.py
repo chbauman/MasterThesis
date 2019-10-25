@@ -12,7 +12,7 @@ from keras.utils import plot_model
 from base_hyperopt import HyperOptimizableModel
 from data import Dataset, get_test_ds
 from data import SeriesConstraint
-from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, SeqInput
+from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput
 from util import *
 from visualize import plot_train_history
 
@@ -246,12 +246,13 @@ class RNNDynamicModel(HyperOptimizableModel):
             self._plot_model(model)
         return model
 
-    def _plot_model(self, model: Any, name: str = "Model.png"):
+    def _plot_model(self, model: Any, name: str = "Model.png",
+                    expand: bool = True):
         """Plots keras model."""
         pth = self.get_plt_path(name)
         plot_model(model, to_file=pth,
                    show_shapes=True,
-                   expand_nested=True,
+                   expand_nested=expand,
                    dpi=500)
 
     def fit(self) -> None:
@@ -354,13 +355,12 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
             first_out = copy_mod(k + 1)(first_out)
             all_out += [res_lay(k + 1)(first_out)]
 
-        full_out = Concatenate(axis=-2)(all_out)
+        full_out = Concatenate(axis=-2, name="final_concatenate")(all_out)
         train_mod = Model(inputs=full_input, outputs=full_out)
-        self._plot_model(train_mod, "TrainModel.png")
+        self._plot_model(train_mod, "TrainModel.png", expand=False)
     pass
 
 
-# @TestDecoratorFactory("RNN Test")
 def test_rnn_models():
     """Tests the RNN model classes.
 
@@ -373,6 +373,7 @@ def test_rnn_models():
     c_inds = np.array([4, 6], dtype=np.int32)
     ds = get_test_ds(dat, c_inds, name="RNNTestDataset")
     ds.seq_len = 10
+    ds.split_data()
 
     # Define model
     test_kwargs = {'name': "Test",
@@ -387,4 +388,5 @@ def test_rnn_models():
                    }
     mod_test = RNNDynamicModel(ds, **test_kwargs)
     mod_test_overshoot = RNNDynamicOvershootModel(n_overshoot=5, data=ds, **test_kwargs)
-    pass
+
+    print("RNN models test passed :)")

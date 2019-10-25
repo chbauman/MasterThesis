@@ -5,6 +5,14 @@ from typing import Union, List, Tuple, Any, Sequence
 import numpy as np
 import scipy.optimize.nnls
 
+"""A few general functions with multiple use cases.
+
+Includes a few general python functions, 
+a lot of numpy transformations and also some tools
+to handle the datetime of python and numpy. Also some
+tests of these functions are included. 
+"""
+
 # Determine platform, assuming we are on Euler if it is not a windows platform
 EULER = not os.name == 'nt'
 
@@ -30,6 +38,7 @@ def rem_first(t: Tuple) -> Tuple:
     Returns:
         New tuple without first value.
     """
+    assert len(t) >= 1, "Tuple must have at least one element!"
     lis = [i for i in t]
     return tuple(lis[1:])
 
@@ -245,6 +254,15 @@ def fit_linear_bf_1d(x: np.ndarray, y: np.ndarray, b_fun, offset: bool = False) 
     """Fits a linear model y = alpha^T f(x).
 
     TODO: implement with offset!
+
+    Args:
+        x: The values on the x axis.
+        y: The values to fit corresponding to x.
+        b_fun: A function evaluating all basis function at the input.
+        offset: Whether to add a bias term.
+
+    Returns:
+        The fitted linear parameters.
     """
 
     if offset:
@@ -266,10 +284,11 @@ def fit_linear_bf_1d(x: np.ndarray, y: np.ndarray, b_fun, offset: bool = False) 
 
 
 def get_shape1(arr: np.ndarray) -> int:
-    """Save version of .shape[1]
+    """Save version of `arr`.shape[1]
 
-    Returns the shape of the second dimension
-    of an array. If it is a vector returns 1.
+    Returns:
+        The shape of the second dimension
+        of an array. If it is a vector returns 1.
     """
     s = arr.shape
     if len(s) < 2:
@@ -356,9 +375,14 @@ def trf_mean_and_std(ts: Arr, mean_and_std: Sequence, remove: bool = True) -> Ar
 
 
 def add_mean_and_std(ts: Arr, mean_and_std: Sequence) -> Arr:
-    """
-    Transforms the data back to having mean
-    and std as specified.
+    """Transforms the data back to having mean and std as specified.
+
+    Args:
+        ts: The series to add mean and std.
+        mean_and_std: The mean and the std.
+
+    Returns:
+        New scaled series.
     """
     if len(mean_and_std) < 2:
         raise ValueError("Invalid value for mean_and_std")
@@ -366,12 +390,14 @@ def add_mean_and_std(ts: Arr, mean_and_std: Sequence) -> Arr:
 
 
 def rem_mean_and_std(ts: Arr, mean_and_std: Sequence) -> Arr:
-    """
-    Whitens the data with known mean and standard deviation.
+    """Whitens the data with known mean and standard deviation.
 
-    :param ts: Data to be whitened.
-    :param mean_and_std: Container of the mean and the std.
-    :return: Whitened data.
+    Args:
+        ts: Data to be whitened.
+        mean_and_std: Container of the mean and the std.
+
+    Returns:
+        Whitened data.
     """
     if len(mean_and_std) < 2:
         raise ValueError("Invalid value for mean_and_std")
@@ -381,9 +407,11 @@ def rem_mean_and_std(ts: Arr, mean_and_std: Sequence) -> Arr:
 
 
 def check_in_range(arr: np.ndarray, low: Num, high: Num) -> bool:
-    """
-    Returns true if all elements in arr are in
-    range [low, high) else false.
+    """Checks if elements of an array are in specified range.
+
+    Returns:
+        True if all elements in arr are in
+        range [low, high) else false.
     """
     if arr.size == 0:
         return True
@@ -467,18 +495,23 @@ def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False,
     return ret_val
 
 
-def make_periodic(arr_1d: np.ndarray, keep_start: bool = True, keep_min: bool = True):
-    """
-    Makes a data series periodic by scaling it by a linearly in / decreasing
-    factor to in / decrease the values towards the end of the series to match
+def make_periodic(arr_1d: np.ndarray, keep_start: bool = True,
+                  keep_min: bool = True) -> np.ndarray:
+    """Makes a data series periodic.
+
+    By scaling it by a linearly in- / decreasing
+    factor to in- / decrease the values towards the end of the series to match
     the start.
 
-    :param arr_1d: Series to make periodic.
-    :param keep_start:
-    :param keep_min: Whether to keep the minimum at the same level.
-    :return: The periodic series.
-    """
+    Args:
+        arr_1d: Series to make periodic.
+        keep_start: Whether to keep the beginning of the series fixed.
+            If False keeps the end of the series fixed.
+        keep_min: Whether to keep the minimum at the same level.
 
+    Returns:
+        The periodic series.
+    """
     n = len(arr_1d)
     if not keep_start:
         raise NotImplementedError("Fucking do it already!")
@@ -800,8 +833,7 @@ def string_to_dt(s: str) -> datetime:
 
 
 def str_to_np_dt(s: str) -> np.datetime64:
-    """
-    Convert string to numpy datetime64.
+    """Convert string to numpy datetime64.
 
     Args:
         s: Date string.
@@ -829,17 +861,19 @@ def np_dt_to_str(np_dt: np.datetime64) -> str:
 
 
 def mins_to_str(mins: int) -> str:
-    """
-    Converts the integer `mins` to a string.
+    """Converts the integer `mins` to a string.
 
-    :param mins: Number of minutes.
-    :return: String
+    Args:
+        mins: Number of minutes.
+
+    Returns:
+        String representation.
     """
     return str(mins) + 'min' if mins < 60 else str(mins / 60) + 'h'
 
 
 def floor_datetime_to_min(dt, mt: int) -> np.ndarray:
-    """Rounds deltatime64 dt down to mt minutes.
+    """Rounds date- / deltatime64 `dt` down to `mt` minutes.
 
     In a really fucking cumbersome way!
 
@@ -868,6 +902,7 @@ def floor_datetime_to_min(dt, mt: int) -> np.ndarray:
 
 
 def n_mins_to_np_dt(mins: int) -> np.timedelta64:
+    """Converts an int (assuming number of minutes) to a numpy deltatime object."""
     return np.timedelta64(mins, 'm')
 
 
