@@ -1970,11 +1970,15 @@ class ModelDataView:
     sequences: np.ndarray  #: 3D array: the relevant data cut into sequences.
     seq_inds: np.ndarray  #: 1D int array: the indices describing the offset to each sequence.
 
-    # Single streak data for analysis
-    streak_n_list: List[int] = []
-    streak_data_list: List[np.ndarray] = []
-
     def __init__(self, d_ref: Dataset, name: str, n_init: int, n_len: int):
+        """Constructor.
+
+        Args:
+            d_ref: The underlying dataset.
+            name: The name of this view, e.g. 'train'.
+            n_init: The offset in timesteps.
+            n_len: The number of rows.
+        """
 
         # Store parameters
         self._d_ref = d_ref
@@ -2054,7 +2058,7 @@ class ModelDataView:
         """
         return self._extract_streak((n_timesteps, take_last))
 
-    @CacheDecoratorFactory(streak_n_list, streak_data_list)
+    @CacheDecoratorFactory()
     def _extract_streak(self, n: Tuple[int, bool]) -> Tuple[np.ndarray, int]:
         # Extract parameters
         n_timesteps, take_last = n

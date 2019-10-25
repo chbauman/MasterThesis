@@ -61,7 +61,7 @@ class BaseDynamicsModel(ABC):
     p_out_inds: np.ndarray
     in_indices: np.ndarray
     p_in_indices: np.ndarray
-    n_pred_full: int
+    n_pred_full: int  #: Number of non-control variables in dataset.
     n_pred: int  #: Number of dimensions of the prediction
 
     # Disturbance variables

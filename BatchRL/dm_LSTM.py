@@ -12,7 +12,7 @@ from keras.utils import plot_model
 from base_hyperopt import HyperOptimizableModel
 from data import Dataset
 from data import SeriesConstraint
-from keras_layers import ConstrainedNoise, FeatureSlice
+from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput
 from util import *
 from visualize import plot_train_history
 
@@ -66,6 +66,9 @@ class RNNDynamicModel(HyperOptimizableModel):
     All parameters are defined in `__init__`. Implements
     the `HyperOptimizableModel` for hyperparameter optimization.
     """
+
+    train_seq_len: int  #: Length of sequences used for training.
+    n_feats: int  #: Number of input features in train data.
 
     def get_space(self) -> Dict:
         """
@@ -240,12 +243,16 @@ class RNNDynamicModel(HyperOptimizableModel):
         if self.verbose:
             model.summary()
         if not EULER:
-            pth = self.get_plt_path("Model.png")
-            plot_model(model, to_file=pth,
-                       show_shapes=True,
-                       expand_nested=True,
-                       dpi=500)
+            self._plot_model(model)
         return model
+
+    def _plot_model(self, model: Any, name: str = "Model.png"):
+        """Plots keras model."""
+        pth = self.get_plt_path(name)
+        plot_model(model, to_file=pth,
+                   show_shapes=True,
+                   expand_nested=True,
+                   dpi=500)
 
     def fit(self) -> None:
         """
@@ -294,7 +301,6 @@ class RNNDynamicModel(HyperOptimizableModel):
 
 
 class RNNDynamicOvershootModel(RNNDynamicModel):
-
     m: Any = None  #: The base model used for prediction.
     overshoot_model: Any = None  #: The overshoot model used for training.
     n_overshoot: int
@@ -309,9 +315,29 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
         super(RNNDynamicOvershootModel, self).__init__(**kwargs)
 
         self.n_overshoot = n_overshoot
+        self.pred_seq_len = self.train_seq_len
+        self.tot_train_seq_len = n_overshoot + self.pred_seq_len
 
-    def _build(self):
+        self._build()
 
-        self.m = self._build_model()
+    def _build(self) -> None:
+        """Builds the keras model."""
 
+        # Build base model.
+        b_mod = self._build_model()
+        self.m = b_mod
+
+        # Build train model.
+        inds = self.p_out_inds
+        tot_len = self.tot_train_seq_len
+
+        # Define input
+        full_input = Input((tot_len, self.n_feats))
+
+        first_out = ExtractInput(inds, tot_len, 0)(full_input)
+
+    pass
+
+
+def test_rnn_models():
     pass
