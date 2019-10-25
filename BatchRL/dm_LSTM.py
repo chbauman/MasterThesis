@@ -4,15 +4,15 @@ from typing import Dict, Optional
 from hyperopt import hp
 from hyperopt.pyll import scope as ho_scope
 from keras import backend as K
-from keras.layers import GRU, LSTM, Dense, Input, Add
+from keras.layers import GRU, LSTM, Dense, Input, Add, Concatenate, Reshape
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 from keras.utils import plot_model
 
 from base_hyperopt import HyperOptimizableModel
-from data import Dataset
+from data import Dataset, get_test_ds
 from data import SeriesConstraint
-from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput
+from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, SeqInput
 from util import *
 from visualize import plot_train_history
 
@@ -331,13 +331,60 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
         inds = self.p_out_inds
         tot_len = self.tot_train_seq_len
 
+        def res_lay(k_ind: int):
+            return Reshape((1, self.n_pred), name=f"reshape_{k_ind}")
+
+        def copy_mod(k_ind: int):
+            m = self.m
+            ip = Input(rem_first(m.input_shape))
+            out = m(ip)
+            new_mod = Model(inputs=ip, outputs=out, name=f"base_model_{k_ind}")
+            return new_mod
+
         # Define input
         full_input = Input((tot_len, self.n_feats))
 
-        first_out = ExtractInput(inds, tot_len, 0)(full_input)
+        first_out = ExtractInput(inds, self.pred_seq_len, 0,
+                                 name="first_extraction")(full_input)
+        first_out = copy_mod(0)(first_out)
+        all_out = [res_lay(0)(first_out)]
+        for k in range(self.n_overshoot - 1):
+            first_out = ExtractInput(inds, self.pred_seq_len, k + 1,
+                                     name=f"extraction_{k+1}")([full_input, first_out])
+            first_out = copy_mod(k + 1)(first_out)
+            all_out += [res_lay(k + 1)(first_out)]
 
+        full_out = Concatenate(axis=-2)(all_out)
+        train_mod = Model(inputs=full_input, outputs=full_out)
+        self._plot_model(train_mod, "TrainModel.png")
     pass
 
 
+# @TestDecoratorFactory("RNN Test")
 def test_rnn_models():
+    """Tests the RNN model classes.
+
+    Raises:
+        AssertionError: If a test fails.
+    """
+    # Create dataset for testing
+    n, n_feat = 100, 10
+    dat = np.random.rand(n, n_feat)
+    c_inds = np.array([4, 6], dtype=np.int32)
+    ds = get_test_ds(dat, c_inds, name="RNNTestDataset")
+    ds.seq_len = 10
+
+    # Define model
+    test_kwargs = {'name': "Test",
+                   'hidden_sizes': (10, 10),
+                   'n_iter_max': 5,
+                   'input_noise_std': 0.001,
+                   'lr': 0.01,
+                   'residual_learning': True,
+                   'weight_vec': None,
+                   'out_inds': np.array([0, 1, 2, 3], dtype=np.int32),
+                   'constraint_list': None,
+                   }
+    mod_test = RNNDynamicModel(ds, **test_kwargs)
+    mod_test_overshoot = RNNDynamicOvershootModel(n_overshoot=5, data=ds, **test_kwargs)
     pass

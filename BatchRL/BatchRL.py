@@ -12,7 +12,7 @@ from batchDDPG import bDDPG
 from dm_Composite import CompositeModel
 
 from battery_model import BatteryModel
-from dm_LSTM import RNNDynamicModel
+from dm_LSTM import RNNDynamicModel, test_rnn_models
 from dm_Const import ConstModel
 from dm_Time import SCTimeModel
 from dm_TimePeriodic import Periodic1DayModel
@@ -62,12 +62,9 @@ def main():
     # get_DFAB_heating_data()
     # generate_room_datasets()
 
-    # w_dat = get_weather_data()
-    # w_dat.split_train_test()
-    # pre_mod = Periodic1DayModel(w_dat, None, alpha=0.1)
-    # pre_mod.analyze_6_days()
-
-    # Do tests
+    # Run tests
+    test_rnn_models()
+    return
     # test_dyn_model()
     # test_test_env()
     test_time_stuff()

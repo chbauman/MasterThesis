@@ -364,6 +364,8 @@ class ExtractInput(Layer):
             x_out = K.reshape(x_out, (-1, 1, self.n_feats))
 
         x_s = x_in.shape
+        if x_s[-2] <= end_ind:
+            raise ValueError("curr_ind or seq_len too big!")
         x_prev = x_in[:, self.curr_ind: (end_ind - 1), :]
         x_next = x_in[:, end_ind: (end_ind + 1), :]
 

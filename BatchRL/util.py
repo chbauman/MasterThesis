@@ -159,6 +159,8 @@ class TestDecoratorFactory(object):
 
     Prints different messages for AssertionErrors
     and other errors.
+    This sucks because it fucks up the debugging.
+    TODO: Solve this!
     """
 
     def __init__(self, msg: str = "Test failed!"):

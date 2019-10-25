@@ -2424,10 +2424,9 @@ def get_test_ds(dat: np.ndarray, c_inds: np.ndarray,
 
 
 def test_dataset_artificially() -> None:
-    """
-    Constructs a small synthetic dataset and makes tests.
+    """Constructs a small synthetic dataset and makes tests.
+
     Tests the plotting and the index conversion of the dataset.
-    Throws an exception if a test fails.
 
     Returns:
         None
