@@ -12,7 +12,7 @@ from batchDDPG import bDDPG
 from dm_Composite import CompositeModel
 
 from battery_model import BatteryModel
-from dm_LSTM import RNNDynamicModel, test_rnn_models
+from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Const import ConstModel
 from dm_Time import SCTimeModel
 from dm_TimePeriodic import Periodic1DayModel
@@ -118,7 +118,7 @@ def main():
                                **base_params)
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(50, 50),
-                          n_iter_max=20,
+                          n_iter_max=50,
                           constraint_list=rnn_consts,
                           **base_params,
                           )
@@ -128,13 +128,19 @@ def main():
                                     n_iter_max=20,
                                     **base_params,
                                     )
+    mod_overshoot = RNNDynamicOvershootModel(n_overshoot=5,
+                                             data=ds,
+                                             name="Overshoot",
+                                             hidden_sizes=(50, 50),
+                                             n_iter_max=20,
+                                             **base_params)
     optimize = False
     if optimize:
         opt_params = mod.optimize(2)
         print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
 
-    mods = [mod, mod_test, mod_no_consts]  # [mod_test]  # mod, mod_no_consts, mod_no_wt]
+    mods = [mod_overshoot]  # , mod, mod_test, mod_no_consts]
     for m_to_use in mods:
         m_to_use.fit()
         print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))

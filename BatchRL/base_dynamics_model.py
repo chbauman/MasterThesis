@@ -486,9 +486,6 @@ class BaseDynamicsModel(ABC):
             plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResPACF_{k}'), partial=True)
 
         # Prepare the data
-        # dat_test = d.get_prepared_data('test')
-        # dat_train = d.get_prepared_data('train_streak')
-        # dat_val = d.get_prepared_data('val_streak')
         dat_train = d.get_streak('train')
         dat_val = d.get_streak('val')
 
@@ -552,20 +549,21 @@ class BaseDynamicsModel(ABC):
                           ext: str = None,
                           data_str: str = "val",
                           n_trials: int = 25) -> None:
+        """Analyses the model using noisy predictions.
+
+        Makes a plot by continuously predicting with
+        the fitted model and comparing it to the ground
+        truth. If predict_ind is None, all series that can be
+        predicted are predicted simultaneously and each predicted
+        series is plotted individually.
+
+        Args:
+            data_str: The string specifying the data to use.
+            n_trials: Number of predictions with noise to average.
+            ext: String extension for the filename.
+
+        Returns: None
         """
-            Makes a plot by continuously predicting with
-            the fitted model and comparing it to the ground
-            truth. If predict_ind is None, all series that can be
-            predicted are predicted simultaneously and each predicted
-            series is plotted individually.
-
-            Args:
-                data_str: The string specifying the data to use.
-                n_trials: Number of predictions with noise to average.
-                ext: String extension for the filename.
-
-            Returns: None
-            """
 
         # Model the disturbance
         self.model_disturbance("train")
@@ -658,11 +656,13 @@ class BaseDynamicsModel(ABC):
         return float(np.sum(residuals * residuals))
 
     def get_residuals(self, data_str: str):
-        """
-        Computes the residuals using the fitted model.
+        """Computes the residuals using the fitted model.
 
-        :param data_str: String defining which part of the data to use.
-        :return: Residuals.
+        Args:
+            data_str: String defining which part of the data to use.
+
+        Returns:
+            Residuals.
         """
         input_data, output_data, n = self.data.get_split(data_str)
         prep_inds = self.data.to_prepared(self.out_inds)
