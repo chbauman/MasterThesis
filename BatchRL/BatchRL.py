@@ -63,8 +63,7 @@ def main():
     # generate_room_datasets()
 
     # Run tests
-    test_rnn_models()
-    return
+    # test_rnn_models()
     # test_dyn_model()
     # test_test_env()
     test_time_stuff()
@@ -75,7 +74,6 @@ def main():
     # # get_data_test()
     # # test_align()
     test_dataset_artificially()
-    return
 
     # Dataset
     name_ds = 'Model_Room43'
@@ -106,47 +104,30 @@ def main():
         SeriesConstraint('exact'),
     ]
     ds.transform_c_list(rnn_consts)
+    base_params = {'input_noise_std': 0.001,
+                   'lr': 0.01,
+                   'residual_learning': True,
+                   'weight_vec': None,
+                   'out_inds': np.array([0, 1, 2, 3, 5], dtype=np.int32),
+                   }
     mod_test = RNNDynamicModel(ds,
                                name="Test",
                                hidden_sizes=(10, 10),
                                n_iter_max=5,
-                               input_noise_std=0.001,
-                               lr=0.01,
-                               residual_learning=True,
-                               weight_vec=None,
-                               out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
-                               constraint_list=rnn_consts)
+                               constraint_list=rnn_consts,
+                               **base_params)
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(50, 50),
                           n_iter_max=20,
-                          input_noise_std=0.01,
-                          lr=0.001,
-                          residual_learning=True,
-                          weight_vec=None,
-                          out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
-                          constraint_list=rnn_consts
+                          constraint_list=rnn_consts,
+                          **base_params,
                           )
     mod_no_consts = RNNDynamicModel(ds,
                                     name="RNN_No_Consts",
                                     hidden_sizes=(50, 50),
                                     n_iter_max=20,
-                                    input_noise_std=0.01,
-                                    lr=0.001,
-                                    residual_learning=True,
-                                    weight_vec=None,
-                                    out_inds=np.array([0, 1, 2, 3, 5], dtype=np.int32),
-                                    constraint_list=None
+                                    **base_params,
                                     )
-    mod_no_wt = RNNDynamicModel(ds,
-                                name="RNN_NoWT",
-                                hidden_sizes=(100, 100),
-                                n_iter_max=100,
-                                input_noise_std=0.001,
-                                lr=0.001,
-                                residual_learning=True,
-                                weight_vec=None,
-                                out_inds=np.array([0, 1, 5], dtype=np.int32),
-                                constraint_list=rnn_consts)
     optimize = False
     if optimize:
         opt_params = mod.optimize(2)

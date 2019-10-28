@@ -163,7 +163,7 @@ class CacheDecoratorFactory(object):
             Returns:
                 The decorated function.
             """
-            print("Fucking n: ", n, str(n))
+            # print("Fucking n: ", n, str(n))
             if n in self.n:
                 i = self.n.index(n)
                 return self.d[i]
@@ -1092,16 +1092,17 @@ def test_python_stuff() -> None:
     n_list = []
     data_list = []
 
-    @CacheDecoratorFactory(n_list, data_list)
-    def fun(n: int, k: int):
-        return n + k * k
-
+    class Dummy:
+        @CacheDecoratorFactory(n_list, data_list)
+        def fun(self, n: int, k: int):
+            return n + k * k
+    d = Dummy()
     try:
-        if not fun(1, k=3) == 10:
+        if not d.fun(1, k=3) == 10:
             raise AssertionError
-        if not fun(2, 3) == 11:
+        if not d.fun(2, 3) == 11:
             raise AssertionError
-        if not fun(1, k=4) == 10:
+        if not d.fun(1, k=4) == 10:
             raise AssertionError
     except AssertionError as e:
         print("Cache Decorator Test failed!!")
