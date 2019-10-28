@@ -120,7 +120,7 @@ class CacheDecoratorFactory(object):
     Function output and function input is stored in a list
     and returned if the same input is given to the decorated function.
 
-    TODO: Test more, make it work for non-member functions!!
+    TODO: Make it work for non-member functions!!
     """
 
     n: List  #: List of function arguments.
@@ -138,6 +138,8 @@ class CacheDecoratorFactory(object):
         """
         self.n = [] if n_list is None else n_list
         self.d = [] if data_list is None else data_list
+
+        print("Init decorator!!!")
 
     def __call__(self, f):
         """Decorates the function `f`.
@@ -161,6 +163,7 @@ class CacheDecoratorFactory(object):
             Returns:
                 The decorated function.
             """
+            print("Fucking n:", self.n, "Input:", n)
             if n in self.n:
                 i = self.n.index(n)
                 return self.d[i]
@@ -1087,6 +1090,10 @@ def test_python_stuff() -> None:
     """
     # Test the caching decorator
     class Dummy:
+        def __init__(self):
+            # self.mutable_fun = CacheDecoratorFactory()(self.mutable_fun)
+            pass
+
         @CacheDecoratorFactory()
         def fun(self, n: int, k: int):
             return n + k * k
@@ -1094,9 +1101,8 @@ def test_python_stuff() -> None:
         @CacheDecoratorFactory()
         def mutable_fun(self, n: int, k: int):
             return [n, k]
-
-    d = Dummy()
     try:
+        d = Dummy()
         assert d.fun(1, k=3) == 10
         assert d.fun(2, 3) == 11
         assert d.fun(1, k=4) == 10
@@ -1104,6 +1110,8 @@ def test_python_stuff() -> None:
         assert d.mutable_fun(1, 2) == list_1_1
         list_1_1[0] = 0
         assert list_1_1 == d.mutable_fun(1, 5)
+        # d2 = Dummy()
+        # assert d2.mutable_fun(1, 2) == [1, 2]  # It fails here!
         assert d.fun(2, 7) == 11
         assert [4, 7] == d.mutable_fun(4, 7)
     except AssertionError as e:
@@ -1112,6 +1120,7 @@ def test_python_stuff() -> None:
     except Exception as e:
         raise AssertionError("Some error happened: {}".format(e))
 
+    # Test rem_first
     assert rem_first((1, 2, 3)) == (2, 3), "rem_first not working correctly!"
     assert rem_first((1, 2)) == (2,), "rem_first not working correctly!"
 

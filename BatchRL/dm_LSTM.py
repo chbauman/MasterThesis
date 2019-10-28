@@ -260,6 +260,8 @@ class RNNDynamicModel(HyperOptimizableModel):
         Fit the model if it hasn't been fitted before.
         Otherwise load the trained model.
 
+        TODO: Compute correct val_percent for fit method!
+
         Returns:
              None
         """

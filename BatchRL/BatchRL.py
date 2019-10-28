@@ -71,7 +71,6 @@ def main():
     test_numpy_functions()
     # test_rest_client()
     test_python_stuff()
-    return
     # # get_data_test()
     # # test_align()
     test_dataset_artificially()
@@ -141,7 +140,7 @@ def main():
         print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
 
-    mods = [mod_overshoot]  # , mod, mod_test, mod_no_consts]
+    mods = [mod_overshoot, mod, mod_test, mod_no_consts]
     for m_to_use in mods:
         m_to_use.fit()
         print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))

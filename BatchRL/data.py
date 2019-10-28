@@ -2010,7 +2010,6 @@ class ModelDataView:
         ret_val = self._get_sequences(seq_len)
         return ret_val
 
-    # @CacheDecoratorFactory()
     def _get_sequences(self, seq_len: int) -> Tuple[np.ndarray, np.ndarray]:
         # Extract sequences and return
         sequences, seq_inds = cut_data(self.get_rel_data(), seq_len)
@@ -2059,7 +2058,6 @@ class ModelDataView:
         """
         return self._extract_streak((n_timesteps, take_last))
 
-    # @CacheDecoratorFactory()
     def _extract_streak(self, n: Tuple[int, bool]) -> Tuple[np.ndarray, int]:
         # Extract parameters
         n_timesteps, take_last = n
@@ -2092,7 +2090,6 @@ class ModelDataView:
         """
         return self._extract_disjoint_streaks((streak_len, n_offs))
 
-    # @CacheDecoratorFactory()
     def _extract_disjoint_streaks(self, n: Tuple[int, int]) -> Tuple[np.ndarray, np.ndarray]:
         """This function does actually do stuff.
 
