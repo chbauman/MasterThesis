@@ -123,8 +123,8 @@ class CacheDecoratorFactory(object):
     TODO: Test more, make it work for non-member functions!!
     """
 
-    n: List = []  #: List of function arguments.
-    d: List = []  #: List of function outputs.
+    n: List  #: List of function arguments.
+    d: List  #: List of function outputs.
 
     def __init__(self, n_list: List = None, data_list: List = None):
         """Initialize the decorator.
@@ -136,10 +136,8 @@ class CacheDecoratorFactory(object):
             n_list: List where the input is stored.
             data_list: List where the function output is stored.
         """
-        if n_list is not None:
-            self.n = n_list
-        if data_list is not None:
-            self.d = data_list
+        self.n = [] if n_list is None else n_list
+        self.d = [] if data_list is None else data_list
 
     def __call__(self, f):
         """Decorates the function `f`.
@@ -163,7 +161,6 @@ class CacheDecoratorFactory(object):
             Returns:
                 The decorated function.
             """
-            # print("Fucking n: ", n, str(n))
             if n in self.n:
                 i = self.n.index(n)
                 return self.d[i]
@@ -1089,21 +1086,26 @@ def test_python_stuff() -> None:
         AssertionError: If a test fails.
     """
     # Test the caching decorator
-    n_list = []
-    data_list = []
-
     class Dummy:
-        @CacheDecoratorFactory(n_list, data_list)
+        @CacheDecoratorFactory()
         def fun(self, n: int, k: int):
             return n + k * k
+
+        @CacheDecoratorFactory()
+        def mutable_fun(self, n: int, k: int):
+            return [n, k]
+
     d = Dummy()
     try:
-        if not d.fun(1, k=3) == 10:
-            raise AssertionError
-        if not d.fun(2, 3) == 11:
-            raise AssertionError
-        if not d.fun(1, k=4) == 10:
-            raise AssertionError
+        assert d.fun(1, k=3) == 10
+        assert d.fun(2, 3) == 11
+        assert d.fun(1, k=4) == 10
+        list_1_1 = d.mutable_fun(1, 1)
+        assert d.mutable_fun(1, 2) == list_1_1
+        list_1_1[0] = 0
+        assert list_1_1 == d.mutable_fun(1, 5)
+        assert d.fun(2, 7) == 11
+        assert [4, 7] == d.mutable_fun(4, 7)
     except AssertionError as e:
         print("Cache Decorator Test failed!!")
         raise e
