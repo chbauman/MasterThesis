@@ -110,6 +110,7 @@ def main():
                    'weight_vec': None,
                    'out_inds': np.array([0, 1, 2, 3, 5], dtype=np.int32),
                    }
+    base_params_no_inds = {k: base_params[k] for k in base_params if k != 'out_inds'}
     mod_test = RNNDynamicModel(ds,
                                name="Test",
                                hidden_sizes=(10, 10),
@@ -118,21 +119,25 @@ def main():
                                **base_params)
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(50, 50),
-                          n_iter_max=50,
+                          n_iter_max=10,
                           constraint_list=rnn_consts,
-                          **base_params,
-                          )
+                          **base_params)
     mod_no_consts = RNNDynamicModel(ds,
                                     name="RNN_No_Consts",
                                     hidden_sizes=(50, 50),
-                                    n_iter_max=20,
-                                    **base_params,
-                                    )
+                                    n_iter_max=10,
+                                    **base_params)
+    mod_const_wt = RNNDynamicModel(ds,
+                                   name="RNN_ConstWT",
+                                   hidden_sizes=(50, 50),
+                                   n_iter_max=10,
+                                   out_inds=np.array([0, 1, 5], dtype=np.int32),
+                                   **base_params_no_inds)
     mod_overshoot = RNNDynamicOvershootModel(n_overshoot=5,
                                              data=ds,
                                              name="Overshoot",
                                              hidden_sizes=(50, 50),
-                                             n_iter_max=20,
+                                             n_iter_max=10,
                                              **base_params)
     optimize = False
     if optimize:
@@ -140,13 +145,13 @@ def main():
         print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
 
-    mods = [mod_overshoot, mod, mod_test, mod_no_consts]
+    mods = [mod_const_wt, mod_overshoot, mod]  # , mod_test, mod_no_consts]
     for m_to_use in mods:
         m_to_use.fit()
         print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))
         m_to_use.analyze()
-        m_to_use.analyze_disturbed("Valid", 'val', 10)
-        m_to_use.analyze_disturbed("Train", 'train', 10)
+        # m_to_use.analyze_disturbed("Valid", 'val', 10)
+        # m_to_use.analyze_disturbed("Train", 'train', 10)
 
     return
     # Full test model

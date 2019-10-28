@@ -652,7 +652,7 @@ class BaseDynamicsModel(ABC):
         # Predict and compute residuals
         one_h_pred = self.n_step_predict(copy_arr_list([in_d, out_d]), n_ts,
                                          pred_ind=None)
-        residuals = tr[(n_ts - 1):] - one_h_pred[:, series_ind]
+        residuals = tr[(n_ts - 1):] - one_h_pred
         return float(np.sum(residuals * residuals))
 
     def get_residuals(self, data_str: str):
