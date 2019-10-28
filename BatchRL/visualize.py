@@ -484,10 +484,14 @@ def stack_compare_plot(stack_y, y_compare, title=None, name=None):
         plt.show()
 
 
-def plot_residuals_acf(residuals: np.ndarray, name: str = None,
+def plot_residuals_acf(residuals: np.ndarray,
+                       name: str = None,
                        lags: int = 50,
                        partial: bool = False) -> None:
     """Plots the ACF of the residuals given.
+
+    If `name` is None, the plot will be shown, else
+    it will be saved to the path specified by `name`.
 
     Args:
         residuals: The array with the residuals for one series.
@@ -504,10 +508,20 @@ def plot_residuals_acf(residuals: np.ndarray, name: str = None,
     if len(residuals.shape) != 1:
         raise ValueError("Residuals needs to be a vector!")
 
-    plot_fun = plot_pacf if partial else plot_acf
+    # Initialize and plot data
     plt.subplots()
+    plot_fun = plot_pacf if partial else plot_acf
     plot_fun(residuals, lags=lags)
-    plt.title("Autocorrelation of Residuals")
+
+    # Set title and labels
+    title = "Autocorrelation of Residuals"
+    if partial:
+        title = "Partial " + title
+    plt.title(title)
+    plt.ylabel("Correlation")
+    plt.xlabel("Lag")
+
+    # Save or show
     if name is not None:
         save_figure(name, False)
     else:
