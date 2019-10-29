@@ -8,7 +8,6 @@ from keras.layers import GRU, LSTM, Dense, Input, Add, Concatenate, Reshape
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 from keras.utils import plot_model
-from tensorflow.python import debug as tf_debug
 
 from base_hyperopt import HyperOptimizableModel
 from data import Dataset, get_test_ds
@@ -317,9 +316,9 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
     m: Any = None  #: The base model used for prediction.
     overshoot_model: Any = None  #: The overshoot model used for training.
     n_overshoot: int
-    DEBUG: bool = False
+    debug: bool = False
 
-    def __init__(self, n_overshoot: int = 10, decay_rate: float = 1.0, **kwargs):
+    def __init__(self, n_overshoot: int = 10, decay_rate: float = 1.0, debug: bool = False, **kwargs):
         """Initialize model
 
         Args:
@@ -332,6 +331,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
         self.n_overshoot = n_overshoot
         self.pred_seq_len = self.train_seq_len
         self.tot_train_seq_len = n_overshoot + self.pred_seq_len
+        self.debug = debug
 
         self._build()
 
@@ -339,7 +339,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
         """Builds the keras model."""
 
         # Build base model.
-        b_mod = self._build_model(self.DEBUG)
+        b_mod = self._build_model(self.debug)
         self.m = b_mod
 
         # Build train model.
@@ -404,7 +404,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
             None
         """
         loaded = self.load_if_exists(self.m, self.name)
-        if not loaded or self.DEBUG:
+        if not loaded or self.debug:
             if self.verbose:
                 self.deb("Fitting Model...")
 
@@ -457,6 +457,7 @@ def test_rnn_models():
     mod_test_overshoot = RNNDynamicOvershootModel(n_overshoot=n_over,
                                                   data=ds,
                                                   name="DebugOvershoot",
+                                                  debug=True,
                                                   **test_kwargs)
     full_sam_seq_len = n_over + train_s_len
 
