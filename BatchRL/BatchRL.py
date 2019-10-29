@@ -63,7 +63,8 @@ def main():
     # generate_room_datasets()
 
     # Run tests
-    # test_rnn_models()
+    test_rnn_models()
+    return
     # test_dyn_model()
     # test_test_env()
     test_time_stuff()
@@ -145,9 +146,9 @@ def main():
                                              n_iter_max=10,
                                              **base_params)
     mod_overshoot_dec = RNNDynamicOvershootModel(n_overshoot=5,
-                                                 decay_rate=0.8,
+                                                 decay_rate=0.0,
                                                  data=ds,
-                                                 name="Overshoot_Decay0.8",
+                                                 name="Overshoot_Decay0.0",
                                                  hidden_sizes=(50, 50),
                                                  n_iter_max=10,
                                                  **base_params)
@@ -157,7 +158,7 @@ def main():
         print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
 
-    mods = [mod, mod_overshoot_dec, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
+    mods = [mod_overshoot_dec, mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
     for m_to_use in mods:
         m_to_use.fit()
         print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))

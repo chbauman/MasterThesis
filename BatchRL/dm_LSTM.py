@@ -8,6 +8,7 @@ from keras.layers import GRU, LSTM, Dense, Input, Add, Concatenate, Reshape
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 from keras.utils import plot_model
+from tensorflow.python import debug as tf_debug
 
 from base_hyperopt import HyperOptimizableModel
 from data import Dataset, get_test_ds
@@ -234,16 +235,10 @@ class RNNDynamicModel(HyperOptimizableModel):
             fixed_input = Input(tensor=k_constants)
             seq_input = Input(shape=(self.train_seq_len, self.n_feats))
             model = Model(inputs=seq_input, outputs=model(seq_input))
-            loss = partial(weighted_loss, weights=fixed_input)
+            self.loss = partial(weighted_loss, weights=fixed_input)
         else:
-            loss = 'mse'
+            self.loss = 'mse'
 
-        opt = Adam(lr=self.lr)
-        model.compile(loss=loss, optimizer=opt)
-        if self.verbose:
-            model.summary()
-        if not EULER:
-            self._plot_model(model)
         return model
 
     def _plot_model(self, model: Any, name: str = "Model.png",
@@ -270,6 +265,14 @@ class RNNDynamicModel(HyperOptimizableModel):
         if not loaded:
             if self.verbose:
                 self.deb("Fitting Model...")
+
+            # Define optimizer and compile
+            opt = Adam(lr=self.lr)
+            self.m.compile(loss=self.loss, optimizer=opt)
+            if self.verbose:
+                self.m.summary()
+            if not EULER:
+                self._plot_model(self.m)
 
             # Prepare the data
             input_data, output_data = self.get_fit_data('train_val')
@@ -339,6 +342,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
             return Reshape((1, self.n_pred), name=f"reshape_{k_ind}")
 
         def copy_mod(k_ind: int):
+            return self.m
             m = self.m
             ip = Input(rem_first(m.input_shape))
             out = m(ip)
@@ -364,7 +368,8 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
 
         # Define loss and compile
         if self.decay_rate != 1.0:
-            ww = np.ones(self.n_overshoot)
+            ww = np.ones((self.n_overshoot, 1), dtype=np.float32)
+            ww = np.repeat(ww, self.n_pred, axis=-1)
             for k in range(self.n_overshoot):
                 ww[k] *= self.decay_rate ** k
             k_constants = K.constant(ww)
@@ -420,6 +425,11 @@ def test_rnn_models():
     Raises:
         AssertionError: If a test fails.
     """
+    # Set debug session
+    sess = K.get_session()
+    sess = tf_debug.LocalCLIDebugWrapperSession(sess)
+    K.set_session(sess)
+
     # Create dataset for testing
     n, n_feat = 100, 10
     dat = np.random.rand(n, n_feat)
@@ -429,8 +439,8 @@ def test_rnn_models():
     ds.split_data()
 
     # Define model
-    test_kwargs = {'hidden_sizes': (10, 10),
-                   'n_iter_max': 5,
+    test_kwargs = {'hidden_sizes': (10,),
+                   'n_iter_max': 3,
                    'input_noise_std': 0.001,
                    'lr': 0.01,
                    'residual_learning': True,
@@ -439,10 +449,11 @@ def test_rnn_models():
                    'constraint_list': None,
                    }
     # mod_test = RNNDynamicModel(ds, name="Test", **test_kwargs)
-    mod_test_overshoot = RNNDynamicOvershootModel(n_overshoot=5,
+    mod_test_overshoot = RNNDynamicOvershootModel(n_overshoot=3,
                                                   data=ds,
-                                                  name="TestOvershoot",
+                                                  name="DebugOvershoot",
                                                   **test_kwargs)
     mod_test_overshoot.fit()
     mod_test_overshoot.fit()
+
     print("RNN models test passed :)")
