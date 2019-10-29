@@ -317,7 +317,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
     m: Any = None  #: The base model used for prediction.
     overshoot_model: Any = None  #: The overshoot model used for training.
     n_overshoot: int
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     def __init__(self, n_overshoot: int = 10, decay_rate: float = 1.0, **kwargs):
         """Initialize model

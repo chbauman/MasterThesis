@@ -5,34 +5,23 @@ functions. The complicated stuff is hidden in the other
 modules.
 """
 
-from FQI import NFQI
-from LSPI import LSPI
-from base_dynamics_model import test_dyn_model
 from batchDDPG import bDDPG
-from dm_Composite import CompositeModel
-
 from battery_model import BatteryModel
-from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
+from cart_pole import CartPole
+from data import get_battery_data, \
+    Dataset, test_dataset_artificially, SeriesConstraint
+from dm_Composite import CompositeModel
 from dm_Const import ConstModel
+from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Time import SCTimeModel
 from dm_TimePeriodic import Periodic1DayModel
 from dynamics_envs import FullRoomEnv
 from keras_layers import test_layers
 from keras_rl_wrap import DQNRoomHeatingAgent
-from simple_battery_test import SimpleBatteryTest
-# Environments for debugging
-from cart_pole import CartPole
 from mount_car_cont import MountCarCont
 from pendulum import Pendulum
+from simple_battery_test import SimpleBatteryTest
 from util import *
-from base_dynamics_env import DynEnv, test_test_env
-from data import WeatherData, TestData, \
-    get_UMAR_heating_data, get_data_test, \
-    get_battery_data, \
-    get_DFAB_heating_data, \
-    compute_DFAB_energy_usage, get_weather_data, generate_room_datasets, \
-    analyze_room_energy_consumption, Dataset, test_align, test_dataset_artificially, no_inds, \
-    generate_sin_cos_time_ds, test_rest_client, SeriesConstraint
 
 
 def simple_battery_FQI():
@@ -65,7 +54,6 @@ def main():
     # Run tests
     test_layers()
     test_rnn_models()
-    return
     # test_dyn_model()
     # test_test_env()
     test_time_stuff()
@@ -147,9 +135,9 @@ def main():
                                              n_iter_max=10,
                                              **base_params)
     mod_overshoot_dec = RNNDynamicOvershootModel(n_overshoot=5,
-                                                 decay_rate=0.0,
+                                                 decay_rate=0.8,
                                                  data=ds,
-                                                 name="Overshoot_Decay0.0",
+                                                 name="Overshoot_Decay0.8",
                                                  hidden_sizes=(50, 50),
                                                  n_iter_max=10,
                                                  **base_params)
@@ -159,7 +147,7 @@ def main():
         print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
 
-    mods = [mod_overshoot_dec, mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
+    mods = [mod_overshoot_dec, mod_overshoot, mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
     for m_to_use in mods:
         m_to_use.fit()
         print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))
@@ -197,8 +185,7 @@ def main():
     bat_name = "Battery"
     get_battery_data()
     bat_ds = Dataset.loadDataset(bat_name)
-    bat_ds.split_train_test(7)
-    bat_ds.get_prepared_data()
+    bat_ds.split_data()
     bat_mod = BatteryModel(bat_ds)
     bat_mod.analyze_bat_model()
     bat_mod.analyze()
