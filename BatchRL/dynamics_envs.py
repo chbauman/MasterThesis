@@ -39,20 +39,33 @@ class FullRoomEnv(DynEnv):
 
         return super(FullRoomEnv, self).step(self._to_continuous(action))
 
+    def _get_r_temp(self, curr_pred: np.ndarray) -> float:
+        r_temp = curr_pred[4]
+        if self.scaling is not None:
+            r_temp = add_mean_and_std(r_temp, self.scaling[5])
+        return r_temp
+
+    def _get_w_temp(self, curr_pred: np.ndarray):
+        w_inds = 2, 3
+        w = [curr_pred[i] for i in w_inds]
+        if self.scaling is not None:
+            for k in range(2):
+                w[k] = add_mean_and_std(w[k], self.scaling[w_inds[k]])
+        return w
+
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
 
         # Compute energy used
         action_rescaled = action
         if self.scaling is not None:
             action_rescaled = add_mean_and_std(action, self.scaling[self.c_ind])
-        d_temp = np.abs(curr_pred[2] - curr_pred[3])
+        w_temps = self._get_w_temp(curr_pred)
+        d_temp = w_temps[0] - w_temps[1]
         energy_used = action_rescaled * d_temp * self.alpha
         assert 0.0 <= action_rescaled <= 1.0, "Fucking wrong"
 
         # Penalty for constraint violation
-        r_temp = curr_pred[4]
-        if self.scaling is not None:
-            r_temp = add_mean_and_std(r_temp, self.scaling[5])
+        r_temp = self._get_r_temp(curr_pred)
         t_bounds = self.temp_bounds
         too_low_penalty = 0.0 if r_temp > t_bounds[0] else t_bounds[0] - r_temp
         too_high_penalty = 0.0 if r_temp < t_bounds[1] else r_temp - t_bounds[1]
