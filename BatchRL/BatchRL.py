@@ -18,7 +18,7 @@ from dm_Time import SCTimeModel
 from dm_TimePeriodic import Periodic1DayModel
 from dynamics_envs import FullRoomEnv
 from keras_layers import test_layers
-from keras_rl_wrap import test_env
+from keras_rl_wrap import test_env, DQNRoomHeatingAgent
 from simple_battery_test import SimpleBatteryTest
 # Environments for debugging
 from cart_pole import CartPole
@@ -157,7 +157,8 @@ def main():
     comp_model = CompositeModel(ds, [mod_test, time_model_ds], new_name="CompositeTimeRNNFull")
     comp_model.fit()
     env = FullRoomEnv(comp_model, disturb_fac=0.3)
-    test_env(env)
+    dqn_agent = DQNRoomHeatingAgent(env)
+    dqn_agent.fit()
     return
 
     # Exogenous variable model
