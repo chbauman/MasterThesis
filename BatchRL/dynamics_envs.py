@@ -39,13 +39,13 @@ class FullRoomEnv(DynEnv):
 
         return super(FullRoomEnv, self).step(self._to_continuous(action))
 
-    def _get_r_temp(self, curr_pred: np.ndarray) -> float:
+    def get_r_temp(self, curr_pred: np.ndarray) -> float:
         r_temp = curr_pred[4]
         if self.scaling is not None:
             r_temp = add_mean_and_std(r_temp, self.scaling[5])
         return r_temp
 
-    def _get_w_temp(self, curr_pred: np.ndarray):
+    def get_w_temp(self, curr_pred: np.ndarray):
         w_inds = 2, 3
         w = [curr_pred[i] for i in w_inds]
         if self.scaling is not None:
@@ -59,14 +59,14 @@ class FullRoomEnv(DynEnv):
         action_rescaled = action
         if self.scaling is not None:
             action_rescaled = add_mean_and_std(action, self.scaling[self.c_ind])
-        w_temps = self._get_w_temp(curr_pred)
+        w_temps = self.get_w_temp(curr_pred)
         d_temp = np.abs(w_temps[0] - w_temps[1])
         energy_used = action_rescaled * d_temp * self.alpha
         assert 0.0 <= action_rescaled <= 1.0, "Fucking wrong"
         assert 10.0 <= w_temps[0] <= 50.0, "Water temperature scaled incorrectly!"
 
         # Penalty for constraint violation
-        r_temp = self._get_r_temp(curr_pred)
+        r_temp = self.get_r_temp(curr_pred)
         t_bounds = self.temp_bounds
         too_low_penalty = 0.0 if r_temp >= t_bounds[0] else t_bounds[0] - r_temp
         too_high_penalty = 0.0 if r_temp <= t_bounds[1] else r_temp - t_bounds[1]
@@ -75,7 +75,7 @@ class FullRoomEnv(DynEnv):
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
 
-        r_temp = self._get_r_temp(curr_pred)
+        r_temp = self.get_r_temp(curr_pred)
         thresh = 5.0
         t_bounds = self.temp_bounds
         if r_temp > t_bounds[1] + thresh or r_temp < t_bounds[0] - thresh:
