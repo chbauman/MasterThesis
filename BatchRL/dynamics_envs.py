@@ -60,20 +60,25 @@ class FullRoomEnv(DynEnv):
         if self.scaling is not None:
             action_rescaled = add_mean_and_std(action, self.scaling[self.c_ind])
         w_temps = self._get_w_temp(curr_pred)
-        d_temp = w_temps[0] - w_temps[1]
+        d_temp = np.abs(w_temps[0] - w_temps[1])
         energy_used = action_rescaled * d_temp * self.alpha
         assert 0.0 <= action_rescaled <= 1.0, "Fucking wrong"
+        assert 10.0 <= w_temps[0] <= 50.0, "Water temperature scaled incorrectly!"
 
         # Penalty for constraint violation
         r_temp = self._get_r_temp(curr_pred)
         t_bounds = self.temp_bounds
-        too_low_penalty = 0.0 if r_temp > t_bounds[0] else t_bounds[0] - r_temp
-        too_high_penalty = 0.0 if r_temp < t_bounds[1] else r_temp - t_bounds[1]
+        too_low_penalty = 0.0 if r_temp >= t_bounds[0] else t_bounds[0] - r_temp
+        too_high_penalty = 0.0 if r_temp <= t_bounds[1] else r_temp - t_bounds[1]
         bound_pen = self.bound_violation_penalty * (too_low_penalty + too_high_penalty)
         return -energy_used - bound_pen
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
 
-        # TODO: Return true if constraints are not met.
-
+        r_temp = self._get_r_temp(curr_pred)
+        thresh = 5.0
+        t_bounds = self.temp_bounds
+        if r_temp > t_bounds[1] + thresh or r_temp < t_bounds[0] - thresh:
+            print("Diverging...")
+            return True
         return False

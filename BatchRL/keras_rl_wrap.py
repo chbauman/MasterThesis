@@ -41,7 +41,6 @@ def test_env(env):
     hist = dqn.fit(env, nb_steps=3000, visualize=False, verbose=1)
     train_plot = env.get_plt_path("test")
     plot_rewards(hist, train_plot)
-    print(hist)
     print("hoi")
     return
     # plot_train_history(hist, val=True)
