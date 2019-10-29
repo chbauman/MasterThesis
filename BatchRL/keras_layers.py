@@ -163,6 +163,82 @@ class SeqInput(Layer):
         return input_shape
 
 
+class IdRecurrent(Layer):
+    """Dummy Layer, it passes the same values that are input into it.
+
+    If `n` is specified, only a reduced number of features is
+    returned, cannot be larger than the total number of features.
+    If `return_sequences` is True, sequences are returned, else
+    only the last element of the sequence.
+    """
+
+    def __init__(self, n: int = None, return_sequences: bool = True, **kwargs):
+        """Initializes the layer.
+
+        Args:
+            n: Number of output features.
+            return_sequences: Whether to return sequences.
+            **kwargs: kwargs for super.
+        """
+        super().__init__(**kwargs)
+        self.n = n
+        self.r_s = return_sequences
+
+    def call(self, x):
+        """Returns `x` unchanged."""
+        assert len(x.shape) == 3, "Only implemented for 3D tensor input."
+        if self.n is None:
+            ret_val = x
+        else:
+            ret_val = x[:, :, :self.n]
+        if self.r_s:
+            return ret_val
+        return ret_val[:, -1, :]
+
+    def compute_output_shape(self, input_shape):
+        """The shape stays the same."""
+        out_shape = [k for k in input_shape]
+        if self.n is not None:
+            out_shape[1] = self.n
+        if self.r_s:
+            out_shape = [out_shape[0], out_shape[2]]
+        return tuple(out_shape)
+
+
+class IdDense(Layer):
+    """Dummy Layer, it passes the same values that are input into it.
+
+    If `n` is specified, only a reduced number of features is
+    returned, cannot be larger than the total number of features.
+    """
+
+    def __init__(self, n: int = None, **kwargs):
+        """Initializes the layer.
+
+        Args:
+            n: Number of output features.
+            **kwargs: kwargs for super.
+        """
+        super().__init__(**kwargs)
+        self.n = n
+
+    def call(self, x):
+        """Returns `x` unchanged."""
+        assert len(x.shape) == 2, "Only implemented for 2D tensor input."
+        if self.n is None:
+            ret_val = x
+        else:
+            ret_val = x[:, :self.n]
+        return ret_val
+
+    def compute_output_shape(self, input_shape):
+        """The shape stays the same."""
+        out_shape = [k for k in input_shape]
+        if self.n is not None:
+            out_shape[1] = self.n
+        return tuple(out_shape)
+
+
 class ConstrainedNoise(Layer):
     """
     Constrained noise layer.

@@ -13,7 +13,7 @@ from tensorflow.python import debug as tf_debug
 from base_hyperopt import HyperOptimizableModel
 from data import Dataset, get_test_ds
 from data import SeriesConstraint
-from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput
+from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurrent, IdDense
 from util import *
 from visualize import plot_train_history
 
@@ -176,7 +176,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         # Build model
         self.m = self._build_model()
 
-    def _build_model(self) -> Any:
+    def _build_model(self, debug: bool = False) -> Any:
         """Builds the keras LSTM model and returns it.
 
         The parameters how to build it were passed to `__init__`.
@@ -201,10 +201,13 @@ class RNNDynamicModel(HyperOptimizableModel):
         rnn = GRU if self.gru else LSTM
         for k in range(n_lstm):
             ret_seq = k != n_lstm - 1
-            model.add(rnn(int(self.hidden_sizes[k]),
-                          return_sequences=ret_seq,
-                          name="rnn_layer_{}".format(k),
-                          **input_shape_dict))
+            if debug:
+                model.add(IdRecurrent(return_sequences=ret_seq))
+            else:
+                model.add(rnn(int(self.hidden_sizes[k]),
+                              return_sequences=ret_seq,
+                              name="rnn_layer_{}".format(k),
+                              **input_shape_dict))
             input_shape_dict = {}
 
         # Output layer
@@ -216,7 +219,11 @@ class RNNDynamicModel(HyperOptimizableModel):
         out_const_layer = ConstrainedNoise(0, consts=out_constraints,
                                            is_input=False,
                                            name="constrain_output")
-        model.add(Dense(self.n_pred, activation=None, name="dense_reduce"))
+        if debug:
+            model.add(IdDense())
+        else:
+            model.add(Dense(self.n_pred, activation=None, name="dense_reduce"))
+
         if self.res_learn:
             # Add last non-control input to output
             seq_input = Input(shape=(self.train_seq_len, self.n_feats),
@@ -255,7 +262,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         Fit the model if it hasn't been fitted before.
         Otherwise load the trained model.
 
-        TODO: Compute correct val_percent for fit method!
+        TODO: Compute more accurate val_percent for fit method!
 
         Returns:
              None
