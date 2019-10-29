@@ -156,7 +156,7 @@ def main():
     # Full test model
     comp_model = CompositeModel(ds, [mod_test, time_model_ds], new_name="CompositeTimeRNNFull")
     comp_model.fit()
-    env = FullRoomEnv(comp_model)
+    env = FullRoomEnv(comp_model, disturb_fac=0.3)
     test_env(env)
     return
 

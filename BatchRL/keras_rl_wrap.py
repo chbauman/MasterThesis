@@ -29,7 +29,10 @@ def test_env(env):
     memory = SequentialMemory(limit=50000, window_length=1)
     policy = BoltzmannQPolicy()
     dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
-                   target_model_update=1e-2, policy=policy)
+                   policy=policy,
+                   gamma=0.9,
+                   train_interval=3,
+                   target_model_update=1000)
     dqn.compile(Adam(lr=1e-5), metrics=['mae'])
 
     # Okay, now it's time to learn something! We visualize the training here for show, but this

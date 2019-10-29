@@ -7,12 +7,14 @@ class FullRoomEnv(DynEnv):
 
     alpha: float = 1.0  #: Weight factor for reward.
     temp_bounds: Sequence = (22.0, 26.0)  #: The requested temperature range.
-    bound_violation_penalty: float = 10.0  #: The penalty in the reward for temperatures out of bound.
+    bound_violation_penalty: float = 2.0  #: The penalty in the reward for temperatures out of bound.
     scaling: np.ndarray = None
 
-    def __init__(self, m: BaseDynamicsModel, temp_bounds: Sequence = None, n_disc_actions: int = 11):
-        max_eps = 24 * 60 // m.data.dt
-        super(FullRoomEnv, self).__init__(m, "FullRoom", max_eps)
+    def __init__(self, m: BaseDynamicsModel, temp_bounds: Sequence = None,
+                 n_disc_actions: int = 11,
+                 **kwargs):
+        max_eps = 24 * 60 // m.data.dt // 4  # 6 h max predictions
+        super(FullRoomEnv, self).__init__(m, "FullRoom", max_eps, **kwargs)
         d = m.data
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds
