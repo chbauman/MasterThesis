@@ -13,7 +13,8 @@ from tensorflow.python import debug as tf_debug
 from base_hyperopt import HyperOptimizableModel
 from data import Dataset, get_test_ds
 from data import SeriesConstraint
-from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurrent, IdDense
+from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurrent, IdDense, \
+    get_multi_input_layer_output
 from util import *
 from visualize import plot_train_history
 
@@ -403,7 +404,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
             None
         """
         loaded = self.load_if_exists(self.m, self.name)
-        if not loaded:
+        if not loaded or self.DEBUG:
             if self.verbose:
                 self.deb("Fitting Model...")
 
@@ -431,35 +432,64 @@ def test_rnn_models():
     Raises:
         AssertionError: If a test fails.
     """
-    # Set debug session
-    sess = K.get_session()
-    sess = tf_debug.LocalCLIDebugWrapperSession(sess)
-    K.set_session(sess)
 
     # Create dataset for testing
     n, n_feat = 100, 10
-    dat = np.random.rand(n, n_feat)
+    dat = np.arange(n * n_feat).reshape((n, n_feat))
     c_inds = np.array([4, 6], dtype=np.int32)
     ds = get_test_ds(dat, c_inds, name="RNNTestDataset")
-    ds.seq_len = 10
+    ds.seq_len = 6
+    train_s_len = ds.seq_len - 1
     ds.split_data()
 
     # Define model
+    p_inds = np.array([0, 1, 3], dtype=np.int32)
     test_kwargs = {'hidden_sizes': (10,),
-                   'n_iter_max': 3,
+                   'n_iter_max': 1,
                    'input_noise_std': 0.001,
                    'lr': 0.01,
                    'residual_learning': True,
                    'weight_vec': None,
-                   'out_inds': np.array([0, 1, 2, 3], dtype=np.int32),
+                   'out_inds': p_inds,
                    'constraint_list': None,
                    }
-    # mod_test = RNNDynamicModel(ds, name="Test", **test_kwargs)
-    mod_test_overshoot = RNNDynamicOvershootModel(n_overshoot=3,
+    n_over = 3
+    mod_test_overshoot = RNNDynamicOvershootModel(n_overshoot=n_over,
                                                   data=ds,
                                                   name="DebugOvershoot",
                                                   **test_kwargs)
-    mod_test_overshoot.fit()
+    full_sam_seq_len = n_over + train_s_len
+
+    # Check sequence lengths
+    assert full_sam_seq_len == mod_test_overshoot.tot_train_seq_len, "Train seq len mismatch!"
+    assert train_s_len == mod_test_overshoot.train_seq_len, "Seq len mismatch!"
+
+    # Check model debug output
+    lay_input = np.array([dat[:full_sam_seq_len]])
+    test_mod = mod_test_overshoot.train_mod
+    test_base_mod = mod_test_overshoot.m
+    l_out = get_multi_input_layer_output(test_mod, lay_input, learning_phase=0)
+    l_out_base = get_multi_input_layer_output(test_base_mod, lay_input[:, :train_s_len, :], learning_phase=0)
+    assert np.allclose(l_out_base[0], l_out[0, 0]), "Model output not correct!"
+
+    # Find intermediate layer output
+    ex1_out = first_out = None
+    for k in test_mod.layers:
+        if k.name == 'extraction_1':
+            ex1_out = k.output
+        if k.name == 'first_extraction':
+            first_out = k.output
+    assert ex1_out is not None and first_out is not None, "Layers not found!"
+    first_ex_out = Model(inputs=test_mod.inputs, outputs=first_out)
+    l_out_first = get_multi_input_layer_output(first_ex_out, lay_input, learning_phase=0)
+    assert np.allclose(lay_input[0, :train_s_len], l_out_first), "First extraction incorrect!"
+    sec_ex_out = Model(inputs=test_mod.inputs, outputs=ex1_out)
+    exp_out = np.copy(lay_input[:, 1:(1 + train_s_len), :])
+    exp_out[0, -1, p_inds] = l_out[0, 0]
+    l_out_sec = get_multi_input_layer_output(sec_ex_out, lay_input, learning_phase=0)
+    assert np.allclose(exp_out, l_out_sec), "Second extraction incorrect!"
+
+    # Try fitting
     mod_test_overshoot.fit()
 
     print("RNN models test passed :)")

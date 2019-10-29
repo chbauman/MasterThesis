@@ -443,7 +443,7 @@ class ExtractInput(Layer):
         if x_s[-2] <= end_ind:
             raise ValueError("curr_ind or seq_len too big!")
         x_prev = x_in[:, self.curr_ind: (end_ind - 1), :]
-        x_next = x_in[:, end_ind: (end_ind + 1), :]
+        x_next = x_in[:, (end_ind - 1): end_ind, :]
 
         # Extract slices
         pred_ind = np.zeros((x_s[-1],), dtype=np.bool)
@@ -541,25 +541,20 @@ def test_layers() -> None:
     Raises:
         AssertionError: If a test fails.
     """
-    # Define data
-    seq_input = np.array([
-        [[1, 2, 3, 4], [2, 3, 4, 5]],
-        [[5, 5, 5, 5], [3, 3, 3, 3]],
-    ])
-    seq_input_long = np.array([
-        [[0, 2, 3, 4], [1, 3, 4, 5], [2, 3, 4, 5], [3, 3, 4, 5], [4, 3, 4, 5], [5, 3, 4, 5]],
-        [[1, 5, 5, 5], [3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3]],
-    ])
-    output = np.array([
-        [-2, 0],
-        [0, -3],
-    ])
+    # Define shapes
+    seq_shape = (2, 6, 4)
+    seq_len_red = 2
+    b_s, seq_len_test, n_feats = seq_shape
+    seq_shape_red = (b_s, seq_len_red, n_feats)
+
+    # Define the data
+    seq_input = np.arange(b_s * seq_len_red * n_feats).reshape(seq_shape_red)
+    seq_input_long = np.arange(b_s * seq_len_test * n_feats).reshape(seq_shape)
+    feat_indices = np.array([0, 2], dtype=np.int32)
+    n_feats_chosen = len(feat_indices)
+    output = -1. * np.arange(b_s * n_feats_chosen).reshape((b_s, n_feats_chosen))
     id_1 = np.array([[1, 2, 3]])
     id_2 = np.array([[2, 2, 2]])
-
-    # Get shapes
-    in_shape = seq_input.shape
-    batch_size, seq_len, n_in_feat = in_shape
 
     # Test multi input test
     add_out = get_multi_input_layer_output(Add(), [id_1, id_2])
@@ -567,7 +562,7 @@ def test_layers() -> None:
     assert np.array_equal(add_out, exp_out), "Multi Input layer test not working!"
 
     # Test SeqInput
-    inp_layer = SeqInput(input_shape=(seq_len, n_in_feat))
+    inp_layer = SeqInput(input_shape=(seq_len_red, n_feats))
     layer_out = get_test_layer_output(inp_layer, seq_input, 1.0)
     if not np.allclose(layer_out, seq_input):
         raise AssertionError("SeqInput layer not implemented correctly!!")
@@ -580,7 +575,7 @@ def test_layers() -> None:
         SeriesConstraint('exact'),
     ]
     noise_level = 5.0
-    const_layer = ConstrainedNoise(noise_level, consts, input_shape=(seq_len, n_in_feat))
+    const_layer = ConstrainedNoise(noise_level, consts, input_shape=(seq_len_red, n_feats))
     layer_out = get_test_layer_output(const_layer, seq_input, 1.0)
     layer_out_test = get_test_layer_output(const_layer, seq_input, 0.0)
     if not np.allclose(layer_out[:, :, 2:], seq_input[:, :, 2:]):
@@ -591,20 +586,19 @@ def test_layers() -> None:
         raise AssertionError("Noise layer during testing still active!!")
 
     # Test FeatureSlice layer
-    indices = [0, 2]
-    lay = FeatureSlice(np.array(indices), input_shape=(seq_len, n_in_feat))
+    lay = FeatureSlice(np.array(feat_indices), input_shape=(seq_len_red, n_feats))
     layer_out = get_test_layer_output(lay, seq_input)
-    if not np.array_equal(layer_out, seq_input[:, -1, indices]):
+    if not np.array_equal(layer_out, seq_input[:, -1, feat_indices]):
         raise AssertionError("FeatureSlice layer not working!!")
 
     # Test ExtractInput layer
-    lay = ExtractInput(np.array(indices), seq_len=3, curr_ind=1)
+    lay = ExtractInput(np.array(feat_indices), seq_len=3, curr_ind=1)
     l_out = get_multi_input_layer_output(lay, [seq_input_long, output])
     l_out2 = get_multi_input_layer_output(lay, [seq_input_long, None])
     l_out3 = get_multi_input_layer_output(lay, seq_input_long)
     exp_out32 = np.copy(seq_input_long)[:, 1:4, :]
     exp_out = np.copy(exp_out32)
-    exp_out[:, -1, indices] = output
+    exp_out[:, -1, feat_indices] = output
     assert np.array_equal(l_out, exp_out), "ExtractInput layer not working!"
     assert np.array_equal(l_out2, exp_out32), "ExtractInput layer not working!"
     assert np.array_equal(l_out3, exp_out32), "ExtractInput layer not working!"
