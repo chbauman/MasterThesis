@@ -1,17 +1,12 @@
-import numpy as np
-import gym
 from keras import Input, Model
-
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Flatten
+from keras.layers import Flatten
 from keras.optimizers import Adam
-
 from rl.agents.dqn import DQNAgent
-from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
+from rl.policy import BoltzmannQPolicy
 
 from keras_util import getMLPModel
-from visualize import plot_train_history, plot_rewards
+from visualize import plot_rewards
 
 
 def test_env(env):
@@ -43,7 +38,6 @@ def test_env(env):
     plot_rewards(hist, train_plot)
     print("hoi")
     return
-    # plot_train_history(hist, val=True)
 
     # After training is done, we save the final weights.
     # dqn.save_weights('dqn_{}_weights.h5f'.format(env.m.name), overwrite=True)
