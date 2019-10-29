@@ -149,11 +149,10 @@ def main():
     for m_to_use in mods:
         m_to_use.fit()
         print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))
-        m_to_use.analyze()
+        # m_to_use.analyze()
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
-    return
     # Full test model
     comp_model = CompositeModel(ds, [mod_test, time_model_ds], new_name="CompositeTimeRNNFull")
     comp_model.fit()

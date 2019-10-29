@@ -444,6 +444,26 @@ def plot_train_history(hist, name: str = None, val: bool = True) -> None:
         plt.show()
 
 
+def plot_rewards(hist, name: str = None) -> None:
+    """Plots the rewards from RL training.
+
+    Args:
+        hist: The history object.
+        name: The path where to save the figure.
+    """
+    plt.subplots()
+    plt.plot(hist.history['episode_reward'])
+    plt.title('Model reward')
+    plt.ylabel('Reward')
+    plt.xlabel('Episode')
+    leg = ['Training']
+    plt.legend(leg, loc='upper left')
+    if name is not None:
+        save_figure(name, False)
+    else:
+        plt.show()
+
+
 def plot_simple_ts(y_list, title=None, name=None):
     """
     Plots the given aligned time series.

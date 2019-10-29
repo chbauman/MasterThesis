@@ -41,7 +41,7 @@ class DynEnv(ABC, gym.Env):
     train_days: List  #: The data of all days, where all data is available.
     day_inds: np.ndarray  #: Index vector storing the timestep offsets to the days
 
-    def __init__(self, m: BaseDynamicsModel, max_eps: int = None):
+    def __init__(self, m: BaseDynamicsModel, max_eps: int = None, disturb_fac: float = 1.0):
         """Initialize the environment.
 
         Args:
@@ -50,6 +50,7 @@ class DynEnv(ABC, gym.Env):
         """
         m.model_disturbance()
         self.m = m
+        self.disturb_fac = disturb_fac
         self.act_dim = m.data.n_c
         self.state_dim = m.data.d
         self.n_ts_per_eps = 100 if max_eps is None else max_eps
@@ -58,7 +59,7 @@ class DynEnv(ABC, gym.Env):
         self.reset()
 
     @abstractmethod
-    def compute_reward(self, curr_pred: np.ndarray, action: np.ndarray) -> float:
+    def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
         """Computes the reward to be maximized during the RL training.
 
         Args:
@@ -82,7 +83,7 @@ class DynEnv(ABC, gym.Env):
         """
         return False
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
+    def step(self, action: Arr) -> Tuple[np.ndarray, float, bool, Any]:
         """Evolve the model with the given control input `action`.
 
         Args:
@@ -95,7 +96,7 @@ class DynEnv(ABC, gym.Env):
         self.hist[-1, -self.act_dim:] = action
         pred_sh = (1, -1, self.state_dim)
         curr_pred = self.m.predict(self.hist.reshape(pred_sh))[0]
-        curr_pred += self.m.disturb()
+        curr_pred += self.disturb_fac * self.m.disturb()
         self.hist[:-1, :] = self.hist[1:, :]
         self.hist[-1, :-self.act_dim] = curr_pred
         self.n_ts += 1
@@ -112,15 +113,13 @@ class DynEnv(ABC, gym.Env):
         Returns:
             A new initial state.
         """
+        # Reset time step and disturbance
         self.n_ts = 0
-
         self.m.reset_disturbance()
 
+        # Select new start data
         start_data_ind = np.random.randint(self.n_start_data)
         self.hist = self.train_data[start_data_ind]
-
-        print(self.hist[-1, :].shape)
-
         return self.hist[-1, :-self.act_dim]
 
     def render(self, mode='human'):
@@ -137,7 +136,7 @@ class TestDynEnv(DynEnv):
         d = m.data
         assert d.n_c == 1 and d.d == 4, "Dataset needs 4 series of which one is controllable!!"
 
-    def compute_reward(self, curr_pred: np.ndarray, action: np.ndarray) -> float:
+    def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
         assert curr_pred.shape == (3,), "Shape of prediction not correct!"
         return curr_pred[2] * action
 
