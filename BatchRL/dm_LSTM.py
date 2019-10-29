@@ -308,7 +308,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
     overshoot_model: Any = None  #: The overshoot model used for training.
     n_overshoot: int
 
-    def __init__(self, n_overshoot: int = 10, **kwargs):
+    def __init__(self, n_overshoot: int = 10, decay_rate: float = 1.0, **kwargs):
         """Initialize model
 
         Args:
@@ -317,6 +317,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
         """
         super(RNNDynamicOvershootModel, self).__init__(**kwargs)
 
+        self.decay_rate = decay_rate
         self.n_overshoot = n_overshoot
         self.pred_seq_len = self.train_seq_len
         self.tot_train_seq_len = n_overshoot + self.pred_seq_len
@@ -362,7 +363,15 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
         train_mod = Model(inputs=full_input, outputs=full_out)
 
         # Define loss and compile
-        loss = 'mse'
+        if self.decay_rate != 1.0:
+            ww = np.ones(self.n_overshoot)
+            for k in range(self.n_overshoot):
+                ww[k] *= self.decay_rate ** k
+            k_constants = K.constant(ww)
+            fixed_input = Input(tensor=k_constants)
+            loss = partial(weighted_loss, weights=fixed_input)
+        else:
+            loss = 'mse'
         opt = Adam(lr=self.lr)
         train_mod.compile(loss=loss, optimizer=opt)
         if self.verbose:

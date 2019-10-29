@@ -79,8 +79,9 @@ def main():
     name_ds = 'Model_Room43'
     ds = Dataset.loadDataset(name_ds)
 
-    ds.name = "Room_96ts"
-    ds.seq_len = 96
+    # Change seq_len
+    # ds.seq_len = 7 * 96
+    # ds.name = "Room_" + str(ds.seq_len)
 
     ds = ds.add_time()
     ds.standardize()
@@ -123,7 +124,7 @@ def main():
                                **base_params)
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(50, 50),
-                          n_iter_max=50,
+                          n_iter_max=10,
                           constraint_list=rnn_consts,
                           **base_params)
     mod_no_consts = RNNDynamicModel(ds,
@@ -143,13 +144,20 @@ def main():
                                              hidden_sizes=(50, 50),
                                              n_iter_max=10,
                                              **base_params)
+    mod_overshoot_dec = RNNDynamicOvershootModel(n_overshoot=5,
+                                                 decay_rate=0.8,
+                                                 data=ds,
+                                                 name="Overshoot_Decay0.8",
+                                                 hidden_sizes=(50, 50),
+                                                 n_iter_max=10,
+                                                 **base_params)
     optimize = False
     if optimize:
         opt_params = mod.optimize(2)
         print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
 
-    mods = [mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
+    mods = [mod, mod_overshoot_dec, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
     for m_to_use in mods:
         m_to_use.fit()
         print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))
@@ -157,6 +165,7 @@ def main():
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
+    return
     # Full test model
     comp_model = CompositeModel(ds, [mod_test, time_model_ds], new_name="CompositeTimeRNNFull")
     comp_model.fit()
