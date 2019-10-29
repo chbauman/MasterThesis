@@ -113,8 +113,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         return new_mod
 
     def hyper_objective(self) -> float:
-        """
-        Uses the hyperparameter objective from the base class.
+        """Uses the hyperparameter objective from the base class.
 
         Returns:
             Objective loss.
@@ -220,7 +219,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                                            is_input=False,
                                            name="constrain_output")
         if debug:
-            model.add(IdDense())
+            model.add(IdDense(n=self.n_pred))
         else:
             model.add(Dense(self.n_pred, activation=None, name="dense_reduce"))
 
@@ -317,6 +316,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
     m: Any = None  #: The base model used for prediction.
     overshoot_model: Any = None  #: The overshoot model used for training.
     n_overshoot: int
+    DEBUG: bool = True
 
     def __init__(self, n_overshoot: int = 10, decay_rate: float = 1.0, **kwargs):
         """Initialize model
@@ -338,7 +338,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
         """Builds the keras model."""
 
         # Build base model.
-        b_mod = self._build_model()
+        b_mod = self._build_model(self.DEBUG)
         self.m = b_mod
 
         # Build train model.
@@ -349,7 +349,6 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
             return Reshape((1, self.n_pred), name=f"reshape_{k_ind}")
 
         def copy_mod(k_ind: int):
-            return self.m
             m = self.m
             ip = Input(rem_first(m.input_shape))
             out = m(ip)

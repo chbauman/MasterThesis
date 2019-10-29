@@ -200,7 +200,7 @@ class IdRecurrent(Layer):
         out_shape = [k for k in input_shape]
         if self.n is not None:
             out_shape[1] = self.n
-        if self.r_s:
+        if not self.r_s:
             out_shape = [out_shape[0], out_shape[2]]
         return tuple(out_shape)
 
@@ -608,5 +608,13 @@ def test_layers() -> None:
     assert np.array_equal(l_out, exp_out), "ExtractInput layer not working!"
     assert np.array_equal(l_out2, exp_out32), "ExtractInput layer not working!"
     assert np.array_equal(l_out3, exp_out32), "ExtractInput layer not working!"
+
+    # Test IdRecurrent layer
+    lay = IdRecurrent(3, input_shape=rem_first(seq_input_long.shape))
+    l_out = get_test_layer_output(lay, seq_input_long)
+    assert np.array_equal(l_out, seq_input_long[:, :, :3]), "IdRecurrent not working correctly!"
+    lay = IdDense(1, input_shape=rem_first(output.shape))
+    l_out = get_test_layer_output(lay, output)
+    assert np.array_equal(l_out, output[:, :1]), "IdDense not working correctly!"
 
     print("Keras Layers tests passed :)")

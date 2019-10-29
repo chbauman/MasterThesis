@@ -63,12 +63,13 @@ def main():
     # generate_room_datasets()
 
     # Run tests
+    test_layers()
     test_rnn_models()
     return
     # test_dyn_model()
     # test_test_env()
     test_time_stuff()
-    test_layers()
+
     test_numpy_functions()
     # test_rest_client()
     test_python_stuff()
