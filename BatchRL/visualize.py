@@ -27,10 +27,12 @@ n_cols: int = len(clr_map)  #: Number of colors in colormap.
 plot_dir = '../Plots'  #: Base plot folder.
 preprocess_plot_path = os.path.join(plot_dir, "Preprocessing")  #: Data processing plot folder.
 model_plot_path = os.path.join(plot_dir, "Models")  #: Dynamics modeling plot folder.
+rl_plot_path = os.path.join(plot_dir, "RL")
 
 # Create folders if they do not exist
 create_dir(preprocess_plot_path)
 create_dir(model_plot_path)
+create_dir(rl_plot_path)
 
 
 def save_figure(save_name, show: bool = False, vector_format: bool = True) -> None:

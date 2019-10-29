@@ -328,13 +328,16 @@ class BaseDynamicsModel(ABC):
         return curr_pred
 
     def get_plt_path(self, name: str) -> str:
-        """
-        Specifies the path of the plot with name 'name'
-        where it should be saved. If there is not a directory
+        """Specifies the path of the plot with name 'name' where it should be saved.
+
+        If there is not a directory
         for the current model, it is created.
 
-        :param name: Name of the plot.
-        :return: Full path of the plot file.
+        Args:
+            name: Name of the plot.
+
+        Returns:
+            Full path of the plot file.
         """
         dir_name = self.plot_path
         return os.path.join(dir_name, name)

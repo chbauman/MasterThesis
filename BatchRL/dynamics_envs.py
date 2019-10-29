@@ -12,7 +12,7 @@ class FullRoomEnv(DynEnv):
 
     def __init__(self, m: BaseDynamicsModel, temp_bounds: Sequence = None, n_disc_actions: int = 11):
         max_eps = 24 * 60 // m.data.dt
-        super(FullRoomEnv, self).__init__(m, max_eps)
+        super(FullRoomEnv, self).__init__(m, "FullRoom", max_eps)
         d = m.data
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds

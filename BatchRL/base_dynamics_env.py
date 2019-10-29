@@ -10,6 +10,7 @@ import gym
 
 from base_dynamics_model import BaseDynamicsModel, TestModel, construct_test_ds
 from util import *
+from visualize import rl_plot_path
 
 
 class DynEnv(ABC, gym.Env):
@@ -41,7 +42,7 @@ class DynEnv(ABC, gym.Env):
     train_days: List  #: The data of all days, where all data is available.
     day_inds: np.ndarray  #: Index vector storing the timestep offsets to the days
 
-    def __init__(self, m: BaseDynamicsModel, max_eps: int = None, disturb_fac: float = 1.0):
+    def __init__(self, m: BaseDynamicsModel, name: str = None, max_eps: int = None, disturb_fac: float = 1.0):
         """Initialize the environment.
 
         Args:
@@ -50,6 +51,13 @@ class DynEnv(ABC, gym.Env):
         """
         m.model_disturbance()
         self.m = m
+        if name is not None:
+            self.name = name
+        else:
+            self.name = "RLEnv_" + m.name
+        self.plot_path = os.path.join(rl_plot_path, self.name)
+        create_dir(self.plot_path)
+
         self.disturb_fac = disturb_fac
         self.act_dim = m.data.n_c
         self.state_dim = m.data.d
@@ -57,6 +65,21 @@ class DynEnv(ABC, gym.Env):
         self.train_data, _, self.train_indices = m.data.get_split("train")
         self.n_start_data = len(self.train_data)
         self.reset()
+
+    def get_plt_path(self, name: str) -> str:
+        """Specifies the path of the plot with name 'name' where it should be saved.
+
+        If there is not a directory
+        for the current model, it is created.
+
+        Args:
+            name: Name of the plot.
+
+        Returns:
+            Full path of the plot file.
+        """
+        dir_name = self.plot_path
+        return os.path.join(dir_name, name)
 
     @abstractmethod
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
