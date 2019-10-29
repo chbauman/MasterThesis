@@ -18,7 +18,7 @@ from dm_Time import SCTimeModel
 from dm_TimePeriodic import Periodic1DayModel
 from dynamics_envs import FullRoomEnv
 from keras_layers import test_layers
-from keras_rl_wrap import test_env, DQNRoomHeatingAgent
+from keras_rl_wrap import DQNRoomHeatingAgent
 from simple_battery_test import SimpleBatteryTest
 # Environments for debugging
 from cart_pole import CartPole
@@ -78,6 +78,10 @@ def main():
     # Dataset
     name_ds = 'Model_Room43'
     ds = Dataset.loadDataset(name_ds)
+
+    ds.name = "Room_96ts"
+    ds.seq_len = 96
+
     ds = ds.add_time()
     ds.standardize()
     ds.split_data()
@@ -119,7 +123,7 @@ def main():
                                **base_params)
     mod = RNNDynamicModel(ds,
                           hidden_sizes=(50, 50),
-                          n_iter_max=10,
+                          n_iter_max=50,
                           constraint_list=rnn_consts,
                           **base_params)
     mod_no_consts = RNNDynamicModel(ds,
@@ -145,11 +149,11 @@ def main():
         print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
 
-    mods = [mod_const_wt, mod_overshoot, mod]  # , mod_test, mod_no_consts]
+    mods = [mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
     for m_to_use in mods:
         m_to_use.fit()
         print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))
-        # m_to_use.analyze()
+        m_to_use.analyze()
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 

@@ -1304,7 +1304,6 @@ class Dataset:
     This class contains all infos about a given dataset and
     offers some functionality for manipulating it.
     """
-
     _offs: int
     _day_len: int = None
     split_dict: Dict[str, 'ModelDataView'] = None  #: The saved splits
@@ -1314,14 +1313,14 @@ class Dataset:
                  descs: Union[np.ndarray, List],
                  c_inds: np.ndarray = no_inds,
                  p_inds: np.ndarray = no_inds,
-                 name: str = ""):
-        """
-        Base constructor.
+                 name: str = "",
+                 seq_len: int = 20):
+        """Base constructor.
         """
 
         # Constants
         self.val_percent = 0.1
-        self.seq_len = 20
+        self.seq_len = seq_len
 
         # Dimensions
         self.n = all_data.shape[0]
@@ -1473,67 +1472,6 @@ class Dataset:
         sequences, streak_offs = mdv.extract_disjoint_streaks(self._day_len, n_off_dis)
         in_out_list = [prepare_supervised_control(s, self.c_inds, False) for s in sequences]
         return in_out_list, streak_offs + mdv.n
-
-    def get_prepared_data(self, what_data: str = 'train', *,
-                          get_all_preds: bool = False) -> Tuple[np.ndarray, np.ndarray, int]:
-        """
-        Prepares the data for supervised learning.
-        DEPRECATED, use get_split or get_streak!
-        """
-        warnings.warn("You should not use this function!!")
-        raise NotImplementedError("Deprecated!!!!")
-
-        # Get the right data
-        n_offset = 0
-        if what_data == 'train':
-            data_to_use = self.train_data
-        elif what_data == 'val':
-            data_to_use = self.val_data
-            n_offset = self.val_start
-        elif what_data == 'test':
-            data_to_use = self.test_data
-            n_offset = self.test_start
-        elif what_data == 'train_val':
-            data_to_use = self.train_val_data
-        elif what_data == 'train_streak':
-            data_to_use = self.train_streak_data
-            n_offset = self.train_streak_start
-        elif what_data == 'val_streak':
-            data_to_use = self.val_streak_data
-            n_offset = self.val_streak_start
-        else:
-            raise ValueError("No such data available: " + what_data)
-        data_to_use = np.copy(data_to_use)
-
-        # Get dimensions
-        s = data_to_use.shape
-        n, s_len, d = s
-        n_c = self.n_c
-
-        # Get control and other column indices
-        cont_inds = np.empty([d], dtype=np.bool)
-        cont_inds.fill(False)
-        cont_inds[self.c_inds] = True
-        other_inds = np.logical_not(cont_inds)
-
-        # Fill the data
-        input_data = np.empty((n, s_len - 1, d), dtype=np.float32)
-        input_data[:, :, :self.d - n_c] = data_to_use[:, :-1, other_inds]
-        input_data[:, :, self.d - n_c:] = data_to_use[:, 1:, cont_inds]
-        if not get_all_preds:
-            output_data = data_to_use[:, -1, other_inds]
-        else:
-            output_data = data_to_use[:, 1:, other_inds]
-
-        # Store more parameters, assuming only one control variable
-        # TODO: General case for multiple control variables!!
-        # Or remove this part, i.e. do it in initializer
-        self.c_inds_prep = self.d - 1
-        self.p_inds_prep = np.copy(self.p_inds)
-        for c_ind in self.c_inds:
-            self.p_inds_prep[self.p_inds_prep > c_ind] -= 1
-
-        return input_data, output_data, n_offset
 
     @classmethod
     def fromRaw(cls, all_data: np.ndarray, m: List, name: str,

@@ -2,9 +2,10 @@ from abc import ABC, abstractmethod
 
 from base_dynamics_env import DynEnv, Any
 
+from util import *
+
 
 class AgentBase(ABC):
-
     env: Any  # The corresponding environment
 
     def __init__(self, env: DynEnv):
@@ -17,4 +18,5 @@ class AgentBase(ABC):
     @abstractmethod
     def get_action(self, state) -> Arr:
         pass
+
     pass
