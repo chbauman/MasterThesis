@@ -17,15 +17,23 @@ from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurre
 from util import *
 from visualize import plot_train_history
 
+"""The recurrent models to be used for modeling the dynamical system.
+
+The models are derived from `HyperOptimizableModel` or at least
+also from `BaseDynamicsModel`.
+"""
+
 
 def weighted_loss(y_true, y_pred, weights):
-    """
-    Returns the weighted MSE between y_true and y_pred.
+    """Returns the weighted MSE between y_true and y_pred.
 
-    :param y_true: True labels.
-    :param y_pred: Predicted labels.
-    :param weights: Weights.
-    :return: Weighted MSE.
+    Args:
+        y_true: True labels.
+        y_pred: Predicted labels.
+        weights: Weights.
+
+    Returns:
+        Weighted MSE.
     """
     return K.mean((y_true - y_pred) * (y_true - y_pred) * weights)
 
