@@ -7,15 +7,26 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from util import *
 
 if EULER:
-    print("No fucking windows!!")
+    # Do not use GUI based backend.
     mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as mpl_colors
 
+"""This file contains all plotting stuff.
+
+Plotting is based on matplotlib. 
+If we are not on a Windows platform, the backend 'Agg' is
+used, since this works also on Euler.
+
+Most functions plot some kind of time series, but there
+are also more specialized plot functions. E.g. plotting 
+the training of a keras neural network.
+"""
+
 register_matplotlib_converters()
 
 plt.rc('font', family='serif')
-# plt.rc('text', usetex=True)  # Makes Problems with the Celsius sign
+# plt.rc('text', usetex=True)  # Makes Problems with the Celsius sign :(
 
 # Plotting colors
 colors = mpl_colors.TABLEAU_COLORS
@@ -548,3 +559,30 @@ def plot_residuals_acf(residuals: np.ndarray,
         save_figure(name, False)
     else:
         plt.show()
+
+
+def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
+                        rewards: np.ndarray) -> None:
+
+    # Extract shapes
+    n_agents, episode_len, n_feats = states.shape
+    n_actions = actions.shape[-1]
+    tot_n_plots = n_actions + n_feats + 1
+
+    # Define axes and x values
+    fig, axs = plt.subplots(tot_n_plots, 1, sharex='all')
+    x = np.arange(episode_len)
+
+    for k in range(n_agents):
+        # Plot actions
+        for i in range(n_actions):
+            axs[i].plot(x, actions[k, :, i])
+
+        # Plot states
+        for i in range(n_feats):
+            axs[n_actions + i].plot(x, states[k, :, i])
+
+        # Plot reward
+        axs[-1].plot(x, rewards[k, :])
+
+    pass
