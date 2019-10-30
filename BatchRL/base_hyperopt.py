@@ -79,11 +79,13 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             Returns:
                 Value of the objective.
             """
-            print(hp_sample)
+
             mod = self.conf_model(hp_sample)
             self.param_list += [hp_sample]
             mod.fit()
-            return mod.hyper_objective()
+            curr_obj = mod.hyper_objective()
+            print(hp_sample, f"Objective value: {curr_obj}")
+            return curr_obj
 
         # Do parameter search
         best = fmin(

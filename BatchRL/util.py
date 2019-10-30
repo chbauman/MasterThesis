@@ -149,8 +149,7 @@ class CacheDecoratorFactory(object):
         """
         self.n = [] if n_list is None else n_list
         self.d = [] if data_list is None else data_list
-
-        print("Init decorator!!!")
+        # print("Init decorator!!!")
 
     def __call__(self, f):
         """Decorates the function `f`.
@@ -174,7 +173,6 @@ class CacheDecoratorFactory(object):
             Returns:
                 The decorated function.
             """
-            print("Fucking n:", self.n, "Input:", n)
             if n in self.n:
                 i = self.n.index(n)
                 return self.d[i]

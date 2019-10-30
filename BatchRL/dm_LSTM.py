@@ -88,8 +88,8 @@ class RNNDynamicModel(HyperOptimizableModel):
         """
         hp_space = {
             'n_layers': ho_scope.int(hp.quniform('n_layers', low=1, high=4, q=1)),
-            'n_neurons': ho_scope.int(hp.quniform('n_neurons', low=5, high=100, q=5)),
-            'n_iter_max': ho_scope.int(hp.quniform('n_iter_max', low=5, high=100, q=5)),
+            'n_neurons': ho_scope.int(hp.quniform('n_neurons', low=5, high=50, q=5)),
+            'n_iter_max': ho_scope.int(hp.quniform('n_iter_max', low=5, high=50, q=5)),
             'gru': hp.choice('gru', [True, False]),
             'lr': hp.loguniform('lr', low=-5 * np.log(10), high=1 * np.log(10)),
             'input_noise_std': hp.loguniform('input_noise_std', low=-6 * np.log(10), high=-1 * np.log(10)),
@@ -143,7 +143,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                  lr: float = 0.001,
                  constraint_list: Sequence[SeriesConstraint] = None,
                  train_seq: bool = False,
-                 verbose: int = 1):
+                 verbose: int = 0):
 
         """Constructor, defines all the network parameters.
 

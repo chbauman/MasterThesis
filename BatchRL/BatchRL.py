@@ -141,12 +141,12 @@ def main():
                                                  hidden_sizes=(50, 50),
                                                  n_iter_max=10,
                                                  **base_params)
-    optimize = False
+    optimize = True
     if optimize:
         opt_params = mod.optimize(2)
         print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
-
+    return
     mods = [mod_overshoot_dec, mod_overshoot, mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
     for m_to_use in mods:
         m_to_use.fit()
