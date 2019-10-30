@@ -153,21 +153,31 @@ class DynEnv(ABC, gym.Env):
     def render(self, mode='human'):
         print("Rendering not implemented!")
 
-    def analyze_agent(self, agents: Union[List, 'AgentBase'], fitted: bool = True):
+    def analyze_agent(self, agents: Union[List, 'AgentBase'], fitted: bool = True) -> None:
+        """Analyzes and compares a set of agents / control strategies.
 
+        Args:
+            agents: A list of agents or a single agent.
+            fitted: Whether the agents are already fitted.
+        """
         # Make function compatible for single agent input
         if not isinstance(agents, list):
-            agents = [agents]        
+            agents = [agents]
 
         # Define arrays to save trajectories
         n_agents = len(agents)
-        action_sequences = np.empty((n_agents, ), dtype=np.float32)
+        action_sequences = np.empty((n_agents, self.n_ts_per_eps, self.act_dim), dtype=np.float32)
+        action_sequences.fill(np.nan)
+        trajectories = np.empty((n_agents, self.n_ts_per_eps, self.state_dim), dtype=np.float32)
+        trajectories.fill(np.nan)
+        rewards = np.empty((n_agents, self.n_ts_per_eps), dtype=np.float32)
+        rewards.fill(np.nan)
 
         # Choose random start for all agents
         start_ind = np.random.randint(self.n_start_data)
 
         for a_id, a in enumerate(agents):
-            # Fit agent
+            # Fit agent if not already fitted
             if not fitted:
                 a.fit()
 
@@ -176,11 +186,13 @@ class DynEnv(ABC, gym.Env):
             episode_over = False
             count = 0
 
-            # Evaluate agent
+            # Evaluate agent and save states, actions and reward
             while not episode_over:
                 curr_action = a.get_action(curr_state)
-                next_state, rew, episode_over, _ = self.step(curr_action)
-                action_sequences[a_id, count] = curr_action
+                curr_state, rew, episode_over, _ = self.step(curr_action)
+                action_sequences[a_id, count, :] = curr_action
+                trajectories[a_id, count, :] = curr_state
+                rewards[a_id, count] = rew
                 count += 1
             pass
 
