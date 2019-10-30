@@ -5,16 +5,34 @@ everything.
 
 ## Running on Euler
 
-When running on Euler, first run:
+### Connecting to Euler using Putty
 
+First set uf a VPN connection if not in ETH network.
+Then run putty, select `euler.ethz.ch` as Host Name and connect,
+it will ask for credentials and then you should be logged in.
+
+### Connecting to Euler from Linux terminal
+
+Use:
+```console
+$ ssh username@euler.ethz.ch
+```
+
+### Setting things up
+
+You can use git to clone this repository, then you
+do not have to copy the code manually.
+You might need to install some additional
+python libraries, do this using the flag `--user`.
+
+### Running on Euler
+
+Run:
 ```console
 $ module load python
 $ module load hdf5
 ```
-
 to load the necessary libraries. 
-You might need to install some additional
-python libraries, do this using the flag `--user`.
 Also remember to copy the data if it has changed 
 since the last time. The command for doing this
 is in [Data](../Data).
