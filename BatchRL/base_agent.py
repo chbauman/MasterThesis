@@ -17,12 +17,18 @@ class AgentBase(ABC):
         self.env = env
         self.name = name
 
-    @abstractmethod
     def fit(self) -> None:
+        """No fitting needed."""
         pass
 
     @abstractmethod
     def get_action(self, state) -> Arr:
-        pass
+        """Defines the control strategy.
 
-    pass
+        Args:
+            state: The current state.
+
+        Returns:
+            Next control action.
+        """
+        pass

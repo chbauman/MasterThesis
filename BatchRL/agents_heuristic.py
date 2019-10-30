@@ -7,17 +7,13 @@ class RuleBasedHeating(AgentBase):
     """Agent applying rule-based heating control.
 
     """
-    rule: Sequence  # The sequence specifying the rule for control.
+    rule: Sequence  #: The sequence specifying the rule for control.
 
     def __init__(self, env: FullRoomEnv, rule: Sequence):
         super().__init__(env)
 
         assert len(rule) == 2, "Rule needs to consist of two values!"
         self.rule = rule
-
-    def fit(self) -> None:
-        """No need to fit anything."""
-        pass
 
     def get_action(self, state) -> Arr:
         """Defines the control strategy.
@@ -38,3 +34,29 @@ class RuleBasedHeating(AgentBase):
             return 1.0
         # Do nothing
         return 0.0
+
+
+class ConstHeating(AgentBase):
+    """Applies a constant control input.
+
+    Can be used for comparison, e.g. if you want
+    to compare an agent to always heating or never heating.
+    Does not really need the environment.
+    """
+    rule: float  #: The constant control input / action
+
+    def __init__(self, env: FullRoomEnv, rule: float):
+        super().__init__(env)
+
+        self.rule = rule
+
+    def get_action(self, state) -> Arr:
+        """Defines the control strategy.
+
+        Args:
+            state: The current state.
+
+        Returns:
+            Next control action.
+        """
+        return self.rule

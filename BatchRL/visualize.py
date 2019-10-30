@@ -562,7 +562,7 @@ def plot_residuals_acf(residuals: np.ndarray,
 
 
 def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
-                        rewards: np.ndarray) -> None:
+                        rewards: np.ndarray, save_path: str = None) -> None:
 
     # Extract shapes
     n_agents, episode_len, n_feats = states.shape
@@ -585,4 +585,6 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
         # Plot reward
         axs[-1].plot(x, rewards[k, :])
 
-    pass
+    # Save
+    if save_path is not None:
+        save_figure(save_path)

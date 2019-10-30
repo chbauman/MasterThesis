@@ -177,6 +177,10 @@ class DynEnv(ABC, gym.Env):
         start_ind = np.random.randint(self.n_start_data)
 
         for a_id, a in enumerate(agents):
+            # Check that agent references this environment
+            if not a.env == self:
+                raise ValueError(f"Agent {a_id} was not assigned this env!")
+
             # Fit agent if not already fitted
             if not fitted:
                 a.fit()
@@ -194,10 +198,11 @@ class DynEnv(ABC, gym.Env):
                 trajectories[a_id, count, :] = curr_state
                 rewards[a_id, count] = rew
                 count += 1
-            pass
 
         # Plot all the things
-        plot_env_evaluation(action_sequences, trajectories, rewards)
+        analysis_plot_path = self.get_plt_path("AgentAnalysis")
+        plot_env_evaluation(action_sequences, trajectories, rewards,
+                            analysis_plot_path)
 
 
 ##########################################################################
