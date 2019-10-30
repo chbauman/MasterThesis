@@ -90,7 +90,7 @@ class RNNDynamicModel(HyperOptimizableModel):
             'n_layers': ho_scope.int(hp.quniform('n_layers', low=1, high=4, q=1)),
             'n_neurons': ho_scope.int(hp.quniform('n_neurons', low=5, high=50, q=5)),
             'n_iter_max': ho_scope.int(hp.quniform('n_iter_max', low=5, high=50, q=5)),
-            'gru': hp.choice('gru', [True, False]),
+            'gru': hp.choice('gru', [False, True]),
             'lr': hp.loguniform('lr', low=-5 * np.log(10), high=1 * np.log(10)),
             'input_noise_std': hp.loguniform('input_noise_std', low=-6 * np.log(10), high=-1 * np.log(10)),
         }

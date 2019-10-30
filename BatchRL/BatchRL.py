@@ -143,8 +143,8 @@ def main():
                                                  **base_params)
     optimize = True
     if optimize:
-        opt_params = mod.optimize(2)
-        print("All tried parameter combinations: {}.".format(mod.param_list))
+        opt_params = mod.optimize(5)
+        # print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
     return
     mods = [mod_overshoot_dec, mod_overshoot, mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
