@@ -145,7 +145,7 @@ class DynEnv(ABC, gym.Env):
         if start_ind is None:
             start_ind = np.random.randint(self.n_start_data)
         else:
-            if self.n_start_data >= start_ind:
+            if self.n_start_data <= start_ind:
                 raise ValueError("start_ind is too fucking large!")
 
         self.hist = self.train_data[start_ind]
