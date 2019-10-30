@@ -4,7 +4,7 @@ from typing import Dict, Optional
 from hyperopt import hp
 from hyperopt.pyll import scope as ho_scope
 from keras import backend as K
-from keras.layers import GRU, LSTM, Dense, Input, Add, Concatenate, Reshape
+from keras.layers import GRU, LSTM, Dense, Input, Add, Concatenate, Reshape, TimeDistributed
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 from keras.utils import plot_model
@@ -134,6 +134,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                  residual_learning: bool = True,
                  lr: float = 0.001,
                  constraint_list: Sequence[SeriesConstraint] = None,
+                 train_seq: bool = False,
                  verbose: int = 1):
 
         """Constructor, defines all the network parameters.
@@ -171,6 +172,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         self.weight_vec = weight_vec
         self.res_learn = residual_learning
         self.lr = lr
+        self.train_seq = train_seq
 
         # Build model
         self.m = self._build_model()
@@ -199,7 +201,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         # Add layers
         rnn = GRU if self.gru else LSTM
         for k in range(n_lstm):
-            ret_seq = k != n_lstm - 1
+            ret_seq = k != n_lstm - 1 or self.train_seq
             if debug:
                 model.add(IdRecurrent(return_sequences=ret_seq))
             else:
@@ -218,12 +220,18 @@ class RNNDynamicModel(HyperOptimizableModel):
         out_const_layer = ConstrainedNoise(0, consts=out_constraints,
                                            is_input=False,
                                            name="constrain_output")
-        if debug:
-            model.add(IdDense(n=self.n_pred))
-        else:
-            model.add(Dense(self.n_pred, activation=None, name="dense_reduce"))
+
+        # Add last dense layer
+        last_layer = IdDense(n=self.n_pred) if debug else Dense(self.n_pred,
+                                                                activation=None,
+                                                                name="dense_reduce")
+        if self.train_seq:
+            last_layer = TimeDistributed(last_layer)
+        model.add(last_layer)
 
         if self.res_learn:
+            if self.train_seq:
+                return NotImplementedError("Cannot combine residual and sequence output learning!")
             # Add last non-control input to output
             seq_input = Input(shape=(self.train_seq_len, self.n_feats),
                               name="input_sequences")
@@ -489,6 +497,10 @@ def test_rnn_models():
     exp_out[0, -1, p_inds] = l_out[0, 0]
     l_out_sec = get_multi_input_layer_output(sec_ex_out, lay_input, learning_phase=0)
     assert np.allclose(exp_out, l_out_sec), "Second extraction incorrect!"
+    # print(lay_input)
+    # print(l_out_sec)
+    # print(l_out)
+    # raise NotImplementedError("Fuck")
 
     # Try fitting
     mod_test_overshoot.fit()

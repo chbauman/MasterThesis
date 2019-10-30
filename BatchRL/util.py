@@ -29,6 +29,17 @@ Arr = Union[Num, np.ndarray]
 #######################################################################################################
 # Python stuff
 
+def tot_size(t: Tuple[int, ...]) -> int:
+    """Computes the product of all numbers in `t`.
+
+    Returns 0 for empty `t`.
+    """
+    res = 1 if len(t) > 0 else 0
+    for k in t:
+        res *= k
+    return res
+
+
 def rem_first(t: Tuple) -> Tuple:
     """Removes first element from tuple.
 
@@ -484,6 +495,7 @@ def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False,
     Returns:
         The fitted parameters and optionally the fitted values.
     """
+
     # Choose least squares solver
     def ls_fun(a_mat_temp, b_temp):
         if non_neg:
@@ -1088,6 +1100,7 @@ def test_python_stuff() -> None:
     Raises:
         AssertionError: If a test fails.
     """
+
     # Test the caching decorator
     class Dummy:
         def __init__(self):
@@ -1101,6 +1114,7 @@ def test_python_stuff() -> None:
         @CacheDecoratorFactory()
         def mutable_fun(self, n: int, k: int):
             return [n, k]
+
     try:
         d = Dummy()
         assert d.fun(1, k=3) == 10
@@ -1123,6 +1137,13 @@ def test_python_stuff() -> None:
     # Test rem_first
     assert rem_first((1, 2, 3)) == (2, 3), "rem_first not working correctly!"
     assert rem_first((1, 2)) == (2,), "rem_first not working correctly!"
+
+    # Test tot_size
+    assert tot_size((1, 2, 3)) == 6, "tot_size not working!"
+    assert tot_size((0, 1)) == 0, "tot_size not working!"
+    assert tot_size(()) == 0, "tot_size not working!"
+
+    print("Python function test passed!")
 
 
 def test_time_stuff() -> None:

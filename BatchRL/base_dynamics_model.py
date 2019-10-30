@@ -629,7 +629,7 @@ class BaseDynamicsModel(ABC):
                          title_and_ylab=title_and_ylab,
                          save_name=self.get_plt_path('OneWeek_WithNoise_' + str(k) + "_" + ext))
 
-    def hyper_obj(self, n_ts: int = 16, series_ind: Arr = None) -> float:
+    def hyper_obj(self, n_ts: int = 24, series_ind: Arr = None) -> float:
         """Defines the objective for the hyperparameter optimization.
 
         Uses multistep prediction to define the performance for
@@ -656,7 +656,8 @@ class BaseDynamicsModel(ABC):
         one_h_pred = self.n_step_predict(copy_arr_list([in_d, out_d]), n_ts,
                                          pred_ind=None)
         residuals = tr[(n_ts - 1):] - one_h_pred
-        return float(np.sum(residuals * residuals))
+        tot_s = tot_size(one_h_pred.shape)
+        return float(np.sum(residuals * residuals)) / tot_s
 
     def get_residuals(self, data_str: str):
         """Computes the residuals using the fitted model.
