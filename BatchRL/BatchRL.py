@@ -57,6 +57,7 @@ def main():
     # test_dyn_model()
     test_test_env()
     test_time_stuff()
+    return
 
     test_numpy_functions()
     # test_rest_client()

@@ -561,9 +561,8 @@ def plot_residuals_acf(residuals: np.ndarray,
         plt.show()
 
 
-def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
-                        rewards: np.ndarray, save_path: str = None) -> None:
-
+def plot_env_evaluation_2(actions: np.ndarray, states: np.ndarray,
+                          rewards: np.ndarray, save_path: str = None) -> None:
     # Extract shapes
     n_agents, episode_len, n_feats = states.shape
     n_actions = actions.shape[-1]
@@ -587,6 +586,47 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
         # Plot reward
         axs[-1].set_title('Rewards')
         axs[-1].plot(x, rewards[k, :])
+
+    # Save
+    if save_path is not None:
+        save_figure(save_path)
+
+
+def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
+                        rewards: np.ndarray, save_path: str = None) -> None:
+    # Extract shapes
+    n_agents, episode_len, n_feats = states.shape
+    n_actions = actions.shape[-1]
+    tot_n_plots = n_actions + n_feats + 1
+
+    # We'll use a separate GridSpecs for controls, states and rewards
+    gs_con = plt.GridSpec(tot_n_plots, 1, hspace=0, top=1.0, bottom=0.0)
+    gs_state = plt.GridSpec(tot_n_plots, 1, hspace=0, top=0.9, bottom=0.1)
+    gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=0, top=1.0, bottom=0.0)
+    fig = plt.figure()
+
+    # Define axes
+    rew_ax = fig.add_subplot(gs_rew[-1, :])
+    con_axs = [fig.add_subplot(gs_con[i, :], sharex=rew_ax) for i in range(n_actions)]
+    state_axs = [fig.add_subplot(gs_state[i, :], sharex=rew_ax) for i in range(n_actions, tot_n_plots - 1)]
+
+    # Set titles
+    rew_ax.set_title("Rewards")
+    con_axs[0].set_title("Control inputs")
+    state_axs[0].set_title("States")
+
+    # Plot all the things!
+    for k in range(n_agents):
+        # Plot actions
+        for i in range(n_actions):
+            con_axs[i].plot(actions[k, :, i])
+
+        # Plot states
+        for i in range(n_feats):
+            state_axs[i].plot(states[k, :, i])
+
+        # Plot reward
+        rew_ax.plot(rewards[k, :])
 
     # Save
     if save_path is not None:
