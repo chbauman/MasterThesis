@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 
 import gym
 
+from base_agent import AgentBase
 from base_dynamics_model import BaseDynamicsModel, TestModel, construct_test_ds
 from util import *
 from visualize import rl_plot_path
@@ -20,7 +21,6 @@ class DynEnv(ABC, gym.Env):
     all the functionality needed to turn it into an environment
     to be used for reinforcement learning.
     """
-
     # Fix data
     m: BaseDynamicsModel  #: Prediction model.
     act_dim: int  #: The dimension of the action space.
@@ -128,7 +128,7 @@ class DynEnv(ABC, gym.Env):
         ep_over = self.n_ts == self.n_ts_per_eps or self.episode_over(curr_pred)
         return curr_pred, r, ep_over, {}
 
-    def reset(self) -> np.ndarray:
+    def reset(self, start_ind: int = None) -> np.ndarray:
         """Resets the environment.
 
         Needs to be called if the episode is over.
@@ -141,12 +141,50 @@ class DynEnv(ABC, gym.Env):
         self.m.reset_disturbance()
 
         # Select new start data
-        start_data_ind = np.random.randint(self.n_start_data)
-        self.hist = self.train_data[start_data_ind]
+        if start_ind is None:
+            start_ind = np.random.randint(self.n_start_data)
+        else:
+            if self.n_start_data >= start_ind:
+                raise ValueError("start_ind is too fucking large!")
+
+        self.hist = self.train_data[start_ind]
         return self.hist[-1, :-self.act_dim]
 
     def render(self, mode='human'):
         print("Rendering not implemented!")
+
+    def analyze_agent(self, agents: Union[List, 'AgentBase'], fitted: bool = True):
+
+        # Make function compatible for single agent input
+        if not isinstance(agents, list):
+            agents = [agents]        
+
+        # Define arrays to save trajectories
+        n_agents = len(agents)
+        action_sequences = np.empty((n_agents, ), dtype=np.float32)
+
+        # Choose random start for all agents
+        start_ind = np.random.randint(self.n_start_data)
+
+        for a_id, a in enumerate(agents):
+            # Fit agent
+            if not fitted:
+                a.fit()
+
+            # Reset env
+            curr_state = self.reset(start_ind=start_ind)
+            episode_over = False
+            count = 0
+
+            # Evaluate agent
+            while not episode_over:
+                curr_action = a.get_action(curr_state)
+                next_state, rew, episode_over, _ = self.step(curr_action)
+                action_sequences[a_id, count] = curr_action
+                count += 1
+            pass
+
+        pass
 
 
 ##########################################################################
