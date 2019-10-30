@@ -561,37 +561,6 @@ def plot_residuals_acf(residuals: np.ndarray,
         plt.show()
 
 
-def plot_env_evaluation_2(actions: np.ndarray, states: np.ndarray,
-                          rewards: np.ndarray, save_path: str = None) -> None:
-    # Extract shapes
-    n_agents, episode_len, n_feats = states.shape
-    n_actions = actions.shape[-1]
-    tot_n_plots = n_actions + n_feats + 1
-
-    # Define axes and x values
-    fig, axs = plt.subplots(tot_n_plots, 1, sharex='all')
-    x = np.arange(episode_len)
-
-    for k in range(n_agents):
-        # Plot actions
-        axs[0].set_title('Control Variables')
-        for i in range(n_actions):
-            axs[i].plot(x, actions[k, :, i])
-
-        # Plot states
-        axs[n_actions].set_title('States')
-        for i in range(n_feats):
-            axs[n_actions + i].plot(x, states[k, :, i])
-
-        # Plot reward
-        axs[-1].set_title('Rewards')
-        axs[-1].plot(x, rewards[k, :])
-
-    # Save
-    if save_path is not None:
-        save_figure(save_path)
-
-
 def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
                         rewards: np.ndarray, save_path: str = None) -> None:
     # Extract shapes
