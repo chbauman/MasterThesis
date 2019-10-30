@@ -1,3 +1,10 @@
+"""A few general functions with multiple use cases.
+
+Includes a few general python functions,
+a lot of numpy transformations and also some tools
+to handle the datetime of python and numpy. Also some
+tests of these functions are included.
+"""
 import os
 from datetime import datetime
 from typing import Union, List, Tuple, Any, Sequence
@@ -5,13 +12,6 @@ from typing import Union, List, Tuple, Any, Sequence
 import numpy as np
 import scipy.optimize.nnls
 
-"""A few general functions with multiple use cases.
-
-Includes a few general python functions, 
-a lot of numpy transformations and also some tools
-to handle the datetime of python and numpy. Also some
-tests of these functions are included. 
-"""
 
 # Determine platform, assuming we are on Euler if it is not a windows platform
 EULER = not os.name == 'nt'

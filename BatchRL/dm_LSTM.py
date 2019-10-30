@@ -1,3 +1,8 @@
+"""The recurrent models to be used for modeling the dynamical system.
+
+The models are derived from `HyperOptimizableModel` or at least
+also from `BaseDynamicsModel`.
+"""
 from functools import partial
 from typing import Dict, Optional
 
@@ -16,12 +21,6 @@ from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurre
     get_multi_input_layer_output
 from util import *
 from visualize import plot_train_history
-
-"""The recurrent models to be used for modeling the dynamical system.
-
-The models are derived from `HyperOptimizableModel` or at least
-also from `BaseDynamicsModel`.
-"""
 
 
 def weighted_loss(y_true, y_pred, weights):
@@ -439,6 +438,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
             self.m.save_weights(self.get_path(self.name))
         else:
             self.deb("Restored trained model")
+
     pass
 
 

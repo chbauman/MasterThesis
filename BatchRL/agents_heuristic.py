@@ -1,5 +1,6 @@
 from base_agent import AgentBase
-from dynamics_envs import FullRoomEnv
+# import base_dynamics_env
+# from dynamics_envs import FullRoomEnv
 from util import *
 
 
@@ -9,7 +10,7 @@ class RuleBasedHeating(AgentBase):
     """
     rule: Sequence  #: The sequence specifying the rule for control.
 
-    def __init__(self, env: FullRoomEnv, rule: Sequence):
+    def __init__(self, env: 'FullRoomEnv', rule: Sequence):
         super().__init__(env)
 
         assert len(rule) == 2, "Rule needs to consist of two values!"
@@ -45,8 +46,8 @@ class ConstHeating(AgentBase):
     """
     rule: float  #: The constant control input / action
 
-    def __init__(self, env: FullRoomEnv, rule: float):
-        super().__init__(env)
+    def __init__(self, env: 'base_dynamics_env.DynEnv', rule: float):
+        super().__init__(env, name=f"Const_{rule}")
 
         self.rule = rule
 

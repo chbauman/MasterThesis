@@ -4,7 +4,7 @@ The `main` function runs all the necessary high-level
 functions. The complicated stuff is hidden in the other
 modules.
 """
-
+from base_dynamics_env import test_test_env
 from batchDDPG import bDDPG
 from battery_model import BatteryModel
 from cart_pole import CartPole
@@ -55,7 +55,7 @@ def main():
     test_layers()
     test_rnn_models()
     # test_dyn_model()
-    # test_test_env()
+    test_test_env()
     test_time_stuff()
 
     test_numpy_functions()

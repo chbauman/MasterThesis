@@ -8,7 +8,8 @@ from abc import ABC, abstractmethod
 
 import gym
 
-from base_agent import AgentBase
+import agents_heuristic
+import base_agent
 from base_dynamics_model import BaseDynamicsModel, TestModel, construct_test_ds
 from util import *
 from visualize import rl_plot_path, plot_env_evaluation
@@ -153,7 +154,7 @@ class DynEnv(ABC, gym.Env):
     def render(self, mode='human'):
         print("Rendering not implemented!")
 
-    def analyze_agent(self, agents: Union[List, 'AgentBase'], fitted: bool = True) -> None:
+    def analyze_agent(self, agents: Union[List, base_agent.AgentBase], fitted: bool = True) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:
@@ -211,7 +212,7 @@ class DynEnv(ABC, gym.Env):
 class TestDynEnv(DynEnv):
 
     def __init__(self, m: BaseDynamicsModel, max_eps: int = None):
-        super(TestDynEnv, self).__init__(m, max_eps)
+        super(TestDynEnv, self).__init__(m, "TestEnv", max_eps)
         d = m.data
         assert d.n_c == 1 and d.d == 4, "Dataset needs 4 series of which one is controllable!!"
 
@@ -223,7 +224,7 @@ class TestDynEnv(DynEnv):
         return False
 
 
-@TestDecoratorFactory("ModelEnvironment")
+# @TestDecoratorFactory("ModelEnvironment")
 def test_test_env():
     n = 201
     test_ds = construct_test_ds(n)
@@ -240,4 +241,7 @@ def test_test_env():
             init_state = test_env.reset()
             assert init_state.shape == (3,), "Prediction does not have the right shape!"
 
+    const_ag_1 = agents_heuristic.ConstHeating(test_env, 0.0)
+    const_ag_2 = agents_heuristic.ConstHeating(test_env, 1.0)
+    test_env.analyze_agent([const_ag_1, const_ag_2])
     print("Model environment test passed :)")
