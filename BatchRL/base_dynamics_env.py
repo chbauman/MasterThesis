@@ -166,10 +166,11 @@ class DynEnv(ABC, gym.Env):
             agents = [agents]
 
         # Define arrays to save trajectories
+        n_non_c_states = self.state_dim - self.act_dim
         n_agents = len(agents)
         action_sequences = np.empty((n_agents, self.n_ts_per_eps, self.act_dim), dtype=np.float32)
         action_sequences.fill(np.nan)
-        trajectories = np.empty((n_agents, self.n_ts_per_eps, self.state_dim), dtype=np.float32)
+        trajectories = np.empty((n_agents, self.n_ts_per_eps, n_non_c_states), dtype=np.float32)
         trajectories.fill(np.nan)
         rewards = np.empty((n_agents, self.n_ts_per_eps), dtype=np.float32)
         rewards.fill(np.nan)

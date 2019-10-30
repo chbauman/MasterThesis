@@ -575,14 +575,17 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
 
     for k in range(n_agents):
         # Plot actions
+        axs[0].set_title('Control Variables')
         for i in range(n_actions):
             axs[i].plot(x, actions[k, :, i])
 
         # Plot states
+        axs[n_actions].set_title('States')
         for i in range(n_feats):
             axs[n_actions + i].plot(x, states[k, :, i])
 
         # Plot reward
+        axs[-1].set_title('Rewards')
         axs[-1].plot(x, rewards[k, :])
 
     # Save
