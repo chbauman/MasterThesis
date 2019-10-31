@@ -34,6 +34,7 @@ class DynEnv(ABC, gym.Env):
 
     train_data: np.ndarray  #: The training data.
     train_indices: np.ndarray  #: The indices corresponding to `train_data`.
+    n_start_data: int  #: The number of possible initializations using the training data.
 
     day_ind: int = 0  #: The index of the day in `train_days`.
     use_noise: bool = True  #: Whether to add noise when simulating.
@@ -119,6 +120,7 @@ class DynEnv(ABC, gym.Env):
             The reward of having chosen that action and a bool
             determining if the episode is over.
         """
+        print(f"Action: {action}")
         self.hist[-1, -self.act_dim:] = action
         pred_sh = (1, -1, self.state_dim)
         curr_pred = self.m.predict(self.hist.reshape(pred_sh))[0]
@@ -235,7 +237,6 @@ class TestDynEnv(DynEnv):
         return False
 
 
-# @TestDecoratorFactory("ModelEnvironment")
 def test_test_env():
     n = 201
     test_ds = construct_test_ds(n)
@@ -243,6 +244,7 @@ def test_test_env():
     n_ts_per_episode = 10
     test_env = TestDynEnv(test_mod, 10)
 
+    # Test shapes
     for k in range(30):
         next_state, r, over, _ = test_env.step(0.0)
         assert next_state.shape == (3,), "Prediction does not have the right shape!"
@@ -252,7 +254,23 @@ def test_test_env():
             init_state = test_env.reset()
             assert init_state.shape == (3,), "Prediction does not have the right shape!"
 
+    # Test agent analysis
     const_ag_1 = agents_heuristic.ConstHeating(test_env, 0.0)
     const_ag_2 = agents_heuristic.ConstHeating(test_env, 1.0)
     test_env.analyze_agent([const_ag_1, const_ag_2])
+
+    # Test deterministic reset
+    const_control = 0.0
+    max_ind = test_env.n_start_data
+    rand_int = np.random.randint(max_ind)
+    test_env.reset(start_ind=rand_int, use_noise=False)
+    first_out = test_env.step(const_control)
+    for k in range(5):
+        test_env.step(const_control)
+    test_env.reset(start_ind=rand_int, use_noise=False)
+    sec_first_out = test_env.step(const_control)
+    assert np.allclose(first_out[0], sec_first_out[0]), "State output not correct!"
+    assert first_out[1] != sec_first_out[1], "Rewards not correct!"
+    assert first_out[2] != sec_first_out[2], "Episode termination not correct!"
+
     print("Model environment test passed :)")
