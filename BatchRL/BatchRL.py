@@ -127,8 +127,8 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
     base_params = {
         'name': name,
         'data': ds,
-        'n_iter_max': 10,
-        'hidden_sizes': (10, 10),
+        'n_iter_max': 40,
+        'hidden_sizes': (50, 50),
         'input_noise_std': 0.001,
         'lr': 0.01,
         'residual_learning': True,
@@ -221,7 +221,7 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    run_tests()
+    # run_tests()
 
     # Get dataset
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
