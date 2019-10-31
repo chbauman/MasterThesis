@@ -147,11 +147,11 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
         # Full model: Predicting all series except for the controllable and the time
         # series. Weather predictions might depend on apartment data.
         return RNNDynamicModel(**base_params)
-    elif name == "WeatherFromWeather_RNN":
-        # The weather model, predicting only the weather, i.e. outside temperature and
+    elif name == "WeatherFromWeatherTime_RNN":
+        # The weather model, predicting only the weather and the time, i.e. outside temperature and
         # irradiance from the past values and the time variable.
         return RNNDynamicModel(out_inds=np.array([0, 1], dtype=np.int32),
-                               in_inds=np.array([0, 1], dtype=np.int32),
+                               in_inds=np.array([0, 1, 6, 7], dtype=np.int32),
                                **base_params_no_inds)
     elif name == "Apartment_RNN":
         # The apartment model, predicting only the apartment variables, i.e. water
@@ -184,7 +184,7 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
         # The full state model combining the weather only model, the
         # apartment only model and the exact time model to predict all
         # variables except for the control variable.
-        mod_weather = get_model("WeatherFromWeather_RNN", ds, rnn_consts=rnn_consts)
+        mod_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts)
         mod_apt = get_model("Apartment_RNN", ds, rnn_consts=rnn_consts)
         model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts)
         return CompositeModel(ds, [mod_weather, mod_apt, model_time_exact],
@@ -221,7 +221,7 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    # run_tests()
+    run_tests()
 
     # Get dataset
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
@@ -231,11 +231,12 @@ def main() -> None:
         # "Time_Exact",
         # "WaterTemp_Const",
         # "Full_RNN",
-        # "WeatherFromWeather_RNN",
-        # "Apartment_RNN",
+        "WeatherFromWeatherTime_RNN",
+        "Apartment_RNN",
         # "RoomTemp_RNN",
-        "FullState_Comp_WeatherAptTime",
-        "FullState_Comp_FullTime",
+        # "Full_Comp_WeatherApt",
+        # "FullState_Comp_WeatherAptTime",
+        # "FullState_Comp_FullTime",
     ]
     all_mods = {nm: get_model(nm, ds, rnn_consts) for nm in needed}
 
@@ -246,12 +247,13 @@ def main() -> None:
     for name, m_to_use in all_mods.items():
         m_to_use.fit()
         print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
-        # m_to_use.analyze()
+        m_to_use.analyze()
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
+    return
     # Full test model
-    curr_tests(all_mods['FullState_Comp_WeatherAptTime'])
+    curr_tests(all_mods['FullState_Comp_FullTime'])
 
     # Train and analyze the battery model
     # run_battery()

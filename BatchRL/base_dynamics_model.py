@@ -94,7 +94,7 @@ class BaseDynamicsModel(ABC):
         if verbose is not None:
             self.verbose = verbose
 
-        # Indices
+        # Output indices
         out_inds_str = ""
         if out_indices is None:
             out_indices = ds.from_prepared(np.arange(ds.d - ds.n_c))
@@ -103,7 +103,11 @@ class BaseDynamicsModel(ABC):
         self.out_inds = out_indices
         self.p_out_inds = ds.to_prepared(out_indices)
         ds.check_inds(out_indices, True)
+        for k in ds.c_inds:
+            if k in out_indices:
+                raise IndexError("You cannot predict control indices!")
 
+        # Input indices
         in_inds_str = ""
         if in_indices is None:
             in_indices = ds.from_prepared(np.arange(ds.d))
@@ -346,7 +350,8 @@ class BaseDynamicsModel(ABC):
         # Predict continuously
         for k in range(n):
             # Predict
-            curr_pred = self.predict(np.copy(curr_in_data))
+            rel_in_dat, _ = self.get_rel_part(np.copy(curr_in_data))
+            curr_pred = self.predict(rel_in_dat)
             if disturb_pred:
                 curr_pred += self.disturb()
             if return_all_predictions:
@@ -698,6 +703,24 @@ class BaseDynamicsModel(ABC):
         tot_s = tot_size(one_h_pred.shape)
         return float(np.sum(residuals * residuals)) / tot_s
 
+    def get_rel_part(self, in_dat: np.ndarray,
+                     out_dat: np.ndarray = None) -> Tuple[np.ndarray, np.ndarray]:
+        """Returns the relevant data series from input and output data.
+
+        Args:
+            in_dat: Full input data.
+            out_dat: Full output data.
+
+        Returns:
+            Reduced input and output data.
+        """
+        rel_in_dat = in_dat[..., self.p_in_indices]
+        if out_dat is not None:
+            rel_out_dat = out_dat[..., self.p_out_inds]
+        else:
+            rel_out_dat = None
+        return rel_in_dat, rel_out_dat
+
     def get_residuals(self, data_str: str):
         """Computes the residuals using the fitted model.
 
@@ -708,8 +731,7 @@ class BaseDynamicsModel(ABC):
             Residuals.
         """
         input_data, output_data, n = self.data.get_split(data_str)
-        rel_in_dat = input_data[..., self.p_in_indices]
-        rel_out_dat = output_data[..., self.p_out_inds]
+        rel_in_dat, rel_out_dat = self.get_rel_part(input_data, output_data)
         residuals = self.predict(rel_in_dat) - rel_out_dat
         return residuals
 
