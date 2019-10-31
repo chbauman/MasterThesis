@@ -708,8 +708,9 @@ class BaseDynamicsModel(ABC):
             Residuals.
         """
         input_data, output_data, n = self.data.get_split(data_str)
-        prep_inds = self.data.to_prepared(self.out_inds)
-        residuals = self.predict(input_data) - output_data[:, prep_inds]
+        rel_in_dat = input_data[..., self.p_in_indices]
+        rel_out_dat = output_data[..., self.p_out_inds]
+        residuals = self.predict(rel_in_dat) - rel_out_dat
         return residuals
 
     def deb(self, *args) -> None:
