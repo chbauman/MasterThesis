@@ -7,53 +7,26 @@ modules.
 from agents_heuristic import ConstHeating
 from base_dynamics_env import test_test_env
 from base_dynamics_model import test_dyn_model
-from batchDDPG import bDDPG
 from battery_model import BatteryModel
-from cart_pole import CartPole
 from data import get_battery_data, \
-    Dataset, test_dataset_artificially, SeriesConstraint
+    Dataset, test_dataset_artificially, SeriesConstraint, generate_room_datasets, get_DFAB_heating_data
 from dm_Composite import CompositeModel
 from dm_Const import ConstModel
-from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
+from dm_LSTM import RNNDynamicModel, test_rnn_models
 from dm_Time import SCTimeModel
 from dm_TimePeriodic import Periodic1DayModel
 from dynamics_envs import FullRoomEnv
 from keras_layers import test_layers
 from keras_rl_wrap import DQNRoomHeatingAgent
-from mount_car_cont import MountCarCont
-from pendulum import Pendulum
-from simple_battery_test import SimpleBatteryTest
 from util import *
 
 
-def simple_battery_FQI():
-    sbt = SimpleBatteryTest(bidirectional=True)
-    sbt = CartPole()
-    sbt = MountCarCont()
-    sbt = Pendulum()
+def run_tests() -> None:
+    """Runs a few tests.
 
-    state_dim = sbt.state_dim
-    nb_actions = sbt.nb_actions
-
-    [s_t, a_t, r_t, s_tp1] = sbt.get_transition_tuples(n_tuples=100000)
-
-    print((np.c_[s_t, a_t, r_t, s_tp1])[:50])
-
-    # fqi = NFQI(state_dim, nb_actions, stoch_policy_imp = False, use_diff_target_net=False,
-    # param_updata_fac=0.5, max_iters = 20, lr = 0.001)
-    fqi = bDDPG(state_dim, nb_actions)
-    # fqi = LSPI(state_dim, nb_actions, stoch_policy_imp=True)
-
-    fqi.fit(s_t, a_t, r_t, s_tp1)
-
-    sbt.eval_policy(fqi.get_policy())
-
-
-def main():
-    # get_DFAB_heating_data()
-    # generate_room_datasets()
-
-    # Run tests
+    Raises:
+        AssertionError: If a test fails.
+    """
     test_layers()
     test_rnn_models()
     test_dyn_model()
@@ -62,31 +35,68 @@ def main():
     test_numpy_functions()
     # test_rest_client()
     test_python_stuff()
-    # # get_data_test()
-    # # test_align()
+    # get_data_test()
+    # test_align()
     test_dataset_artificially()
 
-    # Dataset
-    name_ds = 'Model_Room43'
-    ds = Dataset.loadDataset(name_ds)
 
-    # Change seq_len
-    # ds.seq_len = 7 * 96
-    # ds.name = "Room_" + str(ds.seq_len)
+def choose_dataset(base_ds_name: str = "Model_Room43", seq_len: int = 20) -> Dataset:
+    """Let's you choose a dataset.
 
+    Reads a room dataset, if it is not found, it is generated.
+    Then the sequence length is set, the time variable is added and
+    it is standardized and split into parts for training, validation
+    and testing. Finally it is returned.
+
+    Args:
+        base_ds_name: The name of the base dataset, must be of the form "Model_Room<nr>",
+            with nr = 43 or 53.
+        seq_len: The sequence length to use for the RNN training.
+
+    Returns:
+        The prepared dataset.
+    """
+    # Check `base_ds_name`.
+    if base_ds_name[:9] != "Model_Room" or base_ds_name[-2:] not in ["43", "53"]:
+        raise ValueError(f"Dataset: {base_ds_name} does not exist!")
+
+    # Load dataset, generate if not found.
+    try:
+        ds = Dataset.loadDataset(base_ds_name)
+    except FileNotFoundError:
+        get_DFAB_heating_data()
+        generate_room_datasets()
+        ds = Dataset.loadDataset(base_ds_name)
+
+    # Set sequence length
+    ds.seq_len = seq_len
+    ds.name = base_ds_name[-6:] + "_" + str(ds.seq_len)
+
+    # Add time variables, standardize and prepare different parts of dataset.
     ds = ds.add_time()
     ds.standardize()
     ds.split_data()
 
-    # Time variable prediction
+    # Return
+    return ds
+
+
+def main():
+    """The main function, here all the important, high-level stuff happens.
+
+
+    """
+    # Run tests.
+    run_tests()
+
+    # Get dataset
+    ds = choose_dataset('Model_Room43', seq_len=20)
+
+    # Time model: Predicts the deterministic time variable
     time_model_ds = SCTimeModel(ds, 6)
-    # time_model_ds.analyze()
-    # time_model_ds.analyze_disturbed()
 
     # Constant model for water temperatures
-    mod_naive = ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
-    # mod_naive.analyze()
-    # mod_naive.analyze_disturbed()
+    mod_const_water = ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
 
     # Room temperature model
     rnn_consts = [
@@ -100,6 +110,8 @@ def main():
         SeriesConstraint('exact'),
     ]
     ds.transform_c_list(rnn_consts)
+
+    # Basic parameter set
     base_params = {'input_noise_std': 0.001,
                    'lr': 0.01,
                    'residual_learning': True,
@@ -107,48 +119,67 @@ def main():
                    'out_inds': np.array([0, 1, 2, 3, 5], dtype=np.int32),
                    }
     base_params_no_inds = {k: base_params[k] for k in base_params if k != 'out_inds'}
-    mod_test = RNNDynamicModel(ds,
-                               name="Test",
-                               hidden_sizes=(10, 10),
-                               n_iter_max=5,
+
+    # Different models
+
+    # Full model: Predicting all series except for the controllable and the time
+    # series. Weather predictions might depend on apartment data.
+    mod_full = RNNDynamicModel(ds,
+                               name="FullModel",
+                               hidden_sizes=(50, 50),
+                               n_iter_max=10,
                                constraint_list=rnn_consts,
                                **base_params)
-    mod = RNNDynamicModel(ds,
-                          hidden_sizes=(50, 50),
-                          n_iter_max=10,
-                          constraint_list=rnn_consts,
-                          **base_params)
-    mod_no_consts = RNNDynamicModel(ds,
-                                    name="RNN_No_Consts",
-                                    hidden_sizes=(50, 50),
-                                    n_iter_max=10,
-                                    **base_params)
-    mod_const_wt = RNNDynamicModel(ds,
-                                   name="RNN_ConstWT",
-                                   hidden_sizes=(50, 50),
-                                   n_iter_max=10,
-                                   out_inds=np.array([0, 1, 5], dtype=np.int32),
-                                   **base_params_no_inds)
-    mod_overshoot = RNNDynamicOvershootModel(n_overshoot=5,
-                                             data=ds,
-                                             name="Overshoot",
-                                             hidden_sizes=(50, 50),
-                                             n_iter_max=10,
-                                             **base_params)
-    mod_overshoot_dec = RNNDynamicOvershootModel(n_overshoot=5,
-                                                 decay_rate=0.8,
-                                                 data=ds,
-                                                 name="Overshoot_Decay0.8",
-                                                 hidden_sizes=(50, 50),
-                                                 n_iter_max=10,
-                                                 **base_params)
+
+    # The weather model, predicting only the weather, i.e. outside temperature and
+    # irradiance from the past values and the time variable.
+    mod_weather = RNNDynamicModel(ds,
+                                  name="WeatherOnly",
+                                  hidden_sizes=(10, 10),
+                                  n_iter_max=10,
+                                  constraint_list=rnn_consts,
+                                  out_inds=np.array([0, 1], dtype=np.int32),
+                                  in_inds=np.array([0, 1], dtype=np.int32),
+                                  **base_params_no_inds)
+
+    # The apartment model, predicting only the apartment variables, i.e. water
+    # temperatures and room temperature based on all input variables including the weather.
+    mod_apt = RNNDynamicModel(ds,
+                              name="ApartmentOnly",
+                              hidden_sizes=(10, 10),
+                              n_iter_max=10,
+                              constraint_list=rnn_consts,
+                              out_inds=np.array([2, 3, 5], dtype=np.int32),
+                              **base_params_no_inds)
+    # The full model combining weather and apartment model.
+    mod_weather_and_apt = CompositeModel(ds, [mod_weather, mod_apt, time_model_ds], new_name="FullWeatherAndApt")
+
+    # mod_const_wt = RNNDynamicModel(ds,
+    #                                name="RNN_ConstWT",
+    #                                hidden_sizes=(50, 50),
+    #                                n_iter_max=10,
+    #                                out_inds=np.array([0, 1, 5], dtype=np.int32),
+    #                                **base_params_no_inds)
+    # mod_overshoot = RNNDynamicOvershootModel(n_overshoot=5,
+    #                                          data=ds,
+    #                                          name="Overshoot",
+    #                                          hidden_sizes=(50, 50),
+    #                                          n_iter_max=10,
+    #                                          **base_params)
+    # mod_overshoot_dec = RNNDynamicOvershootModel(n_overshoot=5,
+    #                                              decay_rate=0.8,
+    #                                              data=ds,
+    #                                              name="Overshoot_Decay0.8",
+    #                                              hidden_sizes=(50, 50),
+    #                                              n_iter_max=10,
+    #                                              **base_params)
     optimize = False
     if optimize:
         opt_params = mod.optimize(5)
         # print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
 
-    mods = [mod_overshoot_dec, mod_overshoot, mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
+    mods = []  # mod_overshoot_dec, mod_overshoot, mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
     for m_to_use in mods:
         continue
         m_to_use.fit()
@@ -162,8 +193,8 @@ def main():
     comp_model.fit()
     env = FullRoomEnv(comp_model, disturb_fac=0.3)
     const_ag_1 = ConstHeating(env, 0.0)
-    const_ag_2 = ConstHeating(env, 1.0)
-    const_ag_3 = ConstHeating(env, 1.0)
+    const_ag_2 = ConstHeating(env, env.nb_actions - 1)
+    const_ag_3 = ConstHeating(env, env.nb_actions - 1)
     env.analyze_agent([const_ag_1, const_ag_2, const_ag_3])
     return
 
@@ -199,8 +230,6 @@ def main():
     bat_mod_naive = ConstModel(bat_ds)
     bat_mod_naive.analyze()
     return
-
-    # simple_battery_FQI()
 
 
 if __name__ == '__main__':

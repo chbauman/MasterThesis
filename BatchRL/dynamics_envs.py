@@ -30,13 +30,16 @@ class FullRoomEnv(DynEnv):
         assert d.d == 8 and d.n_c == 1, "Not the correct number of series in dataset!"
 
     def _to_continuous(self, action):
+        """Converts discrete actions to the right range."""
+        if not 0 <= action <= self.nb_actions:
+            raise ValueError(f"Action: {action} not in correct range!")
         zero_one_action = action / (self.nb_actions - 1)
         if self.scaling is None:
             return zero_one_action
         return rem_mean_and_std(zero_one_action, self.scaling[self.c_ind])
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
-
+        print(f"Full room step, action: {action}")
         return super(FullRoomEnv, self).step(self._to_continuous(action))
 
     def get_r_temp(self, curr_pred: np.ndarray) -> float:
