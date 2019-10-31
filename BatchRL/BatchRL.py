@@ -128,6 +128,9 @@ def get_rnn_mod(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
     if name == "Time_Exact":
         # Time model: Predicts the deterministic time variable exactly.
         return SCTimeModel(ds, 6)
+    elif name == "FullState_Naive":
+        # The naive model that predicts all series as the last seen input.
+        return ConstModel(ds)
     elif name == "Full_RNN":
         # Full model: Predicting all series except for the controllable and the time
         # series. Weather predictions might depend on apartment data.
@@ -198,29 +201,31 @@ def main() -> None:
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
     # Get the needed models
-    model_time_exact = get_rnn_mod("Time_Exact", ds, rnn_consts)
-    mod_const_water = get_rnn_mod("WaterTemp_Const", ds)
-    mod_full = get_rnn_mod("Full_RNN", ds, rnn_consts)
-    mod_weather = get_rnn_mod("WeatherFromWeather_RNN", ds, rnn_consts)
-    mod_apt = get_rnn_mod("Apartment_RNN", ds, rnn_consts)
-    mod_rt_only = get_rnn_mod("RoomTemp_RNN", ds, rnn_consts)
-    mod_weather_and_apt = get_rnn_mod("FullState_Comp_WeatherAptTime", ds, rnn_consts)
-    comp_model = get_rnn_mod("FullState_Comp_FullTime", ds, rnn_consts)
+    needed = [
+        # "Time_Exact",
+        # "WaterTemp_Const",
+        # "Full_RNN",
+        # "WeatherFromWeather_RNN",
+        # "Apartment_RNN",
+        # "RoomTemp_RNN",
+        # "FullState_Comp_WeatherAptTime",
+        "FullState_Comp_FullTime",
+    ]
+    all_mods = {nm: get_rnn_mod(nm, ds, rnn_consts) for nm in needed}
 
     # Optimize model
     # optimize_model(mod_full)
 
-    mods = []
-    for m_to_use in mods:
-        continue
+    # Fit or load all initialized models
+    for m_to_use in all_mods:
         m_to_use.fit()
-        print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))
+        print("Comparable performance: {}".format(m_to_use.hyper_objective()))
         # m_to_use.analyze()
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
     # Full test model
-    comp_model.fit()
+    comp_model = all_mods['FullState_Comp_FullTime']
     env = FullRoomEnv(comp_model, disturb_fac=0.3)
     const_ag_1 = ConstHeating(env, 0.0)
     const_ag_2 = ConstHeating(env, env.nb_actions - 1)
@@ -231,9 +236,6 @@ def main() -> None:
     dqn_agent = DQNRoomHeatingAgent(env)
     dqn_agent.fit()
     return
-
-    mod_naive = ConstModel(ds)
-    mod_naive.analyze()
 
     # Battery data
     bat_name = "Battery"
