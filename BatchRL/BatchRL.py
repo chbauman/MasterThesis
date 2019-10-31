@@ -17,7 +17,6 @@ from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Time import SCTimeModel
 from dynamics_envs import FullRoomEnv
 from keras_layers import test_layers
-from keras_rl_wrap import DQNRoomHeatingAgent
 from util import *
 
 
@@ -235,7 +234,7 @@ def main() -> None:
         # "WeatherFromWeather_RNN",
         # "Apartment_RNN",
         # "RoomTemp_RNN",
-        # "FullState_Comp_WeatherAptTime",
+        "FullState_Comp_WeatherAptTime",
         "FullState_Comp_FullTime",
     ]
     all_mods = {nm: get_model(nm, ds, rnn_consts) for nm in needed}
@@ -244,15 +243,15 @@ def main() -> None:
     # optimize_model(all_mods[needed[0]])
 
     # Fit or load all initialized models
-    for m_to_use in all_mods:
+    for name, m_to_use in all_mods.items():
         m_to_use.fit()
-        print("Comparable performance: {}".format(m_to_use.hyper_objective()))
+        print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
         # m_to_use.analyze()
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
     # Full test model
-    curr_tests(all_mods['FullState_Comp_FullTime'])
+    curr_tests(all_mods['FullState_Comp_WeatherAptTime'])
 
     # Train and analyze the battery model
     # run_battery()

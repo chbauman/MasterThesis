@@ -168,7 +168,7 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         # Store data
         self.train_seq_len = self.data.seq_len - 1
-        self.n_feats = self.data.d
+        self.n_feats = len(self.in_indices)
 
         # Store parameters
         self.constraint_list = constraint_list
