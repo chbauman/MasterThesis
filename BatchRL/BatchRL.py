@@ -7,12 +7,13 @@ modules.
 from agents_heuristic import ConstHeating
 from base_dynamics_env import test_test_env
 from base_dynamics_model import test_dyn_model
+from base_hyperopt import HyperOptimizableModel
 from battery_model import BatteryModel
 from data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
-    generate_room_datasets, get_DFAB_heating_data
+    generate_room_datasets, get_DFAB_heating_data, DatasetConstraints
 from dm_Composite import CompositeModel
 from dm_Const import ConstModel
-from dm_LSTM import RNNDynamicModel, test_rnn_models
+from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Time import SCTimeModel
 from dm_TimePeriodic import Periodic1DayModel
 from dynamics_envs import FullRoomEnv
@@ -41,7 +42,7 @@ def run_tests() -> None:
 
 
 def choose_dataset(base_ds_name: str = "Model_Room43",
-                   seq_len: int = 20) -> Tuple[Dataset, List[SeriesConstraint]]:
+                   seq_len: int = 20) -> Tuple[Dataset, DatasetConstraints]:
     """Let's you choose a dataset.
 
     Reads a room dataset, if it is not found, it is generated.
@@ -55,7 +56,7 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
         seq_len: The sequence length to use for the RNN training.
 
     Returns:
-        The prepared dataset and the corresponding constraints list.
+        The prepared dataset and the corresponding list of constraints.
     """
     # Check `base_ds_name`.
     if base_ds_name[:10] != "Model_Room" or base_ds_name[-2:] not in ["43", "53"]:
@@ -95,6 +96,96 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
     return ds, rnn_consts
 
 
+def optimize_model(mod: HyperOptimizableModel) -> None:
+    """Executes the hyperparameter optimization of a model.
+
+    Uses reduced number of model trainings if not on Euler.
+
+    Args:
+        mod: Model whose hyperparameters are to be optimized.
+    """
+    n_opt = 100 if EULER else 3
+    opt_params = mod.optimize(n_opt)
+    # print("All tried parameter combinations: {}.".format(mod.param_list))
+    print("Optimal parameters: {}.".format(opt_params))
+
+
+def get_rnn_mod(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
+    # Basic parameter set
+    base_params = {
+        'name': name,
+        'data': ds,
+        'n_iter_max': 10,
+        'hidden_sizes': (10, 10),
+        'input_noise_std': 0.001,
+        'lr': 0.01,
+        'residual_learning': True,
+        'constraint_list': rnn_consts,
+        'weight_vec': None,
+        'out_inds': np.array([0, 1, 2, 3, 5], dtype=np.int32),
+    }
+    base_params_no_inds = {k: base_params[k] for k in base_params if k != 'out_inds'}
+    if name == "Time_Exact":
+        # Time model: Predicts the deterministic time variable exactly.
+        return SCTimeModel(ds, 6)
+    elif name == "Full_RNN":
+        # Full model: Predicting all series except for the controllable and the time
+        # series. Weather predictions might depend on apartment data.
+        return RNNDynamicModel(**base_params)
+    elif name == "WeatherFromWeather_RNN":
+        # The weather model, predicting only the weather, i.e. outside temperature and
+        # irradiance from the past values and the time variable.
+        return RNNDynamicModel(out_inds=np.array([0, 1], dtype=np.int32),
+                               in_inds=np.array([0, 1], dtype=np.int32),
+                               **base_params_no_inds)
+    elif name == "Apartment_RNN":
+        # The apartment model, predicting only the apartment variables, i.e. water
+        # temperatures and room temperature based on all input variables including the weather.
+        return RNNDynamicModel(out_inds=np.array([2, 3, 5], dtype=np.int32),
+                               **base_params_no_inds)
+    elif name == "RoomTemp_RNN":
+        # The temperature only model, predicting only the room temperature from
+        # all the variables in the dataset. Can e.g. be used with a constant water
+        # temperature model.
+        return RNNDynamicModel(out_inds=np.array([5], dtype=np.int32),
+                               **base_params_no_inds)
+    elif name == "WaterTemp_Const":
+        # Constant model for water temperatures
+        return ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
+    elif name == "Full_RNNOvershootDecay":
+        # Similar to the model "FullModel", but trained with overshoot.
+        return RNNDynamicOvershootModel(n_overshoot=5,
+                                        decay_rate=0.8,
+                                        **base_params)
+    elif name == "Full_Comp_WeatherApt":
+        # The full model combining the weather only model and the
+        # apartment only model to predict all
+        # variables except for the control and the time variables.
+        mod_weather = get_rnn_mod("WeatherFromWeather_RNN", ds, rnn_consts=rnn_consts)
+        mod_apt = get_rnn_mod("Apartment_RNN", ds, rnn_consts=rnn_consts)
+        return CompositeModel(ds, [mod_weather, mod_apt],
+                              new_name="Full_Comp_WeatherApt")
+    elif name == "FullState_Comp_WeatherAptTime":
+        # The full state model combining the weather only model, the
+        # apartment only model and the exact time model to predict all
+        # variables except for the control variable.
+        mod_weather = get_rnn_mod("WeatherFromWeather_RNN", ds, rnn_consts=rnn_consts)
+        mod_apt = get_rnn_mod("Apartment_RNN", ds, rnn_consts=rnn_consts)
+        model_time_exact = get_rnn_mod("Time_Exact", ds, rnn_consts=rnn_consts)
+        return CompositeModel(ds, [mod_weather, mod_apt, model_time_exact],
+                              new_name="FullState_Comp_WeatherAptTime")
+    elif name == "FullState_Comp_FullTime":
+        # The full state model combining the weather only model, the
+        # apartment only model and the exact time model to predict all
+        # variables except for the control variable.
+        mod_full = get_rnn_mod("Full_RNN", ds, rnn_consts=rnn_consts)
+        model_time_exact = get_rnn_mod("Time_Exact", ds, rnn_consts=rnn_consts)
+        return CompositeModel(ds, [mod_full, model_time_exact],
+                              new_name="FullState_Comp_FullTime")
+    else:
+        raise ValueError("No such model defined!")
+
+
 def main() -> None:
     """The main function, here all the important, high-level stuff happens.
 
@@ -106,81 +197,20 @@ def main() -> None:
     # Get dataset
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
-    # Time model: Predicts the deterministic time variable
-    model_time_exact = SCTimeModel(ds, 6)
+    # Get the needed models
+    model_time_exact = get_rnn_mod("Time_Exact", ds, rnn_consts)
+    mod_const_water = get_rnn_mod("WaterTemp_Const", ds)
+    mod_full = get_rnn_mod("Full_RNN", ds, rnn_consts)
+    mod_weather = get_rnn_mod("WeatherFromWeather_RNN", ds, rnn_consts)
+    mod_apt = get_rnn_mod("Apartment_RNN", ds, rnn_consts)
+    mod_rt_only = get_rnn_mod("RoomTemp_RNN", ds, rnn_consts)
+    mod_weather_and_apt = get_rnn_mod("FullState_Comp_WeatherAptTime", ds, rnn_consts)
+    comp_model = get_rnn_mod("FullState_Comp_FullTime", ds, rnn_consts)
 
-    # Constant model for water temperatures
-    mod_const_water = ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
+    # Optimize model
+    # optimize_model(mod_full)
 
-    # Basic parameter set
-    base_params = {'input_noise_std': 0.001,
-                   'lr': 0.01,
-                   'residual_learning': True,
-                   'weight_vec': None,
-                   'out_inds': np.array([0, 1, 2, 3, 5], dtype=np.int32),
-                   }
-    base_params_no_inds = {k: base_params[k] for k in base_params if k != 'out_inds'}
-
-    # Different models
-
-    # Full model: Predicting all series except for the controllable and the time
-    # series. Weather predictions might depend on apartment data.
-    mod_full = RNNDynamicModel(ds,
-                               name="FullModel",
-                               hidden_sizes=(50, 50),
-                               n_iter_max=10,
-                               constraint_list=rnn_consts,
-                               **base_params)
-
-    # The weather model, predicting only the weather, i.e. outside temperature and
-    # irradiance from the past values and the time variable.
-    mod_weather = RNNDynamicModel(ds,
-                                  name="WeatherFromWeatherOnly",
-                                  hidden_sizes=(10, 10),
-                                  n_iter_max=10,
-                                  constraint_list=rnn_consts,
-                                  out_inds=np.array([0, 1], dtype=np.int32),
-                                  in_inds=np.array([0, 1], dtype=np.int32),
-                                  **base_params_no_inds)
-
-    # The apartment model, predicting only the apartment variables, i.e. water
-    # temperatures and room temperature based on all input variables including the weather.
-    mod_apt = RNNDynamicModel(ds,
-                              name="ApartmentOnly",
-                              hidden_sizes=(10, 10),
-                              n_iter_max=10,
-                              constraint_list=rnn_consts,
-                              out_inds=np.array([2, 3, 5], dtype=np.int32),
-                              **base_params_no_inds)
-    # The full model combining weather and apartment model.
-    mod_weather_and_apt = CompositeModel(ds, [mod_weather, mod_apt, model_time_exact], new_name="FullWeatherAndApt")
-
-    # mod_const_wt = RNNDynamicModel(ds,
-    #                                name="RoomTempOnly",
-    #                                hidden_sizes=(50, 50),
-    #                                n_iter_max=10,
-    #                                out_inds=np.array([5], dtype=np.int32),
-    #                                **base_params_no_inds)
-    # mod_overshoot = RNNDynamicOvershootModel(n_overshoot=5,
-    #                                          data=ds,
-    #                                          name="Overshoot",
-    #                                          hidden_sizes=(50, 50),
-    #                                          n_iter_max=10,
-    #                                          **base_params)
-    # mod_overshoot_dec = RNNDynamicOvershootModel(n_overshoot=5,
-    #                                              decay_rate=0.8,
-    #                                              data=ds,
-    #                                              name="Overshoot_Decay0.8",
-    #                                              hidden_sizes=(50, 50),
-    #                                              n_iter_max=10,
-    #                                              **base_params)
-    optimize = False
-    if optimize:
-        opt_params = mod_full.optimize(5)
-        # print("All tried parameter combinations: {}.".format(mod.param_list))
-        print("Optimal parameters: {}.".format(opt_params))
-
-    mods = []  # mod_overshoot_dec, mod_overshoot, mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
+    mods = []
     for m_to_use in mods:
         continue
         m_to_use.fit()
@@ -190,7 +220,6 @@ def main() -> None:
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
     # Full test model
-    comp_model = CompositeModel(ds, [mod_test, time_model_ds], new_name="CompositeTimeRNNFull")
     comp_model.fit()
     env = FullRoomEnv(comp_model, disturb_fac=0.3)
     const_ag_1 = ConstHeating(env, 0.0)
@@ -203,18 +232,6 @@ def main() -> None:
     dqn_agent.fit()
     return
 
-    # Exogenous variable model
-    exo_inds = np.array([0, 1, 2], dtype=np.int32)
-    pre_mod = Periodic1DayModel(ds, exo_inds, alpha=0.1)
-    pre_mod.analyze_6_days()
-
-    comp_model.analyze_6_days()
-
-    # mod.fit()
-    # mod.model_disturbance()
-    # mod.disturb()
-    # mod.analyze()
-    # #
     mod_naive = ConstModel(ds)
     mod_naive.analyze()
 

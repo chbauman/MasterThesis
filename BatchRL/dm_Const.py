@@ -4,9 +4,7 @@ from data import Dataset
 
 
 class ConstModel(BaseDynamicsModel):
-    """
-    The naive model that predicts the last
-    input seen.
+    """The naive model that predicts the last input seen.
     """
 
     def __init__(self, dataset: Dataset, pred_inds: np.ndarray = None):
@@ -24,11 +22,7 @@ class ConstModel(BaseDynamicsModel):
         self.nc = dataset.n_c
 
     def fit(self) -> None:
-        """
-        No need to fit anything.
-
-        :return: None
-        """
+        """No need to fit anything."""
         pass
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:

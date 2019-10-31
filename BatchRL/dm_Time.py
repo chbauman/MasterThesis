@@ -1,13 +1,13 @@
 from base_dynamics_model import BaseDynamicsModel
-from util import *
-from visualize import model_plot_path
 from data import Dataset
+from util import *
 
 
 class SCTimeModel(BaseDynamicsModel):
-    """
-    The naive model that predicts the last
-    input seen.
+    """The time prediction model.
+
+    Predicts the time exactly, up to numerical round-off
+    based on only the last time.
     """
 
     def __init__(self, dataset: Dataset, time_ind: int = None):
@@ -16,8 +16,9 @@ class SCTimeModel(BaseDynamicsModel):
         It predicts the next values given only the previous
         values of the sine and the cosine of the time.
 
-        :param dataset: Dataset containing two time series, sin(time) and cos(time).
-        :param time_ind: Specifying which column holds the sin(t) series.
+        Args:
+            dataset: Dataset containing two time series, sin(time) and cos(time).
+            time_ind: Specifying which column holds the sin(t) series.
                         The cos(t) series is assumed to be in column time_ind + 1.
         """
         # Compute indices and name

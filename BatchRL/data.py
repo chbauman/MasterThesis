@@ -1295,6 +1295,9 @@ class SeriesConstraint:
             return self.extra_dat
 
 
+# Define type
+DatasetConstraints = List[SeriesConstraint]
+
 #: Empty index set
 no_inds = np.array([], dtype=np.int32)
 
