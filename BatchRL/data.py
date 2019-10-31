@@ -1748,6 +1748,8 @@ class Dataset:
         # Do the actual scaling
         m = np.nanmean(self.data[:, col_ind])
         std = np.nanstd(self.data[:, col_ind])
+        if std < 1e-10:
+            raise ValueError(f"Std of series {col_ind} is almost zero!")
         self.data[:, col_ind] = (self.data[:, col_ind] - m) / std
         self.is_scaled[col_ind] = True
         self.scaling[col_ind] = np.array([m, std])
