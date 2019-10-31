@@ -177,7 +177,7 @@ class DynEnv(ABC, gym.Env):
         rewards = np.empty((n_agents, self.n_ts_per_eps), dtype=np.float32)
         rewards.fill(np.nan)
 
-        # Choose random start for all agents
+        # Choose same random start for all agents
         start_ind = np.random.randint(self.n_start_data)
 
         for a_id, a in enumerate(agents):
@@ -202,6 +202,9 @@ class DynEnv(ABC, gym.Env):
                 trajectories[a_id, count, :] = curr_state
                 rewards[a_id, count] = rew
                 count += 1
+
+        # Scale the data to the right values
+        trajectories = self.m.rescale_output(trajectories, out_put=True)
 
         # Plot all the things
         analysis_plot_path = self.get_plt_path("AgentAnalysis")
