@@ -8,8 +8,8 @@ from agents_heuristic import ConstHeating
 from base_dynamics_env import test_test_env
 from base_dynamics_model import test_dyn_model
 from battery_model import BatteryModel
-from data import get_battery_data, \
-    Dataset, test_dataset_artificially, SeriesConstraint, generate_room_datasets, get_DFAB_heating_data
+from data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
+    generate_room_datasets, get_DFAB_heating_data
 from dm_Composite import CompositeModel
 from dm_Const import ConstModel
 from dm_LSTM import RNNDynamicModel, test_rnn_models
@@ -40,13 +40,14 @@ def run_tests() -> None:
     test_dataset_artificially()
 
 
-def choose_dataset(base_ds_name: str = "Model_Room43", seq_len: int = 20) -> Dataset:
+def choose_dataset(base_ds_name: str = "Model_Room43",
+                   seq_len: int = 20) -> Tuple[Dataset, List[SeriesConstraint]]:
     """Let's you choose a dataset.
 
     Reads a room dataset, if it is not found, it is generated.
     Then the sequence length is set, the time variable is added and
     it is standardized and split into parts for training, validation
-    and testing. Finally it is returned.
+    and testing. Finally it is returned with the corresponding constraints.
 
     Args:
         base_ds_name: The name of the base dataset, must be of the form "Model_Room<nr>",
@@ -54,10 +55,10 @@ def choose_dataset(base_ds_name: str = "Model_Room43", seq_len: int = 20) -> Dat
         seq_len: The sequence length to use for the RNN training.
 
     Returns:
-        The prepared dataset.
+        The prepared dataset and the corresponding constraints list.
     """
     # Check `base_ds_name`.
-    if base_ds_name[:9] != "Model_Room" or base_ds_name[-2:] not in ["43", "53"]:
+    if base_ds_name[:10] != "Model_Room" or base_ds_name[-2:] not in ["43", "53"]:
         raise ValueError(f"Dataset: {base_ds_name} does not exist!")
 
     # Load dataset, generate if not found.
@@ -77,27 +78,6 @@ def choose_dataset(base_ds_name: str = "Model_Room43", seq_len: int = 20) -> Dat
     ds.standardize()
     ds.split_data()
 
-    # Return
-    return ds
-
-
-def main():
-    """The main function, here all the important, high-level stuff happens.
-
-
-    """
-    # Run tests.
-    run_tests()
-
-    # Get dataset
-    ds = choose_dataset('Model_Room43', seq_len=20)
-
-    # Time model: Predicts the deterministic time variable
-    time_model_ds = SCTimeModel(ds, 6)
-
-    # Constant model for water temperatures
-    mod_const_water = ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
-
     # Room temperature model
     rnn_consts = [
         SeriesConstraint('interval', [-15.0, 40.0]),
@@ -110,6 +90,27 @@ def main():
         SeriesConstraint('exact'),
     ]
     ds.transform_c_list(rnn_consts)
+
+    # Return
+    return ds, rnn_consts
+
+
+def main() -> None:
+    """The main function, here all the important, high-level stuff happens.
+
+    Changes a lot, so I won't put a more accurate description here ;)
+    """
+    # Run tests.
+    run_tests()
+
+    # Get dataset
+    ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
+
+    # Time model: Predicts the deterministic time variable
+    model_time_exact = SCTimeModel(ds, 6)
+
+    # Constant model for water temperatures
+    mod_const_water = ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
 
     # Basic parameter set
     base_params = {'input_noise_std': 0.001,
@@ -134,7 +135,7 @@ def main():
     # The weather model, predicting only the weather, i.e. outside temperature and
     # irradiance from the past values and the time variable.
     mod_weather = RNNDynamicModel(ds,
-                                  name="WeatherOnly",
+                                  name="WeatherFromWeatherOnly",
                                   hidden_sizes=(10, 10),
                                   n_iter_max=10,
                                   constraint_list=rnn_consts,
@@ -152,13 +153,13 @@ def main():
                               out_inds=np.array([2, 3, 5], dtype=np.int32),
                               **base_params_no_inds)
     # The full model combining weather and apartment model.
-    mod_weather_and_apt = CompositeModel(ds, [mod_weather, mod_apt, time_model_ds], new_name="FullWeatherAndApt")
+    mod_weather_and_apt = CompositeModel(ds, [mod_weather, mod_apt, model_time_exact], new_name="FullWeatherAndApt")
 
     # mod_const_wt = RNNDynamicModel(ds,
-    #                                name="RNN_ConstWT",
+    #                                name="RoomTempOnly",
     #                                hidden_sizes=(50, 50),
     #                                n_iter_max=10,
-    #                                out_inds=np.array([0, 1, 5], dtype=np.int32),
+    #                                out_inds=np.array([5], dtype=np.int32),
     #                                **base_params_no_inds)
     # mod_overshoot = RNNDynamicOvershootModel(n_overshoot=5,
     #                                          data=ds,
@@ -175,7 +176,7 @@ def main():
     #                                              **base_params)
     optimize = False
     if optimize:
-        opt_params = mod.optimize(5)
+        opt_params = mod_full.optimize(5)
         # print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
 
@@ -216,8 +217,6 @@ def main():
     # #
     mod_naive = ConstModel(ds)
     mod_naive.analyze()
-
-    # compute_DFAB_energy_usage()
 
     # Battery data
     bat_name = "Battery"
