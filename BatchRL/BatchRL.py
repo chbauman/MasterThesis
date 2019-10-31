@@ -6,6 +6,7 @@ modules.
 """
 from agents_heuristic import ConstHeating
 from base_dynamics_env import test_test_env
+from base_dynamics_model import test_dyn_model
 from batchDDPG import bDDPG
 from battery_model import BatteryModel
 from cart_pole import CartPole
@@ -55,7 +56,7 @@ def main():
     # Run tests
     test_layers()
     test_rnn_models()
-    # test_dyn_model()
+    test_dyn_model()
     test_test_env()
     test_time_stuff()
     test_numpy_functions()

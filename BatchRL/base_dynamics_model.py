@@ -74,8 +74,8 @@ class BaseDynamicsModel(ABC):
                  out_indices: np.ndarray = None,
                  in_indices: np.ndarray = None,
                  verbose: int = None):
-        """
-        Constructor for the base of every dynamics model.
+        """Constructor for the base of every dynamics model.
+
         If out_indices is None, all series are predicted.
         If in_indices is None, all series are used as input to the model.
 
@@ -765,7 +765,7 @@ def construct_test_ds(n: int = 201) -> Dataset:
     dat[:, 0] = np.arange(n)
     dat[:, 1] = np.reciprocal(1.0 + np.arange(n))
     dat[:, 2] = np.reciprocal(1.0 + np.arange(n))
-    dat[:, 3] = 1
+    dat[:, 3] = 1 + np.reciprocal(1.0 + np.arange(n))
     c_inds = np.array([3])
     ds = get_test_ds(dat, c_inds, dt=60 * 6, name="SyntheticModelData")
     ds.seq_len = 8
@@ -811,7 +811,7 @@ def test_dyn_model() -> None:
     # Initialize, fit and analyze model
     test_mod = TestModel(ds)
     test_mod.fit()
-    test_mod.analyze()
+    # test_mod.analyze()
 
     # Test prediction and residuals
     sample_pred_inp = ds.data[:(ds.seq_len - 1)]
@@ -821,6 +821,20 @@ def test_dyn_model() -> None:
     res = test_mod.get_residuals("train")
     if not np.allclose(mod_out_test - dat_out_train, res):
         raise AssertionError("Residual computation wrong!!")
+
+    # Test scaling
+    ds_scaled = construct_test_ds(n)
+    ds_scaled.standardize()
+    test_mod_scaled = TestModel(ds_scaled)
+    unscaled_out = test_mod_scaled.rescale_output(ds_scaled.data[:, :3], out_put=True,
+                                                  whiten=False)
+    unscaled_in = test_mod_scaled.rescale_output(ds_scaled.data, out_put=False,
+                                                 whiten=False)
+    scaled_out = test_mod_scaled.rescale_output(ds.data[:, :3], out_put=True,
+                                                whiten=True)
+    assert np.allclose(unscaled_out, ds.data[:, :3]), "Rescaling not working!"
+    assert np.allclose(unscaled_in, ds.data), "Rescaling not working!"
+    assert np.allclose(scaled_out, ds_scaled.data[:, :3]), "Rescaling not working!"
 
     print("First point in week plot should be at: {}".format(t_init_streak))
 
