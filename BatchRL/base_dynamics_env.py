@@ -154,7 +154,7 @@ class DynEnv(ABC, gym.Env):
             if self.n_start_data <= start_ind:
                 raise ValueError("start_ind is too fucking large!")
 
-        self.hist = self.train_data[start_ind]
+        self.hist = np.copy(self.train_data[start_ind])
         return self.hist[-1, :-self.act_dim]
 
     def render(self, mode='human'):
@@ -227,14 +227,19 @@ class TestDynEnv(DynEnv):
     def __init__(self, m: BaseDynamicsModel, max_eps: int = None):
         super(TestDynEnv, self).__init__(m, "TestEnv", max_eps)
         d = m.data
+        self.n_pred = 3
         assert d.n_c == 1 and d.d == 4, "Dataset needs 4 series of which one is controllable!!"
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
-        assert curr_pred.shape == (3,), "Shape of prediction not correct!"
+        self._assert_pred_shape(curr_pred)
         return curr_pred[2] * action
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
+        self._assert_pred_shape(curr_pred)
         return False
+
+    def _assert_pred_shape(self, curr_pred):
+        assert curr_pred.shape == (self.n_pred,), "Shape of prediction not correct!"
 
 
 def test_test_env():
