@@ -150,7 +150,8 @@ def main():
 
     mods = [mod_overshoot_dec, mod_overshoot, mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
     for m_to_use in mods:
-        # m_to_use.fit()
+        continue
+        m_to_use.fit()
         print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))
         # m_to_use.analyze()
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
@@ -162,7 +163,8 @@ def main():
     env = FullRoomEnv(comp_model, disturb_fac=0.3)
     const_ag_1 = ConstHeating(env, 0.0)
     const_ag_2 = ConstHeating(env, 1.0)
-    env.analyze_agent([const_ag_1, const_ag_2])
+    const_ag_3 = ConstHeating(env, 1.0)
+    env.analyze_agent([const_ag_1, const_ag_2, const_ag_3])
     return
 
     dqn_agent = DQNRoomHeatingAgent(env)

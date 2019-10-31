@@ -36,6 +36,7 @@ class DynEnv(ABC, gym.Env):
     train_indices: np.ndarray  #: The indices corresponding to `train_data`.
 
     day_ind: int = 0  #: The index of the day in `train_days`.
+    use_noise: bool = True  #: Whether to add noise when simulating.
 
     # The one day data
     n_train_days: int  #: Number of training days
@@ -121,7 +122,8 @@ class DynEnv(ABC, gym.Env):
         self.hist[-1, -self.act_dim:] = action
         pred_sh = (1, -1, self.state_dim)
         curr_pred = self.m.predict(self.hist.reshape(pred_sh))[0]
-        curr_pred += self.disturb_fac * self.m.disturb()
+        if self.use_noise:
+            curr_pred += self.disturb_fac * self.m.disturb()
         self.hist[:-1, :] = self.hist[1:, :]
         self.hist[-1, :-self.act_dim] = curr_pred
         self.n_ts += 1
@@ -130,7 +132,7 @@ class DynEnv(ABC, gym.Env):
         ep_over = self.n_ts == self.n_ts_per_eps or self.episode_over(curr_pred)
         return curr_pred, r, ep_over, {}
 
-    def reset(self, start_ind: int = None) -> np.ndarray:
+    def reset(self, start_ind: int = None, use_noise: bool = True) -> np.ndarray:
         """Resets the environment.
 
         Needs to be called if the episode is over.
@@ -139,6 +141,7 @@ class DynEnv(ABC, gym.Env):
             A new initial state.
         """
         # Reset time step and disturbance
+        self.use_noise = use_noise
         self.n_ts = 0
         self.m.reset_disturbance()
 
@@ -156,12 +159,14 @@ class DynEnv(ABC, gym.Env):
         print("Rendering not implemented!")
 
     def analyze_agent(self, agents: Union[List, base_agent.AgentBase],
-                      fitted: bool = True) -> None:
+                      fitted: bool = True,
+                      use_noise: bool = False) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:
             agents: A list of agents or a single agent.
             fitted: Whether the agents are already fitted.
+            use_noise: Whether to use noise in the predictions.
         """
         # Make function compatible for single agent input
         if not isinstance(agents, list):
@@ -190,7 +195,7 @@ class DynEnv(ABC, gym.Env):
                 a.fit()
 
             # Reset env
-            curr_state = self.reset(start_ind=start_ind)
+            curr_state = self.reset(start_ind=start_ind, use_noise=use_noise)
             episode_over = False
             count = 0
 
