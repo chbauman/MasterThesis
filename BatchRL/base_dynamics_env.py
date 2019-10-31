@@ -275,7 +275,7 @@ def test_test_env():
     test_env.reset(start_ind=rand_int, use_noise=False)
     sec_first_out = test_env.step(const_control)
     assert np.allclose(first_out[0], sec_first_out[0]), "State output not correct!"
-    assert first_out[1] != sec_first_out[1], "Rewards not correct!"
-    assert first_out[2] != sec_first_out[2], "Episode termination not correct!"
+    assert first_out[1] == sec_first_out[1], "Rewards not correct!"
+    assert first_out[2] == sec_first_out[2], "Episode termination not correct!"
 
     print("Model environment test passed :)")
