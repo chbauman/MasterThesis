@@ -160,6 +160,45 @@ class BaseDynamicsModel(ABC):
             res_out_dat_out = out_dat[:, :, self.p_out_inds]
         return res_in_dat, res_out_dat_out
 
+    def rescale_output(self, arr: np.ndarray,
+                       out_put: bool = True,
+                       whiten: bool = False) -> np.ndarray:
+        """Transforms an array back to having / not having original mean and std.
+
+        If `out_put` is True, then the data in `arr` is assumed to
+        lie in the output space of the model, else it should lie in the
+        input space. If `whiten` is true, the mean and the std, as computed
+        in the Dataset, is removed, else added.
+
+        Args:
+            arr: The array with the data to transform.
+            out_put: Whether `arr` is in the output space of the model.
+            whiten: Whether to remove the mean and std, else add it.
+
+        Returns:
+            Array with transformed data.
+
+        Raises:
+            ValueError: If the last dimension does not have the right size.
+        """
+        # Determine transform function and indices
+        trf_fun = rem_mean_and_std if whiten else add_mean_and_std
+        inds = self.out_inds if out_put else self.in_indices
+
+        # Check dimension
+        n_feat = len(inds)
+        if n_feat != arr.shape[-1]:
+            raise ValueError(f"Last dimension must be {n_feat}!")
+
+        # Scale the data
+        arr_scaled = np.copy(arr)
+        for ct, ind in enumerate(inds):
+            if self.data.is_scaled[ind]:
+                mas = self.data.scaling[ind]
+                arr_scaled[..., ct] = trf_fun(arr_scaled[..., ct], mean_and_std=mas)
+
+        return arr_scaled
+
     def get_path(self, name: str) -> str:
         """
         Returns the path where the model parameters

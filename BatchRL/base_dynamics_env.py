@@ -43,7 +43,8 @@ class DynEnv(ABC, gym.Env):
     train_days: List  #: The data of all days, where all data is available.
     day_inds: np.ndarray  #: Index vector storing the timestep offsets to the days
 
-    def __init__(self, m: BaseDynamicsModel, name: str = None, max_eps: int = None, disturb_fac: float = 1.0):
+    def __init__(self, m: BaseDynamicsModel, name: str = None, max_eps: int = None,
+                 disturb_fac: float = 1.0):
         """Initialize the environment.
 
         Args:
@@ -154,7 +155,8 @@ class DynEnv(ABC, gym.Env):
     def render(self, mode='human'):
         print("Rendering not implemented!")
 
-    def analyze_agent(self, agents: Union[List, base_agent.AgentBase], fitted: bool = True) -> None:
+    def analyze_agent(self, agents: Union[List, base_agent.AgentBase],
+                      fitted: bool = True) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:

@@ -4,6 +4,7 @@ The `main` function runs all the necessary high-level
 functions. The complicated stuff is hidden in the other
 modules.
 """
+from agents_heuristic import ConstHeating
 from base_dynamics_env import test_test_env
 from batchDDPG import bDDPG
 from battery_model import BatteryModel
@@ -57,8 +58,6 @@ def main():
     # test_dyn_model()
     test_test_env()
     test_time_stuff()
-    return
-
     test_numpy_functions()
     # test_rest_client()
     test_python_stuff()
@@ -142,25 +141,29 @@ def main():
                                                  hidden_sizes=(50, 50),
                                                  n_iter_max=10,
                                                  **base_params)
-    optimize = True
+    optimize = False
     if optimize:
         opt_params = mod.optimize(5)
         # print("All tried parameter combinations: {}.".format(mod.param_list))
         print("Optimal parameters: {}.".format(opt_params))
-    return
+
     mods = [mod_overshoot_dec, mod_overshoot, mod, mod_test]  # , mod_const_wt, mod_overshoot, mod_test, mod_no_consts]
     for m_to_use in mods:
-        m_to_use.fit()
+        # m_to_use.fit()
         print("16 Timestep performance: {}".format(m_to_use.hyper_objective()))
-        m_to_use.analyze()
+        # m_to_use.analyze()
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
-    return
     # Full test model
     comp_model = CompositeModel(ds, [mod_test, time_model_ds], new_name="CompositeTimeRNNFull")
     comp_model.fit()
     env = FullRoomEnv(comp_model, disturb_fac=0.3)
+    const_ag_1 = ConstHeating(env, 0.0)
+    const_ag_2 = ConstHeating(env, 1.0)
+    env.analyze_agent([const_ag_1, const_ag_2])
+    return
+
     dqn_agent = DQNRoomHeatingAgent(env)
     dqn_agent.fit()
     return

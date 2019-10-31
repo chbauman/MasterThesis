@@ -563,6 +563,10 @@ def plot_residuals_acf(residuals: np.ndarray,
 
 def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
                         rewards: np.ndarray, save_path: str = None) -> None:
+    """Plots the evaluation of multiple agents on an environment.
+
+    TODO: Add info to individual plots.
+    """
     # Extract shapes
     n_agents, episode_len, n_feats = states.shape
     n_actions = actions.shape[-1]
