@@ -6,7 +6,7 @@ modules.
 """
 from agents_heuristic import ConstHeating
 from base_dynamics_env import test_test_env
-from base_dynamics_model import test_dyn_model
+from base_dynamics_model import test_dyn_model, BaseDynamicsModel
 from base_hyperopt import HyperOptimizableModel
 from battery_model import BatteryModel
 from data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
@@ -15,7 +15,6 @@ from dm_Composite import CompositeModel
 from dm_Const import ConstModel
 from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Time import SCTimeModel
-from dm_TimePeriodic import Periodic1DayModel
 from dynamics_envs import FullRoomEnv
 from keras_layers import test_layers
 from keras_rl_wrap import DQNRoomHeatingAgent
@@ -39,6 +38,20 @@ def run_tests() -> None:
     # get_data_test()
     # test_align()
     test_dataset_artificially()
+
+
+def run_battery() -> None:
+
+    # Battery data
+    bat_name = "Battery"
+    get_battery_data()
+    bat_ds = Dataset.loadDataset(bat_name)
+    bat_ds.split_data()
+    bat_mod = BatteryModel(bat_ds)
+    bat_mod.analyze_bat_model()
+    bat_mod.analyze()
+    bat_mod_naive = ConstModel(bat_ds)
+    bat_mod_naive.analyze()
 
 
 def choose_dataset(base_ds_name: str = "Model_Room43",
@@ -110,7 +123,7 @@ def optimize_model(mod: HyperOptimizableModel) -> None:
     print("Optimal parameters: {}.".format(opt_params))
 
 
-def get_rnn_mod(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
+def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
     # Basic parameter set
     base_params = {
         'name': name,
@@ -164,29 +177,43 @@ def get_rnn_mod(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
         # The full model combining the weather only model and the
         # apartment only model to predict all
         # variables except for the control and the time variables.
-        mod_weather = get_rnn_mod("WeatherFromWeather_RNN", ds, rnn_consts=rnn_consts)
-        mod_apt = get_rnn_mod("Apartment_RNN", ds, rnn_consts=rnn_consts)
+        mod_weather = get_model("WeatherFromWeather_RNN", ds, rnn_consts=rnn_consts)
+        mod_apt = get_model("Apartment_RNN", ds, rnn_consts=rnn_consts)
         return CompositeModel(ds, [mod_weather, mod_apt],
                               new_name="Full_Comp_WeatherApt")
     elif name == "FullState_Comp_WeatherAptTime":
         # The full state model combining the weather only model, the
         # apartment only model and the exact time model to predict all
         # variables except for the control variable.
-        mod_weather = get_rnn_mod("WeatherFromWeather_RNN", ds, rnn_consts=rnn_consts)
-        mod_apt = get_rnn_mod("Apartment_RNN", ds, rnn_consts=rnn_consts)
-        model_time_exact = get_rnn_mod("Time_Exact", ds, rnn_consts=rnn_consts)
+        mod_weather = get_model("WeatherFromWeather_RNN", ds, rnn_consts=rnn_consts)
+        mod_apt = get_model("Apartment_RNN", ds, rnn_consts=rnn_consts)
+        model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts)
         return CompositeModel(ds, [mod_weather, mod_apt, model_time_exact],
                               new_name="FullState_Comp_WeatherAptTime")
     elif name == "FullState_Comp_FullTime":
         # The full state model combining the weather only model, the
         # apartment only model and the exact time model to predict all
         # variables except for the control variable.
-        mod_full = get_rnn_mod("Full_RNN", ds, rnn_consts=rnn_consts)
-        model_time_exact = get_rnn_mod("Time_Exact", ds, rnn_consts=rnn_consts)
+        mod_full = get_model("Full_RNN", ds, rnn_consts=rnn_consts)
+        model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts)
         return CompositeModel(ds, [mod_full, model_time_exact],
                               new_name="FullState_Comp_FullTime")
     else:
         raise ValueError("No such model defined!")
+
+
+def curr_tests(comp_model: BaseDynamicsModel) -> None:
+    """The code that I am currently experimenting with."""
+
+    # Full test model
+    env = FullRoomEnv(comp_model, disturb_fac=0.3)
+    const_ag_1 = ConstHeating(env, 0.0)
+    const_ag_2 = ConstHeating(env, env.nb_actions - 1)
+    const_ag_3 = ConstHeating(env, env.nb_actions - 1)
+    env.analyze_agent([const_ag_1, const_ag_2, const_ag_3])
+
+    # dqn_agent = DQNRoomHeatingAgent(env)
+    # dqn_agent.fit()
 
 
 def main() -> None:
@@ -195,7 +222,7 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    run_tests()
+    # run_tests()
 
     # Get dataset
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
@@ -211,10 +238,10 @@ def main() -> None:
         # "FullState_Comp_WeatherAptTime",
         "FullState_Comp_FullTime",
     ]
-    all_mods = {nm: get_rnn_mod(nm, ds, rnn_consts) for nm in needed}
+    all_mods = {nm: get_model(nm, ds, rnn_consts) for nm in needed}
 
     # Optimize model
-    # optimize_model(mod_full)
+    # optimize_model(all_mods[needed[0]])
 
     # Fit or load all initialized models
     for m_to_use in all_mods:
@@ -225,29 +252,10 @@ def main() -> None:
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
     # Full test model
-    comp_model = all_mods['FullState_Comp_FullTime']
-    env = FullRoomEnv(comp_model, disturb_fac=0.3)
-    const_ag_1 = ConstHeating(env, 0.0)
-    const_ag_2 = ConstHeating(env, env.nb_actions - 1)
-    const_ag_3 = ConstHeating(env, env.nb_actions - 1)
-    env.analyze_agent([const_ag_1, const_ag_2, const_ag_3])
-    return
+    curr_tests(all_mods['FullState_Comp_FullTime'])
 
-    dqn_agent = DQNRoomHeatingAgent(env)
-    dqn_agent.fit()
-    return
-
-    # Battery data
-    bat_name = "Battery"
-    get_battery_data()
-    bat_ds = Dataset.loadDataset(bat_name)
-    bat_ds.split_data()
-    bat_mod = BatteryModel(bat_ds)
-    bat_mod.analyze_bat_model()
-    bat_mod.analyze()
-    bat_mod_naive = ConstModel(bat_ds)
-    bat_mod_naive.analyze()
-    return
+    # Train and analyze the battery model
+    # run_battery()
 
 
 if __name__ == '__main__':
