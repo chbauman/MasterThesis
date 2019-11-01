@@ -63,7 +63,7 @@ def _constr_hp_name(hidden_sizes: Sequence,
 
 
 def _constr_base_name(name: str,
-                      res_learn: bool = True,
+                      residual_learning: bool = True,
                       weight_vec: np.ndarray = None,
                       constraint_list: Sequence[SeriesConstraint] = None,
                       train_seq: bool = False,
@@ -72,7 +72,7 @@ def _constr_base_name(name: str,
 
      Args:
         name: Base name
-        res_learn: Whether to use residual learning.
+        residual_learning: Whether to use residual learning.
         weight_vec: Weight vector for weighted loss.
         constraint_list: List with constraints.
         train_seq: Whether to train with sequence output.
@@ -80,7 +80,7 @@ def _constr_base_name(name: str,
     Returns:
         String combining all these parameters.
     """
-    res_str = '' if not res_learn else '_RESL'
+    res_str = '' if not residual_learning else '_RESL'
     w_str = '' if weight_vec is None else '_W' + '-'.join(map(str, weight_vec))
     con_str = '' if constraint_list is None else '_CON'
     seq_str = '' if not train_seq else '_SEQ'
@@ -92,7 +92,7 @@ def constr_name(name: str,
                 n_iter_max: int,
                 lr: float,
                 gru: bool = False,
-                res_learn: bool = True,
+                residual_learning: bool = True,
                 weight_vec: np.ndarray = None,
                 input_noise_std: float = None,
                 constraint_list: Sequence[SeriesConstraint] = None,
@@ -107,7 +107,7 @@ def constr_name(name: str,
         n_iter_max: Number of iterations
         lr: Learning rate
         gru: Whether to use GRU units
-        res_learn: Whether to use residual learning
+        residual_learning: Whether to use residual learning
         weight_vec: Weight vector for weighted loss
         input_noise_std: Standard deviation of input noise.
         constraint_list: List with constraints.
@@ -118,7 +118,7 @@ def constr_name(name: str,
     """
     hp_part = _constr_hp_name(hidden_sizes, n_iter_max, lr,
                               gru, input_noise_std)
-    base_part = _constr_base_name(name, res_learn, weight_vec, constraint_list, train_seq)
+    base_part = _constr_base_name(name, residual_learning, weight_vec, constraint_list, train_seq)
     return base_part + hp_part
 
 
@@ -239,7 +239,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         :param constraint_list: The constraints on the data series.
         :param verbose: The verbosity level, 0, 1 or 2.
         """
-
+        name_orig = name
         name = constr_name(name, hidden_sizes, n_iter_max, lr, gru,
                            residual_learning, weight_vec, input_noise_std,
                            constraint_list)
@@ -251,11 +251,11 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         # Store name for hyperopt
         all_kwargs = {
+            'name': name_orig,
             'data': data,
             'out_inds': out_inds,
             'in_inds': in_inds,
-            'name': name,
-            'res_learn': residual_learning,
+            'residual_learning': residual_learning,
             'weight_vec': weight_vec,
             'constraint_list': constraint_list,
             'train_seq': train_seq,
@@ -269,7 +269,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         self.gru = gru
         self.input_noise_std = input_noise_std
         self.weight_vec = weight_vec
-        self.res_learn = residual_learning
+        self.residual_learning = residual_learning
         self.lr = lr
         self.train_seq = train_seq
 
@@ -328,7 +328,7 @@ class RNNDynamicModel(HyperOptimizableModel):
             last_layer = TimeDistributed(last_layer)
         model.add(last_layer)
 
-        if self.res_learn:
+        if self.residual_learning:
             if self.train_seq:
                 return NotImplementedError("Cannot combine residual and sequence output learning!")
             # Add last non-control input to output
@@ -541,7 +541,7 @@ def test_rnn_models():
         AssertionError: If a test fails.
     """
     # Create dataset for testing
-    n, n_feat = 200, 10
+    n, n_feat = 200, 7
     dat = np.arange(n * n_feat).reshape((n, n_feat))
     c_inds = np.array([4, 6], dtype=np.int32)
     ds = get_test_ds(dat, c_inds, name="RNNTestDataset", dt=4 * 60)
@@ -552,27 +552,31 @@ def test_rnn_models():
 
     # Define model
     p_inds = np.array([0, 1, 3], dtype=np.int32)
-    test_kwargs = {'hidden_sizes': (10,),
+    test_kwargs = {'hidden_sizes': (9,),
                    'n_iter_max': 1,
                    'input_noise_std': 0.001,
-                   'lr': 0.01,
-                   'residual_learning': True,
-                   'weight_vec': None,
-                   'out_inds': p_inds,
-                   'constraint_list': None,
-                   }
+                   'lr': 0.01}
+    fix_kwargs = {'residual_learning': True,
+                  'weight_vec': None,
+                  'out_inds': p_inds,
+                  'constraint_list': None}
     n_over = 3
     mod_test_overshoot = RNNDynamicOvershootModel(n_overshoot=n_over,
                                                   data=ds,
                                                   name="DebugOvershoot",
                                                   debug=True,
-                                                  **test_kwargs)
-    mod_test = RNNDynamicModel(data=ds, **test_kwargs)
-    mod_test.optimize(1)
+                                                  **test_kwargs,
+                                                  **fix_kwargs)
+    mod_test = RNNDynamicModel(data=ds, **test_kwargs, **fix_kwargs)
     full_sam_seq_len = n_over + train_s_len
 
+    # Try hyperopt
+    mod_test.optimize(1)
+    mod_test_2 = RNNDynamicModel.from_best_hp(**fix_kwargs)
+    mod_test_2.optimize(1)
+
     # Check sequence lengths
-    assert full_sam_seq_len == mod_test_overshoot.tot_train_seq_len, "Train seq len mismatch!"
+    assert full_sam_seq_len == mod_test_overshoot.tot_train_seq_len, "Train sequence length mismatch!"
     assert train_s_len == mod_test_overshoot.train_seq_len, "Seq len mismatch!"
 
     # Check model debug output
