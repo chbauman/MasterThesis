@@ -1,7 +1,7 @@
 from base_dynamics_model import BaseDynamicsModel
-from util import *
-from visualize import scatter_plot, model_plot_path
 from data import Dataset
+from util import *
+from visualize import scatter_plot
 
 
 class BatteryModel(BaseDynamicsModel):
@@ -88,7 +88,6 @@ class BatteryModel(BaseDynamicsModel):
         mask = np.logical_or(ds > fitted_ds - 0.35, p < -1.0)
         masked_p = p[mask]
         masked_ds = ds[mask]
-        n_mask = masked_p.shape[0]
 
         # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
         def feat_fun(x: float):

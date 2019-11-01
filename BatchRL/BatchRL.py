@@ -56,9 +56,10 @@ def run_battery() -> None:
     # Run the environment
     n_actions = 11
     bat_env = BatteryEnv(bat_mod, n_actions)
-    const_ag_1 = ConstHeating(bat_env, 0.0)
-    const_ag_2 = ConstHeating(bat_env, n_actions - 1)
-    bat_env.analyze_agent([const_ag_1, const_ag_2])
+    const_ag_1 = ConstHeating(bat_env, 3)  # Discharge
+    const_ag_2 = ConstHeating(bat_env, 7)  # No charging
+    const_ag_3 = ConstHeating(bat_env, 5)  # Charge
+    bat_env.analyze_agent([const_ag_1, const_ag_2, const_ag_3])
 
 
 def choose_dataset(base_ds_name: str = "Model_Room43",
