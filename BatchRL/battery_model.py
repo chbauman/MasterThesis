@@ -15,28 +15,24 @@ class BatteryModel(BaseDynamicsModel):
     """
 
     def __init__(self, dataset: Dataset):
-        """
-        Initializes the battery model with the specified
-        dataset.
+        """Initializes the battery model with the specified dataset.
 
-        :param dataset: Dataset with data to fit modes.
+        Args:
+            dataset: Dataset with data to fit modes.
         """
-        super(BatteryModel, self).__init__(dataset, dataset.name, None)
+        super().__init__(dataset, dataset.name, None)
         self.params = None
 
     def fit(self) -> None:
-        """
-        Calls analyze_bat_model, there the
-        actual model fitting happens.
+        """Fits the battery model.
 
-        :return: None
+        Calls `analyze_bat_model`, there the
+        actual model fitting happens.
         """
         self.analyze_bat_model()
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
-        """
-        Make predictions using the fitted model
-        on the provided data.
+        """Make predictions using the fitted model on the provided data.
 
         :param in_data: Prepared data.
         :return: Predictions
@@ -49,22 +45,22 @@ class BatteryModel(BaseDynamicsModel):
         return s_tp1.reshape((-1, 1))
 
     def disturb(self):
-        """
-        Returns a sample of noise of length n.
+        """Returns a sample of noise of length n.
         """
         raise NotImplementedError("Disturbance for battery model not implemented!")
 
-    def analyze_bat_model(self):
-        """
-        This is basically the fit method, but it also
-        does some data analysis and makes battery data specific some plots.
+    def _eval_at(self, p):
+        """Evaluates the model for a given active power `p`."""
+        a1, a2, a3 = self.params
+        return a1 + a2 * p + a3 * np.maximum(0, p)
 
-        :return: None
+    def analyze_bat_model(self) -> None:
+        """This is basically the fit method, but it also
+        does some data analysis and makes some battery data specific plots.
         """
         # Get data
         d = self.data
-        dat_in, dat_out, inds = d.get_split("train_val")
-        print(dat_in.shape)
+        dat = d.split_dict["train_val"].get_rel_data()
         scale = np.copy(d.scaling)
         scale[0, 0] = 0.0
 
@@ -95,15 +91,12 @@ class BatteryModel(BaseDynamicsModel):
         n_mask = masked_p.shape[0]
 
         # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
-        ls_mat = np.empty((n_mask, 3), dtype=np.float32)
-        ls_mat[:, 0] = 1
-        ls_mat[:, 1] = masked_p
-        ls_mat[:, 2] = masked_p
-        ls_mat[:, 2][ls_mat[:, 2] < 0] = 0
-        self.params = np.linalg.lstsq(ls_mat, masked_ds, rcond=None)[0]
-        a1, a2, a3 = self.params
+        def feat_fun(x: float):
+            return np.array([1.0, x, max(0.0, x)])
+        params = fit_linear_bf_1d(masked_p, masked_ds, feat_fun)
+        self.params = params
         x_pw_line = np.array([np.min(p), 0, np.max(p)], dtype=np.float32)
-        y_pw_line = a1 + a2 * x_pw_line + a3 * np.maximum(0, x_pw_line)
+        y_pw_line = self._eval_at(x_pw_line)
 
         # Plot model
         after_plt_path = os.path.join(self.plot_path, "Cleaned")
