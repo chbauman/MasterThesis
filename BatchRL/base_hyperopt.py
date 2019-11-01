@@ -39,6 +39,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
     @classmethod
     @abstractmethod
     def get_base_name(cls, **kwargs):
+        """Returns the unique name given all the non-hyperparameter parameters."""
         pass
 
     @abstractmethod
@@ -96,12 +97,15 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             Returns:
                 Value of the objective.
             """
-
+            _, self.curr_val = load_hp(self.base_name)
             mod = self.conf_model(hp_sample)
             self.param_list += [hp_sample]
             mod.fit()
             curr_obj = mod.hyper_objective()
             print(hp_sample, f"Objective value: {curr_obj}")
+            if curr_obj < self.curr_val:
+                self.curr_val = curr_obj
+                save_hp(self.base_name, (hp_sample, self.curr_val))
             return curr_obj
 
         # Do parameter search

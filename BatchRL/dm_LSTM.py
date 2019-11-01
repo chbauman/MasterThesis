@@ -151,8 +151,15 @@ class RNNDynamicModel(HyperOptimizableModel):
 
     @classmethod
     def get_base_name(cls, **kwargs):
-        b_n = _constr_base_name(**kwargs)
-        return cls._get_full_name(b_n)
+        super_keys = [
+            'data',
+            'out_inds',
+            'in_inds'
+        ]
+        super_kwargs = {k: kwargs[k] for k in kwargs if k in super_keys}
+        base_kwargs = {k: kwargs[k] for k in kwargs if k not in super_keys}
+        b_n = _constr_base_name(**base_kwargs)
+        return cls._get_full_name_static(b_name=b_n, **super_kwargs)
 
     def get_space(self) -> Dict:
         """
@@ -243,20 +250,17 @@ class RNNDynamicModel(HyperOptimizableModel):
         self.n_feats = len(self.in_indices)
 
         # Store name for hyperopt
-        kwargs_super = {
+        all_kwargs = {
             'data': data,
             'out_inds': out_inds,
             'in_inds': in_inds,
-        }
-        base_kwargs = {
             'name': name,
             'res_learn': residual_learning,
             'weight_vec': weight_vec,
             'constraint_list': constraint_list,
             'train_seq': train_seq,
         }
-        base_name = self.get_base_name(**base_kwargs)
-        self.base_name = self._get_full_name(base_name)
+        self.base_name = self.get_base_name(**all_kwargs)
 
         # Store parameters
         self.constraint_list = constraint_list
@@ -271,17 +275,6 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         # Build model
         self.m = self._build_model()
-
-    def from_best_hyper_params(self,
-                               data: Dataset,
-                               in_inds: np.ndarray = None,
-                               out_inds: np.ndarray = None,
-                               weight_vec: Optional[np.ndarray] = None,
-                               constraint_list: Sequence[SeriesConstraint] = None,
-                               train_seq: bool = False,
-                               ) -> 'RNNDynamicModel':
-
-        pass
 
     def _build_model(self, debug: bool = False) -> Any:
         """Builds the keras RNN model and returns it.
