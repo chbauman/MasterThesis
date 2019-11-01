@@ -1,3 +1,9 @@
+"""The hyperparameter optimization module.
+
+Defines a class that extends the base model class `BaseDynamicsModel`
+for hyperparameter optimization.
+"""
+import os
 import pickle
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
@@ -8,6 +14,11 @@ from hyperopt.pyll import scope as ho_scope
 
 from base_dynamics_model import BaseDynamicsModel, construct_test_ds
 from data import Dataset
+from util import create_dir
+
+# Define path for optimization results.
+hop_path = "../Models/Hop/"  #: The path to all hyperopt data.
+create_dir(hop_path)
 
 OptHP = Tuple[Dict, float]  #: The type of the stored info.
 
@@ -24,14 +35,18 @@ def load_hp(name_hp) -> OptHP:
 
 
 class HyperOptimizableModel(BaseDynamicsModel, ABC):
+    """The abstract base class for models using hyperopt.
+
+    Need to override the abstract methods and set `base_name`
+    in constructor.
+    """
     param_list: List[Dict] = []  #: List of tried parameters.
     base_name: str  #: Base name independent of hyperparameters.
     curr_val: float = 10e100  #: Start value for optimization.
 
     @abstractmethod
     def get_space(self) -> Dict:
-        """
-        Defines the hyperopt space with the hyper parameters
+        """Defines the hyperopt space with the hyper parameters
         to be optimized for a given model.
 
         Returns:
@@ -41,7 +56,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
 
     @classmethod
     @abstractmethod
-    def get_base_name(cls, **kwargs):
+    def get_base_name(cls, **kwargs) -> str:
         """Returns the unique name given all the non-hyperparameter parameters."""
         pass
 
@@ -76,8 +91,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         pass
 
     def optimize(self, n: int = 100) -> Dict:
-        """
-        Does the full hyper parameter optimization with
+        """Does the full hyper parameter optimization with
         the given objective and space.
 
         Args:
@@ -130,28 +144,45 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
 
     @classmethod
     def _get_opt_hp_f_name(cls, b_name: str):
-        return cls.model_path + b_name + "_OPT_HP.pkl"
+        """Determines the file path given the model name."""
+        return os.path.join(hop_path, b_name + "_OPT_HP.pkl")
 
     @classmethod
     def from_best_hp(cls, **kwargs):
+        """Initialize a model with the best previously found hyperparameters.
+
+        Returns:
+             An instance of the same class initialized with the optimal
+             hyperparameters.
+        """
         base_name = cls.get_base_name(**kwargs)
         name_hp = cls._get_opt_hp_f_name(base_name)
-        opt_hp = load_hp(name_hp)
+        try:
+            opt_hp = load_hp(name_hp)
+        except FileNotFoundError:
+            raise FileNotFoundError("No hyperparameters found, need to run optimize() first!")
         hp_params, val = opt_hp
         init_params = cls._hp_sample_to_kwargs(hp_params)
         return cls(**kwargs, **init_params)
 
     @classmethod
-    def _hp_sample_to_kwargs(cls, hp_sample: Dict):
+    def _hp_sample_to_kwargs(cls, hp_sample: Dict) -> Dict:
+        """Converts the sample from the hyperopt space to kwargs for initialization.
+
+        Needs to be overridden if a general `hp_sample` cannot be
+        passed to `__init__` as kwargs.
+
+        Returns:
+            Dict with kwargs for initialization.
+        """
         return hp_sample
 
 
 class TestHopTable(HyperOptimizableModel):
-
+    """Example hyperopt class that does not need fitting."""
     name: str = "TestHop"
 
     def __init__(self, ds: Dataset, base_param: int = 5, h_param_1: int = 0):
-
         super().__init__(ds, self.name)
         self.bp = base_param
         self.h_param = h_param_1
@@ -183,12 +214,21 @@ class TestHopTable(HyperOptimizableModel):
         pass
 
 
-def test_hyperopt():
+def test_hyperopt() -> None:
+    """Tests the hyperopt base class with the Example class.
 
+    Raises:
+        AssertionError: If a test fails.
+    """
     ds = construct_test_ds(20)
+
+    # Init model
     test_hop_mod_4 = TestHopTable(ds, 4, 6)
-    test_hop_mod_4.optimize(5)
+    n = 5
+    test_hop_mod_4.optimize(n)
+    assert len(test_hop_mod_4.param_list) == n, "Parameter logging incorrect!"
 
     best_mod_4 = TestHopTable.from_best_hp(ds=ds, base_param=4)
-    
+    best_mod_4.optimize(n)
+
     print("Hyperopt test passed :)")
