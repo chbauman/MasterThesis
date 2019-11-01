@@ -2,9 +2,12 @@ import pickle
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
 
+from hyperopt import hp
 from hyperopt import fmin, tpe
+from hyperopt.pyll import scope as ho_scope
 
-from base_dynamics_model import BaseDynamicsModel
+from base_dynamics_model import BaseDynamicsModel, construct_test_ds
+from data import Dataset
 
 OptHP = Tuple[Dict, float]  #: The type of the stored info.
 
@@ -21,9 +24,9 @@ def load_hp(name_hp) -> OptHP:
 
 
 class HyperOptimizableModel(BaseDynamicsModel, ABC):
-
     param_list: List[Dict] = []  #: List of tried parameters.
     base_name: str  #: Base name independent of hyperparameters.
+    curr_val: float = 10e100  #: Start value for optimization.
 
     @abstractmethod
     def get_space(self) -> Dict:
@@ -87,6 +90,12 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         hp_space = self.get_space()
         self.param_list = []
 
+        # Load the previously optimum if exists
+        try:
+            _, self.curr_val = load_hp(self.base_name)
+        except FileNotFoundError:
+            pass
+
         # Define final objective function
         def f(hp_sample: Dict) -> float:
             """Fits model and evaluates it.
@@ -97,15 +106,16 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             Returns:
                 Value of the objective.
             """
-            _, self.curr_val = load_hp(self.base_name)
             mod = self.conf_model(hp_sample)
             self.param_list += [hp_sample]
             mod.fit()
             curr_obj = mod.hyper_objective()
-            print(hp_sample, f"Objective value: {curr_obj}")
+
+            # Save if new params are better
             if curr_obj < self.curr_val:
                 self.curr_val = curr_obj
-                save_hp(self.base_name, (hp_sample, self.curr_val))
+                save_path = self._get_opt_hp_f_name(self.base_name)
+                save_hp(save_path, (hp_sample, self.curr_val))
             return curr_obj
 
         # Do parameter search
@@ -119,17 +129,66 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         return best
 
     @classmethod
-    def _get_opt_hp_f_name(cls, **kwargs):
-        return cls.model_path + cls.get_base_name(**kwargs) + "_OPT_HP.pkl"
+    def _get_opt_hp_f_name(cls, b_name: str):
+        return cls.model_path + b_name + "_OPT_HP.pkl"
 
     @classmethod
     def from_best_hp(cls, **kwargs):
-        name_hp = cls._get_opt_hp_f_name(**kwargs)
+        base_name = cls.get_base_name(**kwargs)
+        name_hp = cls._get_opt_hp_f_name(base_name)
         opt_hp = load_hp(name_hp)
         hp_params, val = opt_hp
         init_params = cls._hp_sample_to_kwargs(hp_params)
-        return cls.__init__(**kwargs, **init_params)
+        return cls(**kwargs, **init_params)
 
     @classmethod
     def _hp_sample_to_kwargs(cls, hp_sample: Dict):
         return hp_sample
+
+
+class TestHopTable(HyperOptimizableModel):
+
+    name: str = "TestHop"
+
+    def __init__(self, ds: Dataset, base_param: int = 5, h_param_1: int = 0):
+
+        super().__init__(ds, self.name)
+        self.bp = base_param
+        self.h_param = h_param_1
+
+        self.base_name = self.get_base_name(base_param=base_param)
+
+    def get_space(self) -> Dict:
+        hp_space = {
+            'h_param_1': ho_scope.int(hp.quniform('n_layers', low=0, high=20, q=1)),
+        }
+        return hp_space
+
+    @classmethod
+    def get_base_name(cls, **kwargs):
+        return cls.name + "_" + str(kwargs['base_param'])
+
+    def conf_model(self, hp_sample: Dict) -> 'HyperOptimizableModel':
+        new_mod = TestHopTable(self.data, self.bp, **hp_sample)
+        return new_mod
+
+    def hyper_objective(self) -> float:
+        x = self.h_param
+        return -x * x + 12 * x + 15
+
+    def fit(self) -> None:
+        pass
+
+    def predict(self, in_data):
+        pass
+
+
+def test_hyperopt():
+
+    ds = construct_test_ds(20)
+    test_hop_mod_4 = TestHopTable(ds, 4, 6)
+    test_hop_mod_4.optimize(5)
+
+    best_mod_4 = TestHopTable.from_best_hp(ds=ds, base_param=4)
+    
+    print("Hyperopt test passed :)")
