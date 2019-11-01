@@ -115,7 +115,7 @@ class BatteryEnv(DynEnv):
         """Converts discrete actions to the right range."""
         if not 0 <= action <= self.nb_actions:
             raise ValueError(f"Action: {action} not in correct range!")
-        cont_action = scale_to_range(action, self.nb_actions, self.action_range)
+        cont_action = scale_to_range(action, self.nb_actions - 1, self.action_range)
         if self.scaling is None:
             return cont_action
         return rem_mean_and_std(cont_action, self.scaling[self.c_ind])

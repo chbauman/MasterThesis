@@ -13,6 +13,7 @@ class BatteryModel(BaseDynamicsModel):
     :math:`p_{t+1}`:
     average charging power from time t to t+1 (control input)
     """
+    params: np.ndarray = None  #: Parameters of the pw linear model.
 
     def __init__(self, dataset: Dataset):
         """Initializes the battery model with the specified dataset.
@@ -21,7 +22,6 @@ class BatteryModel(BaseDynamicsModel):
             dataset: Dataset with data to fit modes.
         """
         super().__init__(dataset, dataset.name, None)
-        self.params = None
 
     def fit(self) -> None:
         """Fits the battery model.
@@ -34,18 +34,20 @@ class BatteryModel(BaseDynamicsModel):
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """Make predictions using the fitted model on the provided data.
 
-        :param in_data: Prepared data.
-        :return: Predictions
+        Args:
+            in_data: Prepared data.
+
+        Returns:
+            Predictions
         """
         p = np.copy(in_data[:, -1, 1])
         s_t = np.copy(in_data[:, -1, 0])
-        a1, a2, a3 = self.params
 
-        s_tp1 = s_t + a1 + a2 * p + a3 * np.maximum(0, p)
+        s_tp1 = s_t + self._eval_at(p)
         return s_tp1.reshape((-1, 1))
 
     def disturb(self):
-        """Returns a sample of noise of length n.
+        """Returns a sample of noise.
         """
         raise NotImplementedError("Disturbance for battery model not implemented!")
 
