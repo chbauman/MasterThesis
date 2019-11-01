@@ -149,6 +149,10 @@ class RNNDynamicModel(HyperOptimizableModel):
     train_seq_len: int  #: Length of sequences used for training.
     n_feats: int  #: Number of input features in train data.
 
+    @classmethod
+    def base_name(cls, **kwargs):
+        return _constr_base_name(**kwargs)
+
     def get_space(self) -> Dict:
         """
         Defines the hyper parameter space.
@@ -251,19 +255,19 @@ class RNNDynamicModel(HyperOptimizableModel):
         # Build model
         self.m = self._build_model()
 
-    def from_hyper_params(self,
-                          data: Dataset,
-                          in_inds: np.ndarray = None,
-                          out_inds: np.ndarray = None,
-                          weight_vec: Optional[np.ndarray] = None,
-                          constraint_list: Sequence[SeriesConstraint] = None,
-                          train_seq: bool = False,
-                          ):
+    def from_best_hyper_params(self,
+                               data: Dataset,
+                               in_inds: np.ndarray = None,
+                               out_inds: np.ndarray = None,
+                               weight_vec: Optional[np.ndarray] = None,
+                               constraint_list: Sequence[SeriesConstraint] = None,
+                               train_seq: bool = False,
+                               ) -> 'RNNDynamicModel':
 
         pass
 
     def _build_model(self, debug: bool = False) -> Any:
-        """Builds the keras LSTM model and returns it.
+        """Builds the keras RNN model and returns it.
 
         The parameters how to build it were passed to `__init__`.
 

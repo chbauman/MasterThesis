@@ -1,12 +1,23 @@
-from typing import Dict, List
-
-from hyperopt import fmin, hp, tpe, Trials, space_eval, STATUS_OK
-from hyperopt.pyll import scope as ho_scope
-from hyperopt.pyll.stochastic import sample as ho_sample
-
+import pickle
 from abc import ABC, abstractmethod
+from typing import Dict, List, Tuple
+
+from hyperopt import fmin, tpe
 
 from base_dynamics_model import BaseDynamicsModel
+
+OptHP = Tuple[Dict, float]  #: The type of the stored info.
+
+
+def save_hp(name_hp: str, opt_hp: OptHP) -> None:
+    with open(name_hp, 'wb') as f:
+        pickle.dump(opt_hp, f)
+
+
+def load_hp(name_hp) -> OptHP:
+    with open(name_hp, 'rb') as f:
+        opt_hp = pickle.load(f)
+    return opt_hp
 
 
 class HyperOptimizableModel(BaseDynamicsModel, ABC):
@@ -22,6 +33,11 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         Returns:
             hyperopt space definition.
         """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def base_name(cls, **kwargs):
         pass
 
     @abstractmethod
@@ -96,3 +112,19 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         )
 
         return best
+
+    @classmethod
+    def _get_opt_hp_f_name(cls, **kwargs):
+        return cls.base_name(**kwargs) + "_OPT_HP.pkl"
+
+    @classmethod
+    def from_best_hp(cls, **kwargs):
+        name_hp = cls._get_opt_hp_f_name(**kwargs)
+        opt_hp = load_hp(name_hp)
+        hp_params, val = opt_hp
+        init_params = cls._hp_sample_to_kwargs(hp_params)
+        return cls.__init__(**kwargs, **init_params)
+
+    @classmethod
+    def _hp_sample_to_kwargs(cls, hp_sample: Dict):
+        return hp_sample
