@@ -110,7 +110,7 @@ class BaseDynamicsModel(ABC):
         out_inds = _get_inds_and_str(out_indices, ds, ds.d - ds.n_c)
         self.out_inds, self.p_out_inds, self.out_inds_str = out_inds
         for k in ds.c_inds:
-            if k in out_indices:
+            if k in self.out_inds:
                 raise IndexError("You cannot predict control indices!")
         in_inds = _get_inds_and_str(in_indices, ds, ds.d)
         self.in_indices, self.p_in_indices, self.in_inds_str = in_inds
@@ -118,7 +118,7 @@ class BaseDynamicsModel(ABC):
         # name
         self.name = self._get_full_name(name, ds)
 
-        self.n_pred = len(out_indices)
+        self.n_pred = len(self.out_inds)
         self.n_pred_full = ds.d - ds.n_c
 
         self.plot_path = os.path.join(model_plot_path, self.name)
