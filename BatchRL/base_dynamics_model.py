@@ -38,15 +38,6 @@ def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
     return analysis_ds
 
 
-def _get_inds(indices: np.ndarray, ds: Dataset, n: int):
-    """Prepares the indices."""
-    if indices is None:
-        indices = ds.from_prepared(np.arange(n))
-    p_indices = ds.to_prepared(indices)
-    ds.check_inds(indices, True)
-    return indices, p_indices
-
-
 def _get_inds_str(indices: np.ndarray, pre: str = "In") -> str:
     inds_str = ""
     if indices is not None:
@@ -111,12 +102,12 @@ class BaseDynamicsModel(ABC):
             self.verbose = verbose
 
         # Set up indices
-        out_inds = _get_inds(out_indices, ds, ds.d - ds.n_c)
+        out_inds = self._get_inds(out_indices, ds, False)
         self.out_inds, self.p_out_inds = out_inds
         for k in ds.c_inds:
             if k in self.out_inds:
                 raise IndexError("You cannot predict control indices!")
-        in_inds = _get_inds(in_indices, ds, ds.d)
+        in_inds = self._get_inds(in_indices, ds, True)
         self.in_indices, self.p_in_indices = in_inds
 
         # name
@@ -128,6 +119,16 @@ class BaseDynamicsModel(ABC):
         self.plot_path = os.path.join(model_plot_path, self.name)
         create_dir(self.plot_path)
 
+    @staticmethod
+    def _get_inds(indices: Optional[np.ndarray], ds: Dataset, in_inds: bool = True):
+        """Prepares the indices."""
+        if indices is None:
+            n = ds.d if in_inds else ds.d - ds.n_c
+            indices = ds.from_prepared(np.arange(n))
+        p_indices = ds.to_prepared(indices)
+        ds.check_inds(indices, True)
+        return indices, p_indices
+
     def _get_full_name(self, base_name: str):
         return self._get_full_name_static(self.data, self.out_inds, self.in_indices, base_name)
 
@@ -135,8 +136,8 @@ class BaseDynamicsModel(ABC):
     def _get_full_name_static(data: Dataset, out_inds: np.ndarray,
                               in_inds: np.ndarray, b_name: str):
         """Argghhh, duplicate code here."""
-        out_inds, _ = _get_inds(out_inds, data, data.d - data.n_c)
-        in_inds, _ = _get_inds(in_inds, data, data.d)
+        out_inds, _ = BaseDynamicsModel._get_inds(out_inds, data, False)
+        in_inds, _ = BaseDynamicsModel._get_inds(in_inds, data, True)
         ind_str = _get_inds_str(out_inds, "Out") + _get_inds_str(in_inds)
         return data.name + ind_str + "_MODEL_" + b_name
 

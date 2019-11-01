@@ -160,6 +160,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         try:
             opt_hp = load_hp(name_hp)
         except FileNotFoundError:
+            print(name_hp)
             raise FileNotFoundError("No hyperparameters found, need to run optimize() first!")
         hp_params, val = opt_hp
         init_params = cls._hp_sample_to_kwargs(hp_params)

@@ -158,6 +158,13 @@ class RNNDynamicModel(HyperOptimizableModel):
         ]
         super_kwargs = {k: kwargs[k] for k in kwargs if k in super_keys}
         base_kwargs = {k: kwargs[k] for k in kwargs if k not in super_keys}
+        # Handle None default arguments
+        if base_kwargs.get('name') is None:
+            base_kwargs['name'] = cls.def_name()
+        if super_kwargs.get('in_inds') is None:
+            super_kwargs['in_inds'], _ = cls._get_inds(None, super_kwargs['data'], True)
+        if super_kwargs.get('out_inds') is None:
+            super_kwargs['out_inds'], _ = cls._get_inds(None, super_kwargs['data'], False)
         b_n = _constr_base_name(**base_kwargs)
         return cls._get_full_name_static(b_name=b_n, **super_kwargs)
 
@@ -206,11 +213,15 @@ class RNNDynamicModel(HyperOptimizableModel):
         """
         return self.hyper_obj()
 
+    @staticmethod
+    def def_name():
+        return "basicRNN"
+
     def __init__(self,
                  data: Dataset,
+                 name: str = None,
                  hidden_sizes: Sequence[int] = (20, 20),
                  n_iter_max: int = 10000,
-                 name: str = 'baseRNN',
                  *,
                  in_inds: np.ndarray = None,
                  out_inds: np.ndarray = None,
@@ -239,6 +250,8 @@ class RNNDynamicModel(HyperOptimizableModel):
         :param constraint_list: The constraints on the data series.
         :param verbose: The verbosity level, 0, 1 or 2.
         """
+        if name is None:
+            name = self.def_name()
         name_orig = name
         name = constr_name(name, hidden_sizes, n_iter_max, lr, gru,
                            residual_learning, weight_vec, input_noise_std,
@@ -556,18 +569,18 @@ def test_rnn_models():
                    'n_iter_max': 1,
                    'input_noise_std': 0.001,
                    'lr': 0.01}
-    fix_kwargs = {'residual_learning': True,
+    fix_kwargs = {'data': ds,
+                  'residual_learning': True,
                   'weight_vec': None,
                   'out_inds': p_inds,
                   'constraint_list': None}
     n_over = 3
     mod_test_overshoot = RNNDynamicOvershootModel(n_overshoot=n_over,
-                                                  data=ds,
                                                   name="DebugOvershoot",
                                                   debug=True,
                                                   **test_kwargs,
                                                   **fix_kwargs)
-    mod_test = RNNDynamicModel(data=ds, **test_kwargs, **fix_kwargs)
+    mod_test = RNNDynamicModel(name="TestRNN", **test_kwargs, **fix_kwargs)
     full_sam_seq_len = n_over + train_s_len
 
     # Try hyperopt
