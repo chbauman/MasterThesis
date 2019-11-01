@@ -540,13 +540,13 @@ def test_rnn_models():
     Raises:
         AssertionError: If a test fails.
     """
-
     # Create dataset for testing
-    n, n_feat = 100, 10
+    n, n_feat = 200, 10
     dat = np.arange(n * n_feat).reshape((n, n_feat))
     c_inds = np.array([4, 6], dtype=np.int32)
-    ds = get_test_ds(dat, c_inds, name="RNNTestDataset")
+    ds = get_test_ds(dat, c_inds, name="RNNTestDataset", dt=4 * 60)
     ds.seq_len = 6
+    ds.val_percent = 0.3
     train_s_len = ds.seq_len - 1
     ds.split_data()
 
@@ -567,6 +567,8 @@ def test_rnn_models():
                                                   name="DebugOvershoot",
                                                   debug=True,
                                                   **test_kwargs)
+    mod_test = RNNDynamicModel(data=ds, **test_kwargs)
+    mod_test.optimize(1)
     full_sam_seq_len = n_over + train_s_len
 
     # Check sequence lengths
