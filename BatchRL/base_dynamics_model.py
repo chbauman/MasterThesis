@@ -38,16 +38,20 @@ def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
     return analysis_ds
 
 
-def _get_inds_and_str(indices: np.ndarray, ds: Dataset, n: int):
+def _get_inds(indices: np.ndarray, ds: Dataset, n: int):
     """Prepares the indices."""
-    inds_str = ""
     if indices is None:
         indices = ds.from_prepared(np.arange(n))
-    else:
-        inds_str = "_In" + '-'.join(map(str, indices))
     p_indices = ds.to_prepared(indices)
     ds.check_inds(indices, True)
-    return indices, p_indices, inds_str
+    return indices, p_indices
+
+
+def _get_inds_str(indices: np.ndarray, pre: str = "In") -> str:
+    inds_str = ""
+    if indices is not None:
+        inds_str = "_" + pre + '-'.join(map(str, indices))
+    return inds_str
 
 
 class BaseDynamicsModel(ABC):
@@ -68,7 +72,7 @@ class BaseDynamicsModel(ABC):
     plot_path: str  #: Path to the plot folder
 
     #: Dataset containing all the data
-    data: Dataset
+    data: Dataset  #: Reference to the underlying dataset.
     out_inds: np.ndarray
     p_out_inds: np.ndarray
     in_indices: np.ndarray
@@ -107,16 +111,16 @@ class BaseDynamicsModel(ABC):
             self.verbose = verbose
 
         # Set up indices
-        out_inds = _get_inds_and_str(out_indices, ds, ds.d - ds.n_c)
-        self.out_inds, self.p_out_inds, self.out_inds_str = out_inds
+        out_inds = _get_inds(out_indices, ds, ds.d - ds.n_c)
+        self.out_inds, self.p_out_inds = out_inds
         for k in ds.c_inds:
             if k in self.out_inds:
                 raise IndexError("You cannot predict control indices!")
-        in_inds = _get_inds_and_str(in_indices, ds, ds.d)
-        self.in_indices, self.p_in_indices, self.in_inds_str = in_inds
+        in_inds = _get_inds(in_indices, ds, ds.d)
+        self.in_indices, self.p_in_indices = in_inds
 
         # name
-        self.name = self._get_full_name(name, ds)
+        self.name = self._get_full_name(name)
 
         self.n_pred = len(self.out_inds)
         self.n_pred_full = ds.d - ds.n_c
@@ -124,8 +128,17 @@ class BaseDynamicsModel(ABC):
         self.plot_path = os.path.join(model_plot_path, self.name)
         create_dir(self.plot_path)
 
-    def _get_full_name(self, base_name: str, ds: Dataset):
-        return ds.name + self.out_inds_str + self.in_inds_str + "_MODEL_" + base_name
+    def _get_full_name(self, base_name: str):
+        return self._get_full_name_static(self.data, self.out_inds, self.in_indices, base_name)
+
+    @staticmethod
+    def _get_full_name_static(data: Dataset, out_inds: np.ndarray,
+                              in_inds: np.ndarray, b_name: str):
+        """Argghhh, duplicate code here."""
+        out_inds, _ = _get_inds(out_inds, data, data.d - data.n_c)
+        in_inds, _ = _get_inds(in_inds, data, data.d)
+        ind_str = _get_inds_str(out_inds, "Out") + _get_inds_str(in_inds)
+        return data.name + ind_str + "_MODEL_" + b_name
 
     @abstractmethod
     def fit(self) -> None:

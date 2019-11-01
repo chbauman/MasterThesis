@@ -23,6 +23,7 @@ def load_hp(name_hp) -> OptHP:
 class HyperOptimizableModel(BaseDynamicsModel, ABC):
 
     param_list: List[Dict] = []  #: List of tried parameters.
+    base_name: str  #: Base name independent of hyperparameters.
 
     @abstractmethod
     def get_space(self) -> Dict:
@@ -37,7 +38,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
 
     @classmethod
     @abstractmethod
-    def base_name(cls, **kwargs):
+    def get_base_name(cls, **kwargs):
         pass
 
     @abstractmethod
@@ -115,7 +116,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
 
     @classmethod
     def _get_opt_hp_f_name(cls, **kwargs):
-        return cls.base_name(**kwargs) + "_OPT_HP.pkl"
+        return cls.model_path + cls.get_base_name(**kwargs) + "_OPT_HP.pkl"
 
     @classmethod
     def from_best_hp(cls, **kwargs):

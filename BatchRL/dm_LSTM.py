@@ -150,8 +150,9 @@ class RNNDynamicModel(HyperOptimizableModel):
     n_feats: int  #: Number of input features in train data.
 
     @classmethod
-    def base_name(cls, **kwargs):
-        return _constr_base_name(**kwargs)
+    def get_base_name(cls, **kwargs):
+        b_n = _constr_base_name(**kwargs)
+        return cls._get_full_name(b_n)
 
     def get_space(self) -> Dict:
         """
@@ -240,6 +241,22 @@ class RNNDynamicModel(HyperOptimizableModel):
         # Store data
         self.train_seq_len = self.data.seq_len - 1
         self.n_feats = len(self.in_indices)
+
+        # Store name for hyperopt
+        kwargs_super = {
+            'data': data,
+            'out_inds': out_inds,
+            'in_inds': in_inds,
+        }
+        base_kwargs = {
+            'name': name,
+            'res_learn': residual_learning,
+            'weight_vec': weight_vec,
+            'constraint_list': constraint_list,
+            'train_seq': train_seq,
+        }
+        base_name = self.get_base_name(**base_kwargs)
+        self.base_name = self._get_full_name(base_name)
 
         # Store parameters
         self.constraint_list = constraint_list
