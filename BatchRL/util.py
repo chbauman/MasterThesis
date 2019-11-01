@@ -13,7 +13,6 @@ from typing import Union, List, Tuple, Any, Sequence
 import numpy as np
 import scipy.optimize.nnls
 
-
 # Determine platform, assuming we are on Euler if it is not a windows platform
 EULER = not os.name == 'nt'
 
@@ -68,6 +67,23 @@ def scale_to_range(x: Num, tot_len: Num, ran: Sequence[Num]) -> float:
     # Compute output
     d_ran = ran[1] - ran[0]
     return ran[0] + x / tot_len * d_ran
+
+
+def check_and_scale(action: Num, tot_n_actions: int, interval: Sequence[Num]):
+    """Checks if `action` is in the right range and scales it.
+
+    Args:
+        action: The action to scale.
+        tot_n_actions: The total number of possible actions.
+        interval: The range to scale `action` into.
+
+    Returns:
+        The scaled action.
+    """
+    if not 0 <= action <= tot_n_actions:
+        raise ValueError(f"Action: {action} not in correct range!")
+    cont_action = scale_to_range(action, tot_n_actions - 1, interval)
+    return cont_action
 
 
 def linear_oob_penalty(x: Num, bounds: Sequence[Num]) -> float:
