@@ -1,7 +1,7 @@
 """The recurrent models to be used for modeling the dynamical system.
 
 The models are derived from `HyperOptimizableModel` or at least
-also from `BaseDynamicsModel`.
+from `BaseDynamicsModel`.
 """
 from functools import partial
 from typing import Dict, Optional
@@ -37,6 +37,56 @@ def weighted_loss(y_true, y_pred, weights):
     return K.mean((y_true - y_pred) * (y_true - y_pred) * weights)
 
 
+def _constr_hp_name(hidden_sizes: Sequence,
+                    n_iter_max: int,
+                    lr: float,
+                    gru: bool = False,
+                    input_noise_std: float = None) -> str:
+    """Constructs the part of the name of the network associated with the hyperparameters.
+
+    Args:
+        hidden_sizes: Layer size list or tuple
+        n_iter_max: Number of iterations
+        lr: Learning rate
+        gru: Whether to use GRU units
+        input_noise_std: Standard deviation of input noise.
+
+    Returns:
+        String combining all these parameters.
+    """
+    arch = '_L' + '-'.join(map(str, hidden_sizes))
+    ep_s = '_E' + str(n_iter_max)
+    lrs = '_LR' + "{:.4g}".format(lr)
+    n_str = '' if input_noise_std is None else '_N' + "{:.4g}".format(input_noise_std)
+    gru_str = '' if not gru else '_GRU'
+    return ep_s + arch + lrs + n_str + gru_str
+
+
+def _constr_base_name(name: str,
+                      res_learn: bool = True,
+                      weight_vec: np.ndarray = None,
+                      constraint_list: Sequence[SeriesConstraint] = None,
+                      train_seq: bool = False,
+                      ) -> str:
+    """Constructs the part of the name of the network not associated with hyperparameters.
+
+     Args:
+        name: Base name
+        res_learn: Whether to use residual learning.
+        weight_vec: Weight vector for weighted loss.
+        constraint_list: List with constraints.
+        train_seq: Whether to train with sequence output.
+
+    Returns:
+        String combining all these parameters.
+    """
+    res_str = '' if not res_learn else '_RESL'
+    w_str = '' if weight_vec is None else '_W' + '-'.join(map(str, weight_vec))
+    con_str = '' if constraint_list is None else '_CON'
+    seq_str = '' if not train_seq else '_SEQ'
+    return name + res_str + w_str + con_str + seq_str
+
+
 def constr_name(name: str,
                 hidden_sizes: Sequence,
                 n_iter_max: int,
@@ -44,28 +94,49 @@ def constr_name(name: str,
                 gru: bool = False,
                 res_learn: bool = True,
                 weight_vec: np.ndarray = None,
-                input_noise_std: float = None) -> str:
+                input_noise_std: float = None,
+                constraint_list: Sequence[SeriesConstraint] = None,
+                train_seq: bool = False,
+                ) -> str:
     """
     Constructs the name of the network.
 
-    :param name: Base name
-    :param hidden_sizes: Layer size list or tuple
-    :param n_iter_max: Number of iterations
-    :param lr: Learning rate
-    :param gru: Whether to use GRU units
-    :param res_learn: Whether to use residual learning
-    :param weight_vec: Weight vector for weighted loss
-    :param input_noise_std: Standard deviation of input noise.
-    :return: String combining all these parameters.
+    Args:
+        name: Base name
+        hidden_sizes: Layer size list or tuple
+        n_iter_max: Number of iterations
+        lr: Learning rate
+        gru: Whether to use GRU units
+        res_learn: Whether to use residual learning
+        weight_vec: Weight vector for weighted loss
+        input_noise_std: Standard deviation of input noise.
+        constraint_list: List with constraints.
+        train_seq: Whether to train with sequence output.
+
+    Returns:
+        String combining all these parameters.
     """
-    arch = '_L' + '-'.join(map(str, hidden_sizes))
-    ep_s = '_E' + str(n_iter_max)
-    lrs = '_LR' + "{:.4g}".format(lr)
-    n_str = '' if input_noise_std is None else '_N' + "{:.4g}".format(input_noise_std)
-    gru_str = '' if not gru else '_GRU'
-    res_str = '' if not res_learn else '_RESL'
-    w_str = '' if weight_vec is None else '_W' + '-'.join(map(str, weight_vec))
-    return name + ep_s + arch + lrs + n_str + gru_str + res_str + w_str
+    hp_part = _constr_hp_name(hidden_sizes, n_iter_max, lr,
+                              gru, input_noise_std)
+    base_part = _constr_base_name(name, res_learn, weight_vec, constraint_list, train_seq)
+    return base_part + hp_part
+
+
+def _extract_kwargs(hp_sample: Dict):
+    """Turns a hyperopt parameter sample into a kwargs dict.
+
+    Args:
+        hp_sample: Dict with hyperopt parameters.
+
+    Returns:
+        Kwargs dict for initialization.
+    """
+    n_layers = hp_sample['n_layers']
+    n_units = hp_sample['n_neurons']
+    hidden_sizes = [n_units for _ in range(n_layers)]
+    init_kwargs = {key: hp_sample[key] for key in hp_sample if key not in ['n_layers', 'n_neurons']}
+    init_kwargs['hidden_sizes'] = hidden_sizes
+    return init_kwargs
 
 
 class RNNDynamicModel(HyperOptimizableModel):
@@ -106,15 +177,11 @@ class RNNDynamicModel(HyperOptimizableModel):
         Returns:
             New model.
         """
-        n_layers = hp_sample['n_layers']
-        n_units = hp_sample['n_neurons']
-        hidden_sizes = [n_units for _ in range(n_layers)]
-        init_kwargs = {key: hp_sample[key] for key in hp_sample if key not in ['n_layers', 'n_neurons']}
+        init_kwargs = _extract_kwargs(hp_sample)
         new_mod = RNNDynamicModel(self.data,
                                   in_inds=self.in_indices,
                                   out_inds=self.out_inds,
                                   constraint_list=self.constraint_list,
-                                  hidden_sizes=hidden_sizes,
                                   verbose=0,
                                   **init_kwargs)
         return new_mod
@@ -161,9 +228,9 @@ class RNNDynamicModel(HyperOptimizableModel):
         :param verbose: The verbosity level, 0, 1 or 2.
         """
 
-        name = constr_name(name, hidden_sizes,
-                           n_iter_max, lr, gru,
-                           residual_learning, weight_vec, input_noise_std)
+        name = constr_name(name, hidden_sizes, n_iter_max, lr, gru,
+                           residual_learning, weight_vec, input_noise_std,
+                           constraint_list)
         super(RNNDynamicModel, self).__init__(data, name, out_inds, in_inds, verbose)
 
         # Store data
@@ -183,6 +250,17 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         # Build model
         self.m = self._build_model()
+
+    def from_hyper_params(self,
+                          data: Dataset,
+                          in_inds: np.ndarray = None,
+                          out_inds: np.ndarray = None,
+                          weight_vec: Optional[np.ndarray] = None,
+                          constraint_list: Sequence[SeriesConstraint] = None,
+                          train_seq: bool = False,
+                          ):
+
+        pass
 
     def _build_model(self, debug: bool = False) -> Any:
         """Builds the keras LSTM model and returns it.

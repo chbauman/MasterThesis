@@ -127,7 +127,7 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
     base_params = {
         'name': name,
         'data': ds,
-        'n_iter_max': 40,
+        'n_iter_max': 10,
         'hidden_sizes': (50, 50),
         'input_noise_std': 0.001,
         'lr': 0.01,
@@ -221,10 +221,11 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    # run_tests()
+    run_tests()
 
     # Get dataset
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
+    return
 
     # Get the needed models
     needed = [
@@ -235,7 +236,7 @@ def main() -> None:
         "Apartment_RNN",
         # "RoomTemp_RNN",
         # "Full_Comp_WeatherApt",
-        # "FullState_Comp_WeatherAptTime",
+        "FullState_Comp_WeatherAptTime",
         # "FullState_Comp_FullTime",
     ]
     all_mods = {nm: get_model(nm, ds, rnn_consts) for nm in needed}
@@ -251,9 +252,8 @@ def main() -> None:
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
-    return
     # Full test model
-    curr_tests(all_mods['FullState_Comp_FullTime'])
+    curr_tests(all_mods['FullState_Comp_WeatherAptTime'])
 
     # Train and analyze the battery model
     # run_battery()

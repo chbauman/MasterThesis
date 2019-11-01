@@ -38,6 +38,18 @@ def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
     return analysis_ds
 
 
+def _get_inds_and_str(indices: np.ndarray, ds: Dataset, n: int):
+    """Prepares the indices."""
+    inds_str = ""
+    if indices is None:
+        indices = ds.from_prepared(np.arange(n))
+    else:
+        inds_str = "_In" + '-'.join(map(str, indices))
+    p_indices = ds.to_prepared(indices)
+    ds.check_inds(indices, True)
+    return indices, p_indices, inds_str
+
+
 class BaseDynamicsModel(ABC):
     """
     This class describes the interface of a ML-based
@@ -94,37 +106,26 @@ class BaseDynamicsModel(ABC):
         if verbose is not None:
             self.verbose = verbose
 
-        # Output indices
-        out_inds_str = ""
-        if out_indices is None:
-            out_indices = ds.from_prepared(np.arange(ds.d - ds.n_c))
-        else:
-            out_inds_str = "_Out" + '-'.join(map(str, out_indices))
-        self.out_inds = out_indices
-        self.p_out_inds = ds.to_prepared(out_indices)
-        ds.check_inds(out_indices, True)
+        # Set up indices
+        out_inds = _get_inds_and_str(out_indices, ds, ds.d - ds.n_c)
+        self.out_inds, self.p_out_inds, self.out_inds_str = out_inds
         for k in ds.c_inds:
             if k in out_indices:
                 raise IndexError("You cannot predict control indices!")
-
-        # Input indices
-        in_inds_str = ""
-        if in_indices is None:
-            in_indices = ds.from_prepared(np.arange(ds.d))
-        else:
-            in_inds_str = "_In" + '-'.join(map(str, in_indices))
-        self.in_indices = in_indices
-        self.p_in_indices = ds.to_prepared(in_indices)
-        ds.check_inds(in_indices, True)
+        in_inds = _get_inds_and_str(in_indices, ds, ds.d)
+        self.in_indices, self.p_in_indices, self.in_inds_str = in_inds
 
         # name
-        self.name = ds.name + out_inds_str + in_inds_str + "_MODEL_" + name
+        self.name = self._get_full_name(name, ds)
 
         self.n_pred = len(out_indices)
         self.n_pred_full = ds.d - ds.n_c
 
         self.plot_path = os.path.join(model_plot_path, self.name)
         create_dir(self.plot_path)
+
+    def _get_full_name(self, base_name: str, ds: Dataset):
+        return ds.name + self.out_inds_str + self.in_inds_str + "_MODEL_" + base_name
 
     @abstractmethod
     def fit(self) -> None:
@@ -158,10 +159,7 @@ class BaseDynamicsModel(ABC):
         """
         in_dat, out_dat, n = self.data.get_split(data_name, seq_out)
         res_in_dat = in_dat[:, :, self.p_in_indices]
-        if not seq_out:
-            res_out_dat_out = out_dat[:, self.p_out_inds]
-        else:
-            res_out_dat_out = out_dat[:, :, self.p_out_inds]
+        res_out_dat_out = out_dat[..., self.p_out_inds]
         return res_in_dat, res_out_dat_out
 
     def rescale_output(self, arr: np.ndarray,
