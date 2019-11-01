@@ -412,6 +412,9 @@ class RNNDynamicModel(HyperOptimizableModel):
             # Prepare the data
             input_data, output_data = self.get_fit_data('train_val')
 
+            # Set seed for reproducibility
+            np.random.seed(SEED)
+
             # Fit and save model
             h = self.m.fit(input_data, output_data,
                            epochs=self.n_iter_max,

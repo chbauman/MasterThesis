@@ -6,6 +6,7 @@ to handle the datetime of python and numpy. Also some
 tests of these functions are included.
 """
 import os
+import random
 from datetime import datetime
 from typing import Union, List, Tuple, Any, Sequence
 
@@ -15,6 +16,11 @@ import scipy.optimize.nnls
 
 # Determine platform, assuming we are on Euler if it is not a windows platform
 EULER = not os.name == 'nt'
+
+# Fix random seeds
+SEED = 42
+np.random.seed(SEED)
+random.seed(SEED)
 
 #######################################################################################################
 # Typing
