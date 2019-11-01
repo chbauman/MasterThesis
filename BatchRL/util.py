@@ -46,6 +46,48 @@ def tot_size(t: Tuple[int, ...]) -> int:
     return res
 
 
+def scale_to_range(x: Num, tot_len: Num, ran: Sequence[Num]) -> float:
+    """Interval transformation.
+
+    Assumes `x` is in [0, `tot_len`] and scales it affine linearly
+    to the interval `ran`.
+
+    Args:
+        x: Point to transform.
+        tot_len: Length of initial interval.
+        ran: Interval to transform into.
+
+    Returns:
+        New point in requested interval.
+    """
+    # Check input
+    assert tot_len >= x >= 0.0, "Invalid values!"
+    assert len(ran) == 2, "Range must have length 2!"
+    assert ran[1] > ran[0], "Interval must have positive length!"
+
+    # Compute output
+    d_ran = ran[1] - ran[0]
+    return ran[0] + x / tot_len * d_ran
+
+
+def linear_oob_penalty(x: Num, bounds: Sequence[Num]) -> float:
+    """Computes the linear penalty for `x` not lying within ``bounds`.
+
+    Args:
+        x: Value that should be within bounds.
+        bounds: The specified bounds.
+
+    Returns:
+        Penalty value.
+    """
+    assert bounds[0] <= bounds[1], "Invalid bounds!"
+    if x < bounds[0]:
+        return bounds[0] - x
+    elif x > bounds[1]:
+        return x - bounds[1]
+    return 0
+
+
 def rem_first(t: Tuple) -> Tuple:
     """Removes first element from tuple.
 
@@ -1148,6 +1190,15 @@ def test_python_stuff() -> None:
     assert tot_size((1, 2, 3)) == 6, "tot_size not working!"
     assert tot_size((0, 1)) == 0, "tot_size not working!"
     assert tot_size(()) == 0, "tot_size not working!"
+
+    # Test scale_to_range
+    assert np.allclose(scale_to_range(1.0, 2.0, [-1.0, 1.0]), 0.0), "scale_to_range not working correctly!"
+    assert np.allclose(scale_to_range(1.0, 2.0, [0.0, 2.0]), 1.0), "scale_to_range not working correctly!"
+
+    # Test linear_oob_penalty
+    assert np.allclose(linear_oob_penalty(1.0, [-1.0, 1.0]), 0.0), "linear_oob_penalty not working correctly!"
+    assert np.allclose(scale_to_range(5.0, [0.0, 2.0]), 3.0), "linear_oob_penalty not working correctly!"
+    assert np.allclose(scale_to_range(-5.0, [0.0, 2.0]), 5.0), "linear_oob_penalty not working correctly!"
 
     print("Python function test passed!")
 

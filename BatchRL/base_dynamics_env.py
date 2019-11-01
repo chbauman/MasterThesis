@@ -120,7 +120,7 @@ class DynEnv(ABC, gym.Env):
             The reward of having chosen that action and a bool
             determining if the episode is over.
         """
-        print(f"Action: {action}")
+        # print(f"Action: {action}")
         self.hist[-1, -self.act_dim:] = action
         pred_sh = (1, -1, self.state_dim)
         curr_pred = self.m.predict(self.hist.reshape(pred_sh))[0]
