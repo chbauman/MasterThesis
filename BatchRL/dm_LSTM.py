@@ -168,6 +168,15 @@ class RNNDynamicModel(HyperOptimizableModel):
         b_n = _constr_base_name(**base_kwargs)
         return cls._get_full_name_static(b_name=b_n, **super_kwargs)
 
+    @classmethod
+    def _hp_sample_to_kwargs(cls, hp_sample: Dict) -> Dict:
+        """Converts the sample from the hyperopt space to kwargs for initialization.
+
+        Returns:
+            Dict with kwargs for initialization.
+        """
+        return _extract_kwargs(hp_sample)
+
     def get_space(self) -> Dict:
         """
         Defines the hyper parameter space.
@@ -585,7 +594,7 @@ def test_rnn_models():
 
     # Try hyperopt
     mod_test.optimize(1)
-    mod_test_2 = RNNDynamicModel.from_best_hp(**fix_kwargs)
+    mod_test_2 = RNNDynamicModel.from_best_hp(**fix_kwargs, name="TestRNN")
     mod_test_2.optimize(1)
 
     # Check sequence lengths
