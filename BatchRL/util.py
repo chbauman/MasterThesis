@@ -1197,8 +1197,8 @@ def test_python_stuff() -> None:
 
     # Test linear_oob_penalty
     assert np.allclose(linear_oob_penalty(1.0, [-1.0, 1.0]), 0.0), "linear_oob_penalty not working correctly!"
-    assert np.allclose(scale_to_range(5.0, [0.0, 2.0]), 3.0), "linear_oob_penalty not working correctly!"
-    assert np.allclose(scale_to_range(-5.0, [0.0, 2.0]), 5.0), "linear_oob_penalty not working correctly!"
+    assert np.allclose(linear_oob_penalty(5.0, [0.0, 2.0]), 3.0), "linear_oob_penalty not working correctly!"
+    assert np.allclose(linear_oob_penalty(-5.0, [0.0, 2.0]), 5.0), "linear_oob_penalty not working correctly!"
 
     print("Python function test passed!")
 

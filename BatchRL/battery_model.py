@@ -63,7 +63,8 @@ class BatteryModel(BaseDynamicsModel):
         """
         # Get data
         d = self.data
-        dat = d.orig_train_val
+        dat_in, dat_out, inds = d.get_split("train_val")
+        print(dat_in.shape)
         scale = np.copy(d.scaling)
         scale[0, 0] = 0.0
 

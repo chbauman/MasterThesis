@@ -15,7 +15,7 @@ from dm_Composite import CompositeModel
 from dm_Const import ConstModel
 from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Time import SCTimeModel
-from dynamics_envs import FullRoomEnv
+from dynamics_envs import FullRoomEnv, BatteryEnv
 from keras_layers import test_layers
 from util import *
 
@@ -52,6 +52,13 @@ def run_battery() -> None:
     bat_mod.analyze()
     bat_mod_naive = ConstModel(bat_ds)
     bat_mod_naive.analyze()
+
+    # Run the environment
+    n_actions = 11
+    bat_env = BatteryEnv(bat_mod, n_actions)
+    const_ag_1 = ConstHeating(bat_env, 0.0)
+    const_ag_2 = ConstHeating(bat_env, n_actions - 1)
+    bat_env.analyze_agent([const_ag_1, const_ag_2])
 
 
 def choose_dataset(base_ds_name: str = "Model_Room43",
@@ -222,11 +229,14 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    run_tests()
+    # run_tests()
+
+    # Train and analyze the battery model
+    run_battery()
+    return
 
     # Get dataset
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
-    return
 
     # Get the needed models
     needed = [
@@ -255,9 +265,6 @@ def main() -> None:
 
     # Full test model
     curr_tests(all_mods['FullState_Comp_WeatherAptTime'])
-
-    # Train and analyze the battery model
-    # run_battery()
 
 
 if __name__ == '__main__':
