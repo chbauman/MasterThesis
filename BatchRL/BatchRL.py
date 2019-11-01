@@ -56,9 +56,9 @@ def run_battery() -> None:
     # Run the environment
     n_actions = 11
     bat_env = BatteryEnv(bat_mod, n_actions)
-    const_ag_1 = ConstHeating(bat_env, 4.8)  # Discharge
+    const_ag_1 = ConstHeating(bat_env, 4.9)  # Discharge
     const_ag_2 = ConstHeating(bat_env, 5)  # No charging
-    const_ag_3 = ConstHeating(bat_env, 5.2)  # Charge
+    const_ag_3 = ConstHeating(bat_env, 5.1)  # Charge
     bat_env.analyze_agent([const_ag_1, const_ag_2, const_ag_3])
 
 

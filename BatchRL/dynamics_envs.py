@@ -121,7 +121,6 @@ class BatteryEnv(DynEnv):
         return rem_mean_and_std(cont_action, self.scaling[self.c_ind])
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
-        print(f"Battery step, action: {action}")
         return super().step(self._to_continuous(action))
 
     def _get_scaled_soc(self, unscaled_soc):
