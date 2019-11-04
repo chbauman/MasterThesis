@@ -11,7 +11,7 @@ from keras_util import getMLPModel
 from visualize import plot_rewards
 
 
-class DQNRoomHeatingAgent(AgentBase):
+class DQNBaseAgent(AgentBase):
 
     def __init__(self, env: FullRoomEnv):
 
@@ -20,11 +20,12 @@ class DQNRoomHeatingAgent(AgentBase):
 
         # Build Q-function model.
         nb_actions = env.nb_actions
-        inputs = Input(shape=(1, 7))
+        n_state_vars = env.m.n_pred
+        inputs = Input(shape=(1, n_state_vars))
         flat_inputs = Flatten()(inputs)
         model = getMLPModel(out_dim=nb_actions)
         model = Model(inputs=inputs, outputs=model(flat_inputs))
-        model.summary()
+        # model.summary()
 
         # Configure and compile our agent.
         memory = SequentialMemory(limit=50000, window_length=1)

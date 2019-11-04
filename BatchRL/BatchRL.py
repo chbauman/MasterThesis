@@ -15,6 +15,7 @@ from dm_Composite import CompositeModel
 from dm_Const import ConstModel
 from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Time import SCTimeModel
+from dqn_agent import DQNBaseAgent
 from dynamics_envs import FullRoomEnv, BatteryEnv
 from keras_layers import test_layers
 from util import *
@@ -231,15 +232,24 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
         raise ValueError("No such model defined!")
 
 
-def curr_tests(comp_model: BaseDynamicsModel) -> None:
+def curr_tests(ds: Dataset) -> None:
     """The code that I am currently experimenting with."""
 
+    # Get dataset
+    bat_name = "Battery"
+    get_battery_data()
+    bat_ds = Dataset.loadDataset(bat_name)
+    bat_ds.split_data()
+
     # Full test model
-    env = FullRoomEnv(comp_model, disturb_fac=0.3)
-    const_ag_1 = ConstHeating(env, 0.0)
-    const_ag_2 = ConstHeating(env, env.nb_actions - 1)
-    const_ag_3 = ConstHeating(env, env.nb_actions - 1)
-    env.analyze_agent([const_ag_1, const_ag_2, const_ag_3])
+    comp_model = BatteryModel(bat_ds)
+    comp_model.fit()
+    env = BatteryEnv(comp_model, disturb_fac=0.3)
+    const_ag_1 = ConstHeating(env, 5.01)
+    const_ag_2 = ConstHeating(env, 4.99)
+    dqn_agent = DQNBaseAgent(env)
+    dqn_agent.fit()
+    env.analyze_agent([const_ag_1, const_ag_2, dqn_agent])
 
     # dqn_agent = DQNRoomHeatingAgent(env)
     # dqn_agent.fit()
@@ -270,26 +280,25 @@ def main() -> None:
         # "Full_Comp_WeatherApt",
         "FullState_Comp_WeatherAptTime",
         # "FullState_Comp_FullTime",
-        "FullState_Comp_ReducedTempConstWaterWeather",
+        # "FullState_Comp_ReducedTempConstWaterWeather",
     ]
     all_mods = {nm: get_model(nm, ds, rnn_consts) for nm in needed}
 
     # Optimize model(s)
-    optimize_model(get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts))
-    optimize_model(get_model("RoomTempFromReduced_RNN", ds, rnn_consts))
-    optimize_model(get_model("Apartment_RNN", ds, rnn_consts))
-    return
+    # optimize_model(get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts))
+    # optimize_model(get_model("RoomTempFromReduced_RNN", ds, rnn_consts))
+    # optimize_model(get_model("Apartment_RNN", ds, rnn_consts))
 
     # Fit or load all initialized models
     for name, m_to_use in all_mods.items():
         m_to_use.fit()
         print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
-        m_to_use.analyze()
+        # m_to_use.analyze()
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
     # Full test model
-    curr_tests(all_mods['FullState_Comp_WeatherAptTime'])
+    curr_tests(ds)
 
 
 if __name__ == '__main__':
