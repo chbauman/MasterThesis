@@ -48,4 +48,4 @@ class DQNBaseAgent(AgentBase):
         # dqn.test(env, nb_episodes=5, visualize=True)
 
     def get_action(self, state):
-        pass
+        return self.dqn.forward(state)

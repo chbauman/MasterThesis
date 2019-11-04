@@ -49,7 +49,7 @@ class BatteryModel(BaseDynamicsModel):
     def disturb(self):
         """Returns a sample of noise.
         """
-        raise NotImplementedError("Disturbance for battery model not implemented!")
+        return 0
 
     def _eval_at(self, p):
         """Evaluates the model for a given active power `p`."""

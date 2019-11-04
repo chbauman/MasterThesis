@@ -103,7 +103,7 @@ class BatteryEnv(DynEnv):
     def __init__(self, m: BaseDynamicsModel,
                  n_disc_actions: int = 11,
                  **kwargs):
-        max_eps = 24 * 60 // m.data.dt  # max predictions length
+        max_eps = 24 * 60 // m.data.dt // 2  # max predictions length
         super().__init__(m, "Battery", max_eps, **kwargs)
         d = m.data
         self.nb_actions = n_disc_actions
