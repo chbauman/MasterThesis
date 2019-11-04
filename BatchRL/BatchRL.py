@@ -177,6 +177,13 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
         # temperature model.
         return RNNDynamicModel(out_inds=np.array([5], dtype=np.int32),
                                **base_params_no_inds)
+    elif name == "RoomTempFromReduced_RNN":
+        # The temperature only model, predicting only the room temperature from
+        # a reduced number of variables. Can e.g. be used with a constant water
+        # temperature model.
+        return RNNDynamicModel(out_inds=np.array([5], dtype=np.int32),
+                               in_inds=np.array([0, 2, 5, 6, 7], dtype=np.int32),
+                               **base_params_no_inds)
     elif name == "WaterTemp_Const":
         # Constant model for water temperatures
         return ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
@@ -203,13 +210,23 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
         return CompositeModel(ds, [mod_weather, mod_apt, model_time_exact],
                               new_name="FullState_Comp_WeatherAptTime")
     elif name == "FullState_Comp_FullTime":
-        # The full state model combining the weather only model, the
-        # apartment only model and the exact time model to predict all
+        # The full state model combining the combined weather and apartment model
+        # and the exact time model to predict all
         # variables except for the control variable.
         mod_full = get_model("Full_RNN", ds, rnn_consts=rnn_consts)
         model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts)
         return CompositeModel(ds, [mod_full, model_time_exact],
                               new_name="FullState_Comp_FullTime")
+    elif name == "FullState_Comp_ReducedTempConstWaterWeather":
+        # The full state model combining the weather, the constant water temperature,
+        # the reduced room temperature and the exact time model to predict all
+        # variables except for the control variable.
+        mod_wt = get_model("WaterTemp_Const", ds, rnn_consts=rnn_consts)
+        model_reduced_temp = get_model("RoomTempFromReduced_RNN", ds, rnn_consts=rnn_consts)
+        model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts)
+        model_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts)
+        return CompositeModel(ds, [model_reduced_temp, mod_wt, model_weather, model_time_exact],
+                              new_name="FullState_Comp_ReducedTempConstWaterWeather")
     else:
         raise ValueError("No such model defined!")
 
@@ -237,8 +254,7 @@ def main() -> None:
     # run_tests()
 
     # Train and analyze the battery model
-    run_battery()
-    return
+    # run_battery()
 
     # Get dataset
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
@@ -254,6 +270,7 @@ def main() -> None:
         # "Full_Comp_WeatherApt",
         "FullState_Comp_WeatherAptTime",
         # "FullState_Comp_FullTime",
+        "FullState_Comp_ReducedTempConstWaterWeather",
     ]
     all_mods = {nm: get_model(nm, ds, rnn_consts) for nm in needed}
 
