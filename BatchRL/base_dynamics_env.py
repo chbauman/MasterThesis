@@ -121,8 +121,8 @@ class DynEnv(ABC, gym.Env):
             action: The control input (action).
 
         Returns:
-            The reward of having chosen that action and a bool
-            determining if the episode is over.
+            The next state, the reward of having chosen that action and a bool
+            determining if the episode is over. (And an empty dict)
         """
         # print(f"Action: {action}")
         self.hist[-1, -self.act_dim:] = action

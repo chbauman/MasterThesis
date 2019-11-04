@@ -147,9 +147,9 @@ class BatteryEnv(DynEnv):
         curr_pred = self._get_scaled_soc(curr_pred)
 
         energy_used = action_rescaled * self.alpha
-        bound_pen = linear_oob_penalty(curr_pred, self.soc_bound)
-        if self.n_ts > self.n_ts_per_eps - 2:
-            bound_pen += 10.0
+        bound_pen = 1000 * linear_oob_penalty(curr_pred, self.soc_bound)
+        if self.n_ts > self.n_ts_per_eps - 2 and curr_pred < 60.0:
+            bound_pen += 1000.0
 
         # Penalty for constraint violation
         return -energy_used - bound_pen
@@ -159,6 +159,5 @@ class BatteryEnv(DynEnv):
         b = self.soc_bound
         scaled_soc = self._get_scaled_soc(curr_pred)
         if scaled_soc > b[1] + thresh or scaled_soc < b[0] - thresh:
-            print("Diverging...")
             return True
         return False

@@ -15,7 +15,7 @@ from dm_Composite import CompositeModel
 from dm_Const import ConstModel
 from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Time import SCTimeModel
-from dqn_agent import DQNBaseAgent
+from keras_agents import DQNBaseAgent, NAFBaseAgent
 from dynamics_envs import FullRoomEnv, BatteryEnv
 from keras_layers import test_layers
 from util import *
@@ -247,7 +247,8 @@ def curr_tests(ds: Dataset) -> None:
     env = BatteryEnv(comp_model, disturb_fac=0.3)
     const_ag_1 = ConstHeating(env, 5.01)
     const_ag_2 = ConstHeating(env, 4.99)
-    dqn_agent = DQNBaseAgent(env)
+    env.nb_actions = 1
+    dqn_agent = NAFBaseAgent(env)
     dqn_agent.fit()
     env.analyze_agent([const_ag_1, const_ag_2, dqn_agent])
 
