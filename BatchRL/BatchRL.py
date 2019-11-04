@@ -41,7 +41,11 @@ def run_tests() -> None:
 
 
 def run_battery() -> None:
+    """Runs all battery related stuff.
 
+    Loads and prepares the battery data, fits the
+    battery model and evaluates some agents.
+    """
     # Battery data
     bat_name = "Battery"
     get_battery_data()

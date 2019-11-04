@@ -35,6 +35,11 @@ class FullRoomEnv(DynEnv):
             return zero_one_action
         return rem_mean_and_std(zero_one_action, self.scaling[self.c_ind])
 
+    def scale_actions(self, actions):
+        """Scales the actions to the correct range."""
+        zero_one_action = check_and_scale(actions, self.nb_actions, [0.0, 1.0])
+        return zero_one_action
+
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
         print(f"Full room step, action: {action}")
         return super(FullRoomEnv, self).step(self._to_continuous(action))
@@ -122,6 +127,11 @@ class BatteryEnv(DynEnv):
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
         return super().step(self._to_continuous(action))
+
+    def scale_actions(self, actions):
+        """Scales the actions to the correct range."""
+        zero_one_action = check_and_scale(actions, self.nb_actions, self.action_range)
+        return zero_one_action
 
     def _get_scaled_soc(self, unscaled_soc):
         if self.scaling is not None:

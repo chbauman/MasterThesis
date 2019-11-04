@@ -110,6 +110,10 @@ class DynEnv(ABC, gym.Env):
         """
         return False
 
+    def scale_actions(self, actions):
+        """Scales the actions to the correct range."""
+        return actions
+
     def step(self, action: Arr) -> Tuple[np.ndarray, float, bool, Any]:
         """Evolve the model with the given control input `action`.
 
@@ -212,6 +216,7 @@ class DynEnv(ABC, gym.Env):
 
         # Scale the data to the right values
         trajectories = self.m.rescale_output(trajectories, out_put=True)
+        action_sequences = self.scale_actions(action_sequences)
 
         # Plot all the things
         analysis_plot_path = self.get_plt_path("AgentAnalysis")

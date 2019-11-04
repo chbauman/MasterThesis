@@ -80,7 +80,7 @@ def check_and_scale(action: Num, tot_n_actions: int, interval: Sequence[Num]):
     Returns:
         The scaled action.
     """
-    if not 0 <= action <= tot_n_actions:
+    if not 0 <= np.min(action) or not np.max(action) <= tot_n_actions:
         raise ValueError(f"Action: {action} not in correct range!")
     cont_action = scale_to_range(action, tot_n_actions - 1, interval)
     return cont_action

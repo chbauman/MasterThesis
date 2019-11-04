@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-# import base_dynamics_env
 from util import *
 
 
@@ -13,7 +12,7 @@ class AgentBase(ABC):
     env: Any  #: The corresponding environment
     name: str  #: The name of the Agent / control strategy
 
-    def __init__(self, env: 'base_dynamics_env.DynEnv', name: str = "Abstract Agent"):
+    def __init__(self, env: 'DynEnv', name: str = "Abstract Agent"):
         self.env = env
         self.name = name
 
