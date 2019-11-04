@@ -60,7 +60,7 @@ def scale_to_range(x: Num, tot_len: Num, ran: Sequence[Num]) -> float:
         New point in requested interval.
     """
     # Check input
-    assert tot_len >= x >= 0.0, "Invalid values!"
+    assert tot_len >= np.nanmax(x) and np.nanmin(x) >= 0.0, "Invalid values!"
     assert len(ran) == 2, "Range must have length 2!"
     assert ran[1] > ran[0], "Interval must have positive length!"
 
@@ -72,6 +72,8 @@ def scale_to_range(x: Num, tot_len: Num, ran: Sequence[Num]) -> float:
 def check_and_scale(action: Num, tot_n_actions: int, interval: Sequence[Num]):
     """Checks if `action` is in the right range and scales it.
 
+    Works for an array of actions. Ignores nans.
+
     Args:
         action: The action to scale.
         tot_n_actions: The total number of possible actions.
@@ -80,7 +82,7 @@ def check_and_scale(action: Num, tot_n_actions: int, interval: Sequence[Num]):
     Returns:
         The scaled action.
     """
-    if not 0 <= np.min(action) or not np.max(action) <= tot_n_actions:
+    if not 0 <= np.nanmin(action) or not np.nanmax(action) <= tot_n_actions:
         raise ValueError(f"Action: {action} not in correct range!")
     cont_action = scale_to_range(action, tot_n_actions - 1, interval)
     return cont_action
