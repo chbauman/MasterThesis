@@ -129,7 +129,7 @@ def optimize_model(mod: HyperOptimizableModel) -> None:
     Args:
         mod: Model whose hyperparameters are to be optimized.
     """
-    n_opt = 100 if EULER else 3
+    n_opt = 60 if EULER else 3
     opt_params = mod.optimize(n_opt)
     # print("All tried parameter combinations: {}.".format(mod.param_list))
     print("Optimal parameters: {}.".format(opt_params))
@@ -274,8 +274,11 @@ def main() -> None:
     ]
     all_mods = {nm: get_model(nm, ds, rnn_consts) for nm in needed}
 
-    # Optimize model
-    # optimize_model(all_mods[needed[0]])
+    # Optimize model(s)
+    optimize_model(get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts))
+    optimize_model(get_model("RoomTempFromReduced_RNN", ds, rnn_consts))
+    optimize_model(get_model("Apartment_RNN", ds, rnn_consts))
+    return
 
     # Fit or load all initialized models
     for name, m_to_use in all_mods.items():
