@@ -169,7 +169,8 @@ class BatteryEnv(RLDynEnv):
             bound_pen += 1000.0
 
         # Penalty for constraint violation
-        return -energy_used - bound_pen
+        tot_rew = -energy_used - bound_pen
+        return np.array(tot_rew).item()
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
         thresh = 10

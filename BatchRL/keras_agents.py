@@ -139,14 +139,13 @@ class DDPGBaseAgent(AgentBase):
                                memory=memory, nb_steps_warmup_critic=100, nb_steps_warmup_actor=100,
                                random_process=random_process, gamma=.99, target_model_update=1e-3)
         opt = Adam(lr=.001, clipnorm=1.0)
-        opt._name = "Fuck"
         self.agent.compile(opt, metrics=['mae'])
 
     def fit(self) -> None:
         # Okay, now it's time to learn something! We visualize the training here for show, but this
         # slows down training quite a lot. You can always safely abort the training prematurely using
         # Ctrl + C.
-        self.agent.fit(self.env, nb_steps=50000, visualize=True, verbose=1, nb_max_episode_steps=200)
+        self.agent.fit(self.env, nb_steps=50000, visualize=False, verbose=1, nb_max_episode_steps=200)
 
         # Finally, evaluate our algorithm for 5 episodes.
         self.agent.test(self.env, nb_episodes=5, visualize=True, nb_max_episode_steps=200)
