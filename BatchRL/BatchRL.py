@@ -277,7 +277,7 @@ def curr_tests(ds: Dataset = None) -> None:
     # dqn_agent = NAFBaseAgent(env)
     # dqn_agent = DQNBaseAgent(env)
     dqn_agent.fit()
-    env.analyze_agent([const_ag_1, const_ag_2])
+    env.analyze_agent([const_ag_1, const_ag_2, dqn_agent])
 
     # dqn_agent = DQNRoomHeatingAgent(env)
     # dqn_agent.fit()

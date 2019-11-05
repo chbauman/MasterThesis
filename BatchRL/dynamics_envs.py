@@ -126,7 +126,6 @@ class BatteryEnv(RLDynEnv):
     """The environment for the battery model.
 
     """
-
     alpha: float = 1.0  #: Weight factor for reward.
     action_range: Sequence = (-100, 100)  #: The requested active power range.
     soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
@@ -170,7 +169,7 @@ class BatteryEnv(RLDynEnv):
 
         # Penalty for constraint violation
         tot_rew = -energy_used - bound_pen
-        return np.array(tot_rew).item()
+        return np.array(tot_rew).item() / 100
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
         thresh = 10
