@@ -1,3 +1,4 @@
+import os
 from typing import Sequence
 
 from keras.layers import Dense, Dropout, BatchNormalization
@@ -45,16 +46,18 @@ def getMLPModel(mlp_layers: Sequence = (20, 20), out_dim: int = 1,
                 dropout: bool = False,
                 bn: bool = False,
                 ker_reg: float = 0.01):
-    """
-    Returns a sequential MLP keras model.
+    """Returns a sequential MLP keras model.
 
-    :param mlp_layers: The numbers of neurons per layer.
-    :param out_dim: The output dimension.
-    :param trainable: Whether the parameters should be trainable.
-    :param dropout: Whether to use dropout.
-    :param bn: Whether to use batch normalization.
-    :param ker_reg: Kernel regularization weight.
-    :return: Keras MLP model.
+    Args:
+        mlp_layers: The numbers of neurons per layer.
+        out_dim: The output dimension.
+        trainable: Whether the parameters should be trainable.
+        dropout: Whether to use dropout.
+        bn: Whether to use batch normalization.
+        ker_reg: Kernel regularization weight.
+
+    Returns:
+        Sequential keras MLP model.
     """
     model = Sequential()
     if bn:
@@ -78,3 +81,48 @@ def getMLPModel(mlp_layers: Sequence = (20, 20), out_dim: int = 1,
     last = Dense(out_dim, activation=None, trainable=trainable, name="last_dense")
     model.add(last)
     return model
+
+
+class KerasBase:
+    """Base class for keras models.
+
+    Provides an interface for saving and loading models.
+    """
+
+    model_path: str = "../Models/Dynamics/"
+
+    def save_model(self, m, name):
+        """Saves a keras model"""
+        m.save_weights(self.get_path(name))
+
+    def load_if_exists(self, m, name: str) -> bool:
+        """Loads the keras model if it exists.
+
+        Returns true if it could be loaded, else False.
+
+        Args:
+            m: Model to be loaded.
+            name: Name of model.
+
+        Returns:
+             True if model could be loaded else False.
+        """
+        full_path = self.get_path(name)
+
+        if os.path.isfile(full_path):
+            m.load_weights(full_path)
+            return True
+        return False
+
+    def get_path(self, name: str) -> str:
+        """
+        Returns the path where the model parameters
+        are stored. Used for keras models only.
+
+        Args:
+            name: Model name.
+
+        Returns:
+            Model parameter file path.
+        """
+        return os.path.join(self.model_path, name + ".h5")

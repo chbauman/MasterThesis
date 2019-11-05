@@ -295,6 +295,25 @@ class TestDecoratorFactory(object):
         return decorated
 
 
+def train_wrapper(verbose: bool = True):
+
+    def decorator(fit):
+
+        def decorated(self):
+
+            loaded = self.load_if_exists(self.m, self.name)
+            if not loaded:
+                if verbose:
+                    print("Fitting Model...")
+                fit(self)
+            elif verbose:
+                print("Restored trained model")
+
+        return decorated
+
+    return decorator
+
+
 #######################################################################################################
 # Numerical stuff
 

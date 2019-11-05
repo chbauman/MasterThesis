@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from data import Dataset, get_test_ds
+from keras_util import KerasBase
 from time_series import AR_Model
 from util import *
 from visualize import plot_dataset, model_plot_path, plot_residuals_acf
@@ -45,7 +46,7 @@ def _get_inds_str(indices: np.ndarray, pre: str = "In") -> str:
     return inds_str
 
 
-class BaseDynamicsModel(ABC):
+class BaseDynamicsModel(KerasBase, ABC):
     """
     This class describes the interface of a ML-based
     (partial) dynamics model.
@@ -54,7 +55,6 @@ class BaseDynamicsModel(ABC):
     # Constants
     N_LAG: int = 6
     debug: bool = True
-    model_path: str = "../Models/Dynamics/"
     use_AR: bool = True
 
     # Parameters
@@ -214,38 +214,6 @@ class BaseDynamicsModel(ABC):
                 arr_scaled[..., ct] = trf_fun(arr_scaled[..., ct], mean_and_std=mas)
 
         return arr_scaled
-
-    def get_path(self, name: str) -> str:
-        """
-        Returns the path where the model parameters
-        are stored. Used for keras models only.
-
-        Args:
-            name: Model name.
-
-        Returns:
-            Model parameter file path.
-        """
-        return self.model_path + name + ".h5"
-
-    def load_if_exists(self, m, name: str) -> bool:
-        """
-        Loads the keras model if it exists.
-        Returns true if it could be loaded, else False.
-
-        Args:
-            m: Model to be loaded.
-            name: Name of model.
-
-        Returns:
-             True if model could be loaded else False.
-        """
-        full_path = self.get_path(name)
-
-        if os.path.isfile(full_path):
-            m.load_weights(full_path)
-            return True
-        return False
 
     def model_disturbance(self, data_str: str = 'train') -> None:
         """
