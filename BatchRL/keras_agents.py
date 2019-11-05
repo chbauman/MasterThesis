@@ -122,7 +122,7 @@ class DDPGBaseAgent(AgentBase):
         # Next, we build a very simple model.
         actor = Sequential()
         actor.add(Flatten(input_shape=(1, n_state_vars)))
-        actor = getMLPModel(out_dim=nb_actions)(actor)
+        actor.add(getMLPModel(out_dim=nb_actions))
 
         action_input = Input(shape=(nb_actions,), name='action_input')
         observation_input = Input(shape=(1, n_state_vars), name='observation_input')
@@ -138,7 +138,9 @@ class DDPGBaseAgent(AgentBase):
         self.agent = DDPGAgent(nb_actions=nb_actions, actor=actor, critic=critic, critic_action_input=action_input,
                                memory=memory, nb_steps_warmup_critic=100, nb_steps_warmup_actor=100,
                                random_process=random_process, gamma=.99, target_model_update=1e-3)
-        self.agent.compile(Adam(lr=.001, clipnorm=1.), metrics=['mae'])
+        opt = Adam(lr=.001, clipnorm=1.0)
+        opt._name = "Fuck"
+        self.agent.compile(opt, metrics=['mae'])
 
     def fit(self) -> None:
         # Okay, now it's time to learn something! We visualize the training here for show, but this

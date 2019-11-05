@@ -28,7 +28,7 @@ def run_tests() -> None:
         AssertionError: If a test fails.
     """
     test_hyperopt()
-    # test_layers()
+    test_layers()
     test_rnn_models()
     test_dyn_model()
     test_test_env()
@@ -270,15 +270,14 @@ def curr_tests(ds: Dataset = None) -> None:
     # Full test model
     comp_model = BatteryModel(bat_ds)
     comp_model.fit()
-    env = BatteryEnv(comp_model, disturb_fac=0.3)
+    env = BatteryEnv(comp_model, disturb_fac=0.3, cont_actions=True)
     const_ag_1 = ConstHeating(env, 5.01)
     const_ag_2 = ConstHeating(env, 4.99)
-    env.nb_actions = 1
     dqn_agent = DDPGBaseAgent(env)
     # dqn_agent = NAFBaseAgent(env)
     # dqn_agent = DQNBaseAgent(env)
     dqn_agent.fit()
-    env.analyze_agent([const_ag_1, const_ag_2, dqn_agent])
+    env.analyze_agent([const_ag_1, const_ag_2])
 
     # dqn_agent = DQNRoomHeatingAgent(env)
     # dqn_agent.fit()
@@ -290,7 +289,7 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    run_tests()
+    # run_tests()
 
     # Full test model
     curr_tests()
