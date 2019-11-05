@@ -101,7 +101,7 @@ class KerasBase:
         Returns true if it could be loaded, else False.
 
         Args:
-            m: Model to be loaded.
+            m: Keras model to be loaded.
             name: Name of model.
 
         Returns:

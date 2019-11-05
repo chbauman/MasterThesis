@@ -1,25 +1,39 @@
-import gym
 from keras import Input, Model, Sequential
 from keras.layers import Flatten, Concatenate
 from keras.optimizers import Adam
 from rl.agents import DDPGAgent
 from rl.agents.dqn import DQNAgent, NAFAgent
+from rl.core import Agent
 from rl.memory import SequentialMemory
 from rl.policy import BoltzmannQPolicy
 from rl.random import OrnsteinUhlenbeckProcess
 
 from base_agent import AgentBase
 from dynamics_envs import FullRoomEnv
-from keras_util import getMLPModel
+from keras_util import getMLPModel, KerasBase
 from visualize import plot_rewards
-from util import *
 
 
-class DQNBaseAgent(AgentBase):
+class KerasBaseAgent(AgentBase, KerasBase):
+
+    agent: Agent  #: The keras-rl agent.
+    model_path: str = "../Models/RL/"
+    name: str = "KerasBaseAgent"
+
+    def __init__(self, name: str = None, **kwargs):
+        super().__init__(**kwargs)
+        if name is not None:
+            self.name = name
+
+    def get_action(self, state):
+        return self.agent.forward(state)
+
+
+class DQNBaseAgent(KerasBaseAgent):
 
     def __init__(self, env: FullRoomEnv):
         # Initialize super class
-        super().__init__(env)
+        super().__init__(env=env)
 
         # Build Q-function model.
         nb_actions = env.nb_actions
@@ -33,24 +47,21 @@ class DQNBaseAgent(AgentBase):
         # Configure and compile our agent.
         memory = SequentialMemory(limit=50000, window_length=1)
         policy = BoltzmannQPolicy()
-        self.dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
-                            policy=policy,
-                            gamma=0.9,
-                            train_interval=100,
-                            target_model_update=500)
-        self.dqn.compile(Adam(lr=1e-5), metrics=['mae'])
+        self.agent = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
+                              policy=policy,
+                              gamma=0.9,
+                              train_interval=100,
+                              target_model_update=500)
+        self.agent.compile(Adam(lr=1e-5), metrics=['mae'])
 
     def fit(self) -> None:
         # Fit and plot rewards
-        hist = self.dqn.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
+        hist = self.agent.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
         train_plot = self.env.get_plt_path("test")
         plot_rewards(hist, train_plot)
 
         # self.dqn.save_weights('dqn_{}_weights.h5f'.format(env.m.name), overwrite=True)
         # dqn.test(env, nb_episodes=5, visualize=True)
-
-    def get_action(self, state):
-        return self.dqn.forward(state)
 
 
 class NAFBaseAgent(AgentBase):
