@@ -136,20 +136,32 @@ def optimize_model(mod: HyperOptimizableModel) -> None:
     print("Optimal parameters: {}.".format(opt_params))
 
 
-def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
+def analyze_control_influence(m: BaseDynamicsModel):
+    n_actions = 2
+    env = FullRoomEnv(m, n_disc_actions=n_actions)
+    const_ag_1 = ConstHeating(env, 0)
+    const_ag_2 = ConstHeating(env, n_actions - 1)
+    env.analyze_agent([const_ag_1, const_ag_2])
+
+
+def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, from_hop: bool = False):
     # Basic parameter set
-    base_params = {
-        'name': name,
-        'data': ds,
+    hop_pars = {
         'n_iter_max': 10,
         'hidden_sizes': (50, 50),
         'input_noise_std': 0.001,
         'lr': 0.01,
+        'gru': False,
+    }
+    fix_pars = {
+        'name': name,
+        'data': ds,
         'residual_learning': True,
         'constraint_list': rnn_consts,
         'weight_vec': None,
-        'out_inds': np.array([0, 1, 2, 3, 5], dtype=np.int32),
     }
+    all_out = {'out_inds': np.array([0, 1, 2, 3, 5], dtype=np.int32)}
+    base_params = dict(hop_pars, **fix_pars, **all_out)
     base_params_no_inds = {k: base_params[k] for k in base_params if k != 'out_inds'}
     if name == "Time_Exact":
         # Time model: Predicts the deterministic time variable exactly.
@@ -160,31 +172,45 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
     elif name == "Full_RNN":
         # Full model: Predicting all series except for the controllable and the time
         # series. Weather predictions might depend on apartment data.
+        if from_hop:
+            return RNNDynamicModel.from_best_hp(**fix_pars, **all_out)
         return RNNDynamicModel(**base_params)
     elif name == "WeatherFromWeatherTime_RNN":
         # The weather model, predicting only the weather and the time, i.e. outside temperature and
         # irradiance from the past values and the time variable.
-        return RNNDynamicModel(out_inds=np.array([0, 1], dtype=np.int32),
-                               in_inds=np.array([0, 1, 6, 7], dtype=np.int32),
-                               **base_params_no_inds)
+        inds = {
+            'out_inds': np.array([0, 1], dtype=np.int32),
+            'in_inds': np.array([0, 1, 6, 7], dtype=np.int32),
+        }
+        if from_hop:
+            return RNNDynamicModel.from_best_hp(**fix_pars, **inds)
+        return RNNDynamicModel(**inds, **base_params_no_inds)
     elif name == "Apartment_RNN":
         # The apartment model, predicting only the apartment variables, i.e. water
         # temperatures and room temperature based on all input variables including the weather.
-        return RNNDynamicModel(out_inds=np.array([2, 3, 5], dtype=np.int32),
-                               **base_params_no_inds)
+        out_inds = {'out_inds': np.array([2, 3, 5], dtype=np.int32)}
+        if from_hop:
+            return RNNDynamicModel.from_best_hp(**fix_pars, **out_inds)
+        return RNNDynamicModel(**out_inds, **base_params_no_inds)
     elif name == "RoomTemp_RNN":
         # The temperature only model, predicting only the room temperature from
         # all the variables in the dataset. Can e.g. be used with a constant water
         # temperature model.
-        return RNNDynamicModel(out_inds=np.array([5], dtype=np.int32),
-                               **base_params_no_inds)
+        out_inds = {'out_inds': np.array([5], dtype=np.int32)}
+        if from_hop:
+            return RNNDynamicModel.from_best_hp(**fix_pars, **out_inds)
+        return RNNDynamicModel(**out_inds, **base_params_no_inds)
     elif name == "RoomTempFromReduced_RNN":
         # The temperature only model, predicting only the room temperature from
         # a reduced number of variables. Can e.g. be used with a constant water
         # temperature model.
-        return RNNDynamicModel(out_inds=np.array([5], dtype=np.int32),
-                               in_inds=np.array([0, 2, 5, 6, 7], dtype=np.int32),
-                               **base_params_no_inds)
+        inds = {
+            'out_inds': np.array([5], dtype=np.int32),
+            'in_inds': np.array([0, 2, 5, 6, 7], dtype=np.int32),
+        }
+        if from_hop:
+            return RNNDynamicModel.from_best_hp(**fix_pars, **inds)
+        return RNNDynamicModel(**inds, **base_params_no_inds)
     elif name == "WaterTemp_Const":
         # Constant model for water temperatures
         return ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
@@ -197,35 +223,35 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None):
         # The full model combining the weather only model and the
         # apartment only model to predict all
         # variables except for the control and the time variables.
-        mod_weather = get_model("WeatherFromWeather_RNN", ds, rnn_consts=rnn_consts)
-        mod_apt = get_model("Apartment_RNN", ds, rnn_consts=rnn_consts)
+        mod_weather = get_model("WeatherFromWeather_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        mod_apt = get_model("Apartment_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         return CompositeModel(ds, [mod_weather, mod_apt],
                               new_name="Full_Comp_WeatherApt")
     elif name == "FullState_Comp_WeatherAptTime":
         # The full state model combining the weather only model, the
         # apartment only model and the exact time model to predict all
         # variables except for the control variable.
-        mod_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts)
-        mod_apt = get_model("Apartment_RNN", ds, rnn_consts=rnn_consts)
-        model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts)
+        mod_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        mod_apt = get_model("Apartment_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         return CompositeModel(ds, [mod_weather, mod_apt, model_time_exact],
                               new_name="FullState_Comp_WeatherAptTime")
     elif name == "FullState_Comp_FullTime":
         # The full state model combining the combined weather and apartment model
         # and the exact time model to predict all
         # variables except for the control variable.
-        mod_full = get_model("Full_RNN", ds, rnn_consts=rnn_consts)
-        model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts)
+        mod_full = get_model("Full_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         return CompositeModel(ds, [mod_full, model_time_exact],
                               new_name="FullState_Comp_FullTime")
     elif name == "FullState_Comp_ReducedTempConstWaterWeather":
         # The full state model combining the weather, the constant water temperature,
         # the reduced room temperature and the exact time model to predict all
         # variables except for the control variable.
-        mod_wt = get_model("WaterTemp_Const", ds, rnn_consts=rnn_consts)
-        model_reduced_temp = get_model("RoomTempFromReduced_RNN", ds, rnn_consts=rnn_consts)
-        model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts)
-        model_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts)
+        mod_wt = get_model("WaterTemp_Const", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        model_reduced_temp = get_model("RoomTempFromReduced_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        model_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         return CompositeModel(ds, [model_reduced_temp, mod_wt, model_weather, model_time_exact],
                               new_name="FullState_Comp_ReducedTempConstWaterWeather")
     else:
@@ -248,7 +274,8 @@ def curr_tests(ds: Dataset) -> None:
     const_ag_1 = ConstHeating(env, 5.01)
     const_ag_2 = ConstHeating(env, 4.99)
     env.nb_actions = 1
-    dqn_agent = NAFBaseAgent(env)
+    # dqn_agent = NAFBaseAgent(env)
+    dqn_agent = DQNBaseAgent(env)
     dqn_agent.fit()
     env.analyze_agent([const_ag_1, const_ag_2, dqn_agent])
 
@@ -275,15 +302,16 @@ def main() -> None:
         # "Time_Exact",
         # "WaterTemp_Const",
         # "Full_RNN",
-        "WeatherFromWeatherTime_RNN",
-        "Apartment_RNN",
+        # "WeatherFromWeatherTime_RNN",
+        # "Apartment_RNN",
+        # "RoomTempFromReduced_RNN",
         # "RoomTemp_RNN",
         # "Full_Comp_WeatherApt",
         "FullState_Comp_WeatherAptTime",
         # "FullState_Comp_FullTime",
         # "FullState_Comp_ReducedTempConstWaterWeather",
     ]
-    all_mods = {nm: get_model(nm, ds, rnn_consts) for nm in needed}
+    all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True) for nm in needed}
 
     # Optimize model(s)
     # optimize_model(get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts))
@@ -294,10 +322,13 @@ def main() -> None:
     for name, m_to_use in all_mods.items():
         m_to_use.fit()
         print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
-        # m_to_use.analyze()
+        m_to_use.analyze()
+        analyze_control_influence(m_to_use)
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
+        pass
 
+    return
     # Full test model
     curr_tests(ds)
 
