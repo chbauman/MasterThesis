@@ -292,8 +292,8 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    curr_tests()
-    return
+    # curr_tests()
+    # return
 
     # Train and analyze the battery model
     # run_battery()
@@ -306,12 +306,12 @@ def main() -> None:
         # "Time_Exact",
         # "WaterTemp_Const",
         # "Full_RNN",
-        # "WeatherFromWeatherTime_RNN",
-        # "Apartment_RNN",
-        # "RoomTempFromReduced_RNN",
+        "WeatherFromWeatherTime_RNN",
+        "Apartment_RNN",
+        "RoomTempFromReduced_RNN",
         # "RoomTemp_RNN",
         # "Full_Comp_WeatherApt",
-        "FullState_Comp_WeatherAptTime",
+        # "FullState_Comp_WeatherAptTime",
         # "FullState_Comp_FullTime",
         # "FullState_Comp_ReducedTempConstWaterWeather",
     ]
@@ -327,7 +327,7 @@ def main() -> None:
         m_to_use.fit()
         print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
         m_to_use.analyze()
-        analyze_control_influence(m_to_use)
+        # analyze_control_influence(m_to_use)
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
         pass

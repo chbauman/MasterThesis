@@ -93,7 +93,7 @@ class KerasBase:
 
     def save_model(self, m, name):
         """Saves a keras model"""
-        m.save_weights(self.get_path(name))
+        m.save(self.get_path(name))
 
     def load_if_exists(self, m, name: str) -> bool:
         """Loads the keras model if it exists.
@@ -110,7 +110,7 @@ class KerasBase:
         full_path = self.get_path(name)
 
         if os.path.isfile(full_path):
-            m.load_weights(full_path)
+            m.load_model(full_path)
             return True
         return False
 

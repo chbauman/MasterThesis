@@ -426,7 +426,7 @@ class RNNDynamicModel(HyperOptimizableModel):
             pth = self.get_plt_path("TrainHist")
             plot_train_history(h, pth)
             create_dir(self.model_path)
-            self.m.save_weights(self.get_path(self.name))
+            self.m.save(self.get_path(self.name))
         else:
             self.deb("Restored trained model")
 
