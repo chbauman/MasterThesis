@@ -295,7 +295,7 @@ class TestDecoratorFactory(object):
         return decorated
 
 
-def train_wrapper(verbose: bool = True):
+def train_decorator(verbose: bool = True):
 
     def decorator(fit):
 
@@ -306,6 +306,7 @@ def train_wrapper(verbose: bool = True):
                 if verbose:
                     print("Fitting Model...")
                 fit(self)
+                self.save_model(self.m, self.name)
             elif verbose:
                 print("Restored trained model")
 

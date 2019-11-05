@@ -11,29 +11,29 @@ from rl.random import OrnsteinUhlenbeckProcess
 from base_agent import AgentBase
 from dynamics_envs import FullRoomEnv
 from keras_util import getMLPModel, KerasBase
+from util import *
 from visualize import plot_rewards
 
 
 class KerasBaseAgent(AgentBase, KerasBase):
-
-    agent: Agent  #: The keras-rl agent.
+    m: Agent  #: The keras-rl agent.
     model_path: str = "../Models/RL/"
-    name: str = "KerasBaseAgent"
 
-    def __init__(self, name: str = None, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if name is not None:
-            self.name = name
+        if kwargs.get('name') is None:
+            print("Please provide a name for the agent!")
 
     def get_action(self, state):
-        return self.agent.forward(state)
+        return self.m.forward(state)
 
 
 class DQNBaseAgent(KerasBaseAgent):
 
     def __init__(self, env: FullRoomEnv):
         # Initialize super class
-        super().__init__(env=env)
+        name = "DQN"
+        super().__init__(env=env, name=name)
 
         # Build Q-function model.
         nb_actions = env.nb_actions
@@ -47,28 +47,29 @@ class DQNBaseAgent(KerasBaseAgent):
         # Configure and compile our agent.
         memory = SequentialMemory(limit=50000, window_length=1)
         policy = BoltzmannQPolicy()
-        self.agent = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
-                              policy=policy,
-                              gamma=0.9,
-                              train_interval=100,
-                              target_model_update=500)
-        self.agent.compile(Adam(lr=1e-5), metrics=['mae'])
+        self.m = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
+                          policy=policy,
+                          gamma=0.9,
+                          train_interval=100,
+                          target_model_update=500)
+        self.m.compile(Adam(lr=1e-5), metrics=['mae'])
 
+    @train_decorator(True)
     def fit(self) -> None:
         # Fit and plot rewards
-        hist = self.agent.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
+        hist = self.m.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
         train_plot = self.env.get_plt_path("test")
         plot_rewards(hist, train_plot)
-
-        # self.dqn.save_weights('dqn_{}_weights.h5f'.format(env.m.name), overwrite=True)
         # dqn.test(env, nb_episodes=5, visualize=True)
 
 
-class NAFBaseAgent(AgentBase):
+class NAFBaseAgent(KerasBaseAgent):
 
     def __init__(self, env: FullRoomEnv):
         # Initialize super class
-        super().__init__(env)
+        name = "NAF"
+        super().__init__(env=env, name=name)
+        print("Why don't you work??????")
 
         # Build Q-function model.
         nb_actions = env.nb_actions
@@ -99,29 +100,24 @@ class NAFBaseAgent(AgentBase):
         # even the metrics!
         memory = SequentialMemory(limit=100000, window_length=1)
         random_process = OrnsteinUhlenbeckProcess(theta=.15, mu=0., sigma=.3, size=nb_actions)
-        self.agent = NAFAgent(nb_actions=nb_actions, V_model=v_model, L_model=l_model, mu_model=m_model,
-                              memory=memory, nb_steps_warmup=100, random_process=random_process,
-                              gamma=.99, target_model_update=1e-3)
-        self.agent.compile(Adam(lr=.001, clipnorm=1.), metrics=['mae'])
+        self.m = NAFAgent(nb_actions=nb_actions, V_model=v_model, L_model=l_model, mu_model=m_model,
+                          memory=memory, nb_steps_warmup=100, random_process=random_process,
+                          gamma=.99, target_model_update=1e-3)
+        self.m.compile(Adam(lr=.001, clipnorm=1.), metrics=['mae'])
 
     def fit(self) -> None:
         # Fit and plot rewards
-        hist = self.agent.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
+        hist = self.m.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
         train_plot = self.env.get_plt_path("test")
         plot_rewards(hist, train_plot)
 
-        # self.dqn.save_weights('dqn_{}_weights.h5f'.format(env.m.name), overwrite=True)
-        # dqn.test(env, nb_episodes=5, visualize=True)
 
-    def get_action(self, state):
-        return self.agent.forward(state)
-
-
-class DDPGBaseAgent(AgentBase):
+class DDPGBaseAgent(KerasBaseAgent):
 
     def __init__(self, env: FullRoomEnv):
         # Initialize super class
-        super().__init__(env)
+        name = "DDPG"
+        super().__init__(env=env, name=name)
 
         # Build Q-function model.
         nb_actions = env.nb_actions
@@ -146,27 +142,21 @@ class DDPGBaseAgent(AgentBase):
         # even the metrics!
         memory = SequentialMemory(limit=100000, window_length=1)
         random_process = OrnsteinUhlenbeckProcess(size=nb_actions, theta=.15, mu=0., sigma=.3)
-        self.agent = DDPGAgent(nb_actions=nb_actions, actor=actor, critic=critic, critic_action_input=action_input,
-                               memory=memory, nb_steps_warmup_critic=100, nb_steps_warmup_actor=100,
-                               random_process=random_process, gamma=.99, target_model_update=1e-3)
+        self.m = DDPGAgent(nb_actions=nb_actions, actor=actor, critic=critic, critic_action_input=action_input,
+                           memory=memory, nb_steps_warmup_critic=100, nb_steps_warmup_actor=100,
+                           random_process=random_process, gamma=.99, target_model_update=1e-3)
         opt = Adam(lr=.001, clipnorm=1.0)
-        self.agent.compile(opt, metrics=['mae'])
+        self.m.compile(opt, metrics=['mae'])
 
+    @train_decorator(True)
     def fit(self) -> None:
         # Okay, now it's time to learn something! We visualize the training here for show, but this
         # slows down training quite a lot. You can always safely abort the training prematurely using
         # Ctrl + C.
-        self.agent.fit(self.env, nb_steps=50000, visualize=False, verbose=1, nb_max_episode_steps=200)
+        hist = self.m.fit(self.env, nb_steps=5000, visualize=False, verbose=1, nb_max_episode_steps=200)
 
         # Finally, evaluate our algorithm for 5 episodes.
-        self.agent.test(self.env, nb_episodes=5, visualize=True, nb_max_episode_steps=200)
+        self.m.test(self.env, nb_episodes=5, visualize=True, nb_max_episode_steps=200)
         # Fit and plot rewards
-        hist = self.agent.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
-        train_plot = self.env.get_plt_path("test")
+        train_plot = self.env.get_plt_path(self.name + "_test")
         plot_rewards(hist, train_plot)
-
-        # self.dqn.save_weights('dqn_{}_weights.h5f'.format(env.m.name), overwrite=True)
-        # dqn.test(env, nb_episodes=5, visualize=True)
-
-    def get_action(self, state):
-        return self.agent.forward(state)
