@@ -68,7 +68,7 @@ class FullRoomEnv(DynEnv):
         d_temp = np.abs(w_temps[0] - w_temps[1])
         energy_used = action_rescaled * d_temp * self.alpha
         assert 0.0 <= action_rescaled <= 1.0, "Fucking wrong"
-        assert 10.0 <= w_temps[0] <= 50.0, "Water temperature scaled incorrectly!"
+        # assert 10.0 <= w_temps[0] <= 50.0, "Water temperature scaled incorrectly!"
 
         # Penalty for constraint violation
         r_temp = self.get_r_temp(curr_pred)

@@ -13,6 +13,7 @@ from typing import Union, List, Tuple, Any, Sequence
 import numpy as np
 import scipy.optimize.nnls
 
+
 # Determine platform, assuming we are on Euler if it is not a windows platform
 EULER = not os.name == 'nt'
 

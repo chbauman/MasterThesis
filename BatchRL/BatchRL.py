@@ -15,8 +15,8 @@ from dm_Composite import CompositeModel
 from dm_Const import ConstModel
 from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Time import SCTimeModel
-from keras_agents import DQNBaseAgent, NAFBaseAgent
 from dynamics_envs import FullRoomEnv, BatteryEnv
+from keras_agents import DDPGBaseAgent, NAFBaseAgent
 from keras_layers import test_layers
 from util import *
 
@@ -28,7 +28,7 @@ def run_tests() -> None:
         AssertionError: If a test fails.
     """
     test_hyperopt()
-    test_layers()
+    # test_layers()
     test_rnn_models()
     test_dyn_model()
     test_test_env()
@@ -258,7 +258,7 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, fro
         raise ValueError("No such model defined!")
 
 
-def curr_tests(ds: Dataset) -> None:
+def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
     # Get dataset
@@ -274,8 +274,9 @@ def curr_tests(ds: Dataset) -> None:
     const_ag_1 = ConstHeating(env, 5.01)
     const_ag_2 = ConstHeating(env, 4.99)
     env.nb_actions = 1
+    dqn_agent = DDPGBaseAgent(env)
     # dqn_agent = NAFBaseAgent(env)
-    dqn_agent = DQNBaseAgent(env)
+    # dqn_agent = DQNBaseAgent(env)
     dqn_agent.fit()
     env.analyze_agent([const_ag_1, const_ag_2, dqn_agent])
 
@@ -289,7 +290,11 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    # run_tests()
+    run_tests()
+
+    # Full test model
+    curr_tests()
+    return
 
     # Train and analyze the battery model
     # run_battery()
@@ -327,10 +332,6 @@ def main() -> None:
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
         pass
-
-    return
-    # Full test model
-    curr_tests(ds)
 
 
 if __name__ == '__main__':
