@@ -239,6 +239,31 @@ class IdDense(Layer):
         return tuple(out_shape)
 
 
+class ClipByValue(Layer):
+    """Clipping layer.
+
+    Clips all values in the input tensors into the
+    range [`low`, `high`].
+    """
+
+    def __init__(self, low: float = 0.0, high: float = 1.0, **kwargs):
+        """Initializes the layer.
+
+        Args:
+        """
+        super().__init__(**kwargs)
+        self.low = low
+        self.high = high
+
+    def call(self, x):
+        """Returns clipped `x`."""
+        return K.clip(x, self.low, self.high)
+
+    def compute_output_shape(self, input_shape):
+        """The shape stays the same."""
+        return input_shape
+
+
 class ConstrainedNoise(Layer):
     """
     Constrained noise layer.

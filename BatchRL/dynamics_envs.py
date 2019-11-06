@@ -101,12 +101,12 @@ class FullRoomEnv(RLDynEnv):
             action_rescaled = add_mean_and_std(action, self.scaling[self.c_ind])
         w_temps = self.get_w_temp(curr_pred)
         d_temp = np.abs(w_temps[0] - w_temps[1])
-        energy_used = action_rescaled * d_temp * self.alpha
+        energy_used = np.clip(action_rescaled, 0.0, 1.0) * d_temp * self.alpha
         # assert 0.0 <= action_rescaled <= 1.0, "Fucking wrong"
         # assert 10.0 <= w_temps[0] <= 50.0, "Water temperature scaled incorrectly!"
 
         # Penalty for actions out of the range
-        action_penalty = 10 * linear_oob_penalty(action_rescaled, [0.0, 1.0])
+        action_penalty = 100 * linear_oob_penalty(action_rescaled, [0.0, 1.0])
 
         # Penalty for constraint violation
         r_temp = self.get_r_temp(curr_pred)
@@ -116,10 +116,9 @@ class FullRoomEnv(RLDynEnv):
     def episode_over(self, curr_pred: np.ndarray) -> bool:
 
         r_temp = self.get_r_temp(curr_pred)
-        thresh = 7.0
+        thresh = 10.0
         t_bounds = self.temp_bounds
         if r_temp > t_bounds[1] + thresh or r_temp < t_bounds[0] - thresh:
-            print("Diverging...")
             return True
         return False
 
