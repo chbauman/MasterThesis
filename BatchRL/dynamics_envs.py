@@ -142,6 +142,7 @@ class CProf(ABC):
 
     @abstractmethod
     def __call__(self, t: int) -> float:
+        """Returns the cost at timestep `t`."""
         pass
 
 

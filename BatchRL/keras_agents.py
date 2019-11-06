@@ -131,7 +131,7 @@ class DDPGBaseAgent(KerasBaseAgent):
                          ("GAM", gamma),
                          ("L", layers),
                          ("REG", reg), ]
-        name = "DDPG" + make_param_ext(param_ex_list)
+        name = "DDPG_" + env.name + make_param_ext(param_ex_list)
 
         # Initialize super class
         super().__init__(env=env, name=name)

@@ -15,7 +15,7 @@ from dm_Composite import CompositeModel
 from dm_Const import ConstModel
 from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Time import SCTimeModel
-from dynamics_envs import FullRoomEnv, BatteryEnv
+from dynamics_envs import FullRoomEnv, BatteryEnv, PWProfile
 from keras_agents import DDPGBaseAgent, NAFBaseAgent
 from keras_layers import test_layers
 from util import *
@@ -270,7 +270,8 @@ def curr_tests(ds: Dataset = None) -> None:
     # Full test model
     comp_model = BatteryModel(bat_ds)
     comp_model.fit()
-    env = BatteryEnv(comp_model, disturb_fac=0.3, cont_actions=True, n_cont_actions=1)
+    env = BatteryEnv(comp_model, PWProfile(),
+                     disturb_fac=0.3, cont_actions=True, n_cont_actions=1)
     const_ag_1 = ConstHeating(env, 6.0)
     const_ag_2 = ConstHeating(env, -3.0)
     dqn_agent = DDPGBaseAgent(env)
