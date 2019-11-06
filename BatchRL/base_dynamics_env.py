@@ -134,7 +134,7 @@ class DynEnv(ABC, gym.Env):
         self.hist[-1, :-self.act_dim] = curr_pred
         self.n_ts += 1
 
-        r = self.compute_reward(curr_pred, action)
+        r = np.array(self.compute_reward(curr_pred, action)).item()
         ep_over = self.n_ts == self.n_ts_per_eps or self.episode_over(curr_pred)
         return curr_pred, r, ep_over, {}
 

@@ -283,7 +283,7 @@ def curr_tests(ds: Dataset = None) -> None:
     # m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True)
     # m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
     m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True)
-    m.analyze()
+    # m.analyze()
 
     # And an environment
     env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1)
