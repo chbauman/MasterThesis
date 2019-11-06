@@ -198,5 +198,5 @@ class BatteryEnv(RLDynEnv):
         ac_min = (s_min_scaled - b - curr_state) / c_min
         ac_max = (s_max_scaled - b - curr_state) / c_max
         chosen_action = self._to_continuous(action)
-        # action = np.clip(chosen_action, ac_min, ac_max)
-        return DynEnv.step(self, chosen_action)
+        action = np.clip(chosen_action, ac_min, ac_max)
+        return DynEnv.step(self, action)
