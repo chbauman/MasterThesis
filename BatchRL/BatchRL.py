@@ -270,10 +270,9 @@ def curr_tests(ds: Dataset = None) -> None:
     # Full test model
     comp_model = BatteryModel(bat_ds)
     comp_model.fit()
-    env = BatteryEnv(comp_model, disturb_fac=0.3, cont_actions=True)
-    const_ag_1 = ConstHeating(env, 5.0)
-    const_ag_2 = ConstHeating(env, 4.9)
-    const_ag_2 = ConstHeating(env, 4.0)
+    env = BatteryEnv(comp_model, disturb_fac=0.3, cont_actions=True, n_cont_actions=1)
+    const_ag_1 = ConstHeating(env, 2.0)
+    const_ag_2 = ConstHeating(env, -2.0)
     dqn_agent = DDPGBaseAgent(env)
     # dqn_agent = NAFBaseAgent(env)
     # dqn_agent = DQNBaseAgent(env)

@@ -6,17 +6,24 @@ from util import *
 
 
 class RLDynEnv(DynEnv, ABC):
+
     action_range: Sequence  #: The requested active power range.
+    scaling: np.ndarray = None
+    nb_actions: int  #: Number of actions if discrete else action space dim.
 
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int,
                  action_range: Sequence = (0, 1),
                  cont_actions: bool = False,
                  n_disc_actions: int = 11,
-                 n_cont_actions: int = 1,
+                 n_cont_actions: int = None,
                  **kwargs):
         super().__init__(m, max_eps=max_eps, **kwargs)
 
+        if cont_actions and n_cont_actions is None:
+            raise ValueError("Need to specify action space dimensionality!")
+
+        # Save info
         self.action_range = action_range
         self.nb_actions = n_disc_actions if not cont_actions else n_cont_actions
         self.cont_actions = cont_actions
@@ -24,6 +31,12 @@ class RLDynEnv(DynEnv, ABC):
         self.c_ind = d.c_inds[0]
         if np.all(d.is_scaled):
             self.scaling = d.scaling
+
+    def scale_actions(self, actions):
+        """Scales the actions to the correct range."""
+        if not self.cont_actions:
+            return check_and_scale(actions, self.nb_actions, self.action_range)
+        return actions
 
     def _to_continuous(self, action):
         """Converts discrete actions to the right range."""
@@ -129,25 +142,19 @@ class BatteryEnv(RLDynEnv):
     alpha: float = 1.0  #: Weight factor for reward.
     action_range: Sequence = (-100, 100)  #: The requested active power range.
     soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
-    scaling: np.ndarray = None
 
     def __init__(self, m: BaseDynamicsModel, **kwargs):
         d = m.data
         max_eps = 24 * 60 // d.dt // 2  # max predictions length
-        super().__init__(m, max_eps, name="Battery", **kwargs)
+        super().__init__(m, max_eps, name="Battery", action_range=(-100, 100), **kwargs)
 
         # Check model
         assert len(m.out_inds) == 1, "Model not suited for this environment!!"
+        assert self.action_range == (-100, 100), "action_range value was overridden!"
 
         # Check underlying dataset
         assert d.d == 2 and d.n_c == 1, "Not the correct number of series in dataset!"
         assert d.c_inds[0] == 1, "Second series needs to be controllable!"
-
-    def scale_actions(self, actions):
-        """Scales the actions to the correct range."""
-        if not self.cont_actions:
-            return check_and_scale(actions, self.nb_actions, self.action_range)
-        return actions
 
     def _get_scaled_soc(self, unscaled_soc):
         if self.scaling is not None:
