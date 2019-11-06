@@ -270,7 +270,7 @@ def curr_tests(ds: Dataset = None) -> None:
     # Full test model
     comp_model = BatteryModel(bat_ds)
     comp_model.fit()
-    env = BatteryEnv(comp_model, PWProfile(),
+    env = BatteryEnv(comp_model,
                      disturb_fac=0.3, cont_actions=True, n_cont_actions=1)
     const_ag_1 = ConstHeating(env, 6.0)
     const_ag_2 = ConstHeating(env, -3.0)

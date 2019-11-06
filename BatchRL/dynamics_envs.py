@@ -186,8 +186,8 @@ class BatteryEnv(RLDynEnv):
     soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
     req_soc: float = 60.0  #: Required SoC at end of episode.
     prev_pred: np.ndarray  #: The previous prediction.
-    m: BatteryModel
-    p: CProf = None
+    m: BatteryModel  #: The battery model.
+    p: CProf = None  #: The cost profile.
 
     def __init__(self, m: BatteryModel, p: CProf = None, **kwargs):
         d = m.data
@@ -243,6 +243,7 @@ class BatteryEnv(RLDynEnv):
         return np.array(tot_rew).item() / 300
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
+        """Declare the episode as over if the SoC lies too far wothout bounds."""
         thresh = 10
         b = self.soc_bound
         scaled_soc = self._get_scaled_soc(curr_pred)

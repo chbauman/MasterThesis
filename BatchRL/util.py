@@ -122,7 +122,7 @@ def check_and_scale(action: Num, tot_n_actions: int, interval: Sequence[Num]):
 
 
 def linear_oob_penalty(x: Num, bounds: Sequence[Num]) -> float:
-    """Computes the linear penalty for `x` not lying within ``bounds`.
+    """Computes the linear penalty for `x` not lying within `bounds`.
 
     Args:
         x: Value that should be within bounds.
