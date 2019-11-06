@@ -143,6 +143,7 @@ class BatteryEnv(RLDynEnv):
     alpha: float = 1.0  #: Weight factor for reward.
     action_range: Sequence = (-100, 100)  #: The requested active power range.
     soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
+    req_soc: float = 60.0  #: Required SoC at end of episode.
     prev_pred: np.ndarray  #: The previous prediction.
     m: BatteryModel
 
@@ -160,24 +161,33 @@ class BatteryEnv(RLDynEnv):
         assert d.c_inds[0] == 1, "Second series needs to be controllable!"
 
     def _get_scaled_soc(self, unscaled_soc, remove_mean: bool = False):
+        """Scales the state-of-charge."""
         if self.scaling is not None:
             return trf_mean_and_std(unscaled_soc, self.scaling[0], remove=remove_mean)
         return unscaled_soc
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
+        """Compute the reward for choosing action `action`.
 
+        The reward takes into account the energy used, whether
+        the bounds are satisfied and whether the SoC is high enough
+        at the end of the episode.
+        """
         # Compute energy used
         action_rescaled = action
         if self.scaling is not None:
             action_rescaled = add_mean_and_std(action, self.scaling[self.c_ind])
-        curr_pred = self._get_scaled_soc(curr_pred)
-
         energy_used = action_rescaled * self.alpha
-        bound_pen = 1000 * linear_oob_penalty(curr_pred, self.soc_bound)
-        if self.n_ts > self.n_ts_per_eps - 1 and curr_pred < 60.0:
-            bound_pen += 2000 * linear_oob_penalty(curr_pred, [60, 100])
 
         # Penalty for constraint violation
+        curr_pred = self._get_scaled_soc(curr_pred)
+        bound_pen = 1000 * linear_oob_penalty(curr_pred, self.soc_bound)
+
+        # Penalty for not having charged enough at the end of the episode.
+        if self.n_ts > self.n_ts_per_eps - 1 and curr_pred < self.req_soc:
+            bound_pen += 2000 * linear_oob_penalty(curr_pred, [self.req_soc, 100])
+
+        # Total reward is the negative penalty minus energy used.
         tot_rew = -energy_used - bound_pen
         return np.array(tot_rew).item() / 300
 
@@ -190,13 +200,37 @@ class BatteryEnv(RLDynEnv):
         return False
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
+        """Step function for battery environment.
+
+        If the chosen action would result in a SoC outside the bounds,
+        it is clipped, s.t. the bound constraints are always fulfilled.
+        """
+        # Get default min and max actions from bounds
+        min_ac, max_ac = self._to_continuous(np.array(self.action_range))
+
+        # Find the minimum and maximum action satisfying SoC constraints.
         curr_state = self.get_curr_state()
         soc_bound_arr = np.array(self.soc_bound, copy=True)
         s_min_scaled, s_max_scaled = self._get_scaled_soc(soc_bound_arr, remove_mean=True)
         b, c_min, gam = self.m.params
         c_max = c_min + gam
-        ac_min = (s_min_scaled - b - curr_state) / c_min
-        ac_max = (s_max_scaled - b - curr_state) / c_max
+        ac_min = np.maximum((s_min_scaled - b - curr_state) / c_min, min_ac)
+        ac_max = np.minimum((s_max_scaled - b - curr_state) / c_max, max_ac)
+
+        # Compute minimal action to reach SoC goal
+        n_remain_steps = self.n_ts_per_eps - self.n_ts
+        min_goal_soc = self._get_scaled_soc(self.req_soc, remove_mean=True)
+        ds_remain = min_goal_soc - curr_state
+        if ds_remain > 0:
+            max_ds = b + max_ac * c_max
+            n_ts_needed_min = np.ceil(ds_remain / max_ds)
+            if n_ts_needed_min >= n_remain_steps:
+                min_ds_now = ds_remain - (n_ts_needed_min - 1) * max_ds
+                ac_min = (min_ds_now - b) / c_max
+
+        # Clip the actions.
         chosen_action = self._to_continuous(action)
         action = np.clip(chosen_action, ac_min, ac_max)
+
+        # Call the step function of DynEnv to avoid another scaling.
         return DynEnv.step(self, action)
