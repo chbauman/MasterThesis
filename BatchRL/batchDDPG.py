@@ -1,15 +1,8 @@
-import numpy as np
-
 import keras
-from keras import backend as K
+import numpy as np
+from keras.layers import Input, Lambda, Subtract
 from keras.optimizers import RMSprop
-from keras.models import Sequential, Model
-from keras.layers import Dense, Activation, Flatten, Dropout, Input, RepeatVector, \
-    Lambda, Subtract, BatchNormalization
-from keras.regularizers import l2
 
-from keras_layers import ReduceMax2D, ReduceArgMax2D, OneHot, PrepInput, \
-    ReduceProbabilisticSoftMax2D
 from keras_util import *
 
 

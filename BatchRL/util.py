@@ -402,8 +402,6 @@ def fit_linear_1d(x: np.ndarray, y: np.ndarray, x_new: np.ndarray = None):
 def fit_linear_bf_1d(x: np.ndarray, y: np.ndarray, b_fun, offset: bool = False) -> np.ndarray:
     """Fits a linear model y = alpha^T f(x).
 
-    TODO: implement with offset!
-
     Args:
         x: The values on the x axis.
         y: The values to fit corresponding to x.

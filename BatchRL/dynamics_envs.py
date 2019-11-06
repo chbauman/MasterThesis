@@ -50,17 +50,25 @@ class RLDynEnv(DynEnv, ABC):
         return super().step(self._to_continuous(action))
 
 
-class FullRoomEnv(DynEnv):
+class FullRoomEnv(RLDynEnv):
     alpha: float = 1.0  #: Weight factor for reward.
     temp_bounds: Sequence = (22.0, 26.0)  #: The requested temperature range.
     bound_violation_penalty: float = 2.0  #: The penalty in the reward for temperatures out of bound.
     scaling: np.ndarray = None
 
-    def __init__(self, m: BaseDynamicsModel, temp_bounds: Sequence = None,
+    def __init__(self, m: BaseDynamicsModel,
+                 max_eps: int = 48,
+                 temp_bounds: Sequence = None,
                  n_disc_actions: int = 11,
                  **kwargs):
-        max_eps = 2 * 24 * 60 // m.data.dt // 1  # max predictions length
-        super(FullRoomEnv, self).__init__(m, "FullRoom", max_eps, **kwargs)
+        # Find name
+        ext = make_param_ext([("NEP", max_eps), ("TBD", temp_bounds)])
+        name = "FullRoom" + ext
+
+        # Initialize super class
+        super(FullRoomEnv, self).__init__(m, max_eps, name=name, **kwargs)
+
+        # Save parameters
         d = m.data
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds
@@ -69,27 +77,9 @@ class FullRoomEnv(DynEnv):
         if np.all(d.is_scaled):
             self.scaling = d.scaling
 
-        # Check model
+        # Check model and dataset
         assert len(m.out_inds) == d.d - d.n_c, "Model not suited for this environment!!"
-
-        # Check underlying dataset
         assert d.d == 8 and d.n_c == 1, "Not the correct number of series in dataset!"
-
-    def _to_continuous(self, action):
-        """Converts discrete actions to the right range."""
-        zero_one_action = check_and_scale(action, self.nb_actions, [0.0, 1.0])
-        if self.scaling is None:
-            return zero_one_action
-        return rem_mean_and_std(zero_one_action, self.scaling[self.c_ind])
-
-    def scale_actions(self, actions):
-        """Scales the actions to the correct range."""
-        zero_one_action = check_and_scale(actions, self.nb_actions, [0.0, 1.0])
-        return zero_one_action
-
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
-        print(f"Full room step, action: {action}")
-        return super(FullRoomEnv, self).step(self._to_continuous(action))
 
     def get_r_temp(self, curr_pred: np.ndarray) -> float:
         r_temp = curr_pred[4]
@@ -128,7 +118,7 @@ class FullRoomEnv(DynEnv):
     def episode_over(self, curr_pred: np.ndarray) -> bool:
 
         r_temp = self.get_r_temp(curr_pred)
-        thresh = 5.0
+        thresh = 7.0
         t_bounds = self.temp_bounds
         if r_temp > t_bounds[1] + thresh or r_temp < t_bounds[0] - thresh:
             print("Diverging...")
@@ -243,7 +233,7 @@ class BatteryEnv(RLDynEnv):
         return np.array(tot_rew).item() / 300
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
-        """Declare the episode as over if the SoC lies too far wothout bounds."""
+        """Declare the episode as over if the SoC lies too far without bounds."""
         thresh = 10
         b = self.soc_bound
         scaled_soc = self._get_scaled_soc(curr_pred)

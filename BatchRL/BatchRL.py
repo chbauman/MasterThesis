@@ -47,24 +47,29 @@ def run_battery() -> None:
     Loads and prepares the battery data, fits the
     battery model and evaluates some agents.
     """
-    # Battery data
+    # Load and prepare battery data.
     bat_name = "Battery"
     get_battery_data()
     bat_ds = Dataset.loadDataset(bat_name)
     bat_ds.split_data()
+
+    # Initialize and fit battery model.
     bat_mod = BatteryModel(bat_ds)
     bat_mod.analyze_bat_model()
     bat_mod.analyze()
     bat_mod_naive = ConstModel(bat_ds)
     bat_mod_naive.analyze()
 
-    # Run the environment
-    n_actions = 11
-    bat_env = BatteryEnv(bat_mod, n_actions)
-    const_ag_1 = ConstHeating(bat_env, 4.9)  # Discharge
-    const_ag_2 = ConstHeating(bat_env, 5)  # No charging
-    const_ag_3 = ConstHeating(bat_env, 5.1)  # Charge
-    bat_env.analyze_agent([const_ag_1, const_ag_2, const_ag_3])
+    # Define the environment and agents.
+    bat_env = BatteryEnv(bat_mod,
+                         disturb_fac=0.3, cont_actions=True, n_cont_actions=1)
+    const_ag_1 = ConstHeating(bat_env, 6.0)  # Charge
+    const_ag_2 = ConstHeating(bat_env, -3.0)  # Discharge
+    dqn_agent = DDPGBaseAgent(bat_env)
+
+    # Fit agent and evaluate.
+    dqn_agent.fit()
+    bat_env.analyze_agent([const_ag_1, const_ag_2, dqn_agent])
 
 
 def choose_dataset(base_ds_name: str = "Model_Room43",
@@ -261,25 +266,6 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, fro
 def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
-    # Get dataset
-    bat_name = "Battery"
-    get_battery_data()
-    bat_ds = Dataset.loadDataset(bat_name)
-    bat_ds.split_data()
-
-    # Full test model
-    comp_model = BatteryModel(bat_ds)
-    comp_model.fit()
-    env = BatteryEnv(comp_model,
-                     disturb_fac=0.3, cont_actions=True, n_cont_actions=1)
-    const_ag_1 = ConstHeating(env, 6.0)
-    const_ag_2 = ConstHeating(env, -3.0)
-    dqn_agent = DDPGBaseAgent(env)
-    # dqn_agent = NAFBaseAgent(env)
-    # dqn_agent = DQNBaseAgent(env)
-    dqn_agent.fit()
-    env.analyze_agent([const_ag_1, const_ag_2, dqn_agent])
-    env.analyze_agent([const_ag_1, const_ag_2, dqn_agent])
 
     # dqn_agent = DQNRoomHeatingAgent(env)
     # dqn_agent.fit()
