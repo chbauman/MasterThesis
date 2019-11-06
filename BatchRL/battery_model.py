@@ -42,6 +42,7 @@ class BatteryModel(BaseDynamicsModel):
         """
         p = np.copy(in_data[:, -1, 1])
         s_t = np.copy(in_data[:, -1, 0])
+        print(trf_mean_and_std(p, self.data.scaling[1], remove=False))
 
         s_tp1 = s_t + self._eval_at(p)
         return s_tp1.reshape((-1, 1))

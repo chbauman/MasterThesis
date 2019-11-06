@@ -178,6 +178,7 @@ class DynEnv(ABC, gym.Env):
             agents: A list of agents or a single agent.
             fitted: Whether the agents are already fitted.
             use_noise: Whether to use noise in the predictions.
+            start_ind: Index of initial configuration, random if None.
         """
         # Make function compatible for single agent input
         if not isinstance(agents, list):
