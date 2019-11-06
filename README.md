@@ -32,3 +32,7 @@ $ sphinx-apidoc -F -H 'BatchRL' -A 'Chris' -o . '../MasterThesis/BatchRL/'
 $ cp ../MasterThesis/conf.py .
 $ ./make html
 ```
+
+Or you can directly use the Windows Powershell script [make_doc.ps1](make_doc.ps1)
+which basically runs these commands. The script also removes previously existing
+folders 'Docs', so it can be used to update the documentation.
