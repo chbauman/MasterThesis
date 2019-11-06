@@ -4,7 +4,7 @@ The `main` function runs all the necessary high-level
 functions. The complicated stuff is hidden in the other
 modules.
 """
-from agents_heuristic import ConstHeating
+from agents_heuristic import ConstHeating, RuleBasedHeating
 from base_dynamics_env import test_test_env
 from base_dynamics_model import test_dyn_model, BaseDynamicsModel
 from base_hyperopt import HyperOptimizableModel, test_hyperopt
@@ -259,6 +259,16 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, fro
         model_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         return CompositeModel(ds, [model_reduced_temp, mod_wt, model_weather, model_time_exact],
                               new_name="FullState_Comp_ReducedTempConstWaterWeather")
+    elif name == "FullState_Comp_TempConstWaterWeather":
+        # The full state model combining the weather, the constant water temperature,
+        # the reduced room temperature and the exact time model to predict all
+        # variables except for the control variable.
+        mod_wt = get_model("WaterTemp_Const", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        model_reduced_temp = get_model("RoomTemp_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        model_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        return CompositeModel(ds, [model_reduced_temp, mod_wt, model_weather, model_time_exact],
+                              new_name="FullState_Comp_TempConstWaterWeather")
     else:
         raise ValueError("No such model defined!")
 
@@ -266,8 +276,28 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, fro
 def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
-    # dqn_agent = DQNRoomHeatingAgent(env)
-    # dqn_agent.fit()
+    # Get dataset and constraints
+    ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
+
+    # Choose a model
+    # m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True)
+    # m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
+    m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True)
+    m.analyze()
+
+    # And an environment
+    env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1)
+
+    # Choose agent and fit to env.
+    agent = DDPGBaseAgent(env)
+    agent.fit()
+
+    # Analyze comparing to other agents.
+    open_agent = ConstHeating(env, 1.0)
+    closed_agent = ConstHeating(env, 0.0)
+    rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
+    env.analyze_agent([open_agent, closed_agent, rule_based_agent, agent])
+    env.analyze_agent([open_agent, closed_agent, rule_based_agent])
 
     pass
 
@@ -286,7 +316,7 @@ def main() -> None:
     # Train and analyze the battery model
     # run_battery()
 
-    # Get dataset
+    # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
     # Get the needed models
@@ -302,13 +332,15 @@ def main() -> None:
         # "FullState_Comp_WeatherAptTime",
         # "FullState_Comp_FullTime",
         # "FullState_Comp_ReducedTempConstWaterWeather",
+        # "FullState_Comp_TempConstWaterWeather",
     ]
     all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True) for nm in needed}
 
-    # Optimize model(s)
+    # Hyper-optimize model(s)
     # optimize_model(get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts))
     # optimize_model(get_model("RoomTempFromReduced_RNN", ds, rnn_consts))
     # optimize_model(get_model("Apartment_RNN", ds, rnn_consts))
+    # optimize_model(get_model("RoomTemp_RNN", ds, rnn_consts))
 
     # Fit or load all initialized models
     for name, m_to_use in all_mods.items():

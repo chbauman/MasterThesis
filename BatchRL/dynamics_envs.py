@@ -59,7 +59,6 @@ class FullRoomEnv(RLDynEnv):
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int = 48,
                  temp_bounds: Sequence = None,
-                 n_disc_actions: int = 11,
                  **kwargs):
         # Find name
         ext = make_param_ext([("NEP", max_eps), ("TBD", temp_bounds)])
@@ -72,7 +71,6 @@ class FullRoomEnv(RLDynEnv):
         d = m.data
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds
-        self.nb_actions = n_disc_actions
         self.c_ind = d.c_inds[0]
         if np.all(d.is_scaled):
             self.scaling = d.scaling
@@ -104,16 +102,16 @@ class FullRoomEnv(RLDynEnv):
         w_temps = self.get_w_temp(curr_pred)
         d_temp = np.abs(w_temps[0] - w_temps[1])
         energy_used = action_rescaled * d_temp * self.alpha
-        assert 0.0 <= action_rescaled <= 1.0, "Fucking wrong"
+        # assert 0.0 <= action_rescaled <= 1.0, "Fucking wrong"
         # assert 10.0 <= w_temps[0] <= 50.0, "Water temperature scaled incorrectly!"
+
+        # Penalty for actions out of the range
+        action_penalty = 10 * linear_oob_penalty(action_rescaled, [0.0, 1.0])
 
         # Penalty for constraint violation
         r_temp = self.get_r_temp(curr_pred)
-        t_bounds = self.temp_bounds
-        too_low_penalty = 0.0 if r_temp >= t_bounds[0] else t_bounds[0] - r_temp
-        too_high_penalty = 0.0 if r_temp <= t_bounds[1] else r_temp - t_bounds[1]
-        bound_pen = self.bound_violation_penalty * (too_low_penalty + too_high_penalty)
-        return -energy_used - bound_pen
+        temp_pen = self.bound_violation_penalty * linear_oob_penalty(r_temp, self.temp_bounds)
+        return (-energy_used - temp_pen - action_penalty) / 10
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
 
@@ -187,6 +185,8 @@ class BatteryEnv(RLDynEnv):
         super().__init__(m, max_eps, name=name, action_range=(-100, 100), **kwargs)
 
         self.p = p
+        assert p is None, "Cost profile does not make sense here!"
+        # TODO: Remove cost profile from model!
 
         # Check model
         assert len(m.out_inds) == 1, "Model not suited for this environment!!"

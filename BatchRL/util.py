@@ -341,6 +341,10 @@ def train_decorator(verbose: bool = True):
 
             loaded = self.load_if_exists(self.m, self.name)
             if not loaded:
+                # Set seed for reproducibility
+                np.random.seed(SEED)
+
+                # Fit and save
                 if verbose:
                     print("Fitting Model...")
                 fit(self)
