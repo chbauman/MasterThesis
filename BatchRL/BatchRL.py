@@ -266,9 +266,10 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, fro
 def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
-
     # dqn_agent = DQNRoomHeatingAgent(env)
     # dqn_agent.fit()
+
+    pass
 
 
 def main() -> None:
@@ -281,7 +282,6 @@ def main() -> None:
 
     # Full test model
     curr_tests()
-    return
 
     # Train and analyze the battery model
     # run_battery()
@@ -297,7 +297,7 @@ def main() -> None:
         "WeatherFromWeatherTime_RNN",
         "Apartment_RNN",
         "RoomTempFromReduced_RNN",
-        # "RoomTemp_RNN",
+        "RoomTemp_RNN",
         # "Full_Comp_WeatherApt",
         # "FullState_Comp_WeatherAptTime",
         # "FullState_Comp_FullTime",
