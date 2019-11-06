@@ -70,14 +70,6 @@ class BatteryModel(BaseDynamicsModel):
         p = np.copy(dat[1:, 1])
         ds = np.copy(dat[1:, 0] - dat[:-1, 0])
 
-        # Remove states with too high soc
-        prev_states = np.copy(dat[1:, 0])
-        if d.is_scaled[0]:
-            prev_states = add_mean_and_std(prev_states, d.scaling[0])
-        in_bound = np.logical_and(prev_states > 20.0, prev_states < 80.0)
-        p = p[in_bound]
-        ds = ds[in_bound]
-
         # Remove nans
         not_nans = np.logical_not(np.logical_or(np.isnan(p), np.isnan(ds)))
         p = p[not_nans]

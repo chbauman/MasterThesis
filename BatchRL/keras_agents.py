@@ -9,7 +9,7 @@ from rl.policy import BoltzmannQPolicy
 from rl.random import OrnsteinUhlenbeckProcess
 
 from base_agent import AgentBase
-from dynamics_envs import FullRoomEnv
+from dynamics_envs import FullRoomEnv, RLDynEnv
 from keras_util import getMLPModel, KerasBase
 from util import *
 from visualize import plot_rewards
@@ -64,6 +64,10 @@ class DQNBaseAgent(KerasBaseAgent):
 
 
 class NAFBaseAgent(KerasBaseAgent):
+    """This does not work!
+
+    TODO: Fix this!
+    """
 
     def __init__(self, env: FullRoomEnv):
         # Initialize super class
@@ -114,7 +118,7 @@ class NAFBaseAgent(KerasBaseAgent):
 
 class DDPGBaseAgent(KerasBaseAgent):
 
-    def __init__(self, env: FullRoomEnv,
+    def __init__(self, env: RLDynEnv,
                  n_steps: int = 50000,
                  lr: float = 0.001,
                  gamma: float = 0.9,
@@ -148,7 +152,8 @@ class DDPGBaseAgent(KerasBaseAgent):
 
         self._build_agent_model()
 
-    def _build_agent_model(self):
+    def _build_agent_model(self) -> None:
+        """Builds the Keras model of the agent."""
         # Build actor model
         actor = Sequential()
         actor.add(Flatten(input_shape=(1, self.n_state_vars)))

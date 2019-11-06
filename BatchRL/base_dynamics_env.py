@@ -219,7 +219,9 @@ class DynEnv(ABC, gym.Env):
         action_sequences = self.scale_actions(action_sequences)
 
         # Plot all the things
-        analysis_plot_path = self.get_plt_path("AgentAnalysis")
+        name_list = [a.name for a in agents]
+        agent_names = '_'.join(name_list)
+        analysis_plot_path = self.get_plt_path("AgentAnalysis_" + agent_names)
         plot_env_evaluation(action_sequences, trajectories, rewards,
                             analysis_plot_path)
 
