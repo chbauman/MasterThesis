@@ -138,6 +138,10 @@ class DynEnv(ABC, gym.Env):
         ep_over = self.n_ts == self.n_ts_per_eps or self.episode_over(curr_pred)
         return curr_pred, r, ep_over, {}
 
+    def get_curr_pred(self):
+        """Returns the current state."""
+        return self.hist[-1, :-self.act_dim]
+
     def reset(self, start_ind: int = None, use_noise: bool = True) -> np.ndarray:
         """Resets the environment.
 

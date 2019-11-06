@@ -122,7 +122,7 @@ class DDPGBaseAgent(KerasBaseAgent):
                  n_steps: int = 50000,
                  lr: float = 0.001,
                  gamma: float = 0.9,
-                 layers: Sequence[int] = (20, 20),
+                 layers: Sequence[int] = (50, 50),
                  reg: float = 0.01):
 
         # Find unique name

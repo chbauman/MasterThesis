@@ -2,6 +2,7 @@ from abc import ABC
 
 from base_dynamics_env import DynEnv
 from base_dynamics_model import BaseDynamicsModel
+from battery_model import BatteryModel
 from util import *
 
 
@@ -142,8 +143,10 @@ class BatteryEnv(RLDynEnv):
     alpha: float = 1.0  #: Weight factor for reward.
     action_range: Sequence = (-100, 100)  #: The requested active power range.
     soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
+    prev_pred: np.ndarray  #: The previous prediction.
+    m: BatteryModel
 
-    def __init__(self, m: BaseDynamicsModel, **kwargs):
+    def __init__(self, m: BatteryModel, **kwargs):
         d = m.data
         max_eps = 24 * 60 // d.dt // 2  # max predictions length
         super().__init__(m, max_eps, name="Battery", action_range=(-100, 100), **kwargs)
@@ -156,9 +159,9 @@ class BatteryEnv(RLDynEnv):
         assert d.d == 2 and d.n_c == 1, "Not the correct number of series in dataset!"
         assert d.c_inds[0] == 1, "Second series needs to be controllable!"
 
-    def _get_scaled_soc(self, unscaled_soc):
+    def _get_scaled_soc(self, unscaled_soc, remove_mean: bool = False):
         if self.scaling is not None:
-            return add_mean_and_std(unscaled_soc, self.scaling[0])
+            return trf_mean_and_std(unscaled_soc, self.scaling[0], remove=remove_mean)
         return unscaled_soc
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
@@ -171,12 +174,12 @@ class BatteryEnv(RLDynEnv):
 
         energy_used = action_rescaled * self.alpha
         bound_pen = 1000 * linear_oob_penalty(curr_pred, self.soc_bound)
-        if self.n_ts > self.n_ts_per_eps - 2 and curr_pred < 60.0:
+        if self.n_ts > self.n_ts_per_eps - 1 and curr_pred < 60.0:
             bound_pen += 2000 * linear_oob_penalty(curr_pred, [60, 100])
 
         # Penalty for constraint violation
         tot_rew = -energy_used - bound_pen
-        return np.array(tot_rew).item() / 100
+        return np.array(tot_rew).item() / 300
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
         thresh = 10
@@ -185,3 +188,14 @@ class BatteryEnv(RLDynEnv):
         if scaled_soc > b[1] + thresh or scaled_soc < b[0] - thresh:
             return True
         return False
+
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
+        curr_state = self.get_curr_pred()
+        s_min_scaled, s_max_scaled = self._get_scaled_soc(self.soc_bound, remove_mean=True)
+        b, c_min, gam = self.m.params
+        c_max = c_min + gam
+        ac_min = (s_min_scaled - b - curr_state) / c_min
+        ac_max = (s_max_scaled - b - curr_state) / c_max
+        chosen_action = self._to_continuous(action)
+        action = np.clip(chosen_action, ac_min, ac_max)
+        return super().step(action)
