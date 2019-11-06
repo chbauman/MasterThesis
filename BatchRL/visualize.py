@@ -386,6 +386,7 @@ def scatter_plot(x, y, *,
     """
 
     plt.subplots()
+    plt.grid(True)
 
     # Transform data back to original mean and std.
     x_curr = x

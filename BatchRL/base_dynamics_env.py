@@ -138,7 +138,7 @@ class DynEnv(ABC, gym.Env):
         ep_over = self.n_ts == self.n_ts_per_eps or self.episode_over(curr_pred)
         return curr_pred, r, ep_over, {}
 
-    def get_curr_pred(self):
+    def get_curr_state(self):
         """Returns the current state."""
         return self.hist[-1, :-self.act_dim]
 
@@ -170,7 +170,8 @@ class DynEnv(ABC, gym.Env):
 
     def analyze_agent(self, agents: Union[List, base_agent.AgentBase],
                       fitted: bool = True,
-                      use_noise: bool = False) -> None:
+                      use_noise: bool = False,
+                      start_ind: int = None) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:
@@ -193,7 +194,10 @@ class DynEnv(ABC, gym.Env):
         rewards.fill(np.nan)
 
         # Choose same random start for all agents
-        start_ind = np.random.randint(self.n_start_data)
+        if start_ind is None:
+            start_ind = np.random.randint(self.n_start_data)
+        elif start_ind >= self.n_start_data:
+            raise ValueError("start_ind is too large!")
 
         for a_id, a in enumerate(agents):
             # Check that agent references this environment
@@ -225,7 +229,7 @@ class DynEnv(ABC, gym.Env):
         # Plot all the things
         name_list = [a.name for a in agents]
         agent_names = '_'.join(name_list)
-        analysis_plot_path = self.get_plt_path("AgentAnalysis_" + agent_names)
+        analysis_plot_path = self.get_plt_path("AgentAnalysis_" + str(start_ind) + "_" + agent_names)
         plot_env_evaluation(action_sequences, trajectories, rewards,
                             analysis_plot_path)
 

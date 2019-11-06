@@ -190,12 +190,13 @@ class BatteryEnv(RLDynEnv):
         return False
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
-        curr_state = self.get_curr_pred()
-        s_min_scaled, s_max_scaled = self._get_scaled_soc(self.soc_bound, remove_mean=True)
+        curr_state = self.get_curr_state()
+        soc_bound_arr = np.array(self.soc_bound, copy=True)
+        s_min_scaled, s_max_scaled = self._get_scaled_soc(soc_bound_arr, remove_mean=True)
         b, c_min, gam = self.m.params
         c_max = c_min + gam
         ac_min = (s_min_scaled - b - curr_state) / c_min
         ac_max = (s_max_scaled - b - curr_state) / c_max
         chosen_action = self._to_continuous(action)
-        action = np.clip(chosen_action, ac_min, ac_max)
-        return super().step(action)
+        # action = np.clip(chosen_action, ac_min, ac_max)
+        return super().step(chosen_action)
