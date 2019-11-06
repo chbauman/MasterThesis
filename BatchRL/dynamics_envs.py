@@ -172,7 +172,7 @@ class BatteryEnv(RLDynEnv):
         energy_used = action_rescaled * self.alpha
         bound_pen = 1000 * linear_oob_penalty(curr_pred, self.soc_bound)
         if self.n_ts > self.n_ts_per_eps - 2 and curr_pred < 60.0:
-            bound_pen += 1000.0
+            bound_pen += 2000 * linear_oob_penalty(curr_pred, [60, 100])
 
         # Penalty for constraint violation
         tot_rew = -energy_used - bound_pen
