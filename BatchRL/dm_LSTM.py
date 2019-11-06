@@ -44,6 +44,8 @@ def _constr_hp_name(hidden_sizes: Sequence,
                     input_noise_std: float = None) -> str:
     """Constructs the part of the name of the network associated with the hyperparameters.
 
+    TODO: Use make_param_ext()
+
     Args:
         hidden_sizes: Layer size list or tuple
         n_iter_max: Number of iterations
@@ -69,6 +71,8 @@ def _constr_base_name(name: str,
                       train_seq: bool = False,
                       ) -> str:
     """Constructs the part of the name of the network not associated with hyperparameters.
+
+    TODO: Use make_param_ext()
 
      Args:
         name: Base name
