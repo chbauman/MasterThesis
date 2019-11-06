@@ -148,6 +148,41 @@ class DDPGBaseAgent(KerasBaseAgent):
         opt = Adam(lr=.001, clipnorm=1.0)
         self.m.compile(opt, metrics=['mae'])
 
+    def load_if_exists(self, m, name: str) -> bool:
+        """Loads the keras model if it exists.
+
+        Returns true if it could be loaded, else False.
+        Overrides the function in `KerasBase`, but in this
+        case there are two models to load.
+
+        Args:
+            m: Keras-rl agent model to be loaded.
+            name: Name of model.
+
+        Returns:
+             True if model could be loaded else False.
+        """
+        full_path = self.get_path(name)
+        path_actor = full_path[:-3] + "_actor.h5"
+        path_critic = full_path[:-3] + "_critic.h5"
+
+        if os.path.isfile(path_actor) and os.path.isfile(path_critic):
+            m.load_weights(full_path)
+            return True
+        return False
+
+    def save_model(self, m, name: str) -> None:
+        """Saves a keras model.
+
+        Needs to be overridden here since the keras-rl
+        Agent class does not have a `save`method.
+
+        Args:
+            m: Keras-rl agent model.
+            name: Name of the model.
+        """
+        m.save_weights(self.get_path(name))
+
     @train_decorator(True)
     def fit(self) -> None:
         # Okay, now it's time to learn something! We visualize the training here for show, but this

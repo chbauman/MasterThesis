@@ -96,8 +96,13 @@ class KerasBase:
     model_path: str = "../Models/Dynamics/"
     m: KerasModel
 
-    def save_model(self, m, name):
-        """Saves a keras model"""
+    def save_model(self, m, name: str) -> None:
+        """Saves a keras model.
+
+        Args:
+            m: Keras model.
+            name: Name of the model.
+        """
         m.save(self.get_path(name))
 
     def load_if_exists(self, m, name: str) -> bool:
