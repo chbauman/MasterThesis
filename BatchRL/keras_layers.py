@@ -636,4 +636,9 @@ def test_layers() -> None:
     l_out = get_test_layer_output(lay, output)
     assert np.array_equal(l_out, output[:, :1]), "IdDense not working correctly!"
 
+    # Test ClipByValue
+    c_layer = ClipByValue(0.0, 1.0, input_shape=rem_first(seq_input_long.shape))
+    l_out = get_test_layer_output(c_layer, seq_input_long)
+    assert np.all(l_out >= 0.0) and np.all(l_out <= 1.0), "ClipByValue not working correctly!"
+
     print("Keras Layers tests passed :)")
