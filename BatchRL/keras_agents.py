@@ -114,38 +114,63 @@ class NAFBaseAgent(KerasBaseAgent):
 
 class DDPGBaseAgent(KerasBaseAgent):
 
-    def __init__(self, env: FullRoomEnv):
+    def __init__(self, env: FullRoomEnv,
+                 n_steps: int = 50000,
+                 lr: float = 0.001,
+                 gamma: float = 0.9,
+                 layers: Sequence[int] = (20, 20),
+                 reg: float = 0.01):
+
+        # Find unique name
+        param_ex_list = [("N", n_steps),
+                         ("LR", lr),
+                         ("GAM", gamma),
+                         ("L", layers),
+                         ("REG", reg), ]
+        name = "DDPG" + make_param_ext(param_ex_list)
+
         # Initialize super class
-        name = "DDPG"
         super().__init__(env=env, name=name)
 
-        # Build Q-function model.
-        nb_actions = env.nb_actions
-        n_state_vars = env.m.n_pred
-
-        # Get the environment and extract the number of actions.
+        # Save reference to env and extract dimensions
         self.env = env
+        self.nb_actions = env.nb_actions
+        self.n_state_vars = env.m.n_pred
 
-        # Next, we build a very simple model.
+        # Training parameters
+        self.n_steps = n_steps
+        self.lr = lr
+        self.gamma = gamma
+
+        # Network parameters
+        self.layers = layers
+        self.reg = reg
+
+        self._build_agent_model()
+
+    def _build_agent_model(self):
+        # Build actor model
         actor = Sequential()
-        actor.add(Flatten(input_shape=(1, n_state_vars)))
-        actor.add(getMLPModel(out_dim=nb_actions))
+        actor.add(Flatten(input_shape=(1, self.n_state_vars)))
+        actor.add(getMLPModel(mlp_layers=self.layers,
+                              out_dim=self.nb_actions,
+                              ker_reg=self.reg))
 
-        action_input = Input(shape=(nb_actions,), name='action_input')
-        observation_input = Input(shape=(1, n_state_vars), name='observation_input')
+        # Build critic model
+        action_input = Input(shape=(self.nb_actions,), name='action_input')
+        observation_input = Input(shape=(1, self.n_state_vars), name='observation_input')
         flattened_observation = Flatten()(observation_input)
         x = Concatenate()([action_input, flattened_observation])
-        x = getMLPModel(out_dim=1)(x)
+        x = getMLPModel(mlp_layers=self.layers, out_dim=1, ker_reg=self.reg)(x)
         critic = Model(inputs=[action_input, observation_input], outputs=x)
 
-        # Finally, we configure and compile our agent. You can use every built-in Keras optimizer and
-        # even the metrics!
+        # Configure and compile the agent.
         memory = SequentialMemory(limit=100000, window_length=1)
-        random_process = OrnsteinUhlenbeckProcess(size=nb_actions, theta=.15, mu=0., sigma=.3)
-        self.m = DDPGAgent(nb_actions=nb_actions, actor=actor, critic=critic, critic_action_input=action_input,
+        random_process = OrnsteinUhlenbeckProcess(size=self.nb_actions, theta=.15, mu=0., sigma=.3)
+        self.m = DDPGAgent(nb_actions=self.nb_actions, actor=actor, critic=critic, critic_action_input=action_input,
                            memory=memory, nb_steps_warmup_critic=100, nb_steps_warmup_actor=100,
-                           random_process=random_process, gamma=.99, target_model_update=1e-3)
-        opt = Adam(lr=.001, clipnorm=1.0)
+                           random_process=random_process, gamma=self.gamma, target_model_update=1e-3)
+        opt = Adam(lr=self.lr, clipnorm=1.0)
         self.m.compile(opt, metrics=['mae'])
 
     def load_if_exists(self, m, name: str) -> bool:
@@ -185,13 +210,10 @@ class DDPGBaseAgent(KerasBaseAgent):
 
     @train_decorator(True)
     def fit(self) -> None:
-        # Okay, now it's time to learn something! We visualize the training here for show, but this
-        # slows down training quite a lot. You can always safely abort the training prematurely using
-        # Ctrl + C.
-        hist = self.m.fit(self.env, nb_steps=5000, visualize=False, verbose=1, nb_max_episode_steps=200)
+        """Fit the agent using the environment.
 
-        # Finally, evaluate our algorithm for 5 episodes.
-        self.m.test(self.env, nb_episodes=5, visualize=True, nb_max_episode_steps=200)
+        """
         # Fit and plot rewards
-        train_plot = self.env.get_plt_path(self.name + "_test")
+        hist = self.m.fit(self.env, nb_steps=self.n_steps, visualize=False, verbose=1, nb_max_episode_steps=200)
+        train_plot = self.env.get_plt_path(self.name + "_train_rewards")
         plot_rewards(hist, train_plot)

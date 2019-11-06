@@ -36,6 +36,35 @@ Arr = Union[Num, np.ndarray]
 #######################################################################################################
 # Python stuff
 
+def make_param_ext(l: List[Tuple[str, Any]]) -> str:
+    """Converts a list of parameters to a string.
+
+    Can be used as an extension of a file name to differentiate
+    files generated with different parameters.
+
+    Args:
+        l: List of (Name, parameter) tuples.
+
+    Returns:
+        String combining all parameters.
+    """
+    s = ""
+    for t in l:
+        pre_str, el = t
+        if el is None:
+            continue
+        elif type(el) is bool:
+            if el:
+                s += "_" + pre_str
+        elif type(el) is int:
+            s += "_" + pre_str + str(el)
+        elif type(el) is float:
+            s += "_" + pre_str + "{:.4g}".format(el)
+        elif type(el) is list:
+            s += "_" + pre_str + '-'.join(map(str, el))
+    return s
+
+
 def tot_size(t: Tuple[int, ...]) -> int:
     """Computes the product of all numbers in `t`.
 
@@ -1245,6 +1274,13 @@ def test_python_stuff() -> None:
     assert np.allclose(linear_oob_penalty(1.0, [-1.0, 1.0]), 0.0), "linear_oob_penalty not working correctly!"
     assert np.allclose(linear_oob_penalty(5.0, [0.0, 2.0]), 3.0), "linear_oob_penalty not working correctly!"
     assert np.allclose(linear_oob_penalty(-5.0, [0.0, 2.0]), 5.0), "linear_oob_penalty not working correctly!"
+
+    # Test make_param_ext
+    res1 = make_param_ext([("a", 4), ("b", [1, 2])])
+    assert res1 == "_a4_b1-2", f"make_param_ext not implemented correctly: {res1}"
+    assert make_param_ext([("a", 4), ("b", None), ("c", False)]) == "_a4", "make_param_ext not implemented correctly!"
+    res3 = make_param_ext([("a", 4.1111111), ("b", True)])
+    assert res3 == "_a4.111_b", f"make_param_ext not implemented correctly: {res3}"
 
     print("Python function test passed!")
 
