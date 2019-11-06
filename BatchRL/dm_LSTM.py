@@ -386,49 +386,39 @@ class RNNDynamicModel(HyperOptimizableModel):
                    expand_nested=expand,
                    dpi=500)
 
+    @train_decorator(True)
     def fit(self) -> None:
-        """
-        Fit the model if it hasn't been fitted before.
-        Otherwise load the trained model.
+        """Fit the model if it hasn't been fitted before.
+
+        Else it loads the trained model.
 
         TODO: Compute more accurate val_percent for fit method!
-
-        Returns:
-             None
         """
 
-        loaded = self.load_if_exists(self.m, self.name)
-        if not loaded:
-            if self.verbose:
-                self.deb("Fitting Model...")
+        # Define optimizer and compile
+        opt = Adam(lr=self.lr)
+        self.m.compile(loss=self.loss, optimizer=opt)
+        if self.verbose:
+            self.m.summary()
+        if not EULER:
+            self._plot_model(self.m)
 
-            # Define optimizer and compile
-            opt = Adam(lr=self.lr)
-            self.m.compile(loss=self.loss, optimizer=opt)
-            if self.verbose:
-                self.m.summary()
-            if not EULER:
-                self._plot_model(self.m)
+        # Prepare the data
+        input_data, output_data = self.get_fit_data('train_val')
 
-            # Prepare the data
-            input_data, output_data = self.get_fit_data('train_val')
+        # Set seed for reproducibility
+        np.random.seed(SEED)
 
-            # Set seed for reproducibility
-            np.random.seed(SEED)
-
-            # Fit and save model
-            h = self.m.fit(input_data, output_data,
-                           epochs=self.n_iter_max,
-                           initial_epoch=0,
-                           batch_size=128,
-                           validation_split=self.data.val_percent,
-                           verbose=self.verbose)
-            pth = self.get_plt_path("TrainHist")
-            plot_train_history(h, pth)
-            create_dir(self.model_path)
-            self.m.save(self.get_path(self.name))
-        else:
-            self.deb("Restored trained model")
+        # Fit and save model
+        h = self.m.fit(input_data, output_data,
+                       epochs=self.n_iter_max,
+                       initial_epoch=0,
+                       batch_size=128,
+                       validation_split=self.data.val_percent,
+                       verbose=self.verbose)
+        pth = self.get_plt_path("TrainHist")
+        plot_train_history(h, pth)
+        create_dir(self.model_path)
 
     def predict(self, input_data: np.ndarray) -> np.ndarray:
         """Predicts a batch of sequences using the fitted model.

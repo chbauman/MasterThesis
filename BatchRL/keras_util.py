@@ -1,9 +1,13 @@
 import os
-from typing import Sequence
+from typing import Sequence, Union
 
+from keras import Model
 from keras.layers import Dense, Dropout, BatchNormalization
 from keras.models import Sequential
 from keras.regularizers import l2
+
+
+KerasModel = Union[Sequential, Model]
 
 
 def soft_update_params(model_to_update, other, lam: float = 1.0) -> None:
@@ -90,6 +94,7 @@ class KerasBase:
     """
 
     model_path: str = "../Models/Dynamics/"
+    m: KerasModel
 
     def save_model(self, m, name):
         """Saves a keras model"""
@@ -110,7 +115,7 @@ class KerasBase:
         full_path = self.get_path(name)
 
         if os.path.isfile(full_path):
-            m.load_model(full_path)
+            m.load_weights(full_path)
             return True
         return False
 

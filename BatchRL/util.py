@@ -8,6 +8,7 @@ tests of these functions are included.
 import os
 import random
 from datetime import datetime
+from functools import wraps
 from typing import Union, List, Tuple, Any, Sequence
 
 import numpy as np
@@ -296,9 +297,15 @@ class TestDecoratorFactory(object):
 
 
 def train_decorator(verbose: bool = True):
+    """Decorator factory for fit method of ML model.
 
+    Assumes the model has a keras model `m` as member
+    variable and a name `name`. Then it tries loading
+    the model, if that fails the actual fitting is done.
+    """
     def decorator(fit):
 
+        @wraps(fit)
         def decorated(self):
 
             loaded = self.load_if_exists(self.m, self.name)
