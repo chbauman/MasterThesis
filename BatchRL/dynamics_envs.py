@@ -1,5 +1,4 @@
-from abc import ABC
-from typing import Callable
+from abc import ABC, abstractmethod
 
 from base_dynamics_env import DynEnv
 from base_dynamics_model import BaseDynamicsModel
@@ -137,30 +136,44 @@ class FullRoomEnv(DynEnv):
         return False
 
 
-PriceProfile = Callable[[int], float]  #: Type for price profiles
+class CProf(ABC):
+
+    name: str
+
+    @abstractmethod
+    def __call__(self, t: int) -> float:
+        pass
 
 
-def const_price_profile_factory(p: float) -> PriceProfile:
-    """Returns a constant `PriceProfile`."""
-    def prof(t: int):
-        return p
-    return prof
+class ConstProfile(CProf):
+    """Constant price profile."""
+
+    def __init__(self, p: float):
+        self.p = p
+        self.name = f"PConst_{p}"
+
+    def __call__(self, t: int) -> float:
+        return self.p
 
 
-def price_profile(t: int) -> float:
+class PWProfile(CProf):
     """Some example price profile."""
-    if t < 5:
-        return 1.0
-    elif t < 10:
-        return 2.0
-    elif t < 20:
-        return 1.0
-    elif t < 25:
-        return 3.0
-    elif t < 30:
-        return 2.0
-    else:
-        return 1.0
+
+    name = "PW_Profile"
+
+    def __call__(self, t: int) -> float:
+        if t < 5:
+            return 1.0
+        elif t < 10:
+            return 2.0
+        elif t < 20:
+            return 1.0
+        elif t < 25:
+            return 3.0
+        elif t < 30:
+            return 2.0
+        else:
+            return 1.0
 
 
 class BatteryEnv(RLDynEnv):
@@ -173,12 +186,14 @@ class BatteryEnv(RLDynEnv):
     req_soc: float = 60.0  #: Required SoC at end of episode.
     prev_pred: np.ndarray  #: The previous prediction.
     m: BatteryModel
-    p: PriceProfile = None
+    p: CProf = None
 
-    def __init__(self, m: BatteryModel, p: PriceProfile = None, **kwargs):
+    def __init__(self, m: BatteryModel, p: CProf = None, **kwargs):
         d = m.data
         max_eps = 24 * 60 // d.dt // 2  # max predictions length
-        super().__init__(m, max_eps, name="Battery", action_range=(-100, 100), **kwargs)
+        ext = "_" + p.name if p is not None else ""
+        name = "Battery" + ext
+        super().__init__(m, max_eps, name=name, action_range=(-100, 100), **kwargs)
 
         self.p = p
 
