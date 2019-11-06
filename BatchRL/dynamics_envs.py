@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import Callable
 
 from base_dynamics_env import DynEnv
 from base_dynamics_model import BaseDynamicsModel
@@ -136,6 +137,32 @@ class FullRoomEnv(DynEnv):
         return False
 
 
+PriceProfile = Callable[[int], float]  #: Type for price profiles
+
+
+def const_price_profile_factory(p: float) -> PriceProfile:
+    """Returns a constant `PriceProfile`."""
+    def prof(t: int):
+        return p
+    return prof
+
+
+def price_profile(t: int) -> float:
+    """Some example price profile."""
+    if t < 5:
+        return 1.0
+    elif t < 10:
+        return 2.0
+    elif t < 20:
+        return 1.0
+    elif t < 25:
+        return 3.0
+    elif t < 30:
+        return 2.0
+    else:
+        return 1.0
+
+
 class BatteryEnv(RLDynEnv):
     """The environment for the battery model.
 
@@ -146,11 +173,14 @@ class BatteryEnv(RLDynEnv):
     req_soc: float = 60.0  #: Required SoC at end of episode.
     prev_pred: np.ndarray  #: The previous prediction.
     m: BatteryModel
+    p: PriceProfile = None
 
-    def __init__(self, m: BatteryModel, **kwargs):
+    def __init__(self, m: BatteryModel, p: PriceProfile = None, **kwargs):
         d = m.data
         max_eps = 24 * 60 // d.dt // 2  # max predictions length
         super().__init__(m, max_eps, name="Battery", action_range=(-100, 100), **kwargs)
+
+        self.p = p
 
         # Check model
         assert len(m.out_inds) == 1, "Model not suited for this environment!!"
@@ -173,11 +203,16 @@ class BatteryEnv(RLDynEnv):
         the bounds are satisfied and whether the SoC is high enough
         at the end of the episode.
         """
+        # Penalty for actions out of bound
+        action_pen = 1000 * linear_oob_penalty(action, self.action_range)
+
         # Compute energy used
         action_rescaled = action
         if self.scaling is not None:
             action_rescaled = add_mean_and_std(action, self.scaling[self.c_ind])
         energy_used = action_rescaled * self.alpha
+        if self.p is not None:
+            energy_used *= self.p(self.n_ts)
 
         # Penalty for constraint violation
         curr_pred = self._get_scaled_soc(curr_pred)
@@ -188,7 +223,7 @@ class BatteryEnv(RLDynEnv):
             bound_pen += 2000 * linear_oob_penalty(curr_pred, [self.req_soc, 100])
 
         # Total reward is the negative penalty minus energy used.
-        tot_rew = -energy_used - bound_pen
+        tot_rew = -energy_used - bound_pen - action_pen
         return np.array(tot_rew).item() / 300
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
