@@ -11,7 +11,7 @@ from base_hyperopt import HyperOptimizableModel, test_hyperopt
 from battery_model import BatteryModel
 from data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
     generate_room_datasets, get_DFAB_heating_data, DatasetConstraints
-from dm_Composite import CompositeModel
+from dm_Composite import CompositeModel, test_composite
 from dm_Const import ConstModel
 from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Time import SCTimeModel
@@ -31,6 +31,7 @@ def run_tests() -> None:
     test_layers()
     test_rnn_models()
     test_dyn_model()
+    test_composite()
     test_test_env()
     test_time_stuff()
     test_numpy_functions()
@@ -276,19 +277,23 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, fro
 def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
+    test_composite()
+    return
+
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
     # Choose a model
     m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True)
-    # m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
-    # m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True)
+    m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
+    m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True)
     m.analyze()
     # TODO: Check analysis and fix problem.
+    return
 
     # And an environment
     env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1)
-    return
+
     # Choose agent and fit to env.
     agent = DDPGBaseAgent(env)
     agent.fit()

@@ -1,4 +1,4 @@
-from base_dynamics_model import BaseDynamicsModel
+from base_dynamics_model import BaseDynamicsModel, construct_test_ds, ConstTestModel
 from util import *
 from data import Dataset
 
@@ -17,12 +17,13 @@ class CompositeModel(BaseDynamicsModel):
         All individual model need to be initialized with the same dataset!
 
         Args:
-            dataset: Dataset.
+            dataset: The common `Dataset`.
             model_list: A list of dynamics models defined for the same dataset.
             new_name: The name to give to this model, default produces very long names.
 
         Raises:
-            ValueError: If the model in list do not have access to `dataset`.
+            ValueError: If the model in list do not have access to `dataset` or if
+                any series is predicted by multiple models.
         """
         # Compute name and check datasets
         name = dataset.name + "Composite"
@@ -33,12 +34,16 @@ class CompositeModel(BaseDynamicsModel):
         if new_name is not None:
             name = new_name
 
-        # Collect indices
+        # Collect indices and initialize base class.
         all_out_inds = np.concatenate([m.out_inds for m in model_list])
         if has_duplicates(all_out_inds):
             raise ValueError("Predicting one or more series multiple times.")
-
         super(CompositeModel, self).__init__(dataset, name, all_out_inds, None)
+
+        # We allow only full models, i.e. when combined, the models have to predict
+        # all series except for the controlled ones.
+        if self.n_pred != dataset.d - dataset.n_c:
+            raise ValueError("You need to predict all non-control series!")
 
         # Save models
         self.model_list = model_list
@@ -66,33 +71,31 @@ class CompositeModel(BaseDynamicsModel):
         Returns:
             Aggregated predictions.
         """
-
+        # Get shape of prediction
         in_sh = in_data.shape
         out_dat = np.empty((in_sh[0], self.n_pred), dtype=in_data.dtype)
 
         # Predict with all the models
-        curr_ind = 0
         for m in self.model_list:
-            n_pred_m = m.n_pred
             in_inds = m.p_in_indices
+            out_inds = m.p_out_inds
             pred_in_dat = in_data[:, :, in_inds]
             preds = m.predict(pred_in_dat)
-            out_dat[:, curr_ind: (curr_ind + n_pred_m)] = preds
-            curr_ind += n_pred_m
+            out_dat[:, out_inds] = preds
 
         return out_dat
 
     def disturb(self):
         """Returns a sample of noise.
         """
-        seq_len = self.data.seq_len - 1
         out_dat = np.empty((self.n_pred,), dtype=np.float32)
 
         # Disturb with all the models
         curr_ind = 0
         for m in self.model_list:
             n_pred_m = m.n_pred
-            out_dat[curr_ind: (curr_ind + n_pred_m)] = m.disturb()
+            out_inds = m.p_out_inds
+            out_dat[out_inds] = m.disturb()
             curr_ind += n_pred_m
 
         return out_dat
@@ -102,3 +105,31 @@ class CompositeModel(BaseDynamicsModel):
         for m in self.model_list:
             m.model_disturbance(data_str)
         self.modeled_disturbance = True
+
+
+##########################################################################
+# Testing stuff
+
+
+def test_composite():
+
+    # Define dataset
+    dataset = construct_test_ds(100)
+
+    # Define individual models
+    m1 = ConstTestModel(dataset, pred_val=1.0, out_indices=np.array([0, 2], dtype=np.int32))
+    m2 = ConstTestModel(dataset, pred_val=2.0, out_indices=np.array([1], dtype=np.int32))
+    m3 = ConstTestModel(dataset, pred_val=3.0,
+                        out_indices=np.array([1], dtype=np.int32),
+                        in_indices=np.array([1], dtype=np.int32))
+
+    # Define composite model
+    m = CompositeModel(dataset, [m1, m2], new_name="CompositeTest")
+
+    # Test predictions
+    in_data = np.reshape(np.arange(2 * 5 * 4), (2, 5, 4))
+    exp_out_data = np.ones((2, 3), dtype=np.float32)
+    exp_out_data[:, 1] = 2.0
+    assert np.array_equal(exp_out_data, m.predict(in_data)), "Composite model prediction wrong!"
+
+    print("Composite model test passed! :)")

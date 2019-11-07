@@ -725,6 +725,29 @@ class BaseDynamicsModel(KerasBase, ABC):
 
 ##########################################################################
 # Testing stuff
+
+class ConstTestModel(BaseDynamicsModel):
+
+    def __init__(self,
+                 ds: Dataset,
+                 pred_val: float = 1.0,
+                 **kwargs):
+        name = f"ConstModel_{pred_val}"
+        super().__init__(ds, name, **kwargs)
+
+        self.val = pred_val
+        self.use_AR = False
+
+    def fit(self) -> None:
+        pass
+
+    def predict(self, in_data: np.ndarray) -> np.ndarray:
+        """Predicts a constant value for all series."""
+        in_sh = in_data.shape
+        preds = self.val * np.ones((in_sh[0], self.n_pred), dtype=np.float32)
+        return preds
+
+
 class TestModel(BaseDynamicsModel):
     """Dummy dynamics model class for testing.
 
