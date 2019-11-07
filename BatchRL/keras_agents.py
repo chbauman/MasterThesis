@@ -10,6 +10,7 @@ from rl.random import OrnsteinUhlenbeckProcess
 
 from base_agent import AgentBase
 from dynamics_envs import FullRoomEnv, RLDynEnv
+from keras_layers import ClipByValue
 from keras_util import getMLPModel, KerasBase
 from util import *
 from visualize import plot_rewards
@@ -123,14 +124,16 @@ class DDPGBaseAgent(KerasBaseAgent):
                  lr: float = 0.001,
                  gamma: float = 0.9,
                  layers: Sequence[int] = (50, 50),
-                 reg: float = 0.01):
+                 reg: float = 0.01,
+                 action_range: Sequence = None):
 
         # Find unique name
         param_ex_list = [("N", n_steps),
                          ("LR", lr),
                          ("GAM", gamma),
                          ("L", layers),
-                         ("REG", reg), ]
+                         ("REG", reg),
+                         ("AR", action_range)]
         name = "DDPG_" + env.name + make_param_ext(param_ex_list)
 
         # Initialize super class
@@ -149,6 +152,9 @@ class DDPGBaseAgent(KerasBaseAgent):
         # Network parameters
         self.layers = layers
         self.reg = reg
+        if action_range is not None:
+            assert len(action_range) == 2, "Fucking retarded?"
+        self.action_range = action_range
 
         self._build_agent_model()
 
@@ -160,6 +166,11 @@ class DDPGBaseAgent(KerasBaseAgent):
         actor.add(getMLPModel(mlp_layers=self.layers,
                               out_dim=self.nb_actions,
                               ker_reg=self.reg))
+
+        # Clip actions to desired interval
+        if self.action_range is not None:
+            clip_layer = ClipByValue(self.action_range[0], self.action_range[1])
+            actor.add(clip_layer)
 
         # Build critic model
         action_input = Input(shape=(self.nb_actions,), name='action_input')
