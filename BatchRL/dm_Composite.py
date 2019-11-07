@@ -78,7 +78,7 @@ class CompositeModel(BaseDynamicsModel):
 
         # Predict with all the models
         for m in self.model_list:
-            in_inds = m.p_in_indices
+            in_inds = m.in_indices
             out_inds = m.p_out_inds
             pred_in_dat = in_data[:, :, in_inds]
             preds = m.predict(pred_in_dat)

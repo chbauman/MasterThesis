@@ -319,7 +319,7 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    # curr_tests()
+    curr_tests()
 
     # Train and analyze the battery model
     # run_battery()
@@ -345,7 +345,7 @@ def main() -> None:
 
     # Hyper-optimize model(s)
     for name in needed:
-        optimize_model(get_model(name, ds, rnn_consts, from_hop=False))
+        # optimize_model(get_model(name, ds, rnn_consts, from_hop=False))
         pass
 
     all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True) for nm in needed}

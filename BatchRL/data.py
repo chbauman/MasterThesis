@@ -1318,8 +1318,7 @@ class Dataset:
                  p_inds: np.ndarray = no_inds,
                  name: str = "",
                  seq_len: int = 20):
-        """Base constructor.
-        """
+        """Base constructor."""
 
         # Constants
         self.val_percent = 0.1
@@ -1386,8 +1385,7 @@ class Dataset:
         return
 
     def split_data(self) -> None:
-        """
-        Splits the data into train, validation and test set.
+        """Splits the data into train, validation and test set.
 
         Returns:
             None
@@ -1412,8 +1410,7 @@ class Dataset:
         self.split_dict = {p[0]: ModelDataView(self, *p) for p in pats_defs}
 
     def get_streak(self, str_desc: str, n_days: int = 7) -> Tuple[np.ndarray, np.ndarray, int]:
-        """
-        Extracts a streak from the selected part of the dataset.
+        """Extracts a streak from the selected part of the dataset.
 
         Args:
             str_desc: Part of the dataset, in ['train', 'val', 'test']
@@ -1435,9 +1432,7 @@ class Dataset:
         return input_data, output_data, n_off
 
     def get_split(self, str_desc: str, seq_out: bool = False) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Returns the required part of the data
-        prepared for the supervised model training.
+        """Returns the required part of the data prepared for the supervised model training.
 
         Args:
             seq_out: Whether to return sequence output.
@@ -1457,9 +1452,7 @@ class Dataset:
         return input_data, output_data, offs
 
     def get_days(self, str_desc: str) -> Tuple[List[Tuple[np.ndarray, np.ndarray]], np.ndarray]:
-        """
-        Extracts all streaks of length one day that start at the beginning
-        of the day.
+        """Extracts all streaks of length one day that start at the beginning of the day.
 
         Args:
             str_desc: The string specifying what data to use.
@@ -1480,10 +1473,9 @@ class Dataset:
     def fromRaw(cls, all_data: np.ndarray, m: List, name: str,
                 c_inds: np.ndarray = no_inds,
                 p_inds: np.ndarray = no_inds) -> 'Dataset':
-        """
-        Constructor from data and dict m:
-        Extracts the important metadata from the
-        dict m.
+        """Constructor from data and metadata dict `m`.
+
+        Extracts the important metadata from the dict m.
 
         :param all_data: Numpy array with all the time series.
         :param m: List of metadata dictionaries.
@@ -1523,11 +1515,10 @@ class Dataset:
         return self.d
 
     def __str__(self) -> str:
-        """
-        Creates a string containing the most important
-        information about this dataset.
+        """Creates a string containing the most important information about this dataset.
 
-        :return: Dataset description string.
+        Returns:
+            Dataset description string.
         """
         out_str = "Dataset(" + repr(self.data) + ", \ndt = " + repr(self.dt)
         out_str += ", t_init = " + repr(self.t_init) + ", \nis_scaled = " + repr(self.is_scaled)
