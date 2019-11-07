@@ -1,6 +1,7 @@
-from base_dynamics_model import BaseDynamicsModel, construct_test_ds, ConstTestModel, ConstSeriesTestModel
-from util import *
+from base_dynamics_model import BaseDynamicsModel, construct_test_ds
 from data import Dataset
+from dm_Const import ConstSeriesTestModel
+from util import *
 
 
 class CompositeModel(BaseDynamicsModel):
@@ -116,8 +117,8 @@ def test_composite():
     dataset = construct_test_ds(100)
 
     # Define individual models
-    m1 = ConstTestModel(dataset, pred_val=1.0, out_indices=np.array([0, 2], dtype=np.int32))
-    m2 = ConstTestModel(dataset, pred_val=2.0, out_indices=np.array([1], dtype=np.int32))
+    m1 = ConstSeriesTestModel(dataset, pred_val_list=1.0, out_indices=np.array([0, 2], dtype=np.int32))
+    m2 = ConstSeriesTestModel(dataset, pred_val_list=2.0, out_indices=np.array([1], dtype=np.int32))
     m3 = ConstSeriesTestModel(dataset,
                               pred_val_list=[1.0],
                               out_indices=np.array([1], dtype=np.int32),
@@ -133,10 +134,12 @@ def test_composite():
 
     # Test predictions
     in_data = np.reshape(np.arange(2 * 5 * 4), (2, 5, 4))
+    in_data_2 = np.ones((2, 5, 4), dtype=np.float32) * np.arange(4)
     exp_out_data = np.ones((2, 3), dtype=np.float32)
     exp_out_data[:, 1] = 2.0
     assert np.array_equal(exp_out_data, mc1.predict(in_data)), "Composite model prediction wrong!"
     exp_out_2 = np.ones((2, 3), dtype=np.float32) * np.arange(3.0)
     assert np.array_equal(exp_out_2, mc2.predict(in_data)), "Composite model prediction wrong!"
+    assert np.array_equal(exp_out_2, mc2.predict(in_data_2)), "Composite model prediction wrong!"
 
     print("Composite model test passed! :)")

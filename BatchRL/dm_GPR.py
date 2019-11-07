@@ -1,9 +1,6 @@
-
 import numpy as np
-
+from hyperopt import hp, fmin, rand
 from sklearn.gaussian_process import GaussianProcessRegressor
-
-from hyperopt import hp, fmin, rand, tpe, space_eval
 
 from base_dynamics_model import BaseDynamicsModel
 
@@ -11,9 +8,9 @@ from base_dynamics_model import BaseDynamicsModel
 class GPR_DM(BaseDynamicsModel):
 
     def __init__(self,
-                 alpha = 2.0,
-                 validation = 0.1,
-                 use_diff_data = True):
+                 alpha=2.0,
+                 validation=0.1,
+                 use_diff_data=True):
 
         super(GPR_DM, self).__init__()
 
@@ -26,12 +23,12 @@ class GPR_DM(BaseDynamicsModel):
         """
         Prepares the data for usage with the estimator.
         """
-        i, o = self.prepare_data(data, diff = self.use_diff_data)
+        i, o = self.prepare_data(data, diff=self.use_diff_data)
         n = data.shape[0]
         in_data = np.reshape(i, (n, -1))
         return in_data, o
 
-    def fit(self, data, m = None):
+    def fit(self, data, m=None):
         """
         Fit the model.
         """
@@ -59,17 +56,17 @@ class GPR_DM(BaseDynamicsModel):
 
         # Fitness function for the hyperparameter optimization
         def gpr_fit_fun(alpha):
-            self.gpr = GaussianProcessRegressor(alpha = alpha, n_restarts_optimizer = 10)
+            self.gpr = GaussianProcessRegressor(alpha=alpha, n_restarts_optimizer=10)
             self.gpr.fit(self.in_train, self.out_train)
             return self.mse_error_pred(self.in_val, self.out_val)
 
         # Define space and find best hyperparameters
         space = hp.loguniform('alpha', -2, 5)
-        self.best = fmin(gpr_fit_fun, space, algo=rand.suggest, max_evals = 2)['alpha']
+        self.best = fmin(gpr_fit_fun, space, algo=rand.suggest, max_evals=2)['alpha']
         print("Best alpha: ", self.best)
 
         # Fit again with best
-        self.gpr = GaussianProcessRegressor(alpha = self.best, n_restarts_optimizer = 10)
+        self.gpr = GaussianProcessRegressor(alpha=self.best, n_restarts_optimizer=10)
         self.gpr.fit(self.in_train, self.out_train)
         self.analyze_gp()
 
@@ -77,7 +74,7 @@ class GPR_DM(BaseDynamicsModel):
         reds = self.get_residuals(data)
         self.res_std = np.std(reds)
 
-    def predict(self, data, prepared = False, disturb = False):
+    def predict(self, data, prepared=False, disturb=False):
         """
         Predict outcome for new data.
         """
@@ -89,7 +86,7 @@ class GPR_DM(BaseDynamicsModel):
             in_d, _ = self.prepare_data_gp(data)
         else:
             in_d = data.reshape((n, -1))
-        #print("Predict Input Shape", in_d.shape)
+        # print("Predict Input Shape", in_d.shape)
         res = self.gpr.predict(in_d)
         if self.use_diff_data:
             ind_resh = np.reshape(in_d, (n, self.seq_len - 1, -1))
