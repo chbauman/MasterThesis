@@ -1,4 +1,4 @@
-from base_dynamics_model import BaseDynamicsModel, construct_test_ds, ConstTestModel
+from base_dynamics_model import BaseDynamicsModel, construct_test_ds, ConstTestModel, ConstSeriesTestModel
 from util import *
 from data import Dataset
 
@@ -112,24 +112,31 @@ class CompositeModel(BaseDynamicsModel):
 
 
 def test_composite():
-
     # Define dataset
     dataset = construct_test_ds(100)
 
     # Define individual models
     m1 = ConstTestModel(dataset, pred_val=1.0, out_indices=np.array([0, 2], dtype=np.int32))
     m2 = ConstTestModel(dataset, pred_val=2.0, out_indices=np.array([1], dtype=np.int32))
-    m3 = ConstTestModel(dataset, pred_val=3.0,
-                        out_indices=np.array([1], dtype=np.int32),
-                        in_indices=np.array([1], dtype=np.int32))
+    m3 = ConstSeriesTestModel(dataset,
+                              pred_val_list=[1.0],
+                              out_indices=np.array([1], dtype=np.int32),
+                              in_indices=np.array([1], dtype=np.int32))
+    m4 = ConstSeriesTestModel(dataset,
+                              pred_val_list=[0.0, 2.0],
+                              out_indices=np.array([0, 2], dtype=np.int32),
+                              in_indices=np.array([1, 2, 3], dtype=np.int32))
 
-    # Define composite model
-    m = CompositeModel(dataset, [m1, m2], new_name="CompositeTest")
+    # Define composite models
+    mc1 = CompositeModel(dataset, [m1, m2], new_name="CompositeTest1")
+    mc2 = CompositeModel(dataset, [m3, m4], new_name="CompositeTest2")
 
     # Test predictions
     in_data = np.reshape(np.arange(2 * 5 * 4), (2, 5, 4))
     exp_out_data = np.ones((2, 3), dtype=np.float32)
     exp_out_data[:, 1] = 2.0
-    assert np.array_equal(exp_out_data, m.predict(in_data)), "Composite model prediction wrong!"
+    assert np.array_equal(exp_out_data, mc1.predict(in_data)), "Composite model prediction wrong!"
+    exp_out_2 = np.ones((2, 3), dtype=np.float32) * np.arange(3.0)
+    assert np.array_equal(exp_out_2, mc2.predict(in_data)), "Composite model prediction wrong!"
 
     print("Composite model test passed! :)")

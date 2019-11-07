@@ -727,7 +727,10 @@ class BaseDynamicsModel(KerasBase, ABC):
 # Testing stuff
 
 class ConstTestModel(BaseDynamicsModel):
+    """Test model that predicts a constant value for all series.
 
+    Can take any number of input series and output series.
+    """
     def __init__(self,
                  ds: Dataset,
                  pred_val: float = 1.0,
@@ -745,6 +748,35 @@ class ConstTestModel(BaseDynamicsModel):
         """Predicts a constant value for all series."""
         in_sh = in_data.shape
         preds = self.val * np.ones((in_sh[0], self.n_pred), dtype=np.float32)
+        return preds
+
+
+class ConstSeriesTestModel(BaseDynamicsModel):
+    """Test model that predicts a possibly different constant value for each series.
+
+    Can take any number of input series and output series.
+    """
+
+    def __init__(self,
+                 ds: Dataset,
+                 pred_val_list: List[Num],
+                 **kwargs):
+        name = f"ConstModel"
+        super().__init__(ds, name, **kwargs)
+
+        if not len(pred_val_list) == self.n_pred:
+            raise ValueError("Not the right number of values specified!")
+
+        self.values = np.array(pred_val_list)
+        self.use_AR = False
+
+    def fit(self) -> None:
+        pass
+
+    def predict(self, in_data: np.ndarray) -> np.ndarray:
+        """Predicts a constant value for each series."""
+        in_sh = in_data.shape
+        preds = np.ones((in_sh[0], self.n_pred), dtype=np.float32) * self.values
         return preds
 
 
@@ -775,8 +807,6 @@ class TestModel(BaseDynamicsModel):
     def predict(self, in_data: np.ndarray) -> np.ndarray:
 
         rel_out_dat = -0.9 * in_data[:, -1, :self.n_pred]
-        # rel_out_dat[:, 1] = -0.9 * rel_out_dat[:, 1]
-        # rel_out_dat[:, 2] = -0.9 * rel_out_dat[:, 2]
 
         self.n_prediction += 1
         return rel_out_dat
