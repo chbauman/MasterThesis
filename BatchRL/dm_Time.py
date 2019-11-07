@@ -11,8 +11,8 @@ class SCTimeModel(BaseDynamicsModel):
     """
 
     def __init__(self, dataset: Dataset, time_ind: int = None):
-        """
-        Initialize the Sine-Cosine-Time model.
+        """Initialize the Sine-Cosine-Time model.
+
         It predicts the next values given only the previous
         values of the sine and the cosine of the time.
 
@@ -42,21 +42,17 @@ class SCTimeModel(BaseDynamicsModel):
         self.s_ind_prep, self.c_ind_prep = dataset.to_prepared(self.out_inds)
 
     def fit(self) -> None:
-        """
-        No need to fit anything, model is deterministic
-        and exact up to numerical errors.
-
-        :return: None
-        """
+        """No need to fit anything, model is deterministic."""
         return
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
-        """
-        Compute the next sin(t) and cos(t) value given the
-        values at the last timestep.
+        """Compute the next sin(t) and cos(t) value given the values at the last timestep.
 
-        :param in_data: Prepared data.
-        :return: Same as input
+        Args:
+            in_data: Prepared data.
+
+        Returns:
+             The next time: (sin(t + dt), cos(t + dt)).
         """
 
         in_sh = in_data.shape
@@ -93,9 +89,9 @@ class SCTimeModel(BaseDynamicsModel):
         return out_dat
 
     def model_disturbance(self, data_str: str = 'train'):
-
+        """No need to model, no disturbance used."""
         self.modeled_disturbance = True
 
     def disturb(self) -> np.ndarray:
-
+        """No disturbance, model is exact."""
         return np.zeros((self.n_pred,), dtype=np.float32)

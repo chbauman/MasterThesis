@@ -15,8 +15,8 @@ from dm_Composite import CompositeModel, test_composite
 from dm_Const import ConstModel
 from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dm_Time import SCTimeModel
-from dynamics_envs import FullRoomEnv, BatteryEnv, PWProfile
-from keras_agents import DDPGBaseAgent, NAFBaseAgent
+from dynamics_envs import FullRoomEnv, BatteryEnv
+from keras_agents import DDPGBaseAgent
 from keras_layers import test_layers
 from util import *
 
@@ -278,14 +278,15 @@ def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
     test_composite()
-    return
 
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
     # Choose a model
     m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True)
+    m.analyze()
     m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
+    m.analyze()
     m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True)
     m.analyze()
     # TODO: Check analysis and fix problem.
