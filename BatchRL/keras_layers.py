@@ -1,5 +1,5 @@
 import tensorflow as tf
-from keras import backend as K, Input, Model
+from keras import backend as K, Input
 from keras.layers import Layer, GaussianNoise, Add
 
 from data import SeriesConstraint
@@ -23,7 +23,7 @@ class ReduceMax2D(Layer):
     def build(self, input_shape):
         super(ReduceMax2D, self).build(input_shape)
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         return K.max(x, axis=self.axis + 1)
 
     def compute_output_shape(self, input_shape):
@@ -44,7 +44,7 @@ class ReduceProbabilisticSoftMax2D(Layer):
     def build(self, input_shape):
         super(ReduceProbabilisticSoftMax2D, self).build(input_shape)
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         x_sh = x.shape
         act_axis = self.axis + 1
         mu = K.mean(x, axis=act_axis)
@@ -70,7 +70,7 @@ class ReduceArgMax2D(Layer):
     def build(self, input_shape):
         super(ReduceArgMax2D, self).build(input_shape)
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         return K.argmax(x, axis=self.axis + 1)
 
     def compute_output_shape(self, input_shape):
@@ -92,7 +92,7 @@ class OneHot(Layer):
     def build(self, input_shape):
         super(OneHot, self).build(input_shape)
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         one_h_enc = K.one_hot(x, self.num_classes)
         return K.reshape(one_h_enc, (-1, self.num_classes))
 
@@ -112,7 +112,7 @@ class PrepInput(Layer):
     def build(self, input_shape):
         super(PrepInput, self).build(input_shape)
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         tf_constant = K.arange(self.num_classes)
         one_hot_enc = K.one_hot(tf_constant, self.num_classes)
         one_hot_enc_p1 = K.reshape(one_hot_enc, (1, self.num_classes, self.num_classes))
@@ -138,7 +138,7 @@ class SeqInput(Layer):
         """
         super(SeqInput, self).__init__(**kwargs)
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         """
         Returns `x` unchanged.
 
@@ -184,7 +184,7 @@ class IdRecurrent(Layer):
         self.n = n
         self.r_s = return_sequences
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         """Returns `x` unchanged."""
         assert len(x.shape) == 3, "Only implemented for 3D tensor input."
         if self.n is None:
@@ -222,7 +222,7 @@ class IdDense(Layer):
         super().__init__(**kwargs)
         self.n = n
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         """Returns `x` unchanged."""
         assert len(x.shape) == 2, "Only implemented for 2D tensor input."
         if self.n is None:
@@ -255,7 +255,7 @@ class ClipByValue(Layer):
         self.low = low
         self.high = high
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         """Returns clipped `x`."""
         return K.clip(x, self.low, self.high)
 
@@ -294,7 +294,7 @@ class ConstrainedNoise(Layer):
         self.consts = consts
         self.is_input = is_input
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         """
         Builds the layer given the input x.
 
@@ -382,7 +382,7 @@ class FeatureSlice(Layer):
         if n_dims == 2:
             raise NotImplementedError("Not implemented for 2D tensors!")
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         """
         Builds the layer given the input x. Selects the features
         specified in `slicing_indices` and concatenates them.
@@ -444,7 +444,7 @@ class ExtractInput(Layer):
         self.seq_len = seq_len
         self.curr_ind = curr_ind
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         """
         Builds the layer given the full data and the
         last prediction.

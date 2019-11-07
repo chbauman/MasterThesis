@@ -281,13 +281,13 @@ def curr_tests(ds: Dataset = None) -> None:
 
     # Choose a model
     # m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True)
-    # m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
-    m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True)
-    # m.analyze()
+    m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
+    # m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True)
+    m.analyze()
 
     # And an environment
     env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1)
-
+    return
     # Choose agent and fit to env.
     agent = DDPGBaseAgent(env)
     agent.fit()
