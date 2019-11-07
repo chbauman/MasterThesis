@@ -1,3 +1,4 @@
+import shutil
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -759,6 +760,15 @@ class TestModel(BaseDynamicsModel):
 
 
 def construct_test_ds(n: int = 201, c_series: int = 3) -> Dataset:
+    """Constructs a dataset for testing.
+
+    Args:
+        n: Number of rows.
+        c_series: The index of the control series.
+
+    Returns:
+        A dataset with 4 series, one of which is controllable.
+    """
     # Define dataset
     dat = np.empty((n, 4), dtype=np.float32)
     dat[:, 0] = np.arange(n)
@@ -858,3 +868,17 @@ def test_dyn_model() -> None:
     print("First point in week plot should be at: {}".format(t_init_streak))
 
     print("Dynamic model test passed :)")
+
+
+def cleanup_test_data():
+    """Removes all test folders in the `Plots/Models` folders."""
+    n = 10
+    plot_dir = "../Plots/Models/"
+    ds = construct_test_ds(n)
+    test_ds_name = ds.name
+    name_len = len(test_ds_name)
+    for f in os.listdir(plot_dir):
+        if f[:name_len] == test_ds_name:
+            fol = os.path.join(plot_dir, f)
+            shutil.rmtree(fol)
+    print("Cleaned up some test files!")

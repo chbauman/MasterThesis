@@ -6,7 +6,7 @@ modules.
 """
 from agents_heuristic import ConstHeating, RuleBasedHeating
 from base_dynamics_env import test_test_env
-from base_dynamics_model import test_dyn_model, BaseDynamicsModel
+from base_dynamics_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
 from base_hyperopt import HyperOptimizableModel, test_hyperopt
 from battery_model import BatteryModel
 from data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
@@ -277,6 +277,8 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, fro
 def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
+    cleanup_test_data()
+    return
     test_dyn_model()
     test_composite()
 
