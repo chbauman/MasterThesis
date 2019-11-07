@@ -1,0 +1,7 @@
+#!/bin/bash
+
+module load python
+module load hdf5
+
+echo "Loaded libraries."
+
