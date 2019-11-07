@@ -277,6 +277,7 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, fro
 def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
+    test_dyn_model()
     test_composite()
 
     # Get dataset and constraints

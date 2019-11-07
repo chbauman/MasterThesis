@@ -121,8 +121,9 @@ class BaseDynamicsModel(KerasBase, ABC):
     def _get_inds(indices: Optional[np.ndarray], ds: Dataset, in_inds: bool = True):
         """Prepares the indices."""
         if indices is None:
-            n = ds.d if in_inds else ds.d - ds.n_c
-            indices = ds.from_prepared(np.arange(n))
+            indices = np.arange(ds.d)
+            if not in_inds:
+                indices = ds.from_prepared(indices[:-ds.n_c])
         p_indices = ds.to_prepared(indices)
         ds.check_inds(indices, True)
         return indices, p_indices
@@ -275,6 +276,9 @@ class BaseDynamicsModel(KerasBase, ABC):
                        return_all_predictions: bool = False,
                        disturb_pred: bool = False) -> np.ndarray:
         """Applies the model n times and returns the predictions.
+
+        TODO: Fix this shit!!
+        TODO: Make it work with any prediction indices!!!!
 
         :param prepared_data: Data to predict.
         :param n: Number of timesteps to predict.
@@ -448,7 +452,8 @@ class BaseDynamicsModel(KerasBase, ABC):
             ext: String extension for the filename.
             n_ts_off: Time step offset of data used.
 
-        Returns: None
+        Returns:
+            None
         """
 
         ext = "_" if ext is None else "_" + ext
@@ -539,11 +544,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         #                                 predict_ind=k)
 
     def analyze_6_days(self) -> None:
-        """
-        Analyzes this model using the 7 day streaks.
-
-        :return: None
-        """
+        """Analyzes this model using the 7 day streaks."""
         d = self.data
         n = 60 * 24 // d.dt
 
@@ -713,11 +714,10 @@ class BaseDynamicsModel(KerasBase, ABC):
         return residuals
 
     def deb(self, *args) -> None:
-        """
-        Prints Debug Info to console.
+        """Prints Debug Info to console.
 
-        :param args: Arguments as for print() function.
-        :return: None
+        Args:
+            args: Arguments as for print() function.
         """
         if self.debug:
             print(*args)
@@ -758,14 +758,14 @@ class TestModel(BaseDynamicsModel):
         return rel_out_dat
 
 
-def construct_test_ds(n: int = 201) -> Dataset:
+def construct_test_ds(n: int = 201, c_series: int = 3) -> Dataset:
     # Define dataset
     dat = np.empty((n, 4), dtype=np.float32)
     dat[:, 0] = np.arange(n)
     dat[:, 1] = np.reciprocal(1.0 + np.arange(n))
     dat[:, 2] = np.reciprocal(1.0 + np.arange(n))
     dat[:, 3] = 1 + np.reciprocal(1.0 + np.arange(n))
-    c_inds = np.array([3])
+    c_inds = np.array([c_series])
     ds = get_test_ds(dat, c_inds, dt=60 * 6, name="SyntheticModelData")
     ds.seq_len = 8
     ds.val_percent = 0.3
@@ -786,6 +786,16 @@ def test_dyn_model() -> None:
     # Define dataset
     n = 201
     ds = construct_test_ds(n)
+    ds_1 = construct_test_ds(n, 1)
+
+    # Define models
+    from dm_Const import ConstSeriesTestModel, ConstModel
+    test_mod = TestModel(ds)
+    test_model_2 = ConstSeriesTestModel(ds_1,
+                                        pred_val_list=[0.0, 2.0],
+                                        out_indices=np.array([0, 2], dtype=np.int32),
+                                        in_indices=np.array([1, 2, 3], dtype=np.int32))
+    test_model_3 = ConstModel(ds_1)
 
     # Compute sizes
     n_val = n - int((1.0 - ds.val_percent) * n)
@@ -802,13 +812,18 @@ def test_dyn_model() -> None:
     if n_streak_offset != n_str:
         raise AssertionError("Streak offset fucking wrong!!")
 
+    # Check indices
+    assert np.array_equal(np.array([0, 2, 3]), test_model_3.out_inds), "Out indices incorrect!"
+    assert np.array_equal(np.array([0, 1, 2]), test_model_3.p_out_inds), "Prepared out indices incorrect!"
+    assert np.array_equal(np.array([0, 1, 2, 3]), test_model_3.in_indices), "In indices incorrect!"
+    assert np.array_equal(np.array([0, 3, 1, 2]), test_model_3.p_in_indices), "Prepared in indices incorrect!"
+
     # Find time of initial output
     n_streak_output_offset = n_streak_offset + ds.seq_len - 1
     dt_offset = n_mins_to_np_dt(ds.dt * n_streak_output_offset)
     t_init_streak = str_to_np_dt(ds.t_init) + dt_offset
 
     # Initialize, fit and analyze model
-    test_mod = TestModel(ds)
     test_mod.fit()
     # test_mod.analyze()
 
@@ -834,6 +849,11 @@ def test_dyn_model() -> None:
     assert np.allclose(unscaled_out, ds.data[:, :3]), "Rescaling not working!"
     assert np.allclose(unscaled_in, ds.data), "Rescaling not working!"
     assert np.allclose(scaled_out, ds_scaled.data[:, :3]), "Rescaling not working!"
+
+    # Test n-step predictions.
+    in_d, out_d, _ = ds.get_split('val')
+    step_pred = test_model_2.n_step_predict((in_d, out_d), 4)
+    # TODO
 
     print("First point in week plot should be at: {}".format(t_init_streak))
 

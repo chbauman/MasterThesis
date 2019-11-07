@@ -39,7 +39,7 @@ class CompositeModel(BaseDynamicsModel):
         all_out_inds = np.concatenate([m.out_inds for m in model_list])
         if has_duplicates(all_out_inds):
             raise ValueError("Predicting one or more series multiple times.")
-        super(CompositeModel, self).__init__(dataset, name, all_out_inds, None)
+        super().__init__(dataset, name, all_out_inds, None)
 
         # We allow only full models, i.e. when combined, the models have to predict
         # all series except for the controlled ones.
@@ -114,7 +114,7 @@ class CompositeModel(BaseDynamicsModel):
 
 def test_composite():
     # Define dataset
-    dataset = construct_test_ds(100)
+    dataset = construct_test_ds(200)
 
     # Define individual models
     m1 = ConstSeriesTestModel(dataset, pred_val_list=1.0, out_indices=np.array([0, 2], dtype=np.int32))
@@ -135,7 +135,7 @@ def test_composite():
     # Define composite models
     mc1 = CompositeModel(dataset, [m1, m2], new_name="CompositeTest1")
     mc2 = CompositeModel(dataset, [m3, m4], new_name="CompositeTest2")
-    mc3 = CompositeModel(dataset, [m5, m6], new_name="CompositeTest2")
+    mc3 = CompositeModel(dataset, [m5, m6], new_name="CompositeTest3")
 
     # Test predictions
     in_data = np.reshape(np.arange(2 * 5 * 4), (2, 5, 4))
@@ -149,5 +149,13 @@ def test_composite():
     exp_out_3 = np.copy(exp_out_2)
     exp_out_3[:, 0] = 1.0
     assert np.array_equal(exp_out_3, mc3.predict(in_data_2)), "Composite model prediction wrong!"
+
+    # Test analysis
+    assert not np.any(dataset.is_scaled), "Dataset should not be scaled!!"
+    data = np.copy(dataset.data)
+    mc2.analyze()
+    assert np.array_equal(data, dataset.data), "Analyze does not work correctly!"
+    mc3.analyze()
+    assert np.array_equal(data, dataset.data), "Analyze does not work correctly!"
 
     print("Composite model test passed! :)")

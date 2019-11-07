@@ -37,7 +37,7 @@ class ConstModel(BaseDynamicsModel):
         super().__init__(dataset, self.name, pred_inds, **kwargs)
 
         # Save data
-        self.n_out = len(pred_inds)
+        self.n_out = len(self.out_inds)
         self.nc = dataset.n_c
 
     def fit(self) -> None:
