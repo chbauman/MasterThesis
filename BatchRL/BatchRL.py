@@ -154,7 +154,27 @@ def analyze_control_influence(m: BaseDynamicsModel):
     env.analyze_agent([const_ag_1, const_ag_2])
 
 
-def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, from_hop: bool = False):
+def get_model(name: str, ds: Dataset,
+              rnn_consts: DatasetConstraints = None,
+              from_hop: bool = False,
+              fit: bool = False) -> BaseDynamicsModel:
+    """Loads and optionally fits a model.
+
+    Args:
+        name: The name specifying the model.
+        ds: The dataset to initialize the model with.
+        rnn_consts: The constraints for the recurrent models.
+        from_hop: Whether to initialize the model from optimal hyperparameters.
+        fit: Whether to fit the model before returning it.
+
+    Returns:
+        The requested model.
+    """
+    if fit:
+        mod = get_model(name, ds, rnn_consts, fit=False)
+        mod.fit()
+        return mod
+
     # Basic parameter set
     hop_pars = {
         'n_iter_max': 10,
@@ -285,20 +305,16 @@ def curr_tests(ds: Dataset = None) -> None:
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
     # Choose a model
-    base_data = np.copy(ds.data)
-    streak = copy_arr_list(ds.get_streak("train"))
-    m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True)
-    m.analyze()
-    streak_after = ds.get_streak("train")
-    assert nan_array_equal(base_data, ds.data), "Data was changed during analysis!"
-    for k in range(3):
-        assert np.array_equal(streak_after[k], streak[k]), "Data was changed during analysis!"
 
-    m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
+    in_data = np.zeros((5, 19, 8))
+    m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True, fit=True)
     m.analyze()
-    m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True)
+    m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True, fit=True)
+    m.analyze()
+    m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True, fit=True)
     m.analyze()
     # TODO: Check analysis and fix problem.
+    # TODO: Find the fucking problem!
     return
 
     # And an environment
