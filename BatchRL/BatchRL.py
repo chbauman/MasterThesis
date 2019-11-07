@@ -27,6 +27,7 @@ def run_tests() -> None:
     Raises:
         AssertionError: If a test fails.
     """
+    # Do all the tests.
     test_hyperopt()
     test_layers()
     test_rnn_models()
@@ -40,6 +41,9 @@ def run_tests() -> None:
     # get_data_test()
     # test_align()
     test_dataset_artificially()
+
+    # Do some cleanup.
+    cleanup_test_data()
 
 
 def run_battery() -> None:
@@ -277,17 +281,19 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, fro
 def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
-    cleanup_test_data()
-    return
-    test_dyn_model()
-    test_composite()
-
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
     # Choose a model
+    base_data = np.copy(ds.data)
+    streak = copy_arr_list(ds.get_streak("train"))
     m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True)
     m.analyze()
+    streak_after = ds.get_streak("train")
+    assert nan_array_equal(base_data, ds.data), "Data was changed during analysis!"
+    for k in range(3):
+        assert np.array_equal(streak_after[k], streak[k]), "Data was changed during analysis!"
+
     m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
     m.analyze()
     m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True)

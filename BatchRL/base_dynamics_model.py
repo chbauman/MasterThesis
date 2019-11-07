@@ -806,6 +806,7 @@ def test_dyn_model() -> None:
                                         out_indices=np.array([0, 2], dtype=np.int32),
                                         in_indices=np.array([1, 2, 3], dtype=np.int32))
     test_model_3 = ConstModel(ds_1)
+    test_model_4 = ConstModel(ds)
 
     # Compute sizes
     n_val = n - int((1.0 - ds.val_percent) * n)
@@ -833,9 +834,14 @@ def test_dyn_model() -> None:
     dt_offset = n_mins_to_np_dt(ds.dt * n_streak_output_offset)
     t_init_streak = str_to_np_dt(ds.t_init) + dt_offset
 
-    # Initialize, fit and analyze model
-    test_mod.fit()
-    # test_mod.analyze()
+    # Test model analysis
+    base_data = np.copy(ds_1.data)
+    streak = copy_arr_list(ds_1.get_streak("train"))
+    test_model_2.analyze()
+    streak_after = ds_1.get_streak("train")
+    assert np.array_equal(base_data, ds_1.data), "Data was changed during analysis!"
+    for k in range(3):
+        assert np.array_equal(streak_after[k], streak[k]), "Streak data was changed during analysis!"
 
     # Test prediction and residuals
     sample_pred_inp = ds.data[:(ds.seq_len - 1)]

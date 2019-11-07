@@ -95,3 +95,11 @@ class ConstSeriesTestModel(BaseDynamicsModel):
         in_sh = in_data.shape
         preds = np.ones((in_sh[0], self.n_pred), dtype=np.float32) * self.values
         return preds
+
+    def model_disturbance(self, data_str: str = 'train'):
+        """No need to model, no disturbance used."""
+        self.modeled_disturbance = True
+
+    def disturb(self) -> np.ndarray:
+        """No disturbance, model is exact."""
+        return np.zeros((self.n_pred,), dtype=np.float32)
