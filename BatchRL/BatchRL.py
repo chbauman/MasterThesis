@@ -284,9 +284,6 @@ def curr_tests(ds: Dataset = None) -> None:
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
     # Choose a model
-    m = get_model("Time_Exact", ds, rnn_consts, from_hop=True)
-    m.analyze()
-    return
     m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True)
     m.analyze()
     m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
@@ -322,8 +319,7 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    curr_tests()
-    return
+    # curr_tests()
 
     # Train and analyze the battery model
     # run_battery()
@@ -346,13 +342,13 @@ def main() -> None:
         # "FullState_Comp_ReducedTempConstWaterWeather",
         # "FullState_Comp_TempConstWaterWeather",
     ]
-    all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True) for nm in needed}
 
     # Hyper-optimize model(s)
-    # optimize_model(get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts))
-    # optimize_model(get_model("RoomTempFromReduced_RNN", ds, rnn_consts))
-    # optimize_model(get_model("Apartment_RNN", ds, rnn_consts))
-    # optimize_model(get_model("RoomTemp_RNN", ds, rnn_consts))
+    for name in needed:
+        optimize_model(get_model(name, ds, rnn_consts, from_hop=False))
+        pass
+
+    all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True) for nm in needed}
 
     # Fit or load all initialized models
     for name, m_to_use in all_mods.items():
