@@ -47,9 +47,7 @@ def _get_inds_str(indices: np.ndarray, pre: str = "In") -> str:
 
 
 class BaseDynamicsModel(KerasBase, ABC):
-    """
-    This class describes the interface of a ML-based
-    (partial) dynamics model.
+    """This class describes the interface of a ML-based (partial) dynamics model.
     """
 
     # Constants
@@ -216,12 +214,14 @@ class BaseDynamicsModel(KerasBase, ABC):
         return arr_scaled
 
     def model_disturbance(self, data_str: str = 'train') -> None:
-        """
-        Models the uncertainties in the model
-        by matching the distribution of the residuals.
+        """Models the uncertainties in the model.
 
-        Returns:
-            None
+        It is done by matching the distribution of the residuals.
+        Either use the std of the residuals and use Gaussian noise
+        with the same std or fit an AR process to each series.
+
+        Args:
+            data_str: The string determining the part of the data for fitting.
         """
 
         # Compute residuals
@@ -238,8 +238,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         self.res_std = np.std(residuals, axis=0)
 
     def disturb(self) -> np.ndarray:
-        """
-        Returns a sample of noise of length n.
+        """Returns a sample of noise.
 
         Returns:
             Numpy array of disturbances.
@@ -275,9 +274,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                        pred_ind: int = None,
                        return_all_predictions: bool = False,
                        disturb_pred: bool = False) -> np.ndarray:
-        """
-        Applies the model n times and returns the
-        predictions.
+        """Applies the model n times and returns the predictions.
 
         :param prepared_data: Data to predict.
         :param n: Number of timesteps to predict.

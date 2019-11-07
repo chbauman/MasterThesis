@@ -257,7 +257,7 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, fro
         model_reduced_temp = get_model("RoomTempFromReduced_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         model_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
-        return CompositeModel(ds, [model_reduced_temp, mod_wt, model_weather, model_time_exact],
+        return CompositeModel(ds, [model_weather, mod_wt, model_reduced_temp, model_time_exact],
                               new_name="FullState_Comp_ReducedTempConstWaterWeather")
     elif name == "FullState_Comp_TempConstWaterWeather":
         # The full state model combining the weather, the constant water temperature,
@@ -267,7 +267,7 @@ def get_model(name: str, ds: Dataset, rnn_consts: DatasetConstraints = None, fro
         model_reduced_temp = get_model("RoomTemp_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         model_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
-        return CompositeModel(ds, [model_reduced_temp, mod_wt, model_weather, model_time_exact],
+        return CompositeModel(ds, [model_weather, mod_wt, model_reduced_temp, model_time_exact],
                               new_name="FullState_Comp_TempConstWaterWeather")
     else:
         raise ValueError("No such model defined!")
@@ -280,10 +280,11 @@ def curr_tests(ds: Dataset = None) -> None:
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
     # Choose a model
-    # m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True)
-    m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
+    m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True)
+    # m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True)
     # m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True)
     m.analyze()
+    # TODO: Check analysis and fix problem.
 
     # And an environment
     env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1)

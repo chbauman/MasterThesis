@@ -4,21 +4,25 @@ from data import Dataset
 
 
 class CompositeModel(BaseDynamicsModel):
-    """
-    The composite model, containing multiple other models.
+    """The composite model, combining multiple models.
+
+    All models need to be based on the same dataset.
     """
 
     model_list: List[BaseDynamicsModel]
 
     def __init__(self, dataset: Dataset, model_list: List[BaseDynamicsModel], new_name: str = None):
-        """
-        Initialize the Composite model. All individual model
-        need to be initialized with the same dataset!
+        """Initialize the Composite model.
 
-        :param dataset: Dataset.
-        :param model_list: A list of dynamics models defined for the same dataset.
-        :param new_name: The name to give to this model, default produces very long names.
-        :raises ValueError: If the model in list do not have access to `dataset`.
+        All individual model need to be initialized with the same dataset!
+
+        Args:
+            dataset: Dataset.
+            model_list: A list of dynamics models defined for the same dataset.
+            new_name: The name to give to this model, default produces very long names.
+
+        Raises:
+            ValueError: If the model in list do not have access to `dataset`.
         """
         # Compute name and check datasets
         name = dataset.name + "Composite"
@@ -40,31 +44,27 @@ class CompositeModel(BaseDynamicsModel):
         self.model_list = model_list
 
     def init_1day(self, day_data: np.ndarray) -> None:
-        """
-        Calls the same function on all models in list.
+        """Calls the same function on all models in list.
 
-        :param day_data: The data for the initialization.
-        :return: None
+        Args:
+            day_data: The data for the initialization.
         """
         for m in self.model_list:
             m.init_1day(day_data)
 
     def fit(self) -> None:
-        """
-        Fits all the models.
-
-        :return: None
-        """
-
+        """Fits all the models."""
         for m in self.model_list:
             m.fit()
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
-        """
-        Aggregated prediction by predicting with all models.
+        """Aggregated prediction by predicting with all models.
 
-        :param in_data: Prepared data.
-        :return: Aggregated predictions.
+        Args:
+            in_data: Prepared data.
+
+        Returns:
+            Aggregated predictions.
         """
 
         in_sh = in_data.shape
@@ -83,8 +83,7 @@ class CompositeModel(BaseDynamicsModel):
         return out_dat
 
     def disturb(self):
-        """
-        Returns a sample of noise of length n.
+        """Returns a sample of noise.
         """
         seq_len = self.data.seq_len - 1
         out_dat = np.empty((self.n_pred,), dtype=np.float32)
@@ -99,7 +98,7 @@ class CompositeModel(BaseDynamicsModel):
         return out_dat
 
     def model_disturbance(self, data_str: str = 'train'):
-
+        """Models the disturbances for all sub-models."""
         for m in self.model_list:
             m.model_disturbance(data_str)
         self.modeled_disturbance = True
