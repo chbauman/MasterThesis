@@ -28,7 +28,7 @@ class SCTimeModel(BaseDynamicsModel):
         if time_ind > dataset.d - 2 or time_ind < 0:
             raise IndexError("Time index out of range.")
         inds = np.array([time_ind, time_ind + 1], dtype=np.int32)
-        super(SCTimeModel, self).__init__(dataset, name, inds)
+        super(SCTimeModel, self).__init__(dataset, name, inds, inds)
 
         # Save parameters
         self.dx = 2 * np.pi / (24 * 60 / dataset.dt)
@@ -56,7 +56,7 @@ class SCTimeModel(BaseDynamicsModel):
         """
 
         in_sh = in_data.shape
-        s_ind, c_ind = self.s_ind_prep, self.c_ind_prep
+        s_ind, c_ind = self.out_inds
 
         # Get previous values
         s = np.copy(in_data[:, -1, s_ind])
@@ -68,7 +68,7 @@ class SCTimeModel(BaseDynamicsModel):
             c = add_mean_and_std(c, self.c_scale)
 
         # Compute new
-        if np.max(c) > 1.0 or np.min(c) < -1.0:
+        if np.max(c) > 1.00 or np.min(c) < -1.00:
             print(np.max(c))
             print(np.min(c))
             raise ValueError("Invalid value encountered!")
