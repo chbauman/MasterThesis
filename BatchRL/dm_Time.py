@@ -56,11 +56,10 @@ class SCTimeModel(BaseDynamicsModel):
         """
 
         in_sh = in_data.shape
-        s_ind, c_ind = self.out_inds
 
         # Get previous values
-        s = np.copy(in_data[:, -1, s_ind])
-        c = np.copy(in_data[:, -1, c_ind])
+        s = np.copy(in_data[:, -1, 0])
+        c = np.copy(in_data[:, -1, 1])
 
         # Scale back
         if self.is_scaled:
