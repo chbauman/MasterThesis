@@ -5,9 +5,17 @@ from data import Dataset
 
 class ConstModel(BaseDynamicsModel):
     """The naive model that predicts the last input seen.
+
+    If the input series to the model are not specified, the
+    same as the output series are taken.
+    If there are more input than output series, the output
+    consists of the last observation of the first few input series.
     """
 
-    def __init__(self, dataset: Dataset, pred_inds: np.ndarray = None):
+    name: str = "Naive"  #: Base name of model.
+    n_out: int  #: Number of series that are predicted.
+
+    def __init__(self, dataset: Dataset, pred_inds: np.ndarray = None, **kwargs):
         """Initializes the constant model.
 
         All series specified by prep_inds are predicted by the last seen value.
@@ -15,11 +23,21 @@ class ConstModel(BaseDynamicsModel):
         Args:
             dataset: Dataset containing the data.
             pred_inds: Indices of series to predict.
+            kwargs: Kwargs for base class, e.g. `in_indices`.
         """
-        name = "Naive"
-        super(ConstModel, self).__init__(dataset, name, pred_inds)
+        # Set in_indices to pred_inds if not specified.
+        in_inds = kwargs.get('in_indices')
+        if in_inds is None:
+            kwargs['in_indices'] = pred_inds
+        else:
+            if len(in_inds) < len(pred_inds):
+                raise ValueError("Need at least as many input series as output series!")
+
+        # Init base class
+        super().__init__(dataset, self.name, pred_inds, **kwargs)
 
         # Save data
+        self.n_out = len(pred_inds)
         self.nc = dataset.n_c
 
     def fit(self) -> None:
@@ -35,7 +53,7 @@ class ConstModel(BaseDynamicsModel):
         Returns:
             Same as input
         """
-        return in_data[:, -1, self.out_inds]
+        return np.copy(in_data[:, -1, :self.n_out])
 
 
 class ConstSeriesTestModel(BaseDynamicsModel):
