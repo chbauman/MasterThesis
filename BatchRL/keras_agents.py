@@ -1,3 +1,9 @@
+"""A few keras RL agents.
+
+Based on the agents of the keras-rl library, the agents
+here are basically wrappers of those adding functionality
+to work with the present framework.
+"""
 from keras import Input, Model, Sequential
 from keras.layers import Flatten, Concatenate
 from keras.optimizers import Adam
@@ -17,8 +23,10 @@ from visualize import plot_rewards
 
 
 class KerasBaseAgent(AgentBase, KerasBase):
+    """The interface for all keras-rl agent wrappers."""
+
     m: Agent  #: The keras-rl agent.
-    model_path: str = "../Models/RL/"
+    model_path: str = "../Models/RL/"  #: Where to store the model parameters.
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -26,6 +34,7 @@ class KerasBaseAgent(AgentBase, KerasBase):
             print("Please provide a name for the agent!")
 
     def get_action(self, state):
+        """Use the keras-rl model to get an action."""
         return self.m.forward(state)
 
 
@@ -118,7 +127,11 @@ class NAFBaseAgent(KerasBaseAgent):
 
 
 class DDPGBaseAgent(KerasBaseAgent):
+    """The wrapper of the keras-rl DDPG agent.
 
+    Suited for continuous action and state space.
+    Range of allowed actions can be specified.
+    """
     def __init__(self, env: RLDynEnv,
                  n_steps: int = 50000,
                  lr: float = 0.001,
@@ -127,7 +140,18 @@ class DDPGBaseAgent(KerasBaseAgent):
                  reg: float = 0.01,
                  action_range: Sequence = None):
 
-        # Find unique name
+        """Constructor.
+
+        Args:
+            env: The underlying environment.
+            n_steps: The number of steps to train.
+            lr: The base learning rate.
+            gamma: The discount factor.
+            layers: The layer architecture of the MLP for the actor and the critic network.
+            reg: The regularization factor for the networks.
+            action_range: The range of the actions the actor can take.
+        """
+        # Find unique name based on parameters.
         param_ex_list = [("N", n_steps),
                          ("LR", lr),
                          ("GAM", gamma),
@@ -136,10 +160,10 @@ class DDPGBaseAgent(KerasBaseAgent):
                          ("AR", action_range)]
         name = "DDPG_" + env.name + make_param_ext(param_ex_list)
 
-        # Initialize super class
+        # Initialize super class.
         super().__init__(env=env, name=name)
 
-        # Save reference to env and extract dimensions
+        # Save reference to env and extract relevant dimensions.
         self.env = env
         self.nb_actions = env.nb_actions
         self.n_state_vars = env.m.n_pred
@@ -156,6 +180,7 @@ class DDPGBaseAgent(KerasBaseAgent):
             assert len(action_range) == 2, "Fucking retarded?"
         self.action_range = action_range
 
+        # Build the model.
         self._build_agent_model()
 
     def _build_agent_model(self) -> None:
@@ -216,7 +241,7 @@ class DDPGBaseAgent(KerasBaseAgent):
         """Saves a keras model.
 
         Needs to be overridden here since the keras-rl
-        Agent class does not have a `save`method.
+        `DDPGAgent` class does not have a `save` method.
 
         Args:
             m: Keras-rl agent model.
@@ -228,6 +253,7 @@ class DDPGBaseAgent(KerasBaseAgent):
     def fit(self) -> None:
         """Fit the agent using the environment.
 
+        Makes a plot of the rewards received during the training.
         """
         # Fit and plot rewards
         hist = self.m.fit(self.env, nb_steps=self.n_steps, visualize=False, verbose=1, nb_max_episode_steps=200)
