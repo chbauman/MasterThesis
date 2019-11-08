@@ -182,8 +182,9 @@ class RNNDynamicModel(HyperOptimizableModel):
         return _extract_kwargs(hp_sample)
 
     def get_space(self) -> Dict:
-        """
-        Defines the hyper parameter space.
+        """Defines the hyper parameter space.
+
+        Space is larger when on Euler (`EULER` == True).
 
         Returns:
             Dict specifying the hyper parameter space.
@@ -200,9 +201,10 @@ class RNNDynamicModel(HyperOptimizableModel):
         return hp_space
 
     def conf_model(self, hp_sample: Dict) -> 'HyperOptimizableModel':
-        """
+        """Configures a new model.
+
         Returns a model of the same type with the same output and input
-        indices and the same constraints, but other hyper parameters.
+        indices and the same constraints, but different hyper parameters.
 
         Args:
             hp_sample: Sample of hyper parameters to initialize the model with.
@@ -220,7 +222,9 @@ class RNNDynamicModel(HyperOptimizableModel):
         return new_mod
 
     def hyper_objective(self) -> float:
-        """Uses the hyperparameter objective from the base class.
+        """Defines the objective of the hyperparameter optimization.
+
+        Uses the hyperparameter objective from the base class.
 
         Returns:
             Objective loss.
@@ -228,7 +232,8 @@ class RNNDynamicModel(HyperOptimizableModel):
         return self.hyper_obj()
 
     @staticmethod
-    def def_name():
+    def def_name() -> str:
+        """Returns the base name of this model."""
         return "basicRNN"
 
     def __init__(self,
@@ -250,19 +255,20 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         """Constructor, defines all the network parameters.
 
-        :param name: Base name
-        :param data: Dataset
-        :param hidden_sizes: Layer size list or tuple
-        :param out_inds: Prediction indices
-        :param in_inds: Input indices
-        :param n_iter_max: Number of iterations
-        :param lr: Learning rate
-        :param gru: Whether to use GRU units
-        :param residual_learning: Whether to use residual learning
-        :param weight_vec: Weight vector for weighted loss
-        :param input_noise_std: Standard deviation of input noise.
-        :param constraint_list: The constraints on the data series.
-        :param verbose: The verbosity level, 0, 1 or 2.
+        Args:
+            name: Base name
+            data: Dataset
+            hidden_sizes: Layer size list or tuple
+            out_inds: Prediction indices
+            in_inds: Input indices
+            n_iter_max: Number of iterations
+            lr: Base learning rate
+            gru: Whether to use GRU units
+            residual_learning: Whether to use residual learning
+            weight_vec: Weight vector for weighted loss
+            input_noise_std: Standard deviation of input noise.
+            constraint_list: The constraints on the data series.
+            verbose: The verbosity level, 0, 1 or 2.
         """
         if name is None:
             name = self.def_name()
@@ -382,7 +388,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         return model
 
     def _plot_model(self, model: Any, name: str = "Model.png",
-                    expand: bool = True):
+                    expand: bool = True) -> None:
         """Plots keras model."""
         pth = self.get_plt_path(name)
         plot_model(model, to_file=pth,
@@ -398,7 +404,6 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         TODO: Compute more accurate val_percent for fit method!
         """
-
         # Define optimizer and compile
         opt = Adam(lr=self.lr)
         self.m.compile(loss=self.loss, optimizer=opt)
@@ -424,8 +429,11 @@ class RNNDynamicModel(HyperOptimizableModel):
     def predict(self, input_data: np.ndarray) -> np.ndarray:
         """Predicts a batch of sequences using the fitted model.
 
-        :param input_data: 3D numpy array with input data.
-        :return: 2D numpy array with the predictions.
+        Args:
+            input_data: 3D numpy array with input data.
+
+        Returns:
+            2D numpy array with the predictions.
         """
 
         n = input_data.shape[0]
@@ -439,7 +447,7 @@ class RNNDynamicModel(HyperOptimizableModel):
 class RNNDynamicOvershootModel(RNNDynamicModel):
     m: Any = None  #: The base model used for prediction.
     overshoot_model: Any = None  #: The overshoot model used for training.
-    n_overshoot: int
+    n_overshoot: int  #: Number of timesteps to predict into the future.
     debug: bool = False
 
     def __init__(self, n_overshoot: int = 10, decay_rate: float = 1.0, debug: bool = False, **kwargs):

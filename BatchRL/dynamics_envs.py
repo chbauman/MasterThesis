@@ -64,7 +64,6 @@ class FullRoomEnv(RLDynEnv):
     alpha: float = 1.0  #: Weight factor for reward.
     temp_bounds: Sequence = (22.0, 26.0)  #: The requested temperature range.
     bound_violation_penalty: float = 2.0  #: The penalty in the reward for temperatures out of bound.
-    scaling: np.ndarray = None
 
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int = 48,

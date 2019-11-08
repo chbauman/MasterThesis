@@ -338,7 +338,8 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    # curr_tests()
+    curr_tests()
+    return
 
     # Train and analyze the battery model
     # run_battery()
@@ -355,7 +356,6 @@ def main() -> None:
         "Apartment_RNN",
         "RoomTempFromReduced_RNN",
         "RoomTemp_RNN",
-        # "Full_Comp_WeatherApt",
         # "FullState_Comp_WeatherAptTime",
         # "FullState_Comp_FullTime",
         # "FullState_Comp_ReducedTempConstWaterWeather",

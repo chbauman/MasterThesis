@@ -278,8 +278,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                        disturb_pred: bool = False) -> np.ndarray:
         """Applies the model n times and returns the predictions.
 
-        TODO: Fix this shit!!
-        TODO: Make it work with any prediction indices!!!!
+        TODO: Make it work with any prediction indices!?
 
         :param prepared_data: Data to predict.
         :param n: Number of timesteps to predict.
@@ -806,7 +805,6 @@ def test_dyn_model() -> None:
                                         out_indices=np.array([0, 2], dtype=np.int32),
                                         in_indices=np.array([1, 2, 3], dtype=np.int32))
     test_model_3 = ConstModel(ds_1)
-    test_model_4 = ConstModel(ds)
 
     # Compute sizes
     n_val = n - int((1.0 - ds.val_percent) * n)
@@ -868,8 +866,8 @@ def test_dyn_model() -> None:
 
     # Test n-step predictions.
     in_d, out_d, _ = ds.get_split('val')
-    step_pred = test_model_2.n_step_predict((in_d, out_d), 4)
-    # TODO
+    test_model_2.n_step_predict((in_d, out_d), 4)
+    # TODO: Test it
 
     print("First point in week plot should be at: {}".format(t_init_streak))
 
