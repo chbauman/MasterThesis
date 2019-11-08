@@ -19,7 +19,7 @@ class SCTimeModel(BaseDynamicsModel):
         Args:
             dataset: Dataset containing two time series, sin(time) and cos(time).
             time_ind: Specifying which column holds the sin(t) series.
-                        The cos(t) series is assumed to be in column time_ind + 1.
+                        The cos(t) series is assumed to be in column `time_ind` + 1.
         """
         # Compute indices and name
         name = dataset.name + "_Exact"

@@ -856,13 +856,30 @@ def find_disjoint_streaks(nans: np.ndarray, seq_len: int, streak_len: int,
     return inds[:ct]
 
 
+def move_inds_to_back(arr: np.ndarray, inds) -> np.ndarray:
+    """Moves the series specified by the `inds` to the end of the array.
+
+    Args:
+        arr: The array to transform.
+        inds: The indices specifying the series to move.
+
+    Returns:
+        New array with permuted features.
+    """
+    n_feat = arr.shape[-1]
+    mask = np.ones((n_feat,), np.bool)
+    mask[inds] = False
+    input_dat = np.concatenate([arr[..., mask], arr[..., inds]], axis=-1)
+    return input_dat
+
+
 def prepare_supervised_control(sequences: np.ndarray,
                                c_inds: np.array,
                                sequence_pred: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     """Prepare data for supervised learning.
 
     Transforms a batch of sequences of constant length to
-    prepare it for supervised model training. Removes control indices
+    prepare it for supervised model training. Moves control series
     to the end of the features and shifts them to the past for one
     time step.
 
@@ -1310,5 +1327,11 @@ def test_time_stuff() -> None:
     # Test day_offset_ts
     n_ts = day_offset_ts(t_init_str, n_mins)
     assert n_ts == 5, "Fuck you!!"
+
+    # Test move_inds_to_back
+    arr = np.arange(5)
+    inds = [1, 3]
+    exp_res = np.array([0, 2, 4, 1, 3])
+    np.array_equal(move_inds_to_back(arr, inds), exp_res), "move_inds_to_back not working!"
 
     print("Time tests passed! :)")

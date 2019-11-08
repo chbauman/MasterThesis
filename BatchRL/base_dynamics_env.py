@@ -127,8 +127,9 @@ class DynEnv(ABC, gym.Env):
         """
         # print(f"Action: {action}")
         self.hist[-1, -self.act_dim:] = action
-        pred_sh = (1, -1, self.state_dim)
-        curr_pred = self.m.predict(self.hist.reshape(pred_sh))[0]
+        hist_res = self.hist.reshape((1, -1, self.state_dim))
+        hist_trf = move_inds_to_back(hist_res, self.m.data.c_inds)
+        curr_pred = self.m.predict(hist_trf)[0]
         if self.use_noise:
             curr_pred += self.disturb_fac * self.m.disturb()
         self.hist[:-1, :] = self.hist[1:, :]

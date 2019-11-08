@@ -301,6 +301,8 @@ def get_model(name: str, ds: Dataset,
 def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
+    test_python_stuff()
+
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
