@@ -8,8 +8,12 @@ from util import *
 
 class RLDynEnv(DynEnv, ABC):
 
+    """The base class for RL environments based on `BaseDynamicsModel`.
+
+    Only working for one control input.
+    """
     action_range: Sequence  #: The requested active power range.
-    scaling: np.ndarray = None
+    scaling: np.ndarray = None  #: Whether the underlying `Dataset` was scaled.
     nb_actions: int  #: Number of actions if discrete else action space dim.
 
     def __init__(self, m: BaseDynamicsModel,
@@ -19,6 +23,7 @@ class RLDynEnv(DynEnv, ABC):
                  n_disc_actions: int = 11,
                  n_cont_actions: int = None,
                  **kwargs):
+        """Constructor."""
         super().__init__(m, max_eps=max_eps, **kwargs)
 
         if cont_actions and n_cont_actions is None:
@@ -34,7 +39,11 @@ class RLDynEnv(DynEnv, ABC):
             self.scaling = d.scaling
 
     def scale_actions(self, actions):
-        """Scales the actions to the correct range."""
+        """Scales the actions to the correct range.
+
+        Args:
+            actions: The action to take.
+        """
         if not self.cont_actions:
             return check_and_scale(actions, self.nb_actions, self.action_range)
         return actions
@@ -51,6 +60,7 @@ class RLDynEnv(DynEnv, ABC):
 
 
 class FullRoomEnv(RLDynEnv):
+    """The environment modeling one room only."""
     alpha: float = 1.0  #: Weight factor for reward.
     temp_bounds: Sequence = (22.0, 26.0)  #: The requested temperature range.
     bound_violation_penalty: float = 2.0  #: The penalty in the reward for temperatures out of bound.

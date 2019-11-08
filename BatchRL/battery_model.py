@@ -5,7 +5,8 @@ from visualize import scatter_plot
 
 
 class BatteryModel(BaseDynamicsModel):
-    """
+    """Dynamics model of the battery.
+
     The model of the battery:
     :math:`s_t`: SoC at time t
     Model:

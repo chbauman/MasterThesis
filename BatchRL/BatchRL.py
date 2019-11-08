@@ -311,9 +311,6 @@ def curr_tests(ds: Dataset = None) -> None:
     m.analyze()
     m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True, fit=True)
     m.analyze()
-    # TODO: Check analysis and fix problem.
-    # TODO: Find the fucking problem!
-    return
 
     # And an environment
     env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1)
@@ -367,6 +364,7 @@ def main() -> None:
 
     # Hyper-optimize model(s)
     for name in needed:
+        # print(f"Optimizing: {name}")
         # optimize_model(get_model(name, ds, rnn_consts, from_hop=False))
         pass
 

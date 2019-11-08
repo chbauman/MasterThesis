@@ -1,3 +1,9 @@
+"""Custom keras layers.
+
+Define your custom keras layers here.
+There is also a function that tests the layers
+for some example input.
+"""
 import tensorflow as tf
 from keras import backend as K, Input
 from keras.layers import Layer, GaussianNoise, Add
@@ -5,13 +11,6 @@ from keras.layers import Layer, GaussianNoise, Add
 from data import SeriesConstraint
 from keras_util import *
 from util import *
-
-"""Custom keras layers.
-
-Define your custom keras layers here.
-There is also a function that tests the layers
-for some example input.
-"""
 
 
 class ReduceMax2D(Layer):
@@ -81,9 +80,7 @@ class ReduceArgMax2D(Layer):
 
 
 class OneHot(Layer):
-    """
-    Assuming input of shape (None, 1). 
-    """
+    """Assuming input of shape (None, 1)."""
 
     def __init__(self, num_classes=10, **kwargs):
         self.num_classes = num_classes
@@ -101,9 +98,7 @@ class OneHot(Layer):
 
 
 class PrepInput(Layer):
-    """
-    Uses the states input only for matching the size.
-    """
+    """Uses the states input only for matching the size."""
 
     def __init__(self, num_classes=10, **kwargs):
         self.num_classes = num_classes
@@ -124,14 +119,12 @@ class PrepInput(Layer):
 
 
 class SeqInput(Layer):
-    """
-    Dummy Layer, it lets you specify the input shape
+    """Dummy Layer, it lets you specify the input shape
     when used as a first layer in a Sequential model.
     """
 
     def __init__(self, **kwargs):
-        """
-        Initializes the layer.
+        """Initializes the layer.
 
         Args:
             **kwargs: kwargs for super.
@@ -139,8 +132,7 @@ class SeqInput(Layer):
         super(SeqInput, self).__init__(**kwargs)
 
     def call(self, x, **kwargs):
-        """
-        Returns `x` unchanged.
+        """Returns `x` unchanged.
 
         Args:
             x: Input tensor.
@@ -151,8 +143,7 @@ class SeqInput(Layer):
         return x
 
     def compute_output_shape(self, input_shape):
-        """
-        The shape stays the same.
+        """The shape stays the same.
 
         Args:
             input_shape: The shape of the input.
