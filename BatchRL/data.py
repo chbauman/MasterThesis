@@ -1748,14 +1748,17 @@ class Dataset:
             raise ValueError("Indices containing duplicates!!!")
 
     def to_prepared(self, inds: Arr) -> Arr:
-        """
-        Converts the indices from the original dataset
+        """Converts the indices from the original dataset
         to the indices corresponding to the prepared data.
+
         Since the control series are moved to the end while
         preparing the data, this is needed.
 
-        :param inds: Original indices.
-        :return: New indices.
+        Args:
+            inds: Original indices.
+
+        Returns:
+            New indices.
         """
         new_inds = np.copy(inds)
         n_tot = self.d
@@ -1766,14 +1769,17 @@ class Dataset:
         return new_inds
 
     def from_prepared(self, inds: Arr) -> Arr:
-        """
-        Converts the indices from the prepared data
+        """Converts the indices from the prepared data
         to the indices corresponding to the original dataset.
+
         Since the control series are moved to the end while
         preparing the data, this is needed.
 
-        :param inds: Data indices.
-        :return: Original indices.
+        Args:
+            inds: Data indices.
+
+        Returns:
+            Original indices.
         """
         new_inds = np.copy(inds)
         n_tot = self.d

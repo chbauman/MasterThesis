@@ -136,10 +136,10 @@ def test_composite():
                         in_indices=np.array([1, 2, 3], dtype=np.int32))
     m7 = ConstTestModel(ds_1,
                         pred_inds=np.array([0, 2], dtype=np.int32),
-                        in_indices=np.array([1, 2, 3], dtype=np.int32))
+                        in_indices=np.array([1, 2], dtype=np.int32))
     m8 = ConstTestModel(ds_1,
                         pred_inds=np.array([3], dtype=np.int32),
-                        in_indices=np.array([1, 3], dtype=np.int32))
+                        in_indices=np.array([1], dtype=np.int32))
 
     # Define composite models
     mc1 = CompositeModel(dataset, [m1, m2], new_name="CompositeTest1")
@@ -148,8 +148,11 @@ def test_composite():
     mc4 = CompositeModel(ds_1, [m7, m8], new_name="CompositeTest4")
 
     # Test predictions
-    in_data = np.reshape(np.arange(2 * 5 * 4), (2, 5, 4))
-    in_data_2 = np.ones((2, 5, 4), dtype=np.float32) * np.arange(4)
+    sh = (2, 5, 4)
+    sh_out = (2, 3)
+    sh_tot = tot_size(sh)
+    in_data = np.reshape(np.arange(sh_tot), sh)
+    in_data_2 = np.ones(sh, dtype=np.float32) * np.arange(4)
     exp_out_data = np.ones((2, 3), dtype=np.float32)
     exp_out_data[:, 1] = 2.0
     assert np.array_equal(exp_out_data, mc1.predict(in_data)), "Composite model prediction wrong!"
@@ -159,9 +162,9 @@ def test_composite():
     exp_out_3 = np.copy(exp_out_2)
     exp_out_3[:, 0] = 1.0
     assert np.array_equal(exp_out_3, mc3.predict(in_data_2)), "Composite model prediction wrong!"
-    exp_out_4 = np.copy(exp_out_2)
-    exp_out_4[..., 1:3] += 1
+    exp_out_4 = np.ones(sh_out) * np.array([3, 1, 3])
     act_out = mc4.predict(in_data_2)
     assert np.array_equal(exp_out_4, act_out), "Composite model prediction wrong!"
+    m1_pred = m7.predict(in_data_2[..., [1, 2]])
 
     print("Composite model test passed! :)")
