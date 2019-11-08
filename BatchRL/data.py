@@ -1303,8 +1303,7 @@ no_inds = np.array([], dtype=np.int32)
 
 
 class Dataset:
-    """
-    This class contains all infos about a given dataset and
+    """This class contains all infos about a given dataset and
     offers some functionality for manipulating it.
     """
     _offs: int
@@ -1353,36 +1352,8 @@ class Dataset:
 
         # Variables for later use
         self.streak_len = None
-
-        # Test data
-        self.orig_test = None
-        self.test_data = None
-        self.test_start = None
-
-        # Train val data
-        self.orig_train_val = None
-        self.train_val_data = None
-        self.train_val_start = None
-
-        # Training data
-        self.orig_train = None
-        self.train_data = None
-        self.train_start = 0
-        self.train_streak = None
-        self.train_streak_data = None
-        self.train_streak_start = None
-
-        # Validation data
-        self.orig_val = None
-        self.val_data = None
-        self.val_start = None
-        self.val_streak = None
-        self.val_streak_data = None
-        self.val_streak_start = None
-
         self.c_inds_prep = None
         self.p_inds_prep = None
-        return
 
     def split_data(self) -> None:
         """Splits the data into train, validation and test set.
@@ -1704,6 +1675,7 @@ class Dataset:
 
     @staticmethod
     def get_filename(name: str) -> str:
+        """Returns path where to store this `Dataset`."""
         return os.path.join(dataset_data_path, name) + '.pkl'
 
     @staticmethod
