@@ -6,6 +6,7 @@ from data import Dataset
 
 
 class NoDisturbanceModel(BaseDynamicsModel, ABC):
+    """Interface for models without a disturbance."""
 
     def model_disturbance(self, data_str: str = 'train'):
         """No need to model, no disturbance used."""
@@ -69,6 +70,8 @@ class ConstModel(BaseDynamicsModel):
         return np.copy(in_data[:, -1, :self.n_out])
 
 
+# Testing models.
+
 class ConstTestModel(ConstModel, NoDisturbanceModel):
     """Const Test model without a disturbance."""
     pass
@@ -83,6 +86,7 @@ class ConstSeriesTestModel(NoDisturbanceModel):
     def __init__(self,
                  ds: Dataset,
                  pred_val_list: Union[Num, List[Num]],
+                 predict_input_check: np.ndarray = None,
                  **kwargs):
         """Constructor
 
@@ -102,6 +106,7 @@ class ConstSeriesTestModel(NoDisturbanceModel):
             if not len(pred_val_list) == self.n_pred:
                 raise ValueError("Not the right number of values specified!")
 
+        self.predict_input_check = predict_input_check
         self.values = np.array(pred_val_list)
         self.use_AR = False
 
@@ -111,5 +116,10 @@ class ConstSeriesTestModel(NoDisturbanceModel):
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """Predicts a constant value for each series."""
         in_sh = in_data.shape
+        if self.predict_input_check is not None:
+            pc = self.predict_input_check
+            assert len(pc) == in_sh[-1], "Predictions do not have the right shape!"
+            exp_inp = np.ones(in_sh) * pc
+            assert np.array_equal(exp_inp, in_data), "Input incorrect!!!"
         preds = np.ones((in_sh[0], self.n_pred), dtype=np.float32) * self.values
         return preds

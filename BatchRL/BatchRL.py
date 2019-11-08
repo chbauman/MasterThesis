@@ -304,9 +304,8 @@ def curr_tests(ds: Dataset = None) -> None:
     # test_python_stuff()
     # test_rnn_models()
     # test_dyn_model()
-    test_composite()
-    test_test_env()
-    return
+    # test_composite()
+    # test_test_env()
 
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)

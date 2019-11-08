@@ -371,8 +371,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
     def const_nts_plot(self, predict_data, n_list: List[int], ext: str = '', *,
                        predict_ind: int = None, n_ts_off: int = 0) -> None:
-        """
-        Creates a plot that shows the performance of the
+        """Creates a plot that shows the performance of the
         trained model when predicting a fixed number of timesteps into
         the future.
         If predict_ind is None, all series that can be
@@ -441,8 +440,7 @@ class BaseDynamicsModel(KerasBase, ABC):
     def one_week_pred_plot(self, dat_test, ext: str = None,
                            predict_ind: int = None,
                            n_ts_off: int = 0) -> None:
-        """
-        Makes a plot by continuously predicting with
+        """Makes a plot by continuously predicting with
         the fitted model and comparing it to the ground
         truth. If predict_ind is None, all series that can be
         predicted are predicted simultaneously and each predicted
@@ -498,7 +496,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                          title_and_ylab=title_and_ylab,
                          save_name=self.get_plt_path('OneWeek' + ext))
 
-    def analyze(self) -> None:
+    def analyze(self, plot_acf: bool = True) -> None:
         """Analyzes the trained model.
 
         Makes some plots using the fitted model and the streak data.
@@ -511,10 +509,11 @@ class BaseDynamicsModel(KerasBase, ABC):
         d = self.data
 
         # Get residuals and plot autocorrelation
-        # res = self.get_residuals("train")
-        # for k in range(get_shape1(res)):
-        #     plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResACF_{k}'))
-        #     plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResPACF_{k}'), partial=True)
+        res = self.get_residuals("train")
+        if plot_acf:
+            for k in range(get_shape1(res)):
+                plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResACF_{k}'))
+                plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResPACF_{k}'), partial=True)
 
         # Prepare the data
         dat_train = d.get_streak('train')
@@ -686,6 +685,8 @@ class BaseDynamicsModel(KerasBase, ABC):
     def get_rel_part(self, in_dat: np.ndarray,
                      out_dat: np.ndarray = None) -> Tuple[np.ndarray, np.ndarray]:
         """Returns the relevant data series from input and output data.
+
+        TODO: Find out whether this is actually completely stupid.
 
         Args:
             in_dat: Full input data.
