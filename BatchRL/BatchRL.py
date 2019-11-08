@@ -305,8 +305,6 @@ def curr_tests(ds: Dataset = None) -> None:
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
     # Choose a model
-
-    in_data = np.zeros((5, 19, 8))
     m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True, fit=True)
     m.analyze()
     m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True, fit=True)
@@ -343,7 +341,7 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    curr_tests()
+    # curr_tests()
 
     # Train and analyze the battery model
     # run_battery()

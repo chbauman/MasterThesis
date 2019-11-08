@@ -2,6 +2,7 @@ import numpy as np
 import scipy
 import scipy.stats
 
+
 def phi_linear(s, a):
     """
     returns the evaluations of all the basis functions
@@ -10,6 +11,7 @@ def phi_linear(s, a):
     """
     return np.hstack([1, s, a])
 
+
 def phi_quadratic(s, a):
     """
     returns the evaluations of all the basis functions
@@ -17,6 +19,7 @@ def phi_quadratic(s, a):
     Quadratic model.
     """
     return np.hstack([1, s, a, s * s, a * s, a * a])
+
 
 def phi_handcraft(s, a):
     """
@@ -33,6 +36,7 @@ def phi_handcraft(s, a):
     a_one_hot[a] = 1
     return np.hstack([1, s, s * s, a_one_hot, ind1, ind2, ind3, ind4])
 
+
 def phi_state_action01(s, a):
     """
     returns the evaluations of all the basis functions
@@ -46,6 +50,7 @@ def phi_state_action01(s, a):
     a_one_hot[ind] = 1
     a_one_hot[-1] = 1
     return a_one_hot
+
 
 class LSPI:
     """
@@ -62,12 +67,12 @@ class LSPI:
     def __init__(self,
                  state_dim,
                  nb_actions,
-                 phi = phi_state_action01,
-                 discount_factor = 0.7,
+                 phi=phi_state_action01,
+                 discount_factor=0.7,
                  max_iters=500,
-                 stoch_policy_imp = False,
-                 stochasticity_beta = 2,
-                 accur = 0.01):
+                 stoch_policy_imp=False,
+                 stochasticity_beta=2,
+                 accur=0.01):
 
         """
         Init function, stores all required parameters.
@@ -76,7 +81,7 @@ class LSPI:
         self.nb_actions = nb_actions
         self.phi = phi
         self.disc_fac = discount_factor
-        self.max_iters = max_iters    
+        self.max_iters = max_iters
         self.accur = accur
         s_dum = np.zeros(state_dim)
         self.n_basis_fun = phi(s_dum, 0).shape[0]
@@ -96,7 +101,7 @@ class LSPI:
         b = np.zeros((n))
         for k in range(n_samples):
             b += self.phi(D_s[k], D_a[k])
-        
+
         phi_s_a = np.zeros((self.nb_actions))
 
         elements = np.arange(self.nb_actions)
@@ -126,12 +131,12 @@ class LSPI:
                 # Compute \gamma * \phi(s', \pi(s'))
                 phi_pi = np.reshape(self.phi(D_s_prime[k], pi_s), (n, 1))
                 phi_pi = phi_pi * self.disc_fac
-                
+
                 # Update A
                 A += phi_res * np.transpose(phi_res - phi_pi)
 
             # Solve LSE
-            #w_new = np.linalg.solve(A, b, rcond=None)
+            # w_new = np.linalg.solve(A, b, rcond=None)
             w_new = np.linalg.lstsq(A, b, rcond=None)[0]
 
             # Test convergence
@@ -154,6 +159,7 @@ class LSPI:
         Returns the fitted policy:
         a = \argmax_a \phi(s, a)^T w
         """
+
         def policy(s_t):
             # Computes \phi(s, a) for all a and finds
             # argmax.
@@ -161,5 +167,5 @@ class LSPI:
             for j in range(self.nb_actions):
                 phi_s_a[j] = np.dot(self.phi(s_t, j), self.w)
             return np.argmax(phi_s_a)
-        
+
         return policy
