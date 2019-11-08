@@ -74,7 +74,8 @@ class ConstModel(BaseDynamicsModel):
 
 class ConstTestModel(ConstModel, NoDisturbanceModel):
     """Const Test model without a disturbance."""
-    pass
+
+    name: str = "NaiveNoDisturb"  #: Base name of model.
 
 
 class ConstSeriesTestModel(NoDisturbanceModel):
@@ -96,6 +97,7 @@ class ConstSeriesTestModel(NoDisturbanceModel):
         Args:
             ds: The dataset.
             pred_val_list: The list with the values that will be predicted.
+            predict_input_check: If not None, the input series have to have these values.
             **kwargs: Kwargs for the base class, e.g. `out_indices` or `in_indices`.
         """
         name = f"ConstModel"
@@ -114,7 +116,12 @@ class ConstSeriesTestModel(NoDisturbanceModel):
         pass
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
-        """Predicts a constant value for each series."""
+        """Predicts a constant value for each series.
+
+        Raises:
+            AssertionError: If `predict_input_check` is not None and
+                the input does not match.
+        """
         in_sh = in_data.shape
         if self.predict_input_check is not None:
             pc = self.predict_input_check

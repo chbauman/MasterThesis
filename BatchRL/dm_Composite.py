@@ -42,6 +42,8 @@ class CompositeModel(BaseDynamicsModel):
             raise ValueError("Predicting one or more series multiple times.")
         out_inds = dataset.from_prepared(np.arange(n_pred_full))
         super().__init__(dataset, name, out_inds, None)
+
+        # Reset the indices, since we do not want to permute twice!
         self.p_in_indices = np.arange(dataset.d)
 
         # We allow only full models, i.e. when combined, the models have to predict
