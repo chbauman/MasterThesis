@@ -150,12 +150,10 @@ class BaseDynamicsModel(KerasBase, ABC):
         pass
 
     def init_1day(self, day_data: np.ndarray) -> None:
-        """
-        Initializer for models that need more previous data than seq_len
-        time steps.
+        """Initializer for models that need more previous data than `seq_len` time steps.
 
-        :param day_data: The data of one day to initialize model.
-        :return: None
+        Args:
+            day_data: The data of one day to initialize model.
         """
         pass
 
@@ -280,14 +278,18 @@ class BaseDynamicsModel(KerasBase, ABC):
 
         TODO: Make it work with any prediction indices!?
 
-        :param prepared_data: Data to predict.
-        :param n: Number of timesteps to predict.
-        :param pred_ind: Which series to predict, all if None.
-        :param return_all_predictions: Whether to return intermediate predictions.
-        :param disturb_pred: Whether to apply a disturbance to the prediction.
-        :return: The predictions.
-        :raises ValueError: If n < 0 or n too large or if the prepared data
-            does not have the right shape.
+        Args:
+            prepared_data: Data to predict.
+            n: Number of timesteps to predict.
+            pred_ind: Which series to predict, all if None.
+            return_all_predictions: Whether to return intermediate predictions.
+            disturb_pred: Whether to apply a disturbance to the prediction.
+
+        Returns:
+            The predictions.
+        Raises:
+            ValueError: If `n` < 0 or `n` too large or if the prepared data
+                does not have the right shape.
         """
 
         in_data, out_data = copy_arr_list(prepared_data)
