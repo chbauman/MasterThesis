@@ -5,6 +5,7 @@ based on a model of class `BaseDynamicsModel`.
 """
 
 from abc import ABC, abstractmethod
+from typing import Dict
 
 import gym
 
@@ -115,7 +116,7 @@ class DynEnv(ABC, gym.Env):
         """Scales the actions to the correct range."""
         return actions
 
-    def step(self, action: Arr) -> Tuple[np.ndarray, float, bool, Any]:
+    def step(self, action: Arr) -> Tuple[np.ndarray, float, bool, Dict]:
         """Evolve the model with the given control input `action`.
 
         Args:
@@ -128,8 +129,8 @@ class DynEnv(ABC, gym.Env):
         # print(f"Action: {action}")
         self.hist[-1, -self.act_dim:] = action
         hist_res = self.hist.reshape((1, -1, self.state_dim))
-        hist_trf = move_inds_to_back(hist_res, self.m.data.c_inds)
-        curr_pred = self.m.predict(hist_trf)[0]
+        # hist_trf = move_inds_to_back(hist_res, self.m.data.c_inds)
+        curr_pred = self.m.predict(hist_res)[0]
         if self.use_noise:
             curr_pred += self.disturb_fac * self.m.disturb()
         self.hist[:-1, :] = self.hist[1:, :]

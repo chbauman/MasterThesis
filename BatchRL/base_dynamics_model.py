@@ -511,10 +511,10 @@ class BaseDynamicsModel(KerasBase, ABC):
         d = self.data
 
         # Get residuals and plot autocorrelation
-        res = self.get_residuals("train")
-        for k in range(get_shape1(res)):
-            plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResACF_{k}'))
-            plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResPACF_{k}'), partial=True)
+        # res = self.get_residuals("train")
+        # for k in range(get_shape1(res)):
+        #     plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResACF_{k}'))
+        #     plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResPACF_{k}'), partial=True)
 
         # Prepare the data
         dat_train = d.get_streak('train')

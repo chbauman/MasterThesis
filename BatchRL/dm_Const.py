@@ -1,6 +1,19 @@
+from abc import ABC
+
 from base_dynamics_model import BaseDynamicsModel
 from util import *
 from data import Dataset
+
+
+class NoDisturbanceModel(BaseDynamicsModel, ABC):
+
+    def model_disturbance(self, data_str: str = 'train'):
+        """No need to model, no disturbance used."""
+        self.modeled_disturbance = True
+
+    def disturb(self) -> np.ndarray:
+        """No disturbance, model is exact."""
+        return np.zeros((self.n_pred,), dtype=np.float32)
 
 
 class ConstModel(BaseDynamicsModel):
@@ -56,7 +69,12 @@ class ConstModel(BaseDynamicsModel):
         return np.copy(in_data[:, -1, :self.n_out])
 
 
-class ConstSeriesTestModel(BaseDynamicsModel):
+class ConstTestModel(ConstModel, NoDisturbanceModel):
+    """Const Test model without a disturbance."""
+    pass
+
+
+class ConstSeriesTestModel(NoDisturbanceModel):
     """Test model that predicts a possibly different constant value for each series.
 
     Can take any number of input series and output series.
@@ -95,11 +113,3 @@ class ConstSeriesTestModel(BaseDynamicsModel):
         in_sh = in_data.shape
         preds = np.ones((in_sh[0], self.n_pred), dtype=np.float32) * self.values
         return preds
-
-    def model_disturbance(self, data_str: str = 'train'):
-        """No need to model, no disturbance used."""
-        self.modeled_disturbance = True
-
-    def disturb(self) -> np.ndarray:
-        """No disturbance, model is exact."""
-        return np.zeros((self.n_pred,), dtype=np.float32)

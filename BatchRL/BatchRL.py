@@ -301,7 +301,12 @@ def get_model(name: str, ds: Dataset,
 def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
-    test_python_stuff()
+    # test_python_stuff()
+    # test_rnn_models()
+    # test_dyn_model()
+    test_composite()
+    test_test_env()
+    return
 
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
@@ -317,7 +322,7 @@ def curr_tests(ds: Dataset = None) -> None:
     for m_name in full_mod_names:
         # Load the model and init env
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
-        # m.analyze()
+        m.analyze()
         env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3)
 
         # Define default agents and compare
