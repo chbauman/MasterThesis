@@ -171,7 +171,7 @@ def get_model(name: str, ds: Dataset,
         The requested model.
     """
     if fit:
-        mod = get_model(name, ds, rnn_consts, fit=False)
+        mod = get_model(name, ds, rnn_consts, from_hop, fit=False)
         mod.fit()
         return mod
 
@@ -305,26 +305,30 @@ def curr_tests(ds: Dataset = None) -> None:
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
     # Choose a model
-    m = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds, rnn_consts, from_hop=True, fit=True)
-    m.analyze()
-    m = get_model("FullState_Comp_TempConstWaterWeather", ds, rnn_consts, from_hop=True, fit=True)
-    m.analyze()
-    m = get_model("FullState_Comp_WeatherAptTime", ds, rnn_consts, from_hop=True, fit=True)
-    m.analyze()
+    full_mod_names = [
+        "FullState_Comp_ReducedTempConstWaterWeather",
+        "FullState_Comp_TempConstWaterWeather",
+        "FullState_Comp_WeatherAptTime"
+    ]
 
-    # And an environment
-    env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1)
+    # Test all models
+    for m_name in full_mod_names:
+        # Load the model and init env
+        m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
+        # m.analyze()
+        env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3)
 
-    # Choose agent and fit to env.
-    agent = DDPGBaseAgent(env)
-    agent.fit()
+        # Define default agents and compare
+        open_agent = ConstHeating(env, 1.0)
+        closed_agent = ConstHeating(env, 0.0)
+        rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
+        # env.analyze_agent([open_agent, closed_agent, rule_based_agent])
 
-    # Analyze comparing to other agents.
-    open_agent = ConstHeating(env, 1.0)
-    closed_agent = ConstHeating(env, 0.0)
-    rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-    env.analyze_agent([open_agent, closed_agent, rule_based_agent, agent])
-    env.analyze_agent([open_agent, closed_agent, rule_based_agent])
+        # Choose agent and fit to env.
+        if m_name == "FullState_Comp_WeatherAptTime":
+            agent = DDPGBaseAgent(env)
+            agent.fit()
+            env.analyze_agent([open_agent, closed_agent, rule_based_agent, agent])
 
     pass
 
@@ -339,7 +343,6 @@ def main() -> None:
 
     # Full test model
     curr_tests()
-    return
 
     # Train and analyze the battery model
     # run_battery()

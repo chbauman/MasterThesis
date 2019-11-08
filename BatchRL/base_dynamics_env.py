@@ -56,7 +56,8 @@ class DynEnv(ABC, gym.Env):
         m.model_disturbance()
         self.m = m
         if name is not None:
-            self.name = name
+            dist_ex = make_param_ext([("DF", disturb_fac)])
+            self.name = name + dist_ex
         else:
             self.name = "RLEnv_" + m.name
         self.plot_path = os.path.join(rl_plot_path, self.name)
