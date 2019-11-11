@@ -17,7 +17,7 @@ from keras.utils import plot_model
 from dynamics.base_hyperopt import HyperOptimizableModel
 from data import Dataset, get_test_ds
 from data import SeriesConstraint
-from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurrent, IdDense
+from ml.keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurrent, IdDense
 from tests.test_keras import get_multi_input_layer_output
 from util import *
 from visualize import plot_train_history

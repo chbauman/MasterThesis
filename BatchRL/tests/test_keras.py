@@ -6,7 +6,7 @@ from keras.engine import Layer
 from keras.layers import Add
 
 from data import SeriesConstraint
-from keras_layers import SeqInput, ConstrainedNoise, FeatureSlice, \
+from ml.keras_layers import SeqInput, ConstrainedNoise, FeatureSlice, \
     ExtractInput, IdDense, IdRecurrent, ClipByValue
 from util import check_in_range, rem_first
 

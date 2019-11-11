@@ -16,8 +16,8 @@ from rl.random import OrnsteinUhlenbeckProcess
 
 from agents.base_agent import AgentBase
 from envs.dynamics_envs import FullRoomEnv, RLDynEnv
-from keras_layers import ClipByValue
-from keras_util import getMLPModel, KerasBase
+from ml.keras_layers import ClipByValue
+from ml.keras_util import getMLPModel, KerasBase
 from util import *
 from visualize import plot_rewards
 
