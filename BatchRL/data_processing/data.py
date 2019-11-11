@@ -535,12 +535,13 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
 # Full Data Retrieval and Pre-processing
 
 def get_battery_data() -> 'Dataset':
-    """
-    Loads the battery dataset if existing else
-    creates it from the raw data and creates a few plots.
-    Then returns the dataset.
+    """Loads the battery dataset if existing.
 
-    :return: Battery dataset.
+    Else it is created from the raw data and a few plots are make.
+    Then the dataset is returned.
+
+    Returns:
+        Battery dataset.
     """
     # Constants
     dt_mins = 15

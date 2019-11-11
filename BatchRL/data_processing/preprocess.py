@@ -202,7 +202,7 @@ def fill_holes_linear_interpolate(time_series: np.ndarray, max_width: int = 1) -
         return
 
     # Neglect NaNs at beginning and end
-    non_nans = np.where(nan_bool == False)[0]
+    non_nans = np.where(nan_bool == 0)[0]
     nan_bool[:non_nans[0]] = False
     nan_bool[non_nans[-1]:] = False
 
@@ -214,7 +214,7 @@ def fill_holes_linear_interpolate(time_series: np.ndarray, max_width: int = 1) -
 
     while ind_ind < all_nans.shape[0]:
         s_ind = all_nans[ind_ind][0]
-        streak_len = np.where(nan_bool[s_ind:] == False)[0][0]
+        streak_len = np.where(nan_bool[s_ind:] == 0)[0][0]
         if streak_len <= max_width:
 
             # Interpolate values
