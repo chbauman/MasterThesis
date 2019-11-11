@@ -16,7 +16,7 @@ Example usage::
     )
 
     # Get data from SQL database
-    data, metadata = test_data.getData()
+    data, metadata = test_data.get_data()
 
     # Get data corresponding to first ID (421100171)
     values, timestamps = data[0]
@@ -228,7 +228,7 @@ class DataStruct:
 
     The data is defined when initializing the class
     by a list of IDs, a name and a date range.
-    The method `getData` then retrieves the data when needed.
+    The method `get_data` then retrieves the data when needed.
     Once read, the data is cached in `save_dir` for faster
     access if read again.
     """
@@ -266,7 +266,7 @@ class DataStruct:
         """
         return _get_data_folder(self.name, self.start_date, self.end_date)
 
-    def getData(self) -> Optional[Tuple[List, List]]:
+    def get_data(self) -> Optional[Tuple[List, List]]:
         """Get the data associated with the DataStruct
 
         If the data is not found locally it is
@@ -274,7 +274,9 @@ class DataStruct:
         the local data is read and returned.
 
         Returns:
-            (List[(values: np.ndarray, timestamps: np.ndarray)], List[metadata: Dict])
+            Tuple with two lists, the first one contains the values and
+            the datetimes for each series and the second one contains
+            the metadata dict of each series.
         """
 
         data_folder = self.get_data_folder()
@@ -308,7 +310,7 @@ def example():
     )
 
     # Get data from SQL 
-    data, metadata = test_data.getData()
+    data, metadata = test_data.get_data()
 
     # Get data corresponding to first ID (421100171)
     values, timestamps = data[0]

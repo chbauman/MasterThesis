@@ -717,7 +717,7 @@ def get_from_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins, ne
         loaded = Dataset.loadDataset(name)
         return loaded
     except FileNotFoundError:
-        data, m = dat_struct.getData()
+        data, m = dat_struct.get_data()
         n_cols = len(data)
 
         # Check arguments
@@ -779,7 +779,7 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
         loaded = Dataset.loadDataset(name)
         return loaded
     except FileNotFoundError:
-        data, m = dat_struct.getData()
+        data, m = dat_struct.get_data()
         n_cols = len(data)
         pl_kwargs = b_cast(pl_kwargs, n_cols)
         all_data = None
@@ -871,7 +871,7 @@ def get_battery_data() -> 'Dataset':
     plot_dataset(ds, False, ['Processed Battery Data', y_lab], plot_name_after)
 
     # Get data
-    dat, m = BatteryData.getData()
+    dat, m = BatteryData.get_data()
     x = [dat[i][1] for i in inds]
     y = [dat[i][0] for i in inds]
     m_used = [m[i] for i in inds]
@@ -919,7 +919,7 @@ def get_weather_data(save_plots=True) -> 'Dataset':
     m_out = []
 
     # Weather data
-    dat, m = WeatherData.getData()
+    dat, m = WeatherData.get_data()
 
     # Add Temperature
     all_data, dt_init = pipeline_preps(dat[0],
@@ -1016,7 +1016,7 @@ def get_DFAB_heating_data() -> List['Dataset']:
 
     # Single Rooms
     for e in rooms:
-        data, m = e.getData()
+        data, m = e.get_data()
         n_cols = len(data)
 
         # Single Room Heating Data  
@@ -2143,7 +2143,7 @@ class TestDataSynthetic:
     """
 
     @staticmethod
-    def getData():
+    def get_data():
         # First Time series
         dict1 = {'description': "Synthetic Data Series 1: Base Series", 'unit': "Test Unit 1"}
         val_1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
@@ -2203,8 +2203,8 @@ def test_rest_client() -> None:
 
     # Load using REST api and locally
     t_dat = TestData
-    t_dat.getData()
-    t_dat.getData()
+    t_dat.get_data()
+    t_dat.get_data()
 
     # Remove data again
     fol = TestData.get_data_folder()
