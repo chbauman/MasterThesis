@@ -1,5 +1,5 @@
 from dynamics.base_model import BaseDynamicsModel, construct_test_ds
-from data import Dataset
+from data_processing.data import Dataset
 from dynamics.const import ConstSeriesTestModel, ConstTestModel
 from util.numerics import has_duplicates
 from util.util import *

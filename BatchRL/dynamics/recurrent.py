@@ -15,8 +15,8 @@ from keras.optimizers import Adam
 from keras.utils import plot_model
 
 from dynamics.base_hyperopt import HyperOptimizableModel
-from data import Dataset, get_test_ds
-from data import SeriesConstraint
+from data_processing.data import Dataset, get_test_ds
+from data_processing.data import SeriesConstraint
 from ml.keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurrent, IdDense
 from tests.test_keras import get_multi_input_layer_output
 from util.visualize import plot_train_history

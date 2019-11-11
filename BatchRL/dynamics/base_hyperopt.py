@@ -13,7 +13,7 @@ from hyperopt import fmin, tpe
 from hyperopt.pyll import scope as ho_scope
 
 from dynamics.base_model import BaseDynamicsModel, construct_test_ds
-from data import Dataset
+from data_processing.data import Dataset
 from util.util import create_dir
 
 # Define path for optimization results.

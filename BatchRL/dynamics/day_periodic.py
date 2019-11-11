@@ -1,7 +1,7 @@
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import make_periodic
 from util.util import *
-from data import Dataset
+from data_processing.data import Dataset
 
 
 class Periodic1DayModel(BaseDynamicsModel):

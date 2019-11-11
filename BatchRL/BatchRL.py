@@ -9,7 +9,7 @@ from envs.base_dynamics_env import test_test_env
 from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
 from dynamics.base_hyperopt import HyperOptimizableModel, test_hyperopt
 from dynamics.battery_model import BatteryModel
-from data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
+from data_processing.data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
     generate_room_datasets, get_DFAB_heating_data, DatasetConstraints, get_data_test, test_rest_client
 from dynamics.composite import CompositeModel, test_composite
 from dynamics.const import ConstModel
@@ -32,9 +32,7 @@ def run_tests() -> None:
     test_dyn_model()
     test_composite()
     test_test_env()
-    test_time_stuff()
     test_rest_client()
-    test_python_stuff()
     get_data_test()
     # test_align()
     test_dataset_artificially()

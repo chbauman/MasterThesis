@@ -1,5 +1,5 @@
 from dynamics.base_model import BaseDynamicsModel
-from data import Dataset
+from data_processing.data import Dataset
 from util.numerics import add_mean_and_std, rem_mean_and_std
 from util.util import *
 
