@@ -17,7 +17,6 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from dynamics_envs import FullRoomEnv, BatteryEnv
 from keras_agents import DDPGBaseAgent
-from keras_layers import test_layers
 from util import *
 
 
@@ -29,7 +28,6 @@ def run_tests() -> None:
     """
     # Do all the tests.
     test_hyperopt()
-    test_layers()
     test_rnn_models()
     test_dyn_model()
     test_composite()

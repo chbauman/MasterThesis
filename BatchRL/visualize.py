@@ -35,7 +35,7 @@ clr_map = [colors[name] for name in names]
 n_cols: int = len(clr_map)  #: Number of colors in colormap.
 
 # Saving
-plot_dir = '../Plots'  #: Base plot folder.
+plot_dir = '../../Plots'  #: Base plot folder.
 preprocess_plot_path = os.path.join(plot_dir, "Preprocessing")  #: Data processing plot folder.
 model_plot_path = os.path.join(plot_dir, "Models")  #: Dynamics modeling plot folder.
 rl_plot_path = os.path.join(plot_dir, "RL")
