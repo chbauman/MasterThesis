@@ -1,5 +1,6 @@
 from dynamics.base_model import BaseDynamicsModel
-from util import *
+from util.numerics import make_periodic
+from util.util import *
 from data import Dataset
 
 
@@ -93,4 +94,3 @@ class Periodic1DayModel(BaseDynamicsModel):
         Returns a sample of noise of length n.
         """
         raise NotImplementedError("Disturbance for naive model not implemented!")
-

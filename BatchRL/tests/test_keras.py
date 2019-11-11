@@ -59,6 +59,10 @@ def get_test_layer_output(layer: Layer, np_input, learning_phase: float = 1.0):
 
 
 class TestKeras(TestCase):
+    """Test case class for keras tests.
+
+    TODO: Fix saving path problems.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
