@@ -14,7 +14,7 @@ from hyperopt.pyll import scope as ho_scope
 
 from dynamics.base_model import BaseDynamicsModel, construct_test_ds
 from data import Dataset
-from util import create_dir
+from util.util import create_dir
 
 # Define path for optimization results.
 hop_path = "../Models/Hop/"  #: The path to all hyperopt data.

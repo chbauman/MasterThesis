@@ -8,7 +8,7 @@ from keras.layers import Add
 from data import SeriesConstraint
 from ml.keras_layers import SeqInput, ConstrainedNoise, FeatureSlice, \
     ExtractInput, IdDense, IdRecurrent, ClipByValue
-from util import check_in_range, rem_first
+from util.util import check_in_range, rem_first
 
 
 def get_multi_input_layer_output(layer: Layer, inp_list, learning_phase: float = 1.0):

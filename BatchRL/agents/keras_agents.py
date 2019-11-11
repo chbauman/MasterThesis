@@ -18,8 +18,8 @@ from agents.base_agent import AgentBase
 from envs.dynamics_envs import FullRoomEnv, RLDynEnv
 from ml.keras_layers import ClipByValue
 from ml.keras_util import getMLPModel, KerasBase
-from util import *
-from visualize import plot_rewards
+from util.visualize import plot_rewards
+from util.util import *
 
 
 class KerasBaseAgent(AgentBase, KerasBase):

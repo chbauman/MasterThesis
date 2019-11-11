@@ -8,7 +8,7 @@ from keras import backend as K
 from keras.layers import Layer, GaussianNoise
 
 from data import SeriesConstraint
-from util import *
+from util.util import *
 
 
 class SeqInput(Layer):

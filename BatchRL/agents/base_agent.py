@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from util import *
+from util.util import *
 
 
 class AgentBase(ABC):

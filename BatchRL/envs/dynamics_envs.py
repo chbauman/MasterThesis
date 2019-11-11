@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from envs.base_dynamics_env import DynEnv
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
-from util import *
+from util.util import *
 
 
 class RLDynEnv(DynEnv, ABC):

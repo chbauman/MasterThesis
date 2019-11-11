@@ -1,7 +1,7 @@
 from abc import ABC
 
 from dynamics.base_model import BaseDynamicsModel
-from util import *
+from util.util import *
 from data import Dataset
 
 

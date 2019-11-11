@@ -1,6 +1,6 @@
 from dynamics.base_model import BaseDynamicsModel
 from data import Dataset
-from util import *
+from util.util import *
 
 
 class SCTimeModel(BaseDynamicsModel):

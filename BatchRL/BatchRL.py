@@ -2,7 +2,7 @@
 
 The `main` function runs all the necessary high-level
 functions. The complicated stuff is hidden in the other
-modules.
+modules / packages.
 """
 from agents.agents_heuristic import ConstHeating, RuleBasedHeating
 from envs.base_dynamics_env import test_test_env
@@ -17,7 +17,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv
 from agents.keras_agents import DDPGBaseAgent
-from util import *
+from util.util import *
 
 
 def run_tests() -> None:

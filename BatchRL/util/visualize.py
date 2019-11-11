@@ -4,7 +4,7 @@ import matplotlib as mpl
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from util import *
+from util.util import *
 
 if EULER:
     # Do not use GUI based backend.

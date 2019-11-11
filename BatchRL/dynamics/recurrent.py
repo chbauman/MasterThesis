@@ -19,8 +19,8 @@ from data import Dataset, get_test_ds
 from data import SeriesConstraint
 from ml.keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurrent, IdDense
 from tests.test_keras import get_multi_input_layer_output
-from util import *
-from visualize import plot_train_history
+from util.visualize import plot_train_history
+from util.util import *
 
 
 def weighted_loss(y_true, y_pred, weights):

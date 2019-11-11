@@ -11,8 +11,8 @@ import gym
 
 from agents import agents_heuristic, base_agent
 from dynamics.base_model import BaseDynamicsModel, TestModel, construct_test_ds
-from util import *
-from visualize import rl_plot_path, plot_env_evaluation
+from util.visualize import rl_plot_path, plot_env_evaluation
+from util.util import *
 
 
 class DynEnv(ABC, gym.Env):

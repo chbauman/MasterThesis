@@ -5,8 +5,8 @@ from typing import Optional
 from data import Dataset, get_test_ds
 from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
-from util import *
-from visualize import plot_dataset, model_plot_path, plot_residuals_acf
+from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf
+from util.util import *
 
 
 def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,

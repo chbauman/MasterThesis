@@ -1,7 +1,7 @@
 from dynamics.base_model import BaseDynamicsModel, construct_test_ds
 from data import Dataset
 from dynamics.const import ConstSeriesTestModel, ConstTestModel
-from util import *
+from util.util import *
 
 
 class CompositeModel(BaseDynamicsModel):

@@ -1,7 +1,7 @@
 from dynamics.base_model import BaseDynamicsModel
 from data import Dataset
-from util import *
-from visualize import scatter_plot
+from util.visualize import scatter_plot
+from util.util import *
 
 
 class BatteryModel(BaseDynamicsModel):

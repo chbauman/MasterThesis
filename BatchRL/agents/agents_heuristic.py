@@ -1,7 +1,7 @@
 from agents.base_agent import AgentBase
 # import base_dynamics_env
 # from dynamics_envs import FullRoomEnv
-from util import *
+from util.util import *
 
 
 class RuleBasedHeating(AgentBase):
