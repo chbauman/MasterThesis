@@ -14,7 +14,7 @@ from rl.memory import SequentialMemory
 from rl.policy import BoltzmannQPolicy
 from rl.random import OrnsteinUhlenbeckProcess
 
-from base_agent import AgentBase
+from agents.base_agent import AgentBase
 from envs.dynamics_envs import FullRoomEnv, RLDynEnv
 from keras_layers import ClipByValue
 from keras_util import getMLPModel, KerasBase

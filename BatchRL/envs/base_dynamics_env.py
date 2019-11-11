@@ -9,8 +9,7 @@ from typing import Dict
 
 import gym
 
-import agents_heuristic
-import base_agent
+from agents import agents_heuristic, base_agent
 from dynamics.base_model import BaseDynamicsModel, TestModel, construct_test_ds
 from util import *
 from visualize import rl_plot_path, plot_env_evaluation

@@ -14,7 +14,7 @@ from keras.models import Sequential, Model
 from keras.optimizers import Adam
 from keras.utils import plot_model
 
-from base_hyperopt import HyperOptimizableModel
+from dynamics.base_hyperopt import HyperOptimizableModel
 from data import Dataset, get_test_ds
 from data import SeriesConstraint
 from keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurrent, IdDense
