@@ -6,15 +6,15 @@ modules.
 """
 from agents_heuristic import ConstHeating, RuleBasedHeating
 from base_dynamics_env import test_test_env
-from base_dynamics_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
+from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
 from base_hyperopt import HyperOptimizableModel, test_hyperopt
-from battery_model import BatteryModel
+from dynamics.battery_model import BatteryModel
 from data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
     generate_room_datasets, get_DFAB_heating_data, DatasetConstraints
-from dm_Composite import CompositeModel, test_composite
-from dm_Const import ConstModel
-from dm_LSTM import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
-from dm_Time import SCTimeModel
+from dynamics.composite import CompositeModel, test_composite
+from dynamics.const import ConstModel
+from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
+from dynamics.sin_cos_time import SCTimeModel
 from dynamics_envs import FullRoomEnv, BatteryEnv
 from keras_agents import DDPGBaseAgent
 from keras_layers import test_layers

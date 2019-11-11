@@ -12,7 +12,7 @@ from hyperopt import hp
 from hyperopt import fmin, tpe
 from hyperopt.pyll import scope as ho_scope
 
-from base_dynamics_model import BaseDynamicsModel, construct_test_ds
+from dynamics.base_model import BaseDynamicsModel, construct_test_ds
 from data import Dataset
 from util import create_dir
 

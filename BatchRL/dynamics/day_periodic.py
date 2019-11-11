@@ -1,4 +1,4 @@
-from base_dynamics_model import BaseDynamicsModel
+from dynamics.base_model import BaseDynamicsModel
 from util import *
 from data import Dataset
 

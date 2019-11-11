@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 from base_dynamics_env import DynEnv
-from base_dynamics_model import BaseDynamicsModel
-from battery_model import BatteryModel
+from dynamics.base_model import BaseDynamicsModel
+from dynamics.battery_model import BatteryModel
 from util import *
 
 

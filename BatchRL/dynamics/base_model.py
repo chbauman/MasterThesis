@@ -801,7 +801,7 @@ def test_dyn_model() -> None:
     ds_1 = construct_test_ds(n, 1)
 
     # Define models
-    from dm_Const import ConstSeriesTestModel, ConstModel
+    from dynamics.const import ConstSeriesTestModel, ConstModel
     test_mod = TestModel(ds)
     test_model_2 = ConstSeriesTestModel(ds_1,
                                         pred_val_list=[0.0, 2.0],

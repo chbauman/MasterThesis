@@ -1,6 +1,6 @@
-from base_dynamics_model import BaseDynamicsModel, construct_test_ds
+from dynamics.base_model import BaseDynamicsModel, construct_test_ds
 from data import Dataset
-from dm_Const import ConstSeriesTestModel, ConstTestModel
+from dynamics.const import ConstSeriesTestModel, ConstTestModel
 from util import *
 
 
