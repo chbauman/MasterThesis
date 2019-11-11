@@ -4,6 +4,7 @@ import matplotlib as mpl
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
+from util.numerics import fit_linear_1d
 from util.util import *
 
 if EULER:

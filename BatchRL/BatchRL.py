@@ -33,7 +33,6 @@ def run_tests() -> None:
     test_composite()
     test_test_env()
     test_time_stuff()
-    test_numpy_functions()
     test_rest_client()
     test_python_stuff()
     get_data_test()
