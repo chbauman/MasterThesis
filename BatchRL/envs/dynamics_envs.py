@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from base_dynamics_env import DynEnv
+from envs.base_dynamics_env import DynEnv
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
 from util import *
