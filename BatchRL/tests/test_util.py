@@ -4,6 +4,8 @@ import numpy as np
 
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control
+from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
+    np_dt_to_str, str_to_np_dt, day_offset_ts
 
 
 class TestNumerics(TestCase):
@@ -131,3 +133,91 @@ class TestNumerics(TestCase):
         np.array_equal(move_inds_to_back(arr, inds), exp_res), "move_inds_to_back not working!"
 
     pass
+
+
+class TestUtil(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Define data
+        self.dt1 = np.datetime64('2000-01-01T00:00', 'm')
+        self.dt3 = np.datetime64('2000-01-01T22:45', 'm')
+        self.n_mins = 15
+        self.t_init_str = np_dt_to_str(self.dt3)
+
+    class Dummy:
+        def __init__(self):
+            # self.mutable_fun = CacheDecoratorFactory()(self.mutable_fun)
+            pass
+
+        @CacheDecoratorFactory()
+        def fun(self, n: int, k: int):
+            return n + k * k
+
+        @CacheDecoratorFactory()
+        def mutable_fun(self, n: int, k: int):
+            return [n, k]
+
+    def test_cache_decorator(self):
+        try:
+            d = self.Dummy()
+            assert d.fun(1, k=3) == 10
+            assert d.fun(2, 3) == 11
+            assert d.fun(1, k=4) == 10
+            list_1_1 = d.mutable_fun(1, 1)
+            assert d.mutable_fun(1, 2) == list_1_1
+            list_1_1[0] = 0
+            assert list_1_1 == d.mutable_fun(1, 5)
+            # d2 = Dummy()
+            # assert d2.mutable_fun(1, 2) == [1, 2]  # It fails here!
+            assert d.fun(2, 7) == 11
+            assert [4, 7] == d.mutable_fun(4, 7)
+        except AssertionError as e:
+            print("Cache Decorator Test failed!!")
+            raise e
+        except Exception as e:
+            raise AssertionError("Some error happened: {}".format(e))
+
+    def test_rem_first(self):
+        # Test rem_first
+        self.assertEqual(rem_first((1, 2, 3)), (2, 3),
+                         "rem_first not working correctly!")
+        self.assertEqual(rem_first((1, 2)), (2,),
+                         "rem_first not working correctly!")
+
+    def test_tot_size(self):
+        # Test tot_size
+        msg = "tot_size not working!"
+        self.assertEqual(tot_size((1, 2, 3)), 6, msg)
+        self.assertEqual(tot_size((0, 1)), 0, msg)
+        self.assertEqual(tot_size(()), 0, msg)
+
+    def test_scale_to_range(self):
+        # Test scale_to_range
+        assert np.allclose(scale_to_range(1.0, 2.0, [-1.0, 1.0]), 0.0), "scale_to_range not working correctly!"
+        assert np.allclose(scale_to_range(1.0, 2.0, [0.0, 2.0]), 1.0), "scale_to_range not working correctly!"
+
+    def test_lin_oob_penalty(self):
+        # Test linear_oob_penalty
+        assert np.allclose(linear_oob_penalty(1.0, [-1.0, 1.0]), 0.0), "linear_oob_penalty not working correctly!"
+        assert np.allclose(linear_oob_penalty(5.0, [0.0, 2.0]), 3.0), "linear_oob_penalty not working correctly!"
+        assert np.allclose(linear_oob_penalty(-5.0, [0.0, 2.0]), 5.0), "linear_oob_penalty not working correctly!"
+
+    def test_make_param_ext(self):
+        # Test make_param_ext
+        res1 = make_param_ext([("a", 4), ("b", [1, 2])])
+        assert res1 == "_a4_b1-2", f"make_param_ext not implemented correctly: {res1}"
+        assert make_param_ext(
+            [("a", 4), ("b", None), ("c", False)]) == "_a4", "make_param_ext not implemented correctly!"
+        res3 = make_param_ext([("a", 4.1111111), ("b", True)])
+        assert res3 == "_a4.111_b", f"make_param_ext not implemented correctly: {res3}"
+
+    def test_time_conversion(self):
+        # Test time conversion
+        assert str_to_np_dt(np_dt_to_str(self.dt1)) == self.dt1, "Time conversion not working"
+
+    def test_day_offset_ts(self):
+        # Test day_offset_ts
+        n_ts = day_offset_ts(self.t_init_str, self.n_mins)
+        assert n_ts == 5, "Fuck you!!"
