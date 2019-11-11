@@ -4,7 +4,7 @@ from typing import Dict, Optional
 
 import scipy
 
-from restclient import DataStruct, save_dir
+from rest.client import DataStruct, save_dir
 from util import *
 from visualize import plot_time_series, plot_all, plot_single, preprocess_plot_path, \
     plot_multiple_time_series, plot_dataset, plot_dir, \

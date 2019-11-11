@@ -39,9 +39,9 @@ import requests
 
 USE_CL: bool = True  #: Whether to use the command line for the login.
 if not USE_CL:
-    from pw_gui import get_pw
+    from .pw_gui import get_pw
 else:
-    from pw_cl import get_pw
+    from .pw_cl import get_pw
 
 #: Where to put the local copy of the data.
 save_dir: str = '../Data/'
