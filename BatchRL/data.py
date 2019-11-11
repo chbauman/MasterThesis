@@ -610,18 +610,26 @@ def pipeline_preps(orig_dat,
     return all_data, dt_init_new
 
 
-def add_and_save_plot_series(data, m, curr_all_dat, ind, dt_mins, dt_init, plot_name, base_plot_dir,
-                             title="",
-                             pipeline_kwargs={},
+def add_and_save_plot_series(data, m, curr_all_dat, ind: int, dt_mins,
+                             dt_init, plot_name: str, base_plot_dir: str,
+                             title: str = "",
+                             pipeline_kwargs: Dict = None,
                              n_cols=None,
                              col_ind=None):
-    """
-    Adds the series with index 'ind' to curr_all_dat
+    """Adds the series with index `ind` to curr_all_dat
     and plots the series before and after processing
     with the pipeline.
-    ind: index of series in raw data
-    col_ind: column index of series in processed data 
+
+    Args:
+        title: Title for plot.
+        pipeline_kwargs: Arguments for `pipeline_preps`.
+        ind: Index of series in raw data.
+        n_cols: Total number of columns in final data.
+        col_ind: Column index of series in processed data.
     """
+    # Use defaults args if not specified.
+    if pipeline_kwargs is None:
+        pipeline_kwargs = {}
 
     dt_init_new = np.copy(dt_init)
     all_dat = curr_all_dat
@@ -2256,7 +2264,7 @@ def get_data_test():
 
     # Show plots
     dt_mins = 15
-    dat, m = TestData2.getData()
+    dat, m = TestData2.get_data()
 
     # Clean data
     clean_data(dat[2], [0.0], 4, [3.3])

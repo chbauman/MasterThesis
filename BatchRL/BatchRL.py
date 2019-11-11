@@ -10,7 +10,7 @@ from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_
 from base_hyperopt import HyperOptimizableModel, test_hyperopt
 from dynamics.battery_model import BatteryModel
 from data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
-    generate_room_datasets, get_DFAB_heating_data, DatasetConstraints
+    generate_room_datasets, get_DFAB_heating_data, DatasetConstraints, get_data_test, test_rest_client
 from dynamics.composite import CompositeModel, test_composite
 from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
@@ -34,9 +34,9 @@ def run_tests() -> None:
     test_test_env()
     test_time_stuff()
     test_numpy_functions()
-    # test_rest_client()
+    test_rest_client()
     test_python_stuff()
-    # get_data_test()
+    get_data_test()
     # test_align()
     test_dataset_artificially()
 
