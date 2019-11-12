@@ -1073,7 +1073,7 @@ class Dataset:
         n_train = n - n_test - n_val
 
         # Define parameters for splits
-        pats_defs = [
+        self.pats_defs = [
             ('train', 0, n_train),
             ('val', n_train, n_val),
             ('train_val', 0, n_train + n_val),
@@ -1084,7 +1084,19 @@ class Dataset:
         offs = day_offset_ts(self.t_init, self.dt)
         self._offs = offs
         self._day_len = ts_per_day(self.dt)
-        self.split_dict = {p[0]: ModelDataView(self, *p) for p in pats_defs}
+        self.split_dict = {p[0]: ModelDataView(self, *p) for p in self.pats_defs}
+
+    def check_part(self, part_str: str):
+        """Checks if `part_str` is a valid string for part of data specification.
+
+        Args:
+            part_str: The string specifying the part.
+
+        Raises:
+            ValueError: If the string is not valid.
+        """
+        if part_str not in [s[0] for s in self.pats_defs]:
+            raise ValueError(f"{part_str} is not valid for specifying a part of the data!")
 
     def get_streak(self, str_desc: str, n_days: int = 7) -> Tuple[np.ndarray, np.ndarray, int]:
         """Extracts a streak from the selected part of the dataset.
@@ -1098,6 +1110,7 @@ class Dataset:
             to the first element in the streak.
         """
         # Get info about data split
+        self.check_part(str_desc)
         mdv = self.split_dict[str_desc]
         n_off = mdv.n
         s_len_curr = n_days * self._day_len + self.seq_len - 1

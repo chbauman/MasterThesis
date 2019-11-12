@@ -65,13 +65,25 @@ class DynEnv(ABC, gym.Env):
         self.plot_path = os.path.join(rl_plot_path, self.name)
         create_dir(self.plot_path)
 
+        # Set attributes.
         self.disturb_fac = disturb_fac
         self.act_dim = m.data.n_c
         self.state_dim = m.data.d
         self.n_ts_per_eps = 100 if max_eps is None else max_eps
-        self.train_data, _, self.train_indices = m.data.get_split("train")
-        self.n_start_data = len(self.train_data)
+
+        # Set data and initialize env.
+        self._set_data("train")
         self.reset()
+
+    def _set_data(self, part_str: str = "train") -> None:
+        """Sets the data to use in the env.
+
+        Args:
+            part_str: The string specifying the part of the data.
+        """
+        self.m.data.check_part(part_str)
+        self.train_data, _, self.train_indices = self.m.data.get_split(part_str)
+        self.n_start_data = len(self.train_data)
 
     def get_plt_path(self, name: str) -> str:
         """Specifies the path of the plot with name 'name' where it should be saved.
@@ -238,15 +250,25 @@ class DynEnv(ABC, gym.Env):
         plot_env_evaluation(action_sequences, trajectories, rewards,
                             analysis_plot_path)
 
-    def eval_agents(self, agent_list: Agents, n_steps: int = 100):
+    def eval_agents(self, agent_list: Agents, n_steps: int = 100) -> np.ndarray:
 
-        # Make function compatible for single agent input
+        # Make function compatible for single agent input.
         if not isinstance(agent_list, list):
             agent_list = [agent_list]
 
+        # Init scores.
+        n_agents = len(agent_list)
+        scores = np.empty((n_agents, ), dtype=np.float32)
 
+        for a_id, a in enumerate(agent_list):
+            # Check that agent references this environment
+            if not a.env == self:
+                raise ValueError(f"Agent {a_id} was not assigned this env!")
 
-        pass
+            # Evaluate agent.
+            scores[a_id] = a.eval(n_steps, reset_seed=True)
+
+        return scores
 
 
 ##########################################################################
