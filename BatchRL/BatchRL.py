@@ -296,12 +296,6 @@ def get_model(name: str, ds: Dataset,
 def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
-    # test_python_stuff()
-    # test_rnn_models()
-    # test_dyn_model()
-    # test_composite()
-    # test_test_env()
-
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
@@ -329,7 +323,9 @@ def curr_tests(ds: Dataset = None) -> None:
         if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
             agent = DDPGBaseAgent(env)
             agent.fit()
-            env.analyze_agent([open_agent, closed_agent, rule_based_agent, agent])
+            agent_list = [open_agent, closed_agent, rule_based_agent, agent]
+            env.analyze_agent(agent_list)
+            print(env.eval_agents(agent_list, n_steps=500))
 
     pass
 
@@ -341,10 +337,9 @@ def main() -> None:
     """
     # Run tests.
     run_tests()
-    return
 
     # Full test model
-    # curr_tests()
+    curr_tests()
 
     # Train and analyze the battery model
     # run_battery()

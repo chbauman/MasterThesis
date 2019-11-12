@@ -219,7 +219,7 @@ class DynEnv(ABC, gym.Env):
         for a_id, a in enumerate(agents):
             # Check that agent references this environment
             if not a.env == self:
-                raise ValueError(f"Agent {a_id} was not assigned this env!")
+                raise ValueError(f"Agent {a_id} was not assigned to this env!")
 
             # Fit agent if not already fitted
             if not fitted:
@@ -258,12 +258,12 @@ class DynEnv(ABC, gym.Env):
 
         # Init scores.
         n_agents = len(agent_list)
-        scores = np.empty((n_agents, ), dtype=np.float32)
+        scores = np.empty((n_agents,), dtype=np.float32)
 
         for a_id, a in enumerate(agent_list):
             # Check that agent references this environment
             if not a.env == self:
-                raise ValueError(f"Agent {a_id} was not assigned this env!")
+                raise ValueError(f"Agent {a_id} was not assigned to this env!")
 
             # Evaluate agent.
             scores[a_id] = a.eval(n_steps, reset_seed=True)
