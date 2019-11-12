@@ -1,3 +1,4 @@
+import random
 from unittest import TestCase
 
 import numpy as np
@@ -5,7 +6,7 @@ import numpy as np
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
-    np_dt_to_str, str_to_np_dt, day_offset_ts
+    np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed
 
 
 class TestNumerics(TestCase):
@@ -131,6 +132,16 @@ class TestNumerics(TestCase):
         inds = [1, 3]
         exp_res = np.array([0, 2, 4, 1, 3])
         np.array_equal(move_inds_to_back(arr, inds), exp_res), "move_inds_to_back not working!"
+
+    def test_fix_seed(self):
+        # Tests the seed fixing.
+        max_int = 1000
+        fix_seed()
+        a = random.randint(-max_int, max_int)
+        arr = np.random.normal(0.0, 1.0, 10)
+        fix_seed()
+        self.assertEqual(a, random.randint(-max_int, max_int))
+        self.assertTrue(np.array_equal(arr, np.random.normal(0.0, 1.0, 10)))
 
     pass
 

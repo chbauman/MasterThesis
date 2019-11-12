@@ -61,7 +61,9 @@ def get_test_layer_output(layer: Layer, np_input, learning_phase: float = 1.0):
 class TestKeras(TestCase):
     """Test case class for keras tests.
 
-    TODO: Fix saving path problems.
+    Run from `BatchRL` folder, otherwise the relative paths
+    will be wrong and there will be folders generated in the wrong place.
+    Use the Powershell script `run_tests.ps1` if possible.
     """
 
     def __init__(self, *args, **kwargs):
