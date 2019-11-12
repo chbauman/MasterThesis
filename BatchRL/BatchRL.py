@@ -10,7 +10,7 @@ from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.battery_model import BatteryModel
 from data_processing.data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
     generate_room_datasets, get_DFAB_heating_data, DatasetConstraints, get_data_test, test_rest_client
-from dynamics.composite import CompositeModel, test_composite
+from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dynamics.sin_cos_time import SCTimeModel
@@ -29,7 +29,6 @@ def run_tests() -> None:
     # Do all the tests.
     test_rnn_models()
     test_dyn_model()
-    test_composite()
     test_rest_client()
     get_data_test()
     # test_align()
@@ -338,7 +337,7 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    run_tests()
+    # run_tests()
 
     # Full test model
     curr_tests()

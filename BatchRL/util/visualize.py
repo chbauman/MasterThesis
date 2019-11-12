@@ -47,10 +47,13 @@ create_dir(model_plot_path)
 create_dir(rl_plot_path)
 
 
-def save_figure(save_name, show: bool = False, vector_format: bool = True) -> None:
+def save_figure(save_name, show: bool = False,
+                vector_format: bool = True,
+                size: Tuple[Num, Num] = None) -> None:
     """Saves the current figure.
 
     Args:
+        size: The size in inches, if None, (16, 9) is used.
         save_name: Path where to save the plot.
         show: If true, does nothing.
         vector_format: Whether to save image in vector format.
@@ -58,7 +61,8 @@ def save_figure(save_name, show: bool = False, vector_format: bool = True) -> No
     if save_name is not None and not show:
         # Set figure size
         fig = plt.gcf()
-        fig.set_size_inches(16, 9)
+        sz = size if size is not None else (16, 9)
+        fig.set_size_inches(*sz)
 
         # Save and clear
         save_format = '.pdf' if vector_format else '.png'
@@ -570,7 +574,7 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
                         save_path: str = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
-    TODO: Add info to individual plots.
+    TODO: Fix Size
     """
     assert len(agent_names) == actions.shape[0], "Not the right number of names!"
     assert rewards.shape[0] == actions.shape[0], "Not the right shapes!"
@@ -581,10 +585,10 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     tot_n_plots = n_actions + n_feats + 1
 
     # We'll use a separate GridSpecs for controls, states and rewards
-    gs_con = plt.GridSpec(tot_n_plots, 1, hspace=0, top=1.0, bottom=0.0)
-    gs_state = plt.GridSpec(tot_n_plots, 1, hspace=0.2, top=0.9, bottom=0.1)
-    gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=0, top=1.0, bottom=0.0)
-    fig = plt.figure(figsize=(2 * tot_n_plots, 5))
+    fig = plt.figure()
+    gs_con = plt.GridSpec(tot_n_plots, 1, hspace=0, top=1.0, bottom=0.0, figure=fig)
+    gs_state = plt.GridSpec(tot_n_plots, 1, hspace=0.2, top=0.9, bottom=0.1, figure=fig)
+    gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=0, top=1.0, bottom=0.0, figure=fig)
 
     # Define axes
     rew_ax = fig.add_subplot(gs_rew[-1, :])
@@ -623,5 +627,6 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     rew_ax.legend()
 
     # Save
+    s = (16, tot_n_plots * 1.8)
     if save_path is not None:
-        save_figure(save_path)
+        save_figure(save_path, size=s)
