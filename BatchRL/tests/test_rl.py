@@ -1,6 +1,5 @@
 from unittest import TestCase
 
-import numpy
 import numpy as np
 
 from agents import agents_heuristic

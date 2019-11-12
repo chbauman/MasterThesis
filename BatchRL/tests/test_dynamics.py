@@ -1,8 +1,12 @@
+from typing import Dict
 from unittest import TestCase
 
 import numpy as np
+from hyperopt import hp
+from hyperopt.pyll import scope as ho_scope
 
 from data_processing.data import Dataset
+from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.base_model import BaseDynamicsModel, construct_test_ds
 from util.numerics import copy_arr_list
 
@@ -95,3 +99,56 @@ class TestBaseDynamics(TestCase):
         for k in range(3):
             self.assertTrue(np.array_equal(streak_after[k], streak[k]), "Streak data was changed during analysis!")
 
+
+class TestHopTable(HyperOptimizableModel):
+    """Example hyperopt class that does not need fitting."""
+    name: str = "TestHop"
+
+    def __init__(self, ds: Dataset, base_param: int = 5, h_param_1: int = 0):
+        super().__init__(ds, self.name)
+        self.bp = base_param
+        self.h_param = h_param_1
+
+        self.base_name = self.get_base_name(base_param=base_param)
+
+    def get_space(self) -> Dict:
+        hp_space = {
+            'h_param_1': ho_scope.int(hp.quniform('n_layers', low=0, high=20, q=1)),
+        }
+        return hp_space
+
+    @classmethod
+    def get_base_name(cls, **kwargs):
+        return cls.name + "_" + str(kwargs['base_param'])
+
+    def conf_model(self, hp_sample: Dict) -> 'HyperOptimizableModel':
+        new_mod = TestHopTable(self.data, self.bp, **hp_sample)
+        return new_mod
+
+    def hyper_objective(self) -> float:
+        x = self.h_param
+        return -x * x + 12 * x + 15
+
+    def fit(self) -> None:
+        pass
+
+    def predict(self, in_data):
+        pass
+
+
+class TestHop(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Define dataset
+        self.ds = construct_test_ds(20)
+        self.n = 3
+
+    def test_save_and_load(self):
+        # Init model
+        test_hop_mod_4 = TestHopTable(self.ds, 4, 6)
+        test_hop_mod_4.optimize(self.n)
+        assert len(test_hop_mod_4.param_list) == self.n, "Parameter logging incorrect!"
+        best_mod_4 = TestHopTable.from_best_hp(ds=self.ds, base_param=4)
+        best_mod_4.optimize(self.n)

@@ -8,12 +8,9 @@ import pickle
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
 
-from hyperopt import hp
 from hyperopt import fmin, tpe
-from hyperopt.pyll import scope as ho_scope
 
-from dynamics.base_model import BaseDynamicsModel, construct_test_ds
-from data_processing.data import Dataset
+from dynamics.base_model import BaseDynamicsModel
 from util.util import create_dir
 
 # Define path for optimization results.
@@ -177,59 +174,3 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             Dict with kwargs for initialization.
         """
         return hp_sample
-
-
-class TestHopTable(HyperOptimizableModel):
-    """Example hyperopt class that does not need fitting."""
-    name: str = "TestHop"
-
-    def __init__(self, ds: Dataset, base_param: int = 5, h_param_1: int = 0):
-        super().__init__(ds, self.name)
-        self.bp = base_param
-        self.h_param = h_param_1
-
-        self.base_name = self.get_base_name(base_param=base_param)
-
-    def get_space(self) -> Dict:
-        hp_space = {
-            'h_param_1': ho_scope.int(hp.quniform('n_layers', low=0, high=20, q=1)),
-        }
-        return hp_space
-
-    @classmethod
-    def get_base_name(cls, **kwargs):
-        return cls.name + "_" + str(kwargs['base_param'])
-
-    def conf_model(self, hp_sample: Dict) -> 'HyperOptimizableModel':
-        new_mod = TestHopTable(self.data, self.bp, **hp_sample)
-        return new_mod
-
-    def hyper_objective(self) -> float:
-        x = self.h_param
-        return -x * x + 12 * x + 15
-
-    def fit(self) -> None:
-        pass
-
-    def predict(self, in_data):
-        pass
-
-
-def test_hyperopt() -> None:
-    """Tests the hyperopt base class with the Example class.
-
-    Raises:
-        AssertionError: If a test fails.
-    """
-    ds = construct_test_ds(20)
-
-    # Init model
-    test_hop_mod_4 = TestHopTable(ds, 4, 6)
-    n = 5
-    test_hop_mod_4.optimize(n)
-    assert len(test_hop_mod_4.param_list) == n, "Parameter logging incorrect!"
-
-    best_mod_4 = TestHopTable.from_best_hp(ds=ds, base_param=4)
-    best_mod_4.optimize(n)
-
-    print("Hyperopt test passed :)")
