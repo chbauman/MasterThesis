@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 import numpy as np
-from keras import Sequential, backend as K, Input
+from keras import Input, Sequential, backend as K
 from keras.engine import Layer
 from keras.layers import Add
 

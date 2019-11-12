@@ -13,15 +13,17 @@ from typing import Union, List, Tuple, Any, Sequence
 
 import numpy as np
 
-# Determine platform, assuming we are on Euler if it is not a windows platform
-# from util.numerics import move_inds_to_back
-
+# Determine platform, assuming we are on Euler if it is not a windows platform.
 EULER = not os.name == 'nt'
 
-# Fix random seeds
-SEED = 42
-np.random.seed(SEED)
-random.seed(SEED)
+SEED: int = 42  #: Default seed value.
+
+
+def fix_seed(seed: int = SEED) -> None:
+    """Fixes the random seed."""
+    np.random.seed(seed)
+    random.seed(seed)
+
 
 #######################################################################################################
 # Typing
@@ -334,6 +336,7 @@ def train_decorator(verbose: bool = True):
     variable and a name `name`. Then it tries loading
     the model, if that fails the actual fitting is done.
     """
+
     def decorator(fit):
 
         @wraps(fit)
