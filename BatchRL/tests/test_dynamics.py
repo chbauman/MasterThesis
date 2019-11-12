@@ -8,9 +8,10 @@ from hyperopt.pyll import scope as ho_scope
 from data_processing.data import Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.base_model import BaseDynamicsModel, construct_test_ds
+from dynamics.composite import CompositeModel
 from dynamics.const import NoDisturbanceModel, ConstModel
 from util.numerics import copy_arr_list
-from util.util import Num
+from util.util import Num, tot_size
 
 
 class TestModel(BaseDynamicsModel):
@@ -234,3 +235,94 @@ class TestHop(TestCase):
         assert len(test_hop_mod_4.param_list) == self.n, "Parameter logging incorrect!"
         best_mod_4 = TestHopTable.from_best_hp(ds=self.ds, base_param=4)
         best_mod_4.optimize(self.n)
+
+
+class TestComposite(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Define datasets
+        self.n = 200
+        self.dataset = construct_test_ds(self.n)
+        self.dataset.data = np.ones((self.n, 4)) * np.arange(4)
+        self.dataset.split_data()
+        self.ds_1 = construct_test_ds(self.n, c_series=1)
+        self.ds_1.data = np.ones((self.n, 4)) * np.arange(4)
+        self.ds_1.split_data()
+
+        # Define indices
+        self.inds_1 = np.array([1], dtype=np.int32)
+        self.inds_2 = np.array([2], dtype=np.int32)
+        self.inds_02 = np.array([0, 2], dtype=np.int32)
+        self.inds_123 = np.array([1, 2, 3], dtype=np.int32)
+
+        # Define output data
+        self.sh = (2, 5, 4)
+        self.sh_out = (2, 3)
+        self.sh_tot = tot_size(self.sh)
+        self.in_data = np.reshape(np.arange(self.sh_tot), self.sh)
+        self.in_data_2 = np.ones(self.sh, dtype=np.float32) * np.arange(4)
+
+    def test_first(self):
+        m1 = ConstSeriesTestModel(self.dataset, pred_val_list=1.0,
+                                  out_indices=self.inds_02)
+        m2 = ConstSeriesTestModel(self.dataset, pred_val_list=2.0, out_indices=self.inds_1)
+        mc1 = CompositeModel(self.dataset, [m1, m2], new_name="CompositeTest1")
+        exp_out_data = np.ones((2, 3), dtype=np.float32)
+        exp_out_data[:, 1] = 2.0
+        assert np.array_equal(exp_out_data, mc1.predict(self.in_data)), "Composite model prediction wrong!"
+
+    def test_second(self):
+        m3 = ConstSeriesTestModel(self.dataset,
+                                  pred_val_list=[1.0],
+                                  out_indices=self.inds_1,
+                                  in_indices=self.inds_1)
+        m4 = ConstSeriesTestModel(self.dataset,
+                                  pred_val_list=[0.0, 2.0],
+                                  out_indices=self.inds_02,
+                                  in_indices=self.inds_123)
+        mc2 = CompositeModel(self.dataset, [m3, m4], new_name="CompositeTest2")
+
+        exp_out_2 = np.ones((2, 3), dtype=np.float32) * np.arange(3.0)
+        assert np.array_equal(exp_out_2, mc2.predict(self.in_data)), "Composite model prediction wrong!"
+        assert np.array_equal(exp_out_2, mc2.predict(self.in_data_2)), "Composite model prediction wrong!"
+
+    def test_third(self):
+        m5 = ConstTestModel(self.dataset, pred_inds=self.inds_1)
+        m6 = ConstTestModel(self.dataset,
+                            pred_inds=self.inds_02,
+                            in_indices=self.inds_123)
+        mc3 = CompositeModel(self.dataset, [m5, m6], new_name="CompositeTest3")
+
+        exp_out_3 = np.ones((2, 3), dtype=np.float32) * np.arange(3.0)
+        exp_out_3[:, 0] = 1.0
+        assert np.array_equal(exp_out_3, mc3.predict(self.in_data_2)), "Composite model prediction wrong!"
+
+    def test_fourth(self):
+        m7 = ConstTestModel(self.ds_1,
+                            pred_inds=self.inds_02,
+                            in_indices=np.array([1, 2], dtype=np.int32))
+        m8 = ConstTestModel(self.ds_1,
+                            pred_inds=np.array([3], dtype=np.int32),
+                            in_indices=self.inds_1)
+        mc4 = CompositeModel(self.ds_1, [m7, m8], new_name="CompositeTest4")
+
+        exp_out_4 = np.ones(self.sh_out) * np.array([3, 1, 3])
+        act_out = mc4.predict(self.in_data_2)
+        assert np.array_equal(exp_out_4, act_out), "Composite model prediction wrong!"
+
+    def test_analyze(self):
+        # Test analyze()
+        m9 = ConstSeriesTestModel(self.ds_1,
+                                  pred_val_list=[2.0],
+                                  predict_input_check=self.inds_2,
+                                  out_indices=self.inds_2,
+                                  in_indices=self.inds_2)
+        m10 = ConstSeriesTestModel(self.ds_1,
+                                   pred_val_list=[0.0, 3.0],
+                                   predict_input_check=self.inds_123,
+                                   out_indices=np.array([0, 3], dtype=np.int32),
+                                   in_indices=self.inds_123)
+        mc5 = CompositeModel(self.ds_1, [m9, m10], new_name="CompositeTest4")
+        mc5.analyze(plot_acf=False)

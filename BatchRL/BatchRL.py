@@ -330,7 +330,6 @@ def curr_tests(ds: Dataset = None) -> None:
             print(env.eval_agents(agent_list, n_steps=500))
 
     raise NotImplementedError("WTF")
-    pass
 
 
 def main() -> None:
@@ -339,7 +338,7 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    # run_tests()
+    run_tests()
 
     # Full test model
     curr_tests()
