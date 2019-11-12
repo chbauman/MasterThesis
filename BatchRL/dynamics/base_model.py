@@ -730,37 +730,6 @@ class BaseDynamicsModel(KerasBase, ABC):
 ##########################################################################
 # Testing stuff
 
-class TestModel(BaseDynamicsModel):
-    """Dummy dynamics model class for testing.
-
-    Does not fit anything. Works only with datasets
-    that have exactly 3 series to predict and one
-    control variable series.
-    """
-    n_prediction: int = 0
-    n_pred: int = 3
-
-    def __init__(self,
-                 ds: Dataset):
-        name = "TestModel"
-        super(TestModel, self).__init__(ds, name)
-        self.use_AR = False
-
-        if ds.n_c != 1:
-            raise ValueError("Only one control variable allowed!!")
-        if ds.d - 1 != self.n_pred:
-            raise ValueError("Dataset needs exactly 3 non-controllable state variables!")
-
-    def fit(self) -> None:
-        pass
-
-    def predict(self, in_data: np.ndarray) -> np.ndarray:
-
-        rel_out_dat = -0.9 * in_data[:, -1, :self.n_pred]
-
-        self.n_prediction += 1
-        return rel_out_dat
-
 
 def construct_test_ds(n: int = 201, c_series: int = 3) -> Dataset:
     """Constructs a dataset for testing.
@@ -802,13 +771,15 @@ def test_dyn_model() -> None:
     ds_1 = construct_test_ds(n, 1)
 
     # Define models
-    from dynamics.const import ConstSeriesTestModel, ConstModel
+    from dynamics.const import ConstSeriesTestModel
+    from tests.test_dynamics import TestModel
     test_mod = TestModel(ds)
     test_model_2 = ConstSeriesTestModel(ds_1,
                                         pred_val_list=[0.0, 2.0],
                                         out_indices=np.array([0, 2], dtype=np.int32),
                                         in_indices=np.array([1, 2, 3], dtype=np.int32))
-    test_model_3 = ConstModel(ds_1)
+
+    dat_in_train, dat_out_train, _ = ds.get_split("train")
 
     # Compute sizes
     n_val = n - int((1.0 - ds.val_percent) * n)
@@ -816,34 +787,6 @@ def test_dyn_model() -> None:
     n_train_seqs = n_train - ds.seq_len + 1
     n_streak = 7 * 24 * 60 // ds.dt
     n_streak_offset = n_train_seqs - n_streak
-
-    # Check sizes
-    dat_in_train, dat_out_train, _ = ds.get_split("train")
-    if len(dat_in_train) != n_train_seqs:
-        raise AssertionError("Something baaaaad!")
-    dat_in, dat_out, n_str = ds.get_streak("train")
-    if n_streak_offset != n_str:
-        raise AssertionError("Streak offset fucking wrong!!")
-
-    # Check indices
-    assert np.array_equal(np.array([0, 2, 3]), test_model_3.out_inds), "Out indices incorrect!"
-    assert np.array_equal(np.array([0, 1, 2]), test_model_3.p_out_inds), "Prepared out indices incorrect!"
-    assert np.array_equal(np.array([0, 1, 2, 3]), test_model_3.in_indices), "In indices incorrect!"
-    assert np.array_equal(np.array([0, 3, 1, 2]), test_model_3.p_in_indices), "Prepared in indices incorrect!"
-
-    # Find time of initial output
-    n_streak_output_offset = n_streak_offset + ds.seq_len - 1
-    dt_offset = n_mins_to_np_dt(ds.dt * n_streak_output_offset)
-    t_init_streak = str_to_np_dt(ds.t_init) + dt_offset
-
-    # Test model analysis
-    base_data = np.copy(ds_1.data)
-    streak = copy_arr_list(ds_1.get_streak("train"))
-    test_model_2.analyze()
-    streak_after = ds_1.get_streak("train")
-    assert np.array_equal(base_data, ds_1.data), "Data was changed during analysis!"
-    for k in range(3):
-        assert np.array_equal(streak_after[k], streak[k]), "Streak data was changed during analysis!"
 
     # Test prediction and residuals
     sample_pred_inp = ds.data[:(ds.seq_len - 1)]
@@ -873,6 +816,10 @@ def test_dyn_model() -> None:
     test_model_2.n_step_predict((in_d, out_d), 4)
     # TODO: Test it
 
+    # Find time of initial output
+    n_streak_output_offset = n_streak_offset + ds.seq_len - 1
+    dt_offset = n_mins_to_np_dt(ds.dt * n_streak_output_offset)
+    t_init_streak = str_to_np_dt(ds.t_init) + dt_offset
     print("First point in week plot should be at: {}".format(t_init_streak))
 
     print("Dynamic model test passed :)")
