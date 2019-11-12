@@ -81,6 +81,13 @@ class ConstTestModel(ConstModel, NoDisturbanceModel):
     name: str = "NaiveNoDisturb"  #: Base name of model.
 
 
+class ConstTestModelControlled(ConstTestModel):
+    """Same as `ConstTestModel` but adds the control input to predictions."""
+    def predict(self, in_data: np.ndarray) -> np.ndarray:
+        action = in_data[:, -1, -1]
+        return in_data[:, -1, :self.n_pred] + action
+
+
 class ConstSeriesTestModel(NoDisturbanceModel):
     """Test model that predicts a possibly different constant value for each series.
 

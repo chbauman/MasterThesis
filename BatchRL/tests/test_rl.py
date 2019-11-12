@@ -4,7 +4,7 @@ import numpy as np
 
 from agents import agents_heuristic
 from dynamics.base_model import construct_test_ds, BaseDynamicsModel
-from dynamics.const import ConstTestModel
+from dynamics.const import ConstTestModel, ConstTestModelControlled
 from envs.base_dynamics_env import DynEnv
 from tests.test_dynamics import TestModel
 from util.util import Arr
@@ -38,6 +38,7 @@ class TestEnvs(TestCase):
         # Define dataset
         self.n = 201
         self.test_ds = construct_test_ds(self.n)
+        self.test_ds.c_inds = np.array([1])
         sh = self.test_ds.data.shape
         self.test_mod = TestModel(self.test_ds)
         self.n_ts_per_episode = 10
@@ -45,9 +46,11 @@ class TestEnvs(TestCase):
 
         # Another one
         self.test_ds2 = construct_test_ds(self.n)
+        self.test_ds2.c_inds = np.array([1])
         self.test_ds2.data = np.arange(sh[0]).reshape((-1, 1)) * np.ones(sh, dtype=np.float32)
         self.test_ds2.split_data()
-        self.model_2 = ConstTestModel(self.test_ds2)
+        self.model_2 = ConstTestModelControlled(self.test_ds2)
+        self.test_env2 = TestDynEnv(self.model_2, 10)
 
     def test_shapes(self):
         # Test shapes
@@ -61,13 +64,14 @@ class TestEnvs(TestCase):
                 self.assertEqual(init_state.shape, (3,), "Prediction does not have the right shape!")
 
     def test_step(self):
-        test_env = TestDynEnv(self.model_2, 10)
-        init_state = test_env.reset(0)
-        next_state, rew, ep_over, _ = test_env.step(0.0)
-        self.assertTrue(np.array_equal(init_state, next_state), "Step contains a bug!")
-        for k in range(3):
-            next_state, rew, ep_over, _ = test_env.step(0.0)
-            self.assertTrue(np.array_equal(init_state, next_state), "Step contains a bug!")
+        for action in [1.0, 0.0, 10.0]:
+            init_state = self.test_env2.reset(0)
+            next_state, rew, ep_over, _ = self.test_env2.step(action)
+            self.assertTrue(np.allclose(init_state + action, next_state), "Step contains a bug!")
+            for k in range(3):
+                prev_state = np.copy(next_state)
+                next_state, rew, ep_over, _ = self.test_env2.step(action)
+                self.assertTrue(np.allclose(prev_state + action, next_state), "Step contains a bug!")
 
     def test_agent_analysis(self):
         # Test agent analysis
