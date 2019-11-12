@@ -311,13 +311,13 @@ def curr_tests(ds: Dataset = None) -> None:
         # Load the model and init env
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
         # m.analyze()
-        env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3)
+        env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.0)
 
         # Define default agents and compare
         open_agent = ConstHeating(env, 1.0)
         closed_agent = ConstHeating(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        env.analyze_agent([open_agent, closed_agent, rule_based_agent])
+        env.analyze_agent([open_agent, closed_agent, rule_based_agent], use_noise=True)
         continue
 
         # Choose agent and fit to env.
