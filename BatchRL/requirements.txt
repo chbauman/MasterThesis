@@ -1,3 +1,4 @@
+opcua
 tensorflow
 matplotlib
 pandas
