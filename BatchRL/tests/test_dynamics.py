@@ -45,7 +45,7 @@ class TestBaseDynamics(TestCase):
         super().__init__(*args, **kwargs)
 
         # Define dataset
-        self.n = 201
+        self.n = 151
         self.ds = construct_test_ds(self.n)
         self.ds_1 = construct_test_ds(self.n, 1)
 
@@ -86,9 +86,10 @@ class TestBaseDynamics(TestCase):
 
     def test_analysis(self):
         # Test model analysis
+        # TODO: This is slow (~4s), make it faster.
         base_data = np.copy(self.ds_1.data)
         streak = copy_arr_list(self.ds_1.get_streak("train"))
-        self.test_model_2.analyze()
+        self.test_model_2.analyze(plot_acf=False, n_steps=(2,))
         streak_after = self.ds_1.get_streak("train")
         self.assertTrue(np.array_equal(base_data, self.ds_1.data), "Data was changed during analysis!")
         for k in range(3):

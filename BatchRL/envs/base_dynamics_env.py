@@ -9,9 +9,8 @@ from typing import Dict
 
 import gym
 
-from agents import agents_heuristic, base_agent
-from dynamics.base_model import BaseDynamicsModel, construct_test_ds
-from tests.test_dynamics import TestModel
+from agents import base_agent
+from dynamics.base_model import BaseDynamicsModel
 from util.visualize import rl_plot_path, plot_env_evaluation
 from util.util import *
 
@@ -270,65 +269,3 @@ class DynEnv(ABC, gym.Env):
             scores[a_id] = a.eval(n_steps, reset_seed=True)
 
         return scores
-
-
-##########################################################################
-# Testing stuff
-
-class TestDynEnv(DynEnv):
-
-    def __init__(self, m: BaseDynamicsModel, max_eps: int = None):
-        super(TestDynEnv, self).__init__(m, "TestEnv", max_eps)
-        d = m.data
-        self.n_pred = 3
-        assert d.n_c == 1 and d.d == 4, "Dataset needs 4 series of which one is controllable!!"
-
-    def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
-        self._assert_pred_shape(curr_pred)
-        return curr_pred[2] * action
-
-    def episode_over(self, curr_pred: np.ndarray) -> bool:
-        self._assert_pred_shape(curr_pred)
-        return False
-
-    def _assert_pred_shape(self, curr_pred):
-        assert curr_pred.shape == (self.n_pred,), "Shape of prediction not correct!"
-
-
-def test_test_env():
-    n = 201
-    test_ds = construct_test_ds(n)
-    test_mod = TestModel(test_ds)
-    n_ts_per_episode = 10
-    test_env = TestDynEnv(test_mod, 10)
-
-    # Test shapes
-    for k in range(30):
-        next_state, r, over, _ = test_env.step(0.0)
-        assert next_state.shape == (3,), "Prediction does not have the right shape!"
-        if (k + 1) % n_ts_per_episode == 0 and not over:
-            raise AssertionError("Episode should be over!!")
-        if over:
-            init_state = test_env.reset()
-            assert init_state.shape == (3,), "Prediction does not have the right shape!"
-
-    # Test agent analysis
-    const_ag_1 = agents_heuristic.ConstHeating(test_env, 0.0)
-    const_ag_2 = agents_heuristic.ConstHeating(test_env, 1.0)
-    test_env.analyze_agent([const_ag_1, const_ag_2])
-
-    # Test deterministic reset
-    const_control = 0.0
-    max_ind = test_env.n_start_data
-    rand_int = np.random.randint(max_ind)
-    test_env.reset(start_ind=rand_int, use_noise=False)
-    first_out = test_env.step(const_control)
-    for k in range(5):
-        test_env.step(const_control)
-    test_env.reset(start_ind=rand_int, use_noise=False)
-    sec_first_out = test_env.step(const_control)
-    assert np.allclose(first_out[0], sec_first_out[0]), "State output not correct!"
-    assert first_out[1] == sec_first_out[1], "Rewards not correct!"
-    assert first_out[2] == sec_first_out[2], "Episode termination not correct!"
-
-    print("Model environment test passed :)")

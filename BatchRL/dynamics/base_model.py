@@ -370,7 +370,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         dir_name = self.plot_path
         return os.path.join(dir_name, name)
 
-    def const_nts_plot(self, predict_data, n_list: List[int], ext: str = '', *,
+    def const_nts_plot(self, predict_data, n_list: Sequence[int], ext: str = '', *,
                        predict_ind: int = None, n_ts_off: int = 0) -> None:
         """Creates a plot that shows the performance of the
         trained model when predicting a fixed number of timesteps into
@@ -497,7 +497,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                          title_and_ylab=title_and_ylab,
                          save_name=self.get_plt_path('OneWeek' + ext))
 
-    def analyze(self, plot_acf: bool = True) -> None:
+    def analyze(self, plot_acf: bool = True, n_steps: Sequence = (1, 4, 20)) -> None:
         """Analyzes the trained model.
 
         Makes some plots using the fitted model and the streak data.
@@ -528,8 +528,8 @@ class BaseDynamicsModel(KerasBase, ABC):
         # Plot for fixed number of time-steps
         val_copy = copy_arr_list(dat_val)
         train_copy = copy_arr_list(dat_train)
-        self.const_nts_plot(val_copy, [1, 4, 20], ext='Validation_All', n_ts_off=n_val)
-        self.const_nts_plot(train_copy, [1, 4, 20], ext='Train_All', n_ts_off=n_train)
+        self.const_nts_plot(val_copy, n_steps, ext='Validation_All', n_ts_off=n_val)
+        self.const_nts_plot(train_copy, n_steps, ext='Train_All', n_ts_off=n_train)
 
         # Plot for continuous predictions
         self.one_week_pred_plot(copy_arr_list(dat_val), "Validation_All", n_ts_off=n_val)
@@ -686,8 +686,6 @@ class BaseDynamicsModel(KerasBase, ABC):
     def get_rel_part(self, in_dat: np.ndarray,
                      out_dat: np.ndarray = None) -> Tuple[np.ndarray, np.ndarray]:
         """Returns the relevant data series from input and output data.
-
-        TODO: Find out whether this is actually completely stupid.
 
         Args:
             in_dat: Full input data.
