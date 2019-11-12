@@ -14,7 +14,7 @@ from typing import Union, List, Tuple, Any, Sequence
 import numpy as np
 
 # Determine platform, assuming we are on Euler if it is not a windows platform.
-EULER = not os.name == 'nt'
+EULER: bool = os.name != 'nt'
 
 SEED: int = 42  #: Default seed value.
 

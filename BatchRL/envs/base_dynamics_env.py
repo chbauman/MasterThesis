@@ -14,6 +14,8 @@ from dynamics.base_model import BaseDynamicsModel, TestModel, construct_test_ds
 from util.visualize import rl_plot_path, plot_env_evaluation
 from util.util import *
 
+Agents = Union[List, base_agent.AgentBase]
+
 
 class DynEnv(ABC, gym.Env):
     """The environment wrapper class for `BaseDynamicsModel`.
@@ -235,6 +237,16 @@ class DynEnv(ABC, gym.Env):
         analysis_plot_path = self.get_plt_path("AgentAnalysis_" + str(start_ind) + "_" + agent_names)
         plot_env_evaluation(action_sequences, trajectories, rewards,
                             analysis_plot_path)
+
+    def eval_agents(self, agent_list: Agents, n_steps: int = 100):
+
+        # Make function compatible for single agent input
+        if not isinstance(agent_list, list):
+            agent_list = [agent_list]
+
+
+
+        pass
 
 
 ##########################################################################
