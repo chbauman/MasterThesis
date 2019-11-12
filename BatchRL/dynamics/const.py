@@ -36,7 +36,7 @@ class ConstModel(BaseDynamicsModel):
 
         Args:
             dataset: Dataset containing the data.
-            pred_inds: Indices of series to predict.
+            pred_inds: Indices of series to predict, all if None.
             kwargs: Kwargs for base class, e.g. `in_indices`.
         """
         # Set in_indices to pred_inds if not specified.
@@ -73,7 +73,10 @@ class ConstModel(BaseDynamicsModel):
 # Testing models.
 
 class ConstTestModel(ConstModel, NoDisturbanceModel):
-    """Const Test model without a disturbance."""
+    """Const Test model without a disturbance.
+
+    Same as `ConstModel`, but no disturbance.
+    """
 
     name: str = "NaiveNoDisturb"  #: Base name of model.
 
