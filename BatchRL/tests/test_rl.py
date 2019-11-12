@@ -4,9 +4,8 @@ import numpy as np
 
 from agents import agents_heuristic
 from dynamics.base_model import construct_test_ds, BaseDynamicsModel
-from dynamics.const import ConstTestModel, ConstTestModelControlled
 from envs.base_dynamics_env import DynEnv
-from tests.test_dynamics import TestModel
+from tests.test_dynamics import TestModel, ConstTestModelControlled
 from util.util import Arr
 
 
@@ -64,7 +63,7 @@ class TestEnvs(TestCase):
                 self.assertEqual(init_state.shape, (3,), "Prediction does not have the right shape!")
 
     def test_step(self):
-        for action in [1.0, 0.0, 10.0]:
+        for action in [1.0, 0.0]:
             init_state = self.test_env2.reset(0)
             next_state, rew, ep_over, _ = self.test_env2.step(action)
             self.assertTrue(np.allclose(init_state + action, next_state), "Step contains a bug!")

@@ -771,7 +771,7 @@ def test_dyn_model() -> None:
     ds_1 = construct_test_ds(n, 1)
 
     # Define models
-    from dynamics.const import ConstSeriesTestModel
+    from tests.test_dynamics import ConstSeriesTestModel
     from tests.test_dynamics import TestModel
     test_mod = TestModel(ds)
     test_model_2 = ConstSeriesTestModel(ds_1,

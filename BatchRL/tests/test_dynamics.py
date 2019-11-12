@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union, List
 from unittest import TestCase
 
 import numpy as np
@@ -8,7 +8,9 @@ from hyperopt.pyll import scope as ho_scope
 from data_processing.data import Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.base_model import BaseDynamicsModel, construct_test_ds
+from dynamics.const import NoDisturbanceModel, ConstModel
 from util.numerics import copy_arr_list
+from util.util import Num
 
 
 class TestModel(BaseDynamicsModel):
@@ -37,10 +39,81 @@ class TestModel(BaseDynamicsModel):
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
 
-        rel_out_dat = -0.9 * in_data[:, -1, :self.n_pred]
+        rel_out_dat = -0.9 * in_data[:, -1, :self.n_pred] + in_data[:, -1, -1].reshape(-1, 1)
 
         self.n_prediction += 1
         return rel_out_dat
+
+
+class ConstSeriesTestModel(NoDisturbanceModel):
+    """Test model that predicts a possibly different constant value for each series.
+
+    Can take any number of input series and output series.
+    """
+
+    def __init__(self,
+                 ds: Dataset,
+                 pred_val_list: Union[Num, List[Num]],
+                 predict_input_check: np.ndarray = None,
+                 **kwargs):
+        """Constructor
+
+        If `pred_val_list` is a number, it will be used as prediction
+        for all series that are predicted.
+
+        Args:
+            ds: The dataset.
+            pred_val_list: The list with the values that will be predicted.
+            predict_input_check: If not None, the input series have to have these values.
+            **kwargs: Kwargs for the base class, e.g. `out_indices` or `in_indices`.
+        """
+        name = f"ConstModel"
+        super().__init__(ds, name, **kwargs)
+
+        # Check if the list contains the right number of elements if it is a list.
+        if isinstance(pred_val_list, List):
+            if not len(pred_val_list) == self.n_pred:
+                raise ValueError("Not the right number of values specified!")
+
+        self.predict_input_check = predict_input_check
+        self.values = np.array(pred_val_list)
+        self.use_AR = False
+
+    def fit(self) -> None:
+        pass
+
+    def predict(self, in_data: np.ndarray) -> np.ndarray:
+        """Predicts a constant value for each series.
+
+        Raises:
+            AssertionError: If `predict_input_check` is not None and
+                the input does not match.
+        """
+        in_sh = in_data.shape
+        if self.predict_input_check is not None:
+            pc = self.predict_input_check
+            assert len(pc) == in_sh[-1], "Predictions do not have the right shape!"
+            exp_inp = np.ones(in_sh) * pc
+            assert np.array_equal(exp_inp, in_data), "Input incorrect!!!"
+        preds = np.ones((in_sh[0], self.n_pred), dtype=np.float32) * self.values
+        return preds
+
+
+class ConstTestModel(ConstModel, NoDisturbanceModel):
+    """Const Test model without a disturbance.
+
+    Same as `ConstModel`, but no disturbance.
+    """
+
+    name: str = "NaiveNoDisturb"  #: Base name of model.
+
+
+class ConstTestModelControlled(ConstTestModel):
+    """Same as `ConstTestModel` but adds the control input to predictions."""
+
+    def predict(self, in_data: np.ndarray) -> np.ndarray:
+        action = in_data[:, -1, -1]
+        return in_data[:, -1, :self.n_pred] + action
 
 
 class TestBaseDynamics(TestCase):
@@ -54,7 +127,7 @@ class TestBaseDynamics(TestCase):
         self.ds_1 = construct_test_ds(self.n, 1)
 
         # Define models
-        from dynamics.const import ConstSeriesTestModel, ConstModel
+        from dynamics.const import ConstModel
         self.test_mod = TestModel(self.ds)
         self.test_model_2 = ConstSeriesTestModel(self.ds_1,
                                                  pred_val_list=[0.0, 2.0],
