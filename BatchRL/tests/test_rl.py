@@ -30,6 +30,10 @@ class TestDynEnv(DynEnv):
 
 
 class TestEnvs(TestCase):
+    """Tests the RL environments.
+
+    TODO: Remove files after testing.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -172,6 +172,15 @@ class TestBaseDynamics(TestCase):
         for k in range(3):
             self.assertTrue(np.array_equal(streak_after[k], streak[k]), "Streak data was changed during analysis!")
 
+    def test_const_series_test_model(self):
+        """Test the test model."""
+        n_feat = self.ds_1.d - self.ds_1.n_c
+        preds = list(range(n_feat))
+        c_mod = ConstSeriesTestModel(self.ds_1, preds)
+        exp_out = np.copy(preds).reshape((1, -1))
+        self.assertTrue(np.array_equal(exp_out, c_mod.predict(exp_out)),
+                        "ConstSeriesTestModel implemented incorrectly!")
+
 
 class TestHopTable(HyperOptimizableModel):
     """Example hyperopt class that does not need fitting."""
