@@ -565,7 +565,7 @@ def plot_residuals_acf(residuals: np.ndarray,
 
 def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
                         rewards: np.ndarray,
-                        ds: 'Dataset',
+                        ds,
                         agent_names: Sequence[str],
                         save_path: str = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
@@ -582,25 +582,27 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
 
     # We'll use a separate GridSpecs for controls, states and rewards
     gs_con = plt.GridSpec(tot_n_plots, 1, hspace=0, top=1.0, bottom=0.0)
-    gs_state = plt.GridSpec(tot_n_plots, 1, hspace=0, top=0.9, bottom=0.1)
+    gs_state = plt.GridSpec(tot_n_plots, 1, hspace=0.2, top=0.9, bottom=0.1)
     gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=0, top=1.0, bottom=0.0)
-    fig = plt.figure()
+    fig = plt.figure(figsize=(2 * tot_n_plots, 5))
 
     # Define axes
     rew_ax = fig.add_subplot(gs_rew[-1, :])
     con_axs = [fig.add_subplot(gs_con[i, :], sharex=rew_ax) for i in range(n_actions)]
     state_axs = [fig.add_subplot(gs_state[i, :], sharex=rew_ax) for i in range(n_actions, tot_n_plots - 1)]
 
-    # Set titles
-    rew_ax.set_title("Rewards")
-    con_axs[0].set_title("Control inputs")
-    state_axs[0].set_title("States")
-
     # Find legends
     n_tot_vars = ds.d
     c_inds = ds.c_inds
     control_descs = [ds.descriptions[c] for c in c_inds]
     state_descs = [ds.descriptions[c] for c in range(n_tot_vars) if c not in c_inds]
+
+    # Set titles
+    rew_ax.set_title("Rewards")
+    for k in range(n_actions):
+        con_axs[k].set_title(f"Control inputs: {control_descs[k]}")
+    for k in range(n_feats):
+        state_axs[k].set_title(f"State: {state_descs[k]}")
 
     # Plot all the things!
     for k in range(n_agents):
@@ -613,8 +615,9 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
             state_axs[i].plot(states[k, :, i], label=agent_names[k])
 
         # Plot reward
-        rew_ax.plot(rewards[k, :])
+        rew_ax.plot(rewards[k, :], label=agent_names[k])
 
+    # Add legends
     con_axs[0].legend()
     state_axs[0].legend()
     rew_ax.legend()
