@@ -1,4 +1,4 @@
-#########################################################################################################################
+########################################################################################################################
 # Name: opc ua client
 # Version: 0.1
 
@@ -9,15 +9,16 @@
 # Changed order to subscribe/ publish                   RK                              20190411
 # Moved the try statement inside the for loop           RK                              20190425
 # Changed from time to datetime to show milliseconds    RK                              20190508
-
 ########################################################################################################################
-from opcua import Client
-from opcua import ua
-from opcua.common import ua_utils
-import pandas as pd
+
 import datetime
 import logging
 import socket
+
+import pandas as pd
+from opcua import Client
+from opcua import ua
+from opcua.common import ua_utils
 
 """initialize logger"""
 logger = logging.getLogger('opc ua client')
@@ -25,6 +26,8 @@ logger = logging.getLogger('opc ua client')
 
 # toggle function
 def toggle(tonf=5000):
+    if tonf != 5000:
+        raise NotImplementedError("What is this supposed to do?")
     if datetime.datetime.now().second % 10 < 5:
         is_toggled = False
     else:
@@ -46,7 +49,7 @@ class SubHandler(object):
         self.df_Read = pd.DataFrame(data={'node': [], 'value': []}).astype('object')
         self.json_Read = self.df_Read.to_json()
 
-    def datachange_notification(self, node, val, data):
+    def data_change_notification(self, node, val, data):
         try:
             df_New = pd.DataFrame(data={'node': [], 'value': []}).astype('object')
             df_New.at[0, 'node'] = str(node)
@@ -58,6 +61,7 @@ class SubHandler(object):
         except Exception as e:
             logger.error(e)
 
+    @staticmethod
     def event_notification(self, event):
         logger.info("Python: New event", event)
 
@@ -82,7 +86,8 @@ class OpcuaClient(object):
         self.client = Client(url=url, timeout=4)
         self.client.set_user(user)  # You have to enter your User name*
         self.client.set_password(password)  # You have to enter your password*
-        self.client.application_uri = application_uri + ":" + socket.gethostname() + ":" + user  # You have to enter the uri according to the name or path of your certificate and key*
+        # You have to enter the uri according to the name or path of your certificate and key*
+        self.client.application_uri = application_uri + ":" + socket.gethostname() + ":" + user
         # You have to enter the uri according to the name or path of your certificate and key*
         self.client.product_uri = product_uri + ":" + socket.gethostname() + ":" + user
         self.handler = SubHandler()
@@ -154,7 +159,7 @@ class OpcuaClient(object):
             self._ua_values = [ua.DataValue(ua.Variant(ua_utils.string_to_val(str(value), datatype), datatype)) for
                                value, datatype in zip(self.df_write['value'].tolist(), self._data_types)]
             self.client.set_values(nodes=self._node_objects, values=self._ua_values)
-            [logger.info('write %s %s' % (nodeobject, value)) for nodeobject, value in
+            [logger.info('write %s %s' % (node_object, value)) for node_object, value in
              zip(self._node_objects, self._ua_values)]
         except Exception as e:
             logging.warning(e)

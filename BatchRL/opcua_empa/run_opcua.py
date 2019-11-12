@@ -8,7 +8,8 @@ import time
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger('opc ua client')
 
-if __name__ == "__main__":
+
+def try_opcua():
     opcua_client = OpcuaClient(user='Aurelio', password='Aurelio4ever')
     if opcua_client.connect():
         opcua_client.subscribe(json_read=pd.DataFrame(
