@@ -5,9 +5,8 @@ functions. The complicated stuff is hidden in the other
 modules / packages.
 """
 from agents.agents_heuristic import ConstHeating, RuleBasedHeating
-from envs.base_dynamics_env import test_test_env
 from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
-from dynamics.base_hyperopt import HyperOptimizableModel, test_hyperopt
+from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.battery_model import BatteryModel
 from data_processing.data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
     generate_room_datasets, get_DFAB_heating_data, DatasetConstraints, get_data_test, test_rest_client
@@ -17,6 +16,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv
 from agents.keras_agents import DDPGBaseAgent
+from opcua_empa.run_opcua import try_opcua
 from util.util import *
 
 
@@ -27,11 +27,9 @@ def run_tests() -> None:
         AssertionError: If a test fails.
     """
     # Do all the tests.
-    test_hyperopt()
     test_rnn_models()
     test_dyn_model()
     test_composite()
-    test_test_env()
     test_rest_client()
     get_data_test()
     # test_align()
@@ -296,6 +294,9 @@ def get_model(name: str, ds: Dataset,
 def curr_tests(ds: Dataset = None) -> None:
     """The code that I am currently experimenting with."""
 
+    # try_opcua()
+    # return
+
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
 
@@ -317,7 +318,7 @@ def curr_tests(ds: Dataset = None) -> None:
         open_agent = ConstHeating(env, 1.0)
         closed_agent = ConstHeating(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        env.analyze_agent([open_agent, closed_agent, rule_based_agent])
+        # env.analyze_agent([open_agent, closed_agent, rule_based_agent])
 
         # Choose agent and fit to env.
         if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
@@ -336,7 +337,7 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    run_tests()
+    # run_tests()
 
     # Full test model
     curr_tests()
