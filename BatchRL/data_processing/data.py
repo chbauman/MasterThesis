@@ -9,10 +9,8 @@ from util.numerics import align_ts, trf_mean_and_std, add_mean_and_std, check_in
     nan_array_equal, find_disjoint_streaks, find_all_streaks
 from util.util import *
 from rest.client import DataStruct, save_dir
-from util.visualize import plot_time_series, plot_all, plot_single, \
-    preprocess_plot_path, \
-    plot_multiple_time_series, plot_dataset, plot_dir, \
-    stack_compare_plot
+from util.visualize import plot_time_series, plot_all, plot_single, preprocess_plot_path, \
+    plot_multiple_time_series, plot_dataset, plot_dir, stack_compare_plot
 
 # Data directories
 dataset_data_path = os.path.join(save_dir, "Datasets")
@@ -94,8 +92,8 @@ Room5RedData = DataStruct(id_list=[421110084,  # Temp
                           start_date='2017-01-01',
                           end_date='2019-12-31')
 
-DFAB_AddData = DataStruct(id_list=[421100168,  # Vorlauf Temp
-                                   421100170,  # Rücklauf Temp
+DFAB_AddData = DataStruct(id_list=[421100168,  # Inflow Temp
+                                   421100170,  # Outflow Temp
                                    421100174,  # Tot volume flow
                                    421100163,  # Pump running
                                    421110169,  # Speed of other pump
@@ -338,11 +336,18 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind: int, dt_mins,
                              pipeline_kwargs: Dict = None,
                              n_cols=None,
                              col_ind=None):
-    """Adds the series with index `ind` to curr_all_dat
+    """Adds the series with index `ind` to `curr_all_dat`
     and plots the series before and after processing
     with the pipeline.
 
     Args:
+        data: The raw data.
+        m: Metadata dictionary.
+        curr_all_dat: The data array with the current processed data.
+        dt_mins: Number of minutes in a timestep.
+        dt_init: The initial time.
+        plot_name: Name of the plot.
+        base_plot_dir: Plotting directory.
         title: Title for plot.
         pipeline_kwargs: Arguments for `pipeline_preps`.
         ind: Index of series in raw data.
@@ -354,7 +359,6 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind: int, dt_mins,
         pipeline_kwargs = {}
 
     dt_init_new = np.copy(dt_init)
-    all_dat = curr_all_dat
     if col_ind is None:
         col_ind = ind
     elif curr_all_dat is None and col_ind != 0:
@@ -592,8 +596,8 @@ def get_battery_data() -> 'Dataset':
 
 
 def get_weather_data(save_plots=True) -> 'Dataset':
-    """
-    Load and interpolate the weather data.
+    """Load and interpolate the weather data.
+
     TODO: Refactor with other functions!
     """
 
@@ -673,10 +677,10 @@ def get_weather_data(save_plots=True) -> 'Dataset':
 
 
 def get_UMAR_heating_data() -> List['Dataset']:
-    """
-    Load and interpolate all the necessary data.
+    """Load and interpolate all the necessary data.
 
-    :return: The dataset with the UMAR data.
+    Returns:
+        The dataset with the UMAR data.
     """
 
     dat_structs = [Room272Data, Room274Data]
@@ -706,12 +710,12 @@ def get_UMAR_heating_data() -> List['Dataset']:
 
 
 def get_DFAB_heating_data() -> List['Dataset']:
-    """
-    Loads or creates all data from DFAB then returns
+    """Loads or creates all data from DFAB then returns
     a list of all datasets. 4 for the rooms, one for the heating water
     and one with all the valves.
 
-    :return: list of all required datasets.
+    Returns:
+        List of all required datasets.
     """
     data_list = []
     dt_mins = 15
@@ -796,29 +800,29 @@ def compute_DFAB_energy_usage(show_plots=True):
     n_valves = len(valve_room_allocation)
 
     # Loop over rooms and compute flow per room
-    A = np.empty((n_not_nans, n_rooms), dtype=np.float32)
+    a_mat = np.empty((n_not_nans, n_rooms), dtype=np.float32)
     for i, room_nr in room_dict.items():
         room_valves = v_dat_not_nan[:, valve_room_allocation == room_nr]
-        A[:, i] = np.mean(room_valves, axis=1)
+        a_mat[:, i] = np.mean(room_valves, axis=1)
     b = w_dat_not_nan[:, 2]
-    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset=True)
+    x = solve_ls(a_mat[usable][first_n_del:], b[usable][first_n_del:], offset=True)
     print("Flow", x)
 
     # Loop over rooms and compute flow per room
-    A = np.empty((n_not_nans, n_valves), dtype=np.float32)
+    a_mat = np.empty((n_not_nans, n_valves), dtype=np.float32)
     for i in range(n_valves):
-        A[:, i] = v_dat_not_nan[:, i]
+        a_mat[:, i] = v_dat_not_nan[:, i]
     b = w_dat_not_nan[:, 2]
-    x, fitted = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], offset=False, ret_fit=True)
+    x, fitted = solve_ls(a_mat[usable][first_n_del:], b[usable][first_n_del:], offset=False, ret_fit=True)
     print("Flow per valve", x)
 
-    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], non_neg=True)
+    x = solve_ls(a_mat[usable][first_n_del:], b[usable][first_n_del:], non_neg=True)
     print("Non Negative Flow per valve", x)
-    x = solve_ls(A[usable][first_n_del:], b[usable][first_n_del:], non_neg=True, offset=True)
+    x = solve_ls(a_mat[usable][first_n_del:], b[usable][first_n_del:], non_neg=True, offset=True)
     print("Non Negative Flow per valve with offset", x)
 
     # stack_compare_plot(A[usable][first_n_del:], [21 * b[usable][first_n_del:], 21 * fitted], title="Valve model")
-    stack_compare_plot(A[usable][first_n_del:], [21 * 0.0286 * np.ones(b[usable][first_n_del:].shape), 21 * fitted],
+    stack_compare_plot(a_mat[usable][first_n_del:], [21 * 0.0286 * np.ones(b[usable][first_n_del:].shape), 21 * fitted],
                        title="Valve model")
     # PO
     x[:] = 0.0286
@@ -835,8 +839,6 @@ def compute_DFAB_energy_usage(show_plots=True):
                     title_and_ylab=['Sum All Valves', '0/1'],
                     save_name=tot_room_valves_plot_path)
 
-    raise NotImplementedError("Hahaha")
-
     flow_rates_f3 = np.array([134, 123, 129, 94, 145, 129, 81], dtype=np.float32)
     print(np.sum(flow_rates_f3), "Flow rates sum, 3. OG")
     del_temp = 13
@@ -849,8 +851,8 @@ def compute_DFAB_energy_usage(show_plots=True):
     flow_rates_f45 = h_to_s / (c_p * d_w * del_temp) * powers_f45
     print(flow_rates_f45)
 
-    tot_n_vals_open = np.sum(v_dat, axis=1)
-    dTemp = w_dat[:, 0] - w_dat[:, 1]
+    tot_n_val_open = np.sum(v_dat, axis=1)
+    d_temp = w_dat[:, 0] - w_dat[:, 1]
 
     # Prepare output
     out_dat = np.empty((aligned_len, n_rooms), dtype=np.float32)
@@ -865,7 +867,7 @@ def compute_DFAB_energy_usage(show_plots=True):
         plot_dataset(w_dataset, show=False,
                      title_and_ylab=["Water Temps", "Temperature"],
                      save_name=w_plot_path)
-        plot_single(dTemp, m_room, use_time=True, show=False,
+        plot_single(d_temp, m_room, use_time=True, show=False,
                     title_and_ylab=["Temperature Difference", "DT"],
                     scale_back=False,
                     save_name=dw_plot_path)
@@ -876,10 +878,10 @@ def compute_DFAB_energy_usage(show_plots=True):
         room_sum_valves = np.sum(room_valves, axis=1)
 
         # Divide ignoring division by zero
-        room_energy = dTemp * np.divide(room_sum_valves,
-                                        tot_n_vals_open,
-                                        out=np.zeros_like(room_sum_valves),
-                                        where=tot_n_vals_open != 0)
+        room_energy = d_temp * np.divide(room_sum_valves,
+                                         tot_n_val_open,
+                                         out=np.zeros_like(room_sum_valves),
+                                         where=tot_n_val_open != 0)
 
         m_room['description'] = 'Room ' + room_nr
         if show_plots:

@@ -8,7 +8,6 @@ from util.util import *
 
 
 class RLDynEnv(DynEnv, ABC):
-
     """The base class for RL environments based on `BaseDynamicsModel`.
 
     Only working for one control input.
