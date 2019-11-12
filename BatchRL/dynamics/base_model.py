@@ -756,6 +756,8 @@ def construct_test_ds(n: int = 201, c_series: int = 3) -> Dataset:
 def test_dyn_model() -> None:
     """Tests the dynamic model base class with the TestModel.
 
+    DEPRECATED: Use unit tests!
+
     Returns:
         None
 

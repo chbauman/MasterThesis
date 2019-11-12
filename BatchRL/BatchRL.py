@@ -308,7 +308,7 @@ def curr_tests(ds: Dataset = None) -> None:
     ]
 
     # Test all models
-    for m_name in full_mod_names:
+    for m_name in full_mod_names[:1]:
         # Load the model and init env
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
         # m.analyze()
@@ -318,7 +318,8 @@ def curr_tests(ds: Dataset = None) -> None:
         open_agent = ConstHeating(env, 1.0)
         closed_agent = ConstHeating(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        # env.analyze_agent([open_agent, closed_agent, rule_based_agent])
+        env.analyze_agent([open_agent, closed_agent, rule_based_agent])
+        continue
 
         # Choose agent and fit to env.
         if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
@@ -328,6 +329,7 @@ def curr_tests(ds: Dataset = None) -> None:
             env.analyze_agent(agent_list)
             print(env.eval_agents(agent_list, n_steps=500))
 
+    raise NotImplementedError("WTF")
     pass
 
 

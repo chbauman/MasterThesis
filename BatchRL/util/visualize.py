@@ -564,11 +564,17 @@ def plot_residuals_acf(residuals: np.ndarray,
 
 
 def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
-                        rewards: np.ndarray, save_path: str = None) -> None:
+                        rewards: np.ndarray,
+                        ds: 'Dataset',
+                        agent_names: Sequence[str],
+                        save_path: str = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Add info to individual plots.
     """
+    assert len(agent_names) == actions.shape[0], "Not the right number of names!"
+    assert rewards.shape[0] == actions.shape[0], "Not the right shapes!"
+
     # Extract shapes
     n_agents, episode_len, n_feats = states.shape
     n_actions = actions.shape[-1]
@@ -590,18 +596,28 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     con_axs[0].set_title("Control inputs")
     state_axs[0].set_title("States")
 
+    # Find legends
+    n_tot_vars = ds.d
+    c_inds = ds.c_inds
+    control_descs = [ds.descriptions[c] for c in c_inds]
+    state_descs = [ds.descriptions[c] for c in range(n_tot_vars) if c not in c_inds]
+
     # Plot all the things!
     for k in range(n_agents):
         # Plot actions
         for i in range(n_actions):
-            con_axs[i].plot(actions[k, :, i])
+            con_axs[i].plot(actions[k, :, i], label=agent_names[k])
 
         # Plot states
         for i in range(n_feats):
-            state_axs[i].plot(states[k, :, i])
+            state_axs[i].plot(states[k, :, i], label=agent_names[k])
 
         # Plot reward
         rew_ax.plot(rewards[k, :])
+
+    con_axs[0].legend()
+    state_axs[0].legend()
+    rew_ax.legend()
 
     # Save
     if save_path is not None:

@@ -216,6 +216,8 @@ class DynEnv(ABC, gym.Env):
         elif start_ind >= self.n_start_data:
             raise ValueError("start_ind is too large!")
 
+        assert not np.allclose(trajectories[0], trajectories[1]), "WTF 2??"
+
         for a_id, a in enumerate(agents):
             # Check that agent references this environment
             if not a.env == self:
@@ -239,6 +241,8 @@ class DynEnv(ABC, gym.Env):
                 rewards[a_id, count] = rew
                 count += 1
 
+        # assert not np.allclose(trajectories[0], trajectories[1]), "WTF??"
+
         # Scale the data to the right values
         trajectories = self.m.rescale_output(trajectories, out_put=True)
         action_sequences = self.scale_actions(action_sequences)
@@ -247,7 +251,8 @@ class DynEnv(ABC, gym.Env):
         name_list = [a.name for a in agents]
         agent_names = '_'.join(name_list)
         analysis_plot_path = self.get_plt_path("AgentAnalysis_" + str(start_ind) + "_" + agent_names)
-        plot_env_evaluation(action_sequences, trajectories, rewards,
+        plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
+                            name_list,
                             analysis_plot_path)
 
     def eval_agents(self, agent_list: Agents, n_steps: int = 100) -> np.ndarray:
