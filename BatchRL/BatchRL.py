@@ -228,7 +228,7 @@ def get_model(name: str, ds: Dataset,
         # temperature model.
         inds = {
             'out_inds': np.array([5], dtype=np.int32),
-            'in_inds': np.array([0, 2, 5, 6, 7], dtype=np.int32),
+            'in_inds': np.array([0, 2, 4, 5, 6, 7], dtype=np.int32),
         }
         if from_hop:
             return RNNDynamicModel.from_best_hp(**fix_pars, **inds)
@@ -307,17 +307,19 @@ def curr_tests(ds: Dataset = None) -> None:
     ]
 
     # Test all models
-    for m_name in full_mod_names[:1]:
+    for m_name in full_mod_names[2:]:
         # Load the model and init env
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
         # m.analyze()
-        env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.0)
+        env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3)
 
         # Define default agents and compare
         open_agent = ConstHeating(env, 1.0)
         closed_agent = ConstHeating(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        env.analyze_agent([open_agent, closed_agent, rule_based_agent], use_noise=True)
+        env.analyze_agent([open_agent, closed_agent, rule_based_agent],
+                          use_noise=False,
+                          max_steps=1)
         continue
 
         # Choose agent and fit to env.
@@ -327,8 +329,6 @@ def curr_tests(ds: Dataset = None) -> None:
             agent_list = [open_agent, closed_agent, rule_based_agent, agent]
             env.analyze_agent(agent_list)
             print(env.eval_agents(agent_list, n_steps=500))
-
-    raise NotImplementedError("WTF")
 
 
 def main() -> None:
@@ -341,6 +341,7 @@ def main() -> None:
 
     # Full test model
     curr_tests()
+    return
 
     # Train and analyze the battery model
     # run_battery()

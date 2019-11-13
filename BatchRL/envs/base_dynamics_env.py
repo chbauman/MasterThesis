@@ -143,6 +143,7 @@ class DynEnv(ABC, gym.Env):
         self.hist[-1, -self.act_dim:] = action
         hist_res = np.copy(self.hist).reshape((1, -1, self.state_dim))
         # hist_trf = move_inds_to_back(hist_res, self.m.data.c_inds)
+        print("Model Input", hist_res[..., -1, :])
         curr_pred = self.m.predict(hist_res)[0]
         if self.use_noise:
             curr_pred += self.disturb_fac * self.m.disturb()
@@ -187,7 +188,8 @@ class DynEnv(ABC, gym.Env):
     def analyze_agent(self, agents: Union[List, base_agent.AgentBase],
                       fitted: bool = True,
                       use_noise: bool = False,
-                      start_ind: int = None) -> None:
+                      start_ind: int = None,
+                      max_steps: int = None) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:
@@ -199,6 +201,9 @@ class DynEnv(ABC, gym.Env):
         # Make function compatible for single agent input
         if not isinstance(agents, list):
             agents = [agents]
+
+        if max_steps is None:
+            max_steps = 100000
 
         # Define arrays to save trajectories
         n_non_c_states = self.state_dim - self.act_dim
@@ -216,8 +221,6 @@ class DynEnv(ABC, gym.Env):
         elif start_ind >= self.n_start_data:
             raise ValueError("start_ind is too large!")
 
-        assert not np.allclose(trajectories[0], trajectories[1]), "WTF 2??"
-
         for a_id, a in enumerate(agents):
             # Check that agent references this environment
             if not a.env == self:
@@ -233,15 +236,13 @@ class DynEnv(ABC, gym.Env):
             count = 0
 
             # Evaluate agent and save states, actions and reward
-            while not episode_over:
+            while not episode_over and count < max_steps:
                 curr_action = a.get_action(curr_state)
                 curr_state, rew, episode_over, _ = self.step(curr_action)
                 action_sequences[a_id, count, :] = curr_action
-                trajectories[a_id, count, :] = curr_state
+                trajectories[a_id, count, :] = np.copy(curr_state)
                 rewards[a_id, count] = rew
                 count += 1
-
-        # assert not np.allclose(trajectories[0], trajectories[1]), "WTF??"
 
         # Scale the data to the right values
         trajectories = self.m.rescale_output(trajectories, out_put=True)
