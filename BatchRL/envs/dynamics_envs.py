@@ -223,8 +223,8 @@ class BatteryEnv(RLDynEnv):
         at the end of the episode.
         """
         # Compute energy used
-        action_rescaled = self._to_scaled(action, True)
-        action_pen = 1000 * linear_oob_penalty(action, self.action_range[0])
+        action_rescaled = self._to_scaled(action, True)[0]
+        action_pen = 1000 * linear_oob_penalty(action_rescaled, self.action_range[0])
         assert action_pen <= 0.0, "WTF"
         energy_used = action_rescaled * self.alpha
         if self.p is not None:
@@ -290,4 +290,5 @@ class BatteryEnv(RLDynEnv):
         action = np.clip(chosen_action, ac_min, ac_max)
 
         # Call the step function of DynEnv to avoid another scaling.
+        # TODO: Return info about action clipping. (Fallback control!)
         return DynEnv.step(self, action)

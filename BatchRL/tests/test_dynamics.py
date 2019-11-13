@@ -8,6 +8,7 @@ from hyperopt.pyll import scope as ho_scope
 from data_processing.data import Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.base_model import BaseDynamicsModel, construct_test_ds
+from dynamics.battery_model import BatteryModel
 from dynamics.composite import CompositeModel
 from dynamics.const import NoDisturbanceModel, ConstModel
 from util.numerics import copy_arr_list
@@ -326,3 +327,49 @@ class TestComposite(TestCase):
                                    in_indices=self.inds_123)
         mc5 = CompositeModel(self.ds_1, [m9, m10], new_name="CompositeTest4")
         mc5.analyze(plot_acf=False)
+
+
+def get_test_battery_model(n: int = 150,
+                           noise: float = 1.0,
+                           linear: bool = True):
+    data = np.ones((n, 2)) * np.array([50, 0.0])
+    ds2 = construct_test_ds(n, c_series=1, n_feats=2)
+    ds2.data = data
+    if noise > 0.0:
+        ds2.data += np.random.normal(0.0, noise, (n, 2))
+        ds2.standardize()
+    ds2.split_data()
+    m2 = BatteryModel(ds2)
+    m2.name = "BatteryTest"
+    par3 = 0 if linear else 1
+    m2.params = np.array([0, 1, par3])
+    return m2
+
+
+class TestBattery(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Define models
+        n = 150
+        self.m = get_test_battery_model(n, noise=0.0, linear=True)
+        self.m2 = get_test_battery_model(n, noise=1.0, linear=False)
+
+    def test_battery(self):
+        n = 10
+        in_data = np.ones((n, 1, 2))
+        soc = np.arange(n) + 30
+        in_data[:, 0, 0] = soc
+        p = self.m.predict(in_data)
+        self.assertTrue(np.array_equal(p.reshape(n), soc + 1))
+
+    def test_nonlinear_battery(self):
+        n = 5
+        in_data = np.ones((n, 1, 2))
+        soc = np.arange(n) + 30
+        in_data[:, 0, 0] = soc
+        p = self.m2.predict(in_data)
+        self.assertTrue(np.array_equal(p.reshape(n), soc + 2))
+
+    pass

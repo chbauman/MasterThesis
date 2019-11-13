@@ -4,6 +4,7 @@ import numpy as np
 
 from agents import agents_heuristic
 from dynamics.base_model import construct_test_ds, BaseDynamicsModel
+from dynamics.battery_model import BatteryModel
 from envs.dynamics_envs import RLDynEnv
 from tests.test_dynamics import TestModel, ConstTestModelControlled
 from util.numerics import rem_mean_and_std, add_mean_and_std
@@ -117,3 +118,13 @@ class TestEnvs(TestCase):
         cont_ac2 = self.test_env._to_scaled(my_c, True)
         exp_ac2 = add_mean_and_std(np.array([my_c]), self.test_env.scaling[c_ind])
         self.assertTrue(np.array_equal(cont_ac2, exp_ac2), "_to_scaled not correct!")
+
+
+class TestBatteryEnv(TestCase):
+    """Tests the battery RL environment.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.m = BatteryModel()
