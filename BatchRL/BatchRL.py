@@ -319,7 +319,7 @@ def curr_tests(ds: Dataset = None) -> None:
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
         env.analyze_agent([open_agent, closed_agent, rule_based_agent],
                           use_noise=False,
-                          max_steps=1)
+                          max_steps=None)
         continue
 
         # Choose agent and fit to env.
@@ -337,10 +337,11 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    run_tests()
+    # run_tests()
 
     # Full test model
-    # curr_tests()
+    curr_tests()
+    return
 
     # Train and analyze the battery model
     # run_battery()
@@ -365,13 +366,15 @@ def main() -> None:
 
     # Hyper-optimize model(s)
     for name in needed:
-        print(f"Optimizing: {name}")
         mod = get_model(name, ds, rnn_consts, from_hop=False)
         if isinstance(mod, HyperOptimizableModel):
-            optimize_model(mod)
+            print(f"Optimizing: {name}")
+            if EULER:
+                optimize_model(mod)
+            else:
+                print("Not optimizing!")
         else:
             raise ValueError(f"Model {name} not hyperparameter-optimizable!")
-        pass
 
     all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True) for nm in needed}
 

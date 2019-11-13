@@ -586,9 +586,9 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
 
     # We'll use a separate GridSpecs for controls, states and rewards
     fig = plt.figure()
-    gs_con = plt.GridSpec(tot_n_plots, 1, hspace=0, top=1.0, bottom=0.0, figure=fig)
-    gs_state = plt.GridSpec(tot_n_plots, 1, hspace=0.2, top=0.9, bottom=0.1, figure=fig)
-    gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=0, top=1.0, bottom=0.0, figure=fig)
+    gs_con = plt.GridSpec(tot_n_plots, 1, hspace=0.4, top=1.0, bottom=0.0, figure=fig)
+    gs_state = plt.GridSpec(tot_n_plots, 1, hspace=0.4, top=1.0, bottom=0.0, figure=fig)
+    gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=0.4, top=1.0, bottom=0.0, figure=fig)
 
     # Define axes
     rew_ax = fig.add_subplot(gs_rew[-1, :])
@@ -604,9 +604,9 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     # Set titles
     rew_ax.set_title("Rewards")
     for k in range(n_actions):
-        con_axs[k].set_title(f"Control inputs: {control_descs[k]}")
+        con_axs[k].set_title(f"Control inputs: {clean_desc(control_descs[k])}")
     for k in range(n_feats):
-        state_axs[k].set_title(f"State: {state_descs[k]}")
+        state_axs[k].set_title(f"State: {clean_desc(state_descs[k])}")
 
     # Plot all the things!
     for k in range(n_agents):
