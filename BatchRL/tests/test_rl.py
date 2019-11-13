@@ -6,7 +6,7 @@ from agents import agents_heuristic
 from dynamics.base_model import construct_test_ds, BaseDynamicsModel
 from envs.dynamics_envs import RLDynEnv
 from tests.test_dynamics import TestModel, ConstTestModelControlled
-from util.numerics import rem_mean_and_std
+from util.numerics import rem_mean_and_std, add_mean_and_std
 from util.util import Arr
 
 
@@ -114,3 +114,6 @@ class TestEnvs(TestCase):
         c_ind = self.test_env.c_ind[0]
         exp_ac = rem_mean_and_std(np.array([my_c]), self.test_env.scaling[c_ind])
         self.assertTrue(np.array_equal(cont_ac, exp_ac), "_to_scaled not correct!")
+        cont_ac2 = self.test_env._to_scaled(my_c, True)
+        exp_ac2 = add_mean_and_std(np.array([my_c]), self.test_env.scaling[c_ind])
+        self.assertTrue(np.array_equal(cont_ac2, exp_ac2), "_to_scaled not correct!")
