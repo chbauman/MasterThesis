@@ -6,7 +6,7 @@ import numpy as np
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
 from envs.base_dynamics_env import DynEnv
-from util.numerics import trf_mean_and_std, add_mean_and_std
+from util.numerics import trf_mean_and_std, add_mean_and_std, rem_mean_and_std
 from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list
 
 RangeT = Tuple[Num, Num]
@@ -185,6 +185,7 @@ class BatteryEnv(RLDynEnv):
     alpha: float = 1.0  #: Weight factor for reward.
     action_range: Sequence = (-100, 100)  #: The requested active power range.
     soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
+    scaled_soc_bd: np.ndarray = None  #: `soc_bound` scaled to the model space.
     req_soc: float = 60.0  #: Required SoC at end of episode.
     prev_pred: np.ndarray  #: The previous prediction.
     m: BatteryModel  #: The battery model.
@@ -200,6 +201,8 @@ class BatteryEnv(RLDynEnv):
         self.p = p
         assert p is None, "Cost profile does not make sense here!"
         # TODO: Remove cost profile from model!
+
+        self.scaled_soc_bd = rem_mean_and_std(np.array(self.soc_bound), self.scaling[0])
 
         # Check model
         assert len(m.out_inds) == 1, "Model not suited for this environment!!"
@@ -291,6 +294,15 @@ class BatteryEnv(RLDynEnv):
         extra = {'clip_action': action}
 
         # Call the step function of DynEnv to avoid another scaling.
-        # TODO: Return info about action clipping. (Fallback control!)
         s, r, e, _ = DynEnv.step(self, action)
         return s, r, e, extra
+
+    def reset(self, *args, **kwargs) -> np.ndarray:
+        super().reset(*args, **kwargs)
+        # Clip the values to the valid SoC range!
+        if self.scaled_soc_bd is None:
+            self.scaled_soc_bd = rem_mean_and_std(np.array(self.soc_bound), self.m.data.scaling[0])
+        self.hist[:, 0] = np.clip(self.hist[:, 0],
+                                  self.scaled_soc_bd[0],
+                                  self.scaled_soc_bd[1])
+        return np.copy(self.hist[-1, :-self.act_dim])
