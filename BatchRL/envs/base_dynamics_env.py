@@ -59,7 +59,7 @@ class DynEnv(ABC, gym.Env):
         self.m = m
         if name is not None:
             dist_ex = make_param_ext([("DF", disturb_fac)])
-            self.name = name + dist_ex
+            self.name = name + dist_ex + "_DATA_" + m.name
         else:
             self.name = "RLEnv_" + m.name
         self.plot_path = os.path.join(rl_plot_path, self.name)

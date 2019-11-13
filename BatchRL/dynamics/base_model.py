@@ -371,7 +371,8 @@ class BaseDynamicsModel(KerasBase, ABC):
         return os.path.join(dir_name, name)
 
     def const_nts_plot(self, predict_data, n_list: Sequence[int], ext: str = '', *,
-                       predict_ind: int = None, n_ts_off: int = 0) -> None:
+                       predict_ind: int = None, n_ts_off: int = 0,
+                       overwrite: bool = True) -> None:
         """Creates a plot that shows the performance of the
         trained model when predicting a fixed number of timesteps into
         the future.
@@ -385,14 +386,21 @@ class BaseDynamicsModel(KerasBase, ABC):
             ext: Extension for the name of the plot.
             predict_ind: Which series to predict.
             n_ts_off: Number of time steps to shift the initial time for correct plotting.
-
-        Returns:
-            None
+            overwrite: Whether to overwrite existing plot files.
         """
+        # Get data
         d = self.data
         in_d, out_d = predict_data
         s = in_d.shape
         dt = d.dt
+
+        # Check if plot file already exists
+        time_str = mins_to_str(dt * n_list[0])
+        ext_0 = "0_" + ext if predict_ind is None else ext
+        name = time_str + 'Ahead' + ext_0 + '.pdf'
+        plot_path = self.get_plt_path(name)
+        if not overwrite and os.path.isfile(plot_path):
+            return
 
         # Plot for all n
         if predict_ind is not None:
@@ -440,7 +448,8 @@ class BaseDynamicsModel(KerasBase, ABC):
 
     def one_week_pred_plot(self, dat_test, ext: str = None,
                            predict_ind: int = None,
-                           n_ts_off: int = 0) -> None:
+                           n_ts_off: int = 0,
+                           overwrite: bool = True) -> None:
         """Makes a plot by continuously predicting with
         the fitted model and comparing it to the ground
         truth. If predict_ind is None, all series that can be
@@ -452,12 +461,17 @@ class BaseDynamicsModel(KerasBase, ABC):
             dat_test: Data to use for making plots.
             ext: String extension for the filename.
             n_ts_off: Time step offset of data used.
-
-        Returns:
-            None
+            overwrite: Whether to overwrite existing plot files.
         """
-
+        # Check if plot file already exists
         ext = "_" if ext is None else "_" + ext
+        ext_0 = "0_" + ext if predict_ind is None else ext
+        name = 'OneWeek_' + ext_0 + ".pdf"
+        plot_path = self.get_plt_path(name)
+        if not overwrite and os.path.isfile(plot_path):
+            return
+
+        # Get data
         d = self.data
         in_dat_test, out_dat_test = dat_test
         s = in_dat_test.shape
@@ -497,14 +511,18 @@ class BaseDynamicsModel(KerasBase, ABC):
                          title_and_ylab=title_and_ylab,
                          save_name=self.get_plt_path('OneWeek' + ext))
 
-    def analyze(self, plot_acf: bool = True, n_steps: Sequence = (1, 4, 20)) -> None:
+    def analyze(self, plot_acf: bool = True,
+                n_steps: Sequence = (1, 4, 20),
+                overwrite: bool = False) -> None:
         """Analyzes the trained model.
 
         Makes some plots using the fitted model and the streak data.
         Also plots the acf and the partial acf of the residuals.
 
-        Returns:
-            None
+        Args:
+            plot_acf: Whether to plot the acf of the residuals.
+            n_steps: The list with the number of steps for `const_nts_plot`.
+            overwrite: Whether to overwrite existing plot files.
         """
         print("Analyzing model {}".format(self.name))
         d = self.data
@@ -528,22 +546,18 @@ class BaseDynamicsModel(KerasBase, ABC):
         # Plot for fixed number of time-steps
         val_copy = copy_arr_list(dat_val)
         train_copy = copy_arr_list(dat_train)
-        self.const_nts_plot(val_copy, n_steps, ext='Validation_All', n_ts_off=n_val)
-        self.const_nts_plot(train_copy, n_steps, ext='Train_All', n_ts_off=n_train)
+        self.const_nts_plot(val_copy, n_steps, ext='Validation_All', n_ts_off=n_val,
+                            overwrite=overwrite)
+        self.const_nts_plot(train_copy, n_steps, ext='Train_All', n_ts_off=n_train,
+                            overwrite=overwrite)
 
         # Plot for continuous predictions
-        self.one_week_pred_plot(copy_arr_list(dat_val), "Validation_All", n_ts_off=n_val)
-        self.one_week_pred_plot(copy_arr_list(dat_train), "Train_All", n_ts_off=n_train)
-
-        # Make more predictions
-        # n_pred = len(self.out_inds)
-        # if n_pred > 1:
-        #     for k in range(n_pred):
-        #         ext = str(k) + "__"
-        #         self.one_week_pred_plot(copy_arr_list(dat_val), ext + "Validation",
-        #                                 predict_ind=k)
-        #         self.one_week_pred_plot(copy_arr_list(dat_train), ext + "Train",
-        #                                 predict_ind=k)
+        self.one_week_pred_plot(copy_arr_list(dat_val), "Validation_All",
+                                n_ts_off=n_val,
+                                overwrite=overwrite)
+        self.one_week_pred_plot(copy_arr_list(dat_train), "Train_All",
+                                n_ts_off=n_train,
+                                overwrite=overwrite)
 
     def analyze_6_days(self) -> None:
         """Analyzes this model using the 7 day streaks."""

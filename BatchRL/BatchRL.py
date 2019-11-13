@@ -341,7 +341,7 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    # curr_tests()
+    curr_tests()
 
     # Train and analyze the battery model
     run_battery()
