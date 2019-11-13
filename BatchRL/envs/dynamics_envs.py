@@ -1,10 +1,17 @@
 from abc import ABC, abstractmethod
+from typing import Sequence, Tuple, Any, List
+
+import numpy as np
 
 from envs.base_dynamics_env import DynEnv
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
 from util.numerics import trf_mean_and_std, add_mean_and_std, rem_mean_and_std
-from util.util import *
+from util.util import check_and_scale, make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list
+
+RangeT = Tuple[Num, Num]
+InRangeT = LOrEl[RangeT]  #: The type of action ranges.
+RangeListT = List[RangeT]
 
 
 class RLDynEnv(DynEnv, ABC):
@@ -12,7 +19,8 @@ class RLDynEnv(DynEnv, ABC):
 
     Only working for one control input.
     """
-    action_range: Sequence  #: The requested active power range.
+    action_range: RangeListT  #: The range of the actions.
+    action_range_scaled: np.ndarray  #: The range scaled to the whitened actions.
     scaling: np.ndarray = None  #: Whether the underlying `Dataset` was scaled.
     nb_actions: int  #: Number of actions if discrete else action space dim.
 
@@ -28,13 +36,18 @@ class RLDynEnv(DynEnv, ABC):
 
         if cont_actions and n_cont_actions is None:
             raise ValueError("Need to specify action space dimensionality!")
+        if not cont_actions:
+            raise NotImplementedError("This is deprecated!")
 
         # Save info
-        self.action_range = action_range
+        self.action_range = to_list(action_range)
+        assert len(self.action_range) == n_cont_actions, "False amount of action ranges!"
+
         self.nb_actions = n_disc_actions if not cont_actions else n_cont_actions
         self.cont_actions = cont_actions
+
         d = m.data
-        self.c_ind = d.c_inds[0]
+        self.c_ind = d.c_inds
         if np.all(d.is_scaled):
             self.scaling = d.scaling
 
@@ -45,11 +58,12 @@ class RLDynEnv(DynEnv, ABC):
             actions: The action to take.
         """
         if not self.cont_actions:
-            return check_and_scale(actions, self.nb_actions, self.action_range)
+            assert False, "Discrete actions are deprecated!"
+            # return check_and_scale(actions, self.nb_actions, self.action_range)
         return actions
 
     def _to_continuous(self, action):
-        """Converts discrete actions to the right range."""
+        """Converts actions to the right range."""
         cont_action = self.scale_actions(action)
         if self.scaling is None:
             return cont_action
@@ -234,7 +248,9 @@ class BatteryEnv(RLDynEnv):
 
         # Penalty for not having charged enough at the end of the episode.
         if self.n_ts > self.n_ts_per_eps - 1 and curr_pred < self.req_soc:
-            bound_pen += 2000 * linear_oob_penalty(curr_pred, [self.req_soc, 100])
+            not_enough = 2000 * linear_oob_penalty(curr_pred, [self.req_soc, 100])
+            bound_pen += not_enough
+            assert not_enough <= 0.0, "Model not working"
 
         # Total reward is the negative penalty minus energy used.
         tot_rew = -energy_used - bound_pen - action_pen
@@ -246,7 +262,8 @@ class BatteryEnv(RLDynEnv):
         b = self.soc_bound
         scaled_soc = self._get_scaled_soc(curr_pred)
         if scaled_soc > b[1] + thresh or scaled_soc < b[0] - thresh:
-            return True
+            raise AssertionError("Battery model wrong!!")
+            # return True
         return False
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:

@@ -9,7 +9,7 @@ import os
 import random
 from datetime import datetime
 from functools import wraps
-from typing import Union, List, Tuple, Any, Sequence
+from typing import Union, List, Tuple, Any, Sequence, TypeVar
 
 import numpy as np
 
@@ -31,12 +31,22 @@ def fix_seed(seed: int = SEED) -> None:
 # Type for general number
 Num = Union[int, float]
 
-# Type for general array, including 0-D ones, i.e. single numbers
+# Type for general array, including 0-D ones, i.e. single numbers.
 Arr = Union[Num, np.ndarray]
+
+# Type for list or single element of specified type.
+T = TypeVar('T')
+LOrEl = Union[Sequence[T], T]
 
 
 #######################################################################################################
 # Python stuff
+
+def to_list(lore: LOrEl) -> List:
+    if not isinstance(lore, list):
+        return [lore]
+    return lore
+
 
 def make_param_ext(l: List[Tuple[str, Any]]) -> str:
     """Converts a list of parameters to a string.

@@ -139,7 +139,6 @@ class DynEnv(ABC, gym.Env):
             The next state, the reward of having chosen that action and a bool
             determining if the episode is over. (And an empty dict)
         """
-        # print(f"Action: {action}")
         self.hist[-1, -self.act_dim:] = action
         hist_res = np.copy(self.hist).reshape((1, -1, self.state_dim))
         curr_pred = self.m.predict(hist_res)[0]

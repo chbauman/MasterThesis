@@ -6,7 +6,7 @@ import numpy as np
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
-    np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed
+    np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list
 
 
 class TestNumerics(TestCase):
@@ -189,6 +189,11 @@ class TestUtil(TestCase):
             raise e
         except Exception as e:
             raise AssertionError("Some error happened: {}".format(e))
+
+    def test_to_list(self):
+        self.assertEqual([1], to_list(1))
+        self.assertEqual([1], to_list([1]))
+        self.assertEqual(["1"], to_list("1"))
 
     def test_rem_first(self):
         # Test rem_first
