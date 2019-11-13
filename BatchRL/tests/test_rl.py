@@ -4,15 +4,18 @@ import numpy as np
 
 from agents import agents_heuristic
 from dynamics.base_model import construct_test_ds, BaseDynamicsModel
-from envs.base_dynamics_env import DynEnv
+from envs.dynamics_envs import RLDynEnv
 from tests.test_dynamics import TestModel, ConstTestModelControlled
+from util.numerics import rem_mean_and_std
 from util.util import Arr
 
 
-class TestDynEnv(DynEnv):
+class TestDynEnv(RLDynEnv):
     """The test environment."""
     def __init__(self, m: BaseDynamicsModel, max_eps: int = None):
-        super(TestDynEnv, self).__init__(m, "TestEnv", max_eps)
+        super(TestDynEnv, self).__init__(m, max_eps, cont_actions=True,
+                                         n_cont_actions=1,
+                                         name="TestEnv")
         d = m.data
         self.n_pred = 3
         assert d.n_c == 1 and d.d == 4, "Dataset needs 4 series of which one is controllable!!"
@@ -41,6 +44,8 @@ class TestEnvs(TestCase):
         # Define dataset
         self.n = 201
         self.test_ds = construct_test_ds(self.n)
+        self.test_ds.standardize()
+        self.test_ds.split_data()
         self.test_ds.c_inds = np.array([1])
         sh = self.test_ds.data.shape
         self.test_mod = TestModel(self.test_ds)
@@ -96,3 +101,16 @@ class TestEnvs(TestCase):
         assert np.allclose(first_out[0], sec_first_out[0]), "State output not correct!"
         assert first_out[1] == sec_first_out[1], "Rewards not correct!"
         assert first_out[2] == sec_first_out[2], "Episode termination not correct!"
+
+    def test_scaling(self):
+        my_c = 4.5
+        self.assertTrue(self.test_env2.scaling is None)
+        self.assertTrue(self.test_env.scaling is not None)
+
+        # Test _to_scaled
+        cont_ac_2 = self.test_env2._to_scaled(my_c)
+        self.assertTrue(np.array_equal(np.array([my_c]), cont_ac_2), "_to_scaled not correct!")
+        cont_ac = self.test_env._to_scaled(my_c)
+        c_ind = self.test_env.c_ind[0]
+        exp_ac = rem_mean_and_std(np.array([my_c]), self.test_env.scaling[c_ind])
+        self.assertTrue(np.array_equal(cont_ac, exp_ac), "_to_scaled not correct!")

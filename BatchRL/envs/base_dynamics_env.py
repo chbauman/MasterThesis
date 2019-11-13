@@ -34,14 +34,16 @@ class DynEnv(ABC, gym.Env):
     n_ts: int = 0  #: The current number of timesteps.
     hist: np.ndarray  #: 2D array with current state.
 
+    # The current data to sample initial conditions from.
     train_data: np.ndarray  #: The training data.
     train_indices: np.ndarray  #: The indices corresponding to `train_data`.
     n_start_data: int  #: The number of possible initializations using the training data.
 
-    day_ind: int = 0  #: The index of the day in `train_days`.
+    # Info about the current episode.
     use_noise: bool = True  #: Whether to add noise when simulating.
 
     # The one day data
+    day_ind: int = 0  #: The index of the day in `train_days`.
     n_train_days: int  #: Number of training days
     n_ts_per_day: int  #: Number of time steps in a day
     train_days: List  #: The data of all days, where all data is available.

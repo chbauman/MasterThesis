@@ -3,11 +3,11 @@ from typing import Sequence, Tuple, Any, List
 
 import numpy as np
 
-from envs.base_dynamics_env import DynEnv
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
-from util.numerics import trf_mean_and_std, add_mean_and_std, rem_mean_and_std
-from util.util import check_and_scale, make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list
+from envs.base_dynamics_env import DynEnv
+from util.numerics import trf_mean_and_std, add_mean_and_std
+from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list
 
 RangeT = Tuple[Num, Num]
 InRangeT = LOrEl[RangeT]  #: The type of action ranges.
@@ -51,26 +51,20 @@ class RLDynEnv(DynEnv, ABC):
         if np.all(d.is_scaled):
             self.scaling = d.scaling
 
-    def scale_actions(self, actions):
-        """Scales the actions to the correct range.
-
-        Args:
-            actions: The action to take.
-        """
-        if not self.cont_actions:
-            assert False, "Discrete actions are deprecated!"
-            # return check_and_scale(actions, self.nb_actions, self.action_range)
-        return actions
-
-    def _to_continuous(self, action):
+    def _to_scaled(self, action: Arr, to_original: bool = False) -> np.ndarray:
         """Converts actions to the right range."""
+        if np.array(action).shape == ():
+            action = np.array([action])
         cont_action = self.scale_actions(action)
         if self.scaling is None:
             return cont_action
-        return rem_mean_and_std(cont_action, self.scaling[self.c_ind])
+        c_actions_scaled = np.empty_like(cont_action)
+        for k in range(self.nb_actions):
+            c_actions_scaled[k] = trf_mean_and_std(cont_action[k], self.scaling[self.c_ind[k]], not to_original)
+        return c_actions_scaled
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
-        return super().step(self._to_continuous(action))
+        return super().step(self._to_scaled(action))
 
 
 class FullRoomEnv(RLDynEnv):
@@ -94,7 +88,6 @@ class FullRoomEnv(RLDynEnv):
         d = m.data
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds
-        self.c_ind = d.c_inds[0]
         if np.all(d.is_scaled):
             self.scaling = d.scaling
 
@@ -119,9 +112,7 @@ class FullRoomEnv(RLDynEnv):
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
 
         # Compute energy used
-        action_rescaled = action
-        if self.scaling is not None:
-            action_rescaled = add_mean_and_std(action, self.scaling[self.c_ind])
+        action_rescaled = self._to_scaled(action, True)[0]
         w_temps = self.get_w_temp(curr_pred)
         d_temp = np.abs(w_temps[0] - w_temps[1])
         energy_used = np.clip(action_rescaled, 0.0, 1.0) * d_temp * self.alpha
@@ -212,7 +203,7 @@ class BatteryEnv(RLDynEnv):
 
         # Check model
         assert len(m.out_inds) == 1, "Model not suited for this environment!!"
-        assert self.action_range == (-100, 100), "action_range value was overridden!"
+        assert self.action_range == [(-100, 100)], "action_range value was overridden!"
 
         # Check underlying dataset
         assert d.d == 2 and d.n_c == 1, "Not the correct number of series in dataset!"
@@ -231,13 +222,10 @@ class BatteryEnv(RLDynEnv):
         the bounds are satisfied and whether the SoC is high enough
         at the end of the episode.
         """
-        # Penalty for actions out of bound
-        action_pen = 1000 * linear_oob_penalty(action, self.action_range)
-
         # Compute energy used
-        action_rescaled = action
-        if self.scaling is not None:
-            action_rescaled = add_mean_and_std(action, self.scaling[self.c_ind])
+        action_rescaled = self._to_scaled(action, True)
+        action_pen = 1000 * linear_oob_penalty(action, self.action_range[0])
+        assert action_pen <= 0.0, "WTF"
         energy_used = action_rescaled * self.alpha
         if self.p is not None:
             energy_used *= self.p(self.n_ts)
@@ -245,6 +233,8 @@ class BatteryEnv(RLDynEnv):
         # Penalty for constraint violation
         curr_pred = self._get_scaled_soc(curr_pred)
         bound_pen = 1000 * linear_oob_penalty(curr_pred, self.soc_bound)
+        if self.n_ts > 1:
+            assert bound_pen <= 0.0, "WTF2"
 
         # Penalty for not having charged enough at the end of the episode.
         if self.n_ts > self.n_ts_per_eps - 1 and curr_pred < self.req_soc:
@@ -273,7 +263,7 @@ class BatteryEnv(RLDynEnv):
         it is clipped, s.t. the bound constraints are always fulfilled.
         """
         # Get default min and max actions from bounds
-        min_ac, max_ac = self._to_continuous(np.array(self.action_range))
+        min_ac, max_ac = self._to_scaled(np.array(self.action_range))[0]
 
         # Find the minimum and maximum action satisfying SoC constraints.
         curr_state = self.get_curr_state()
@@ -296,7 +286,7 @@ class BatteryEnv(RLDynEnv):
                 ac_min = (min_ds_now - b) / c_max
 
         # Clip the actions.
-        chosen_action = self._to_continuous(action)
+        chosen_action = self._to_scaled(action)
         action = np.clip(chosen_action, ac_min, ac_max)
 
         # Call the step function of DynEnv to avoid another scaling.
