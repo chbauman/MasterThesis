@@ -248,12 +248,11 @@ class DynEnv(ABC, gym.Env):
         action_sequences = self.scale_actions(action_sequences)
 
         # Plot all the things
-        name_list = [a.name for a in agents]
+        name_list = [a.get_short_name() for a in agents]
         agent_names = '_'.join(name_list)
         analysis_plot_path = self.get_plt_path("AgentAnalysis_" + str(start_ind) + "_" + agent_names)
         plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
-                            name_list,
-                            analysis_plot_path)
+                            name_list, analysis_plot_path)
 
     def eval_agents(self, agent_list: Agents, n_steps: int = 100) -> np.ndarray:
 

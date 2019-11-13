@@ -33,6 +33,9 @@ class AgentBase(ABC):
         """
         pass
 
+    def get_short_name(self):
+        return self.name
+
     def eval(self, n_steps: int = 100, reset_seed: bool = False):
         """Evaluates the agent for a given number of steps.
 

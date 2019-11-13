@@ -59,7 +59,9 @@ def run_battery() -> None:
 
     # Define the environment and agents.
     bat_env = BatteryEnv(bat_mod,
-                         disturb_fac=0.3, cont_actions=True, n_cont_actions=1)
+                         disturb_fac=0.3,
+                         cont_actions=True,
+                         n_cont_actions=1)
     const_ag_1 = ConstHeating(bat_env, 6.0)  # Charge
     const_ag_2 = ConstHeating(bat_env, -3.0)  # Discharge
     dqn_agent = DDPGBaseAgent(bat_env)

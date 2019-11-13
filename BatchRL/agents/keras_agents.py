@@ -158,7 +158,7 @@ class DDPGBaseAgent(KerasBaseAgent):
                          ("L", layers),
                          ("REG", reg),
                          ("AR", action_range)]
-        name = "DDPG_" + env.name + make_param_ext(param_ex_list)
+        name = self.get_short_name() + "_" + env.name + make_param_ext(param_ex_list)
 
         # Initialize super class.
         super().__init__(env=env, name=name)
@@ -259,3 +259,6 @@ class DDPGBaseAgent(KerasBaseAgent):
         hist = self.m.fit(self.env, nb_steps=self.n_steps, visualize=False, verbose=1, nb_max_episode_steps=200)
         train_plot = self.env.get_plt_path(self.name + "_train_rewards")
         plot_rewards(hist, train_plot)
+
+    def get_short_name(self):
+        return "DDPG"
