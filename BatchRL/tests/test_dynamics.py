@@ -332,6 +332,7 @@ class TestComposite(TestCase):
 def get_test_battery_model(n: int = 150,
                            noise: float = 1.0,
                            linear: bool = True):
+    """Constructs a fitted battery model."""
     data = np.ones((n, 2)) * np.array([50, 0.0])
     ds2 = construct_test_ds(n, c_series=1, n_feats=2)
     ds2.data = data

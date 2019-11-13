@@ -210,6 +210,8 @@ class DynEnv(ABC, gym.Env):
         n_agents = len(agents)
         action_sequences = np.empty((n_agents, self.n_ts_per_eps, self.act_dim), dtype=np.float32)
         action_sequences.fill(np.nan)
+        clipped_action_sequences = np.empty((n_agents, self.n_ts_per_eps, self.act_dim), dtype=np.float32)
+        clipped_action_sequences.fill(np.nan)
         trajectories = np.empty((n_agents, self.n_ts_per_eps, n_non_c_states), dtype=np.float32)
         trajectories.fill(np.nan)
         rewards = np.empty((n_agents, self.n_ts_per_eps), dtype=np.float32)
@@ -238,8 +240,10 @@ class DynEnv(ABC, gym.Env):
             # Evaluate agent and save states, actions and reward
             while not episode_over and count < max_steps:
                 curr_action = a.get_action(curr_state)
-                curr_state, rew, episode_over, _ = self.step(curr_action)
+                curr_state, rew, episode_over, extra = self.step(curr_action)
                 action_sequences[a_id, count, :] = curr_action
+                if extra.get('clip_action'):
+                    clipped_action_sequences[a_id, count, :] = extra['clip_action']
                 trajectories[a_id, count, :] = np.copy(curr_state)
                 rewards[a_id, count] = rew
                 count += 1
@@ -247,6 +251,7 @@ class DynEnv(ABC, gym.Env):
         # Scale the data to the right values
         trajectories = self.m.rescale_output(trajectories, out_put=True)
         action_sequences = self.scale_actions(action_sequences)
+        clipped_action_sequences = self.scale_actions(clipped_action_sequences)
 
         # Plot all the things
         name_list = [a.get_short_name() for a in agents]

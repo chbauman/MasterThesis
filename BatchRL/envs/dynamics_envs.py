@@ -288,7 +288,9 @@ class BatteryEnv(RLDynEnv):
         # Clip the actions.
         chosen_action = self._to_scaled(action)
         action = np.clip(chosen_action, ac_min, ac_max)
+        extra = {'clip_action': action}
 
         # Call the step function of DynEnv to avoid another scaling.
         # TODO: Return info about action clipping. (Fallback control!)
-        return DynEnv.step(self, action)
+        s, r, e, _ = DynEnv.step(self, action)
+        return s, r, e, extra

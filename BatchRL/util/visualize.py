@@ -571,7 +571,8 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
                         rewards: np.ndarray,
                         ds,
                         agent_names: Sequence[str],
-                        save_path: str = None) -> None:
+                        save_path: str = None,
+                        extra_actions: np.ndarray = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Fix Size
@@ -579,21 +580,28 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     assert len(agent_names) == actions.shape[0], "Not the right number of names!"
     assert rewards.shape[0] == actions.shape[0], "Not the right shapes!"
 
+    # Check fallback actions
+    plot_extra = extra_actions is not None
+
     # Extract shapes
     n_agents, episode_len, n_feats = states.shape
     n_actions = actions.shape[-1]
-    tot_n_plots = n_actions + n_feats + 1
+    tot_n_plots = n_actions + n_feats + 1 + plot_extra * n_actions
 
     # We'll use a separate GridSpecs for controls, states and rewards
     fig = plt.figure()
     gs_con = plt.GridSpec(tot_n_plots, 1, hspace=0.4, top=1.0, bottom=0.0, figure=fig)
     gs_state = plt.GridSpec(tot_n_plots, 1, hspace=0.4, top=1.0, bottom=0.0, figure=fig)
     gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=0.4, top=1.0, bottom=0.0, figure=fig)
+    gs_con_fb = plt.GridSpec(tot_n_plots, 1, hspace=0.4, top=1.0, bottom=0.0, figure=fig)
 
     # Define axes
+    n_act_plots = n_actions * (1 + plot_extra)
     rew_ax = fig.add_subplot(gs_rew[-1, :])
     con_axs = [fig.add_subplot(gs_con[i, :], sharex=rew_ax) for i in range(n_actions)]
-    state_axs = [fig.add_subplot(gs_state[i, :], sharex=rew_ax) for i in range(n_actions, tot_n_plots - 1)]
+    state_axs = [fig.add_subplot(gs_state[i, :], sharex=rew_ax) for i in range(n_act_plots, tot_n_plots - 1)]
+    con_fb_axs = [fig.add_subplot(gs_con[i, :], sharex=rew_ax) for i in range(n_actions, n_act_plots)]
+    assert not plot_extra and con_fb_axs == [], "Something is wrong!"
 
     # Find legends
     n_tot_vars = ds.d
@@ -604,7 +612,9 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     # Set titles
     rew_ax.set_title("Rewards")
     for k in range(n_actions):
-        con_axs[k].set_title(f"Control inputs: {clean_desc(control_descs[k])}")
+        con_axs[k].set_title(f"Original control inputs: {clean_desc(control_descs[k])}")
+        if plot_extra:
+            con_fb_axs[k].set_title(f"Constrained control inputs: {clean_desc(control_descs[k])}")
     for k in range(n_feats):
         state_axs[k].set_title(f"State: {clean_desc(state_descs[k])}")
 
@@ -613,7 +623,8 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
         # Plot actions
         for i in range(n_actions):
             con_axs[i].plot(actions[k, :, i], label=agent_names[k])
-
+            if plot_extra:
+                con_fb_axs[i].plot(extra_actions[k, :, i], label=agent_names[k])
         # Plot states
         for i in range(n_feats):
             state_axs[i].plot(states[k, :, i], label=agent_names[k])
