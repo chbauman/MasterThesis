@@ -601,7 +601,7 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     con_axs = [fig.add_subplot(gs_con[i, :], sharex=rew_ax) for i in range(n_actions)]
     state_axs = [fig.add_subplot(gs_state[i, :], sharex=rew_ax) for i in range(n_act_plots, tot_n_plots - 1)]
     con_fb_axs = [fig.add_subplot(gs_con[i, :], sharex=rew_ax) for i in range(n_actions, n_act_plots)]
-    assert not plot_extra and con_fb_axs == [], "Something is wrong!"
+    assert plot_extra or con_fb_axs == [], "Something is wrong!"
 
     # Find legends
     n_tot_vars = ds.d

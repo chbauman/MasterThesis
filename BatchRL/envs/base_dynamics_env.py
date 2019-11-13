@@ -252,13 +252,15 @@ class DynEnv(ABC, gym.Env):
         trajectories = self.m.rescale_output(trajectories, out_put=True)
         action_sequences = self.scale_actions(action_sequences)
         clipped_action_sequences = self.scale_actions(clipped_action_sequences)
+        if np.allclose(clipped_action_sequences, action_sequences):
+            clipped_action_sequences = None
 
         # Plot all the things
         name_list = [a.get_short_name() for a in agents]
         agent_names = '_'.join(name_list)
         analysis_plot_path = self.get_plt_path("AgentAnalysis_" + str(start_ind) + "_" + agent_names)
         plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
-                            name_list, analysis_plot_path)
+                            name_list, analysis_plot_path, clipped_action_sequences)
 
     def eval_agents(self, agent_list: Agents, n_steps: int = 100) -> np.ndarray:
 
