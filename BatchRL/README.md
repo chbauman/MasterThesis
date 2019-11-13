@@ -3,6 +3,17 @@
 The file `BatchRL.py` is the main function, run this to run
 everything. 
 
+## Running tests
+
+The script `run_tests.ps1` let's you run some unit tests.
+If you are not using Powershell, just type:
+```console
+$ python -m unittest discover .
+```
+and it should run. It does not contain all tests, there is 
+another function in the main script `BatchRL.py` that runs some 
+tests that need some more time to run.
+
 ## Running on Euler
 
 ### Connecting to Euler using Putty
