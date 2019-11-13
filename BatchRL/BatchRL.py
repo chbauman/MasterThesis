@@ -66,7 +66,7 @@ def run_battery() -> None:
 
     # Fit agent and evaluate.
     dqn_agent.fit()
-    bat_env.analyze_agent([const_ag_1, const_ag_2, dqn_agent])
+    bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent])
 
 
 def choose_dataset(base_ds_name: str = "Model_Room43",
@@ -143,7 +143,7 @@ def analyze_control_influence(m: BaseDynamicsModel):
     env = FullRoomEnv(m, n_disc_actions=n_actions)
     const_ag_1 = ConstHeating(env, 0)
     const_ag_2 = ConstHeating(env, n_actions - 1)
-    env.analyze_agent([const_ag_1, const_ag_2])
+    env.analyze_agents_visually([const_ag_1, const_ag_2])
 
 
 def get_model(name: str, ds: Dataset,
@@ -307,7 +307,7 @@ def curr_tests(ds: Dataset = None) -> None:
     ]
 
     # Test all models
-    for m_name in full_mod_names[2:]:
+    for m_name in full_mod_names[:1]:
         # Load the model and init env
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
         # m.analyze()
@@ -317,9 +317,10 @@ def curr_tests(ds: Dataset = None) -> None:
         open_agent = ConstHeating(env, 1.0)
         closed_agent = ConstHeating(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        env.analyze_agent([open_agent, closed_agent, rule_based_agent],
-                          use_noise=False,
-                          max_steps=None)
+        env.analyze_agents_visually([open_agent, open_agent, closed_agent, rule_based_agent],
+                                    start_ind=0,
+                                    use_noise=False,
+                                    max_steps=None)
         continue
 
         # Choose agent and fit to env.
@@ -327,7 +328,7 @@ def curr_tests(ds: Dataset = None) -> None:
             agent = DDPGBaseAgent(env)
             agent.fit()
             agent_list = [open_agent, closed_agent, rule_based_agent, agent]
-            env.analyze_agent(agent_list)
+            env.analyze_agents_visually(agent_list)
             print(env.eval_agents(agent_list, n_steps=500))
 
 
@@ -340,11 +341,10 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    curr_tests()
-    return
+    # curr_tests()
 
     # Train and analyze the battery model
-    # run_battery()
+    run_battery()
 
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
@@ -382,7 +382,7 @@ def main() -> None:
     for name, m_to_use in all_mods.items():
         m_to_use.fit()
         print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
-        m_to_use.analyze()
+        # m_to_use.analyze()
         # analyze_control_influence(m_to_use)
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)

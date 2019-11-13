@@ -142,7 +142,6 @@ class DynEnv(ABC, gym.Env):
         # print(f"Action: {action}")
         self.hist[-1, -self.act_dim:] = action
         hist_res = np.copy(self.hist).reshape((1, -1, self.state_dim))
-        # hist_trf = move_inds_to_back(hist_res, self.m.data.c_inds)
         curr_pred = self.m.predict(hist_res)[0]
         if self.use_noise:
             curr_pred += self.disturb_fac * self.m.disturb()
@@ -184,11 +183,11 @@ class DynEnv(ABC, gym.Env):
     def render(self, mode='human'):
         print("Rendering not implemented!")
 
-    def analyze_agent(self, agents: Union[List, base_agent.AgentBase],
-                      fitted: bool = True,
-                      use_noise: bool = False,
-                      start_ind: int = None,
-                      max_steps: int = None) -> None:
+    def analyze_agents_visually(self, agents: Union[List, base_agent.AgentBase],
+                                fitted: bool = True,
+                                use_noise: bool = False,
+                                start_ind: int = None,
+                                max_steps: int = None) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:

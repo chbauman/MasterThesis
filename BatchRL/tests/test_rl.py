@@ -80,7 +80,7 @@ class TestEnvs(TestCase):
         # Test agent analysis
         const_ag_1 = agents_heuristic.ConstHeating(self.test_env, 0.0)
         const_ag_2 = agents_heuristic.ConstHeating(self.test_env, 1.0)
-        self.test_env.analyze_agent([const_ag_1, const_ag_2])
+        self.test_env.analyze_agents_visually([const_ag_1, const_ag_2])
 
     def test_reset(self):
         # Test deterministic reset

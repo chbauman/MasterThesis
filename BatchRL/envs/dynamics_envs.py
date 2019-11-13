@@ -69,9 +69,9 @@ class FullRoomEnv(RLDynEnv):
                  max_eps: int = 48,
                  temp_bounds: Sequence = None,
                  **kwargs):
-        # Find name
+        # Define name
         ext = make_param_ext([("NEP", max_eps), ("TBD", temp_bounds)])
-        name = "FullRoom" + ext
+        name = "FullRoom_DATA_" + m.name + ext
 
         # Initialize super class
         super(FullRoomEnv, self).__init__(m, max_eps, name=name, **kwargs)
