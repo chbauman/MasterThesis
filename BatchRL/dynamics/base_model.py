@@ -756,7 +756,7 @@ def construct_test_ds(n: int = 201, c_series: int = 3, n_feats: int = 4) -> Data
     """
     # Check input
     assert n_feats >= 2, "At least two columns required!"
-    assert c_series < n_feats, "Control index out of ounds!"
+    assert c_series < n_feats, "Control index out of bounds!"
 
     # Define dataset
     dat = np.empty((n, n_feats), dtype=np.float32)

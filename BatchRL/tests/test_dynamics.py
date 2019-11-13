@@ -356,6 +356,12 @@ class TestBattery(TestCase):
         self.m = get_test_battery_model(n, noise=0.0, linear=True)
         self.m2 = get_test_battery_model(n, noise=1.0, linear=False)
 
+    def test_eval(self):
+        val = 5.0
+        self.assertAlmostEqual(self.m._eval_at(val), val, msg="_eval_at sucks!")
+        self.assertAlmostEqual(self.m2._eval_at(val), 2 * val, msg="_eval_at sucks!")
+        self.assertAlmostEqual(self.m2._eval_at(-val), -val, msg="_eval_at sucks!")
+
     def test_battery(self):
         n = 10
         in_data = np.ones((n, 1, 2))
