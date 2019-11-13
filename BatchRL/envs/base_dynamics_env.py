@@ -143,7 +143,6 @@ class DynEnv(ABC, gym.Env):
         self.hist[-1, -self.act_dim:] = action
         hist_res = np.copy(self.hist).reshape((1, -1, self.state_dim))
         # hist_trf = move_inds_to_back(hist_res, self.m.data.c_inds)
-        print("Model Input", hist_res[..., -1, :])
         curr_pred = self.m.predict(hist_res)[0]
         if self.use_noise:
             curr_pred += self.disturb_fac * self.m.disturb()
@@ -197,6 +196,7 @@ class DynEnv(ABC, gym.Env):
             fitted: Whether the agents are already fitted.
             use_noise: Whether to use noise in the predictions.
             start_ind: Index of initial configuration, random if None.
+            max_steps: The maximum number of steps of an episode.
         """
         # Make function compatible for single agent input
         if not isinstance(agents, list):

@@ -337,11 +337,10 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    # run_tests()
+    run_tests()
 
     # Full test model
-    curr_tests()
-    return
+    # curr_tests()
 
     # Train and analyze the battery model
     # run_battery()
@@ -366,8 +365,12 @@ def main() -> None:
 
     # Hyper-optimize model(s)
     for name in needed:
-        # print(f"Optimizing: {name}")
-        # optimize_model(get_model(name, ds, rnn_consts, from_hop=False))
+        print(f"Optimizing: {name}")
+        mod = get_model(name, ds, rnn_consts, from_hop=False)
+        if isinstance(mod, HyperOptimizableModel):
+            optimize_model(mod)
+        else:
+            raise ValueError(f"Model {name} not hyperparameter-optimizable!")
         pass
 
     all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True) for nm in needed}
