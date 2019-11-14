@@ -67,7 +67,6 @@ class DynEnv(ABC, gym.Env):
         else:
             self.name = "RLEnv_" + m.name
         self.plot_path = os.path.join(rl_plot_path, self.name)
-        create_dir(self.plot_path)
 
         # Set attributes.
         self.disturb_fac = disturb_fac
@@ -102,6 +101,7 @@ class DynEnv(ABC, gym.Env):
             Full path of the plot file.
         """
         dir_name = self.plot_path
+        create_dir(dir_name)
         return os.path.join(dir_name, name)
 
     @abstractmethod

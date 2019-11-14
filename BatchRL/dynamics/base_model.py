@@ -117,7 +117,6 @@ class BaseDynamicsModel(KerasBase, ABC):
         self.n_pred_full = ds.d - ds.n_c
 
         self.plot_path = os.path.join(model_plot_path, self.name)
-        create_dir(self.plot_path)
 
     @staticmethod
     def _get_inds(indices: Optional[np.ndarray], ds: Dataset, in_inds: bool = True):
@@ -368,6 +367,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             Full path of the plot file.
         """
         dir_name = self.plot_path
+        create_dir(dir_name)
         return os.path.join(dir_name, name)
 
     def const_nts_plot(self, predict_data, n_list: Sequence[int], ext: str = '', *,
