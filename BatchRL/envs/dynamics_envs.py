@@ -55,6 +55,14 @@ class RLDynEnv(DynEnv, ABC):
         if np.all(d.is_scaled):
             self.scaling = d.scaling
 
+        # Scaled action range
+        ac_r_scales = np.empty((n_cont_actions, 2), dtype=np.float32)
+        for k in range(n_cont_actions):
+            ac_r_scales[k] = np.array(self.action_range[k])
+            if self.scaling is not None:
+                ac_r_scales[k] = rem_mean_and_std(ac_r_scales[k],
+                                                  self.scaling[self.c_ind[k]])
+
     def _to_scaled(self, action: Arr, to_original: bool = False) -> np.ndarray:
         """Converts actions to the right range."""
         if np.array(action).shape == ():

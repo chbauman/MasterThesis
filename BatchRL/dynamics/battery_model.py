@@ -82,7 +82,7 @@ class BatteryModel(BaseDynamicsModel):
 
         # Plot data
         labs = {'title': 'Battery Model', 'xlab': 'Active Power [kW]', 'ylab': r'$\Delta$ SoC [%]'}
-        before_plt_path = os.path.join(self.plot_path, "WithOutliers")
+        before_plt_path = self.get_plt_path("WithOutliers")
         scatter_plot(p, ds, lab_dict=labs,
                      show=False,
                      m_and_std_x=scale[1],
@@ -105,7 +105,7 @@ class BatteryModel(BaseDynamicsModel):
         y_pw_line = self._eval_at(x_pw_line)
 
         # Plot model
-        after_plt_path = os.path.join(self.plot_path, "Cleaned")
+        after_plt_path = self.get_plt_path("Cleaned")
         scatter_plot(masked_p, masked_ds, lab_dict=labs,
                      show=False,
                      add_line=False,

@@ -4,8 +4,9 @@ Define your custom keras layers here.
 There is also a function that tests the layers
 for some example input.
 """
-from keras import backend as K
+from keras import backend as K, activations
 from keras.layers import Layer, GaussianNoise
+import tensorflow as tf
 
 from data_processing.data import SeriesConstraint
 from util.util import *
@@ -393,3 +394,33 @@ class ExtractInput(Layer):
         if len(s0) != 3:
             raise ValueError("Only implemented for 3D tensors!")
         return s0[0], self.seq_len, s0[2]
+
+
+class TanhConstrainOutput(Layer):
+    """Activation layer.
+
+    Applies sigmoid to the tensor and scales the
+    intermediate output to assert an output in a given range
+    for each output feature.
+    """
+
+    def __init__(self, ranges: List[Tuple[Num, Num]], **kwargs):
+        """Initializes the layer.
+
+        Args:
+            ranges: List of intervals.
+        """
+        super().__init__(**kwargs)
+        self.low = np.array([i[0] for i in ranges], dtype=np.float32)
+        self.dist = np.array([i[1] - i[0] for i in ranges], dtype=np.float32)
+
+    def call(self, x, **kwargs):
+        """Returns clipped `x`."""
+        activated = activations.sigmoid(x)
+        l_tensor = tf.convert_to_tensor(self.low.reshape((1, -1)))
+        d_tensor = tf.convert_to_tensor(self.dist.reshape((1, -1)))
+        return activated * d_tensor + l_tensor
+
+    def compute_output_shape(self, input_shape):
+        """The shape stays the same."""
+        return input_shape

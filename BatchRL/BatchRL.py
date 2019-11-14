@@ -353,8 +353,7 @@ def main() -> None:
     # curr_tests()
 
     # Train and analyze the battery model
-    run_battery()
-    return
+    # run_battery()
 
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
@@ -392,7 +391,7 @@ def main() -> None:
     for name, m_to_use in all_mods.items():
         m_to_use.fit()
         print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
-        # m_to_use.analyze()
+        m_to_use.analyze()
         # analyze_control_influence(m_to_use)
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
