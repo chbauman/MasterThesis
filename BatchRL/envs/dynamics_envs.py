@@ -141,7 +141,6 @@ class FullRoomEnv(RLDynEnv):
 
 
 class CProf(ABC):
-
     name: str
 
     @abstractmethod
@@ -185,6 +184,7 @@ class BatteryEnv(RLDynEnv):
     """The environment for the battery model.
 
     """
+
     alpha: float = 1.0  #: Weight factor for reward.
     action_range: Sequence = (-100, 100)  #: The requested active power range.
     soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
@@ -229,36 +229,39 @@ class BatteryEnv(RLDynEnv):
             return trf_mean_and_std(unscaled_soc, self.scaling[0], remove=remove_mean)
         return unscaled_soc
 
-    def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
-        """Compute the reward for choosing action `action`.
+    def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
+        """Computes the energy used by dis- / charging the battery."""
 
-        The reward takes into account the energy used, whether
-        the bounds are satisfied and whether the SoC is high enough
-        at the end of the episode.
-        """
-        # Compute energy used
         action_rescaled = self._to_scaled(action, True)[0]
-        action_pen = 1000 * linear_oob_penalty(action_rescaled, self.action_range[0])
-        assert action_pen <= 0.0, "WTF"
+        assert linear_oob_penalty(action_rescaled, self.action_range[0]) <= 0.0, "WTF"
+
+        # Compute energy used
         energy_used = action_rescaled * self.alpha
+
+        # Compute costs (Deprecated!)
         if self.p is not None:
             energy_used *= self.p(self.n_ts)
+            assert False, "No pricing for battery only!"
 
-        # Penalty for constraint violation
+        # Check constraint violation
         curr_pred = self._get_scaled_soc(curr_pred)
-        bound_pen = 1000 * linear_oob_penalty(curr_pred, self.soc_bound)
-        if self.n_ts > 0:
-            assert bound_pen <= 0.0, "WTF2"
+        assert linear_oob_penalty(curr_pred, self.soc_bound) <= 0.0, "WTF2"
 
         # Penalty for not having charged enough at the end of the episode.
         if self.n_ts > self.n_ts_per_eps - 1 and curr_pred < self.req_soc:
-            not_enough = 2000 * linear_oob_penalty(curr_pred, [self.req_soc, 100])
-            bound_pen += not_enough
-            assert not_enough <= 0.0, "Model not working"
+            assert linear_oob_penalty(curr_pred, [self.req_soc, 100]) <= 0.0, "Model not working"
 
         # Total reward is the negative penalty minus energy used.
-        tot_rew = -energy_used - bound_pen - action_pen
-        return np.array(tot_rew).item() / 300
+        return np.array([energy_used])
+
+    def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
+        """Compute the reward for choosing action `action`.
+
+        The reward takes into account the energy used.
+        """
+        # Return minus the energy used.
+        e_used = self.detailed_reward(curr_pred, action)
+        return -e_used.item()
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
         """Declare the episode as over if the SoC lies too far without bounds."""

@@ -21,9 +21,9 @@ class TestDynEnv(RLDynEnv):
         self.n_pred = 3
         assert d.n_c == 1 and d.d == 4, "Dataset needs 4 series of which one is controllable!!"
 
-    def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
+    def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
         self._assert_pred_shape(curr_pred)
-        return curr_pred[2] * action
+        return np.array([curr_pred[2] * action])
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
         self._assert_pred_shape(curr_pred)

@@ -105,6 +105,18 @@ class DynEnv(ABC, gym.Env):
         return os.path.join(dir_name, name)
 
     @abstractmethod
+    def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
+        """Computes the different components of the reward and returns them all.
+
+        Args:
+            curr_pred: The current predictions.
+            action: The most recent action taken.
+
+        Returns:
+            The reward components in an 1d array.
+        """
+        pass
+
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
         """Computes the reward to be maximized during the RL training.
 
@@ -115,7 +127,8 @@ class DynEnv(ABC, gym.Env):
         Returns:
             Value of the reward of that outcome.
         """
-        pass
+        # The base implementation just sums up the different rewards.
+        return np.sum(self.detailed_reward(curr_pred, action)).item()
 
     @abstractmethod
     def episode_over(self, curr_pred: np.ndarray) -> bool:

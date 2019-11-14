@@ -299,7 +299,7 @@ def get_model(name: str, ds: Dataset,
         raise ValueError("No such model defined!")
 
 
-def curr_tests(ds: Dataset = None) -> None:
+def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
     # try_opcua()
