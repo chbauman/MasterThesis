@@ -4,6 +4,9 @@ Based on the agents of the keras-rl library, the agents
 here are basically wrappers of those adding functionality
 to work with the present framework.
 """
+import os
+from typing import Sequence
+
 from keras import Input, Model, Sequential
 from keras.layers import Flatten, Concatenate
 from keras.optimizers import Adam
@@ -18,8 +21,8 @@ from agents.base_agent import AgentBase
 from envs.dynamics_envs import FullRoomEnv, RLDynEnv
 from ml.keras_layers import ClipByValue
 from ml.keras_util import getMLPModel, KerasBase
+from util.util import make_param_ext, train_decorator
 from util.visualize import plot_rewards
-from util.util import *
 
 
 class KerasBaseAgent(AgentBase, KerasBase):

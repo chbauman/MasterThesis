@@ -9,18 +9,17 @@ from typing import Tuple
 import numpy as np
 
 from agents.agents_heuristic import ConstHeating, RuleBasedHeating
-from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
-from dynamics.base_hyperopt import HyperOptimizableModel
-from dynamics.battery_model import BatteryModel
+from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
-    generate_room_datasets, get_DFAB_heating_data, DatasetConstraints, get_data_test, test_rest_client, get_weather_data
+    generate_room_datasets, get_DFAB_heating_data, DatasetConstraints, get_data_test, test_rest_client
+from dynamics.base_hyperopt import HyperOptimizableModel
+from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
+from dynamics.battery_model import BatteryModel
 from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv
-from agents.keras_agents import DDPGBaseAgent
-from opcua_empa.run_opcua import try_opcua
 from util.util import EULER
 
 
@@ -40,7 +39,6 @@ def run_tests() -> None:
 
     # Do some cleanup.
     cleanup_test_data()
-    split_desc_units()
 
 
 def run_battery() -> None:

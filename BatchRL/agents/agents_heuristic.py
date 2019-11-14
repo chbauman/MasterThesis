@@ -1,7 +1,7 @@
+from typing import Sequence
+
 from agents.base_agent import AgentBase
-# import base_dynamics_env
-# from dynamics_envs import FullRoomEnv
-from util.util import *
+from util.util import Arr
 
 
 class RuleBasedHeating(AgentBase):
