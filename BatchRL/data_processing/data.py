@@ -406,17 +406,21 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind: int, dt_mins,
 def save_ds_from_raw(all_data: np.ndarray, m_out: List[Dict], name: str,
                      c_inds: np.ndarray = None,
                      p_inds: np.ndarray = None,
-                     standardize_data: bool = False):
-    """
-    Creates a dataset from the raw input data.
+                     standardize_data: bool = False,
+                     custom_descs=None):
+    """Creates a dataset from the raw input data.
 
-    :param all_data: 2D numpy data array
-    :param m_out: List with metadata dictionaries.
-    :param name: Name of the dataset.
-    :param c_inds: Control indices.
-    :param p_inds: Prediction indices.
-    :param standardize_data: Whether to standardize the data.
-    :return: Dataset
+    Args:
+        all_data: 2D numpy data array
+        m_out: List with metadata dictionaries.
+        name: Name of the dataset.
+        c_inds: Control indices.
+        p_inds: Prediction indices.
+        standardize_data: Whether to standardize the data.
+        custom_descs: Optional custom description.
+
+    Returns:
+        Dataset
     """
     if c_inds is None:
         c_inds = no_inds
@@ -425,6 +429,8 @@ def save_ds_from_raw(all_data: np.ndarray, m_out: List[Dict], name: str,
     if standardize_data:
         all_data, m_out = standardize(all_data, m_out)
     dataset = Dataset.fromRaw(all_data, m_out, name, c_inds=c_inds, p_inds=p_inds)
+    if custom_descs is not None:
+        dataset.descriptions = custom_descs
     dataset.save()
     return dataset
 
@@ -434,7 +440,8 @@ def get_from_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins, ne
                          desc_list: np.ndarray = None,
                          c_inds: np.ndarray = None,
                          p_inds: np.ndarray = None,
-                         standardize_data: bool = False) -> 'Dataset':
+                         standardize_data: bool = False,
+                         custom_descs=None) -> 'Dataset':
     """
     Extracts the specified series and applies
     pre-processing steps to all of them and puts them into a
@@ -483,7 +490,8 @@ def get_from_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins, ne
             m_out += [m[i]]
 
         # Save
-        return save_ds_from_raw(all_data, m_out, new_name, c_inds, p_inds, standardize_data)
+        return save_ds_from_raw(all_data, m_out, new_name, c_inds, p_inds, standardize_data,
+                                custom_descs=custom_descs)
 
 
 def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int, pl_kwargs,
@@ -600,80 +608,32 @@ def get_weather_data(save_plots=True) -> 'Dataset':
 
     TODO: Refactor with other functions!
     """
-
     # Constants
     dt_mins = 15
     filter_sigma = 2.0
     fill_by_ip_max = 2
     name = "Weather"
     name += "" if filter_sigma is None else str(filter_sigma)
+    inds = [0, 2]
+
+    # Specify kwargs for pipeline
+    p_kwargs_temp = {'clean_args': [([], 30, [])],
+                     'hole_fill_args': fill_by_ip_max,
+                     'gauss_sigma': filter_sigma}
+    p_kwargs_irr = {'clean_args': [([], 60, [1300.0, 0.0]), ([], 60 * 20)],
+                    'hole_fill_args': fill_by_ip_max,
+                    'gauss_sigma': filter_sigma}
+    kws = [p_kwargs_temp, p_kwargs_irr]
 
     # Plot files
     prep_plot_dir = os.path.join(preprocess_plot_path, name)
     create_dir(prep_plot_dir)
-    plot_name_temp = os.path.join(prep_plot_dir, "Outside_Temp")
-    plot_name_irr = os.path.join(prep_plot_dir, "Irradiance")
-    plot_name_temp_raw = os.path.join(prep_plot_dir, "Raw Outside_Temp")
-    plot_name_irr_raw = os.path.join(prep_plot_dir, "Raw Irradiance")
 
-    # Try loading data
-    try:
-        loaded = Dataset.loadDataset(name)
-        return loaded
-    except FileNotFoundError:
-        pass
-
-    # Initialize meta data dict list
-    m_out = []
-
-    # Weather data
-    dat, m = WeatherData.get_data()
-
-    # Add Temperature
-    all_data, dt_init = pipeline_preps(dat[0],
-                                       dt_mins,
-                                       clean_args=[([], 30, [])],
-                                       rem_out_args=None,
-                                       hole_fill_args=fill_by_ip_max,
-                                       n_tot_cols=2,
-                                       gauss_sigma=filter_sigma)
-    add_dt_and_t_init(m, dt_mins, dt_init)
-    m_out += [m[0]]
-
-    if save_plots:
-        plot_time_series(dat[0][1], dat[0][0], m=m[0], show=False, save_name=plot_name_temp_raw)
-        plot_single(all_data[:, 0],
-                    m[0],
-                    use_time=True,
-                    show=False,
-                    title_and_ylab=['Outside Temperature Processed', m[0]['unit']],
-                    save_name=plot_name_temp)
-
-    # Add Irradiance Data
-    all_data, _ = pipeline_preps(dat[2],
-                                 dt_mins,
-                                 all_data=all_data,
-                                 dt_init=dt_init,
-                                 row_ind=1,
-                                 clean_args=[([], 60, [1300.0, 0.0]), ([], 60 * 20)],
-                                 rem_out_args=None,
-                                 hole_fill_args=fill_by_ip_max,
-                                 gauss_sigma=filter_sigma)
-    m_out += [m[2]]
-
-    if save_plots:
-        plot_time_series(dat[2][1], dat[2][0], m=m[2], show=False, save_name=plot_name_irr_raw)
-        plot_single(all_data[:, 1],
-                    m[2],
-                    use_time=True,
-                    show=False,
-                    title_and_ylab=['Irradiance Processed', m[2]['unit']],
-                    save_name=plot_name_irr)
-
-    # Save and return
-    w_dataset = Dataset.fromRaw(all_data, m_out, name, c_inds=no_inds, p_inds=no_inds)
-    w_dataset.save()
-    return w_dataset
+    # Get the data
+    custom_descs = np.array(["Outside Temperature [°C]", "Irradiance [W/m^2]"])
+    ds = get_from_data_struct(WeatherData, prep_plot_dir, dt_mins, name, inds, kws,
+                              standardize_data=True, custom_descs=custom_descs)
+    return ds
 
 
 def get_UMAR_heating_data() -> List['Dataset']:
@@ -948,8 +908,7 @@ def analyze_room_energy_consumption():
 
 
 class SeriesConstraint:
-    """
-    The class defining constraints for single data series.
+    """The class defining constraints for single data series.
     """
 
     #: The allowed constraint type
@@ -1014,7 +973,10 @@ class Dataset:
     """
     _offs: int
     _day_len: int = None
-    split_dict: Dict[str, 'ModelDataView'] = None  #: The saved splits
+
+    # The split data
+    split_dict: Dict[str, 'ModelDataView'] = None  #: The saved splits.
+    pats_defs: List[Tuple]  #: List of tuples specifying the subsets of the data.
 
     def __init__(self, all_data: np.ndarray, dt: int, t_init, scaling: np.ndarray,
                  is_scaled: np.ndarray,
@@ -1024,6 +986,7 @@ class Dataset:
                  name: str = "",
                  seq_len: int = 20):
         """Base constructor."""
+        assert np.array_equal(p_inds, no_inds), "Specifying `p_inds` is deprecated!"
 
         # Constants
         self.val_percent = 0.1
@@ -1064,8 +1027,7 @@ class Dataset:
     def split_data(self) -> None:
         """Splits the data into train, validation and test set.
 
-        Returns:
-            None
+        Uses `pats_defs` to choose the splits.
         """
         # Get sizes
         n = self.data.shape[0]

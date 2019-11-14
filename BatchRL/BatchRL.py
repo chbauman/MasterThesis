@@ -9,7 +9,7 @@ from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_
 from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.battery_model import BatteryModel
 from data_processing.data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
-    generate_room_datasets, get_DFAB_heating_data, DatasetConstraints, get_data_test, test_rest_client
+    generate_room_datasets, get_DFAB_heating_data, DatasetConstraints, get_data_test, test_rest_client, get_weather_data
 from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
@@ -344,9 +344,10 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    run_tests()
+    get_weather_data()
+    # run_tests()
     return
-    
+
     # Full test model
     # curr_tests()
 
