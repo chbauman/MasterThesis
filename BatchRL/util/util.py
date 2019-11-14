@@ -7,6 +7,7 @@ tests of these functions are included.
 """
 import os
 import random
+import shutil
 from datetime import datetime
 from functools import wraps
 from typing import Union, List, Tuple, Any, Sequence, TypeVar
@@ -414,6 +415,37 @@ def create_dir(dirname: str) -> None:
     """
     if not os.path.exists(dirname):
         os.makedirs(dirname)
+
+
+def rem_dirs(base_dir: str, pat: str, anywhere: bool = False) -> None:
+    """Removes all files / folders in the directory `base_dir` based on `pat`.
+
+    If `anywhere` is True, then all files and directories that contain
+    the `pat` anywhere are removed. Otherwise only if they contain
+    `pat` at the beginning of their name.
+
+    Args:
+        base_dir: Base directory.
+        pat: String specifying the pattern of stuff to delete.
+        anywhere: Whether the pattern can be contained anywhere in the name.
+    """
+    pat_len = len(pat)
+
+    # Define function to choose files to delete.
+    def cond(f_name: str) -> bool:
+        if anywhere:
+            return pat in f_name
+        else:
+            return f_name[:pat_len] == pat
+
+    # Iterate over files / dirs in `base_dir`.
+    for f in os.listdir(base_dir):
+        if cond(f):
+            fol = os.path.join(base_dir, f)
+            if os.path.isdir(fol):
+                shutil.rmtree(fol)
+            else:
+                os.remove(fol)
 
 
 #######################################################################################################

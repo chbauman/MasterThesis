@@ -855,9 +855,8 @@ def cleanup_test_data():
     plot_dir = "../Plots/Models/"
     ds = construct_test_ds(n)
     test_ds_name = ds.name
-    name_len = len(test_ds_name)
-    for f in os.listdir(plot_dir):
-        if f[:name_len] == test_ds_name:
-            fol = os.path.join(plot_dir, f)
-            shutil.rmtree(fol)
+    rem_dirs(plot_dir, test_ds_name)
+    rl_dir = "../Plots/RL/"
+    rem_dirs(rl_dir, "TestEnv")
+    rem_dirs(rl_dir, "BatteryTest", anywhere=True)
     print("Cleaned up some test files!")

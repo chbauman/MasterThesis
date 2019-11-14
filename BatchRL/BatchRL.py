@@ -344,8 +344,9 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    # run_tests()
-
+    run_tests()
+    return
+    
     # Full test model
     # curr_tests()
 
