@@ -612,11 +612,15 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     # Set titles
     rew_ax.set_title("Rewards")
     for k in range(n_actions):
-        con_axs[k].set_title(f"Original control inputs: {clean_desc(control_descs[k])}")
+        con_axs[k].set_ylabel(f"{clean_desc(control_descs[k])}")
+        con_axs[k].set_title(f"Original control inputs")
         if plot_extra:
-            con_fb_axs[k].set_title(f"Constrained control inputs: {clean_desc(control_descs[k])}")
+            con_fb_axs[k].set_title(f"Constrained control inputs")
+            con_fb_axs[k].set_ylabel(f"{clean_desc(control_descs[k])}")
     for k in range(n_feats):
-        state_axs[k].set_title(f"State: {clean_desc(state_descs[k])}")
+        if k == 0:
+            state_axs[k].set_title(f"States")
+        state_axs[k].set_ylabel(f"{clean_desc(state_descs[k])}")
 
     # Plot all the things!
     for k in range(n_agents):
@@ -635,6 +639,7 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     # Add legends
     con_axs[0].legend()
     state_axs[0].legend()
+    rew_ax.set_xlabel(f"Timestep [{ds.dt}min]")
     rew_ax.legend()
 
     # Save

@@ -18,9 +18,9 @@ sys.path.insert(0, 'C:\\Users\\Chrigi\\Documents\\MasterThesis\\MasterThesis\\Ba
 # -- Project information -----------------------------------------------------
 
 project = 'BatchRL'
-copyright = '2019, Chris'
-author = 'Chris'
-version = '1.0'
+copyright = '2019, Christian Baumann'
+author = 'Christian Baumann'
+version = '1.1.2'
 
 
 # -- General configuration ---------------------------------------------------
