@@ -73,7 +73,7 @@ class TestEnvs(TestCase):
                 self.assertEqual(init_state.shape, (3,), "Prediction does not have the right shape!")
 
     def test_step(self):
-        for action in [1.0, 0.0]:
+        for action in [np.array([1.0]), np.array([0.0])]:
             init_state = self.test_env2.reset(0)
             next_state, rew, ep_over, _ = self.test_env2.step(action)
             self.assertTrue(np.allclose(init_state + action, next_state), "Step contains a bug!")
@@ -90,7 +90,7 @@ class TestEnvs(TestCase):
 
     def test_reset(self):
         # Test deterministic reset
-        const_control = 0.0
+        const_control = np.array([0.0], dtype=np.float32)
         max_ind = self.test_env.n_start_data
         rand_int = np.random.randint(max_ind)
         self.test_env.reset(start_ind=rand_int, use_noise=False)
@@ -129,9 +129,15 @@ class TestBatteryEnv(TestCase):
 
         self.m = get_test_battery_model(linear=False)
         self.env = BatteryEnv(self.m, max_eps=8)
-        self.ag_1 = agents_heuristic.ConstHeating(self.env, 26.0)
-        self.ag_2 = agents_heuristic.ConstHeating(self.env, -23.0)
+        self.ag_1 = agents_heuristic.ConstHeating(self.env, 3.0)
+        self.ag_2 = agents_heuristic.ConstHeating(self.env, -7.0)
 
     def test_analyze_agents(self):
-        self.env.analyze_agents_visually([self.ag_1, self.ag_2], start_ind=0)
+        self.env.analyze_agents_visually([self.ag_1, self.ag_2], start_ind=1)
 
+    def test_scaled(self):
+        self.assertTrue(self.env.scaling is not None, "Data should be scaled!!")
+
+    def test_scaling(self):
+        var = 5.0
+        self.assertNotEqual(var, self.env._to_scaled(var))

@@ -133,34 +133,36 @@ class DynEnv(ABC, gym.Env):
         """Scales the actions to the correct range."""
         return actions
 
-    def step(self, action: Arr, original_a: Arr = None) -> Tuple[np.ndarray, float, bool, Dict]:
+    def step(self, action: Arr) -> Tuple[np.ndarray, float, bool, Dict]:
         """Evolve the model with the given control input `action`.
 
         Args:
             action: The control input (action).
-            original_a: Original action chosen by the agent, before being constrained
-                by the environment.
 
         Returns:
             The next state, the reward of having chosen that action and a bool
             determining if the episode is over. (And an empty dict)
         """
+        # Add the control to the history
         self.hist[-1, -self.act_dim:] = action
+
+        # Predict using the model
         hist_res = np.copy(self.hist).reshape((1, -1, self.state_dim))
         curr_pred = self.m.predict(hist_res)[0]
+
+        # Add noise
         if self.use_noise:
             curr_pred += self.disturb_fac * self.m.disturb()
+
+        # Save the chosen action
+        self.orig_actions[self.n_ts, :] = action
+
+        # Update history
         self.hist[:-1, :] = self.hist[1:, :]
         self.hist[-1, :-self.act_dim] = curr_pred
-
-        # assert not np.allclose(original_a, action)
-        if original_a is not None:
-            self.orig_actions[self.n_ts, :] = original_a
-        else:
-            pass
-            # assert False, "Hmmmm"
         self.n_ts += 1
 
+        # Compute reward and episode termination
         r = np.array(self.compute_reward(curr_pred, action)).item()
         ep_over = self.n_ts == self.n_ts_per_eps or self.episode_over(curr_pred)
         return curr_pred, r, ep_over, {}
@@ -256,6 +258,7 @@ class DynEnv(ABC, gym.Env):
                 curr_action = a.get_action(curr_state)
                 curr_state, rew, episode_over, extra = self.step(curr_action)
                 action_sequences[a_id, count, :] = curr_action
+
                 trajectories[a_id, count, :] = np.copy(curr_state)
                 rewards[a_id, count] = rew
                 count += 1
@@ -268,7 +271,6 @@ class DynEnv(ABC, gym.Env):
         action_sequences = self.scale_actions(action_sequences)
         clipped_action_sequences = self.scale_actions(clipped_action_sequences)
         if np.allclose(clipped_action_sequences, action_sequences):
-            #raise ValueError("Fuck")
             clipped_action_sequences = None
 
         # Plot all the things

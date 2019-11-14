@@ -66,8 +66,8 @@ class RLDynEnv(DynEnv, ABC):
             c_actions_scaled[k] = trf_mean_and_std(cont_action[k], self.scaling[self.c_ind[k]], not to_original)
         return c_actions_scaled
 
-    def step(self, action: np.ndarray, orig_ac: Arr = None) -> Tuple[np.ndarray, float, bool, Any]:
-        return super().step(self._to_scaled(action), orig_ac)
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
+        return super().step(self._to_scaled(action))
 
 
 class FullRoomEnv(RLDynEnv):
@@ -247,7 +247,7 @@ class BatteryEnv(RLDynEnv):
         # Penalty for constraint violation
         curr_pred = self._get_scaled_soc(curr_pred)
         bound_pen = 1000 * linear_oob_penalty(curr_pred, self.soc_bound)
-        if self.n_ts > 1:
+        if self.n_ts > 0:
             assert bound_pen <= 0.0, "WTF2"
 
         # Penalty for not having charged enough at the end of the episode.
@@ -270,15 +270,12 @@ class BatteryEnv(RLDynEnv):
             # return True
         return False
 
-    def step(self, action: np.ndarray, orig_a: np.ndarray = None) -> Tuple[np.ndarray, float, bool, Any]:
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
         """Step function for battery environment.
 
         If the chosen action would result in a SoC outside the bounds,
         it is clipped, s.t. the bound constraints are always fulfilled.
         """
-        assert orig_a is None, "Action is scaled here!"
-        print("Step")
-
         # Get default min and max actions from bounds
         min_ac, max_ac = self._to_scaled(np.array(self.action_range))[0]
 
@@ -305,12 +302,15 @@ class BatteryEnv(RLDynEnv):
         # Clip the actions.
         scaled_action = self._to_scaled(action)
         chosen_action = np.clip(scaled_action, ac_min, ac_max)
+        if self.scaling is not None:
+            assert not np.array_equal(action, chosen_action)
 
         # Call the step function of DynEnv to avoid another scaling.
-        return DynEnv.step(self, chosen_action, action)
+        return DynEnv.step(self, chosen_action)
 
     def reset(self, *args, **kwargs) -> np.ndarray:
         super().reset(*args, **kwargs)
+
         # Clip the values to the valid SoC range!
         if self.scaled_soc_bd is None:
             self.scaled_soc_bd = rem_mean_and_std(np.array(self.soc_bound), self.m.data.scaling[0])
