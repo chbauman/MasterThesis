@@ -627,7 +627,7 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
         if plot_extra:
             _setup_axis(con_fb_axs[k], "Constrained Control Inputs", control_descs[k])
     for k in range(n_feats):
-        _setup_axis(state_axs[k], "States", state_descs[k], title=k == 0)
+        _setup_axis(state_axs[k], "States", state_descs[k])
 
     # Plot all the things!
     for k in range(n_agents):

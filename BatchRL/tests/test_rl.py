@@ -4,7 +4,6 @@ import numpy as np
 
 from agents import agents_heuristic
 from dynamics.base_model import construct_test_ds, BaseDynamicsModel
-from dynamics.battery_model import BatteryModel
 from envs.dynamics_envs import RLDynEnv, BatteryEnv
 from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model
 from util.numerics import rem_mean_and_std, add_mean_and_std
@@ -21,9 +20,12 @@ class TestDynEnv(RLDynEnv):
         self.n_pred = 3
         assert d.n_c == 1 and d.d == 4, "Dataset needs 4 series of which one is controllable!!"
 
+    reward_descs = ["Action Dependent [unit1]",
+                    "Constant 1 [unit2]"]
+
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
         self._assert_pred_shape(curr_pred)
-        return np.array([curr_pred[2] * action])
+        return np.array([curr_pred[2] * action, 1.0])
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
         self._assert_pred_shape(curr_pred)
@@ -64,7 +66,7 @@ class TestEnvs(TestCase):
     def test_shapes(self):
         # Test shapes
         for k in range(30):
-            next_state, r, over, _ = self.test_env.step(0.0)
+            next_state, r, over, _ = self.test_env.step(np.array([0.0]))
             assert next_state.shape == (3,), "Prediction does not have the right shape!"
             if (k + 1) % self.n_ts_per_episode == 0 and not over:
                 raise AssertionError("Episode should be over!!")

@@ -104,6 +104,8 @@ class DynEnv(ABC, gym.Env):
         create_dir(dir_name)
         return os.path.join(dir_name, name)
 
+    reward_descs: List = []  #: The description of the detailed reward.
+
     @abstractmethod
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
         """Computes the different components of the reward and returns them all.

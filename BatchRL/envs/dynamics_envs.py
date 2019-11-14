@@ -50,6 +50,7 @@ class RLDynEnv(DynEnv, ABC):
         self.fb_actions = np.empty((max_eps, n_cont_actions), dtype=np.float32)
 
         d = m.data
+        self.dt_h = d.dt / 60
         self.c_ind = d.c_inds
         if np.all(d.is_scaled):
             self.scaling = d.scaling
@@ -112,23 +113,30 @@ class FullRoomEnv(RLDynEnv):
                 w[k] = add_mean_and_std(w[k], self.scaling[w_inds[k]])
         return w
 
-    def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
+    reward_descs = ["Energy Consumption []",
+                    "Temperature Bound Violation [°Kh]"]
+
+    def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
 
         # Compute energy used
         action_rescaled = self._to_scaled(action, True)[0]
         w_temps = self.get_w_temp(curr_pred)
         d_temp = np.abs(w_temps[0] - w_temps[1])
-        energy_used = np.clip(action_rescaled, 0.0, 1.0) * d_temp * self.alpha
-        # assert 0.0 <= action_rescaled <= 1.0, "Fucking wrong"
+        energy_used = np.clip(action_rescaled, 0.0, 1.0) * d_temp * self.dt_h
         # assert 10.0 <= w_temps[0] <= 50.0, "Water temperature scaled incorrectly!"
 
-        # Penalty for actions out of the range
-        action_penalty = 100 * linear_oob_penalty(action_rescaled, [0.0, 1.0])
+        # Check for actions out of range
+        action_penalty = linear_oob_penalty(action_rescaled, [0.0, 1.0])
+        assert action_penalty <= 0.0, "Actions scaled wrongly!"
 
         # Penalty for constraint violation
         r_temp = self.get_r_temp(curr_pred)
-        temp_pen = self.bound_violation_penalty * linear_oob_penalty(r_temp, self.temp_bounds)
-        return (-energy_used - temp_pen - action_penalty) / 10
+        temp_pen = self.dt_h * linear_oob_penalty(r_temp, self.temp_bounds)
+        return np.array([energy_used, temp_pen])
+
+    def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
+        """Computes the total reward from the individual components."""
+        return -np.sum(self.detailed_reward(curr_pred, action)).item()
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
 
@@ -185,7 +193,7 @@ class BatteryEnv(RLDynEnv):
 
     """
 
-    alpha: float = 1.0  #: Weight factor for reward.
+    alpha: float = 1.0  #: Reward scaling factor.
     action_range: Sequence = (-100, 100)  #: The requested active power range.
     soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
     scaled_soc_bd: np.ndarray = None  #: `soc_bound` scaled to the model space.
@@ -229,6 +237,8 @@ class BatteryEnv(RLDynEnv):
             return trf_mean_and_std(unscaled_soc, self.scaling[0], remove=remove_mean)
         return unscaled_soc
 
+    reward_descs = ["Energy Consumption [kWh]"]  #: Description of the detailed reward.
+
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
         """Computes the energy used by dis- / charging the battery."""
 
@@ -236,7 +246,7 @@ class BatteryEnv(RLDynEnv):
         assert linear_oob_penalty(action_rescaled, self.action_range[0]) <= 0.0, "WTF"
 
         # Compute energy used
-        energy_used = action_rescaled * self.alpha
+        energy_used = action_rescaled * self.dt_h
 
         # Compute costs (Deprecated!)
         if self.p is not None:
@@ -261,7 +271,7 @@ class BatteryEnv(RLDynEnv):
         """
         # Return minus the energy used.
         e_used = self.detailed_reward(curr_pred, action)
-        return -e_used.item()
+        return -e_used.item() * self.alpha
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
         """Declare the episode as over if the SoC lies too far without bounds."""
