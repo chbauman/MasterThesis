@@ -18,8 +18,8 @@ from rl.policy import BoltzmannQPolicy
 from rl.random import OrnsteinUhlenbeckProcess
 
 from agents.base_agent import AgentBase
-from envs.dynamics_envs import FullRoomEnv, RLDynEnv
-from ml.keras_layers import ClipByValue
+from envs.dynamics_envs import FullRoomEnv, RLDynEnv, RangeListT
+from ml.keras_layers import ClipByValue, ConstrainOutput
 from ml.keras_util import getMLPModel, KerasBase
 from util.util import make_param_ext, train_decorator
 from util.visualize import plot_rewards
@@ -141,7 +141,7 @@ class DDPGBaseAgent(KerasBaseAgent):
                  gamma: float = 0.9,
                  layers: Sequence[int] = (50, 50),
                  reg: float = 0.01,
-                 action_range: Sequence = None):
+                 action_range: RangeListT = None):
 
         """Constructor.
 
@@ -180,7 +180,7 @@ class DDPGBaseAgent(KerasBaseAgent):
         self.layers = layers
         self.reg = reg
         if action_range is not None:
-            assert len(action_range) == 2, "Fucking retarded?"
+            assert len(action_range) == env.nb_actions, "Wrong amount of ranges!"
         self.action_range = action_range
 
         # Build the model.
@@ -197,7 +197,7 @@ class DDPGBaseAgent(KerasBaseAgent):
 
         # Clip actions to desired interval
         if self.action_range is not None:
-            clip_layer = ClipByValue(self.action_range[0], self.action_range[1])
+            clip_layer = ConstrainOutput(self.action_range)
             actor.add(clip_layer)
 
         # Build critic model
