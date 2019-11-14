@@ -435,15 +435,18 @@ def save_ds_from_raw(all_data: np.ndarray, m_out: List[Dict], name: str,
     return dataset
 
 
-def get_from_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins, new_name: Optional[str], ind_list,
-                         prep_arg_list,
+def get_from_data_struct(dat_struct: DataStruct,
+                         base_plot_dir: str,
+                         dt_mins: int,
+                         new_name: Optional[str],
+                         ind_list: List[int],
+                         prep_arg_list: List[Dict],
                          desc_list: np.ndarray = None,
                          c_inds: np.ndarray = None,
                          p_inds: np.ndarray = None,
                          standardize_data: bool = False,
                          custom_descs=None) -> 'Dataset':
-    """
-    Extracts the specified series and applies
+    """Extracts the specified series and applies
     pre-processing steps to all of them and puts them into a
     Dataset.
     """
@@ -455,9 +458,10 @@ def get_from_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins, ne
 
     # Try loading data
     try:
-        loaded = Dataset.loadDataset(name)
+        loaded = Dataset.loadDataset(new_name)
         return loaded
     except FileNotFoundError:
+        print("Did not find Dataset:", new_name)
         data, m = dat_struct.get_data()
         n_cols = len(data)
 
@@ -498,8 +502,7 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
                         c_inds: np.ndarray = None,
                         p_inds: np.ndarray = None,
                         standardize_data=False) -> 'Dataset':
-    """
-    Converts a DataStruct to a Dataset.
+    """Converts a DataStruct to a Dataset.
     Using the same pre-processing steps for each series
     in the DataStruct.
 
@@ -570,13 +573,13 @@ def get_battery_data() -> 'Dataset':
     p_kwargs_ap = {'clean_args': [([], 6 * 60, [])]}
     kws = [p_kwargs_soc, p_kwargs_ap]
     c_inds = np.array([1], dtype=np.int32)
-    p_inds = np.array([0], dtype=np.int32)
+    custom_descs = np.array(["State of Charge [%]", "Active Power [kW]"])
 
     # Get the data
     ds = get_from_data_struct(BatteryData, bat_plot_path, dt_mins, name, inds, kws,
                               c_inds=c_inds,
-                              p_inds=p_inds,
-                              standardize_data=True)
+                              standardize_data=True,
+                              custom_descs=custom_descs)
 
     # Plot files
     plot_name_roi = os.path.join(bat_plot_path, "Strange")
@@ -603,10 +606,8 @@ def get_battery_data() -> 'Dataset':
     return ds
 
 
-def get_weather_data(save_plots=True) -> 'Dataset':
+def get_weather_data() -> 'Dataset':
     """Load and interpolate the weather data.
-
-    TODO: Refactor with other functions!
     """
     # Constants
     dt_mins = 15
@@ -632,7 +633,8 @@ def get_weather_data(save_plots=True) -> 'Dataset':
     # Get the data
     custom_descs = np.array(["Outside Temperature [°C]", "Irradiance [W/m^2]"])
     ds = get_from_data_struct(WeatherData, prep_plot_dir, dt_mins, name, inds, kws,
-                              standardize_data=True, custom_descs=custom_descs)
+                              desc_list=custom_descs,
+                              standardize_data=True)
     return ds
 
 
@@ -1713,10 +1715,10 @@ class ModelDataView:
 
 
 def generate_room_datasets() -> List[Dataset]:
-    """
-    Gather the right data and put it all together.
+    """Gather the right data and put it all together.
 
-    :return: List of room datasets of DFAB.
+    Returns:
+        List of room datasets of DFAB.
     """
 
     # Get weather
@@ -1761,11 +1763,16 @@ def generate_room_datasets() -> List[Dataset]:
                                 valves_ds.t_init,
                                 np.empty((1, 2), dtype=np.float32),
                                 np.array([False]),
-                                np.array(["Averaged valve open time."]))
+                                np.array(["Averaged Valve Open Time [100%]"]))
 
         # Put all together
         full_ds = (inlet_water_and_weather + valves_avg_ds) + room_temp_ds
         full_ds.c_inds = np.array([4], dtype=np.int32)
+
+        # Set descriptions
+        full_ds.descriptions[-1] = "Room Temperature [°C]"
+        full_ds.descriptions[2] = "Heating Water Temperature (In) [°C]"
+        full_ds.descriptions[3] = "Heating Water Temperature (Out) [°C]"
 
         # Add blinds
         if len(room_ds) == 5:

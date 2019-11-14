@@ -344,7 +344,7 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    get_weather_data()
+    generate_room_datasets()
     # run_tests()
     return
 
