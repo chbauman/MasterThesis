@@ -2,6 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
+from BatchRL import choose_dataset
 from agents import agents_heuristic
 from dynamics.base_model import construct_test_ds, BaseDynamicsModel
 from envs.dynamics_envs import RLDynEnv, BatteryEnv
@@ -143,3 +144,18 @@ class TestBatteryEnv(TestCase):
     def test_scaling(self):
         var = 5.0
         self.assertNotEqual(var, self.env._to_scaled(var))
+
+
+class TestFullRoomEnv(TestCase):
+    """Tests the room RL environment.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
+
+    def test_something(self):
+        pass
+
+    pass

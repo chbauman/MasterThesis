@@ -243,7 +243,7 @@ class BatteryEnv(RLDynEnv):
         """Computes the energy used by dis- / charging the battery."""
 
         action_rescaled = self._to_scaled(action, True)[0]
-        assert linear_oob_penalty(action_rescaled, self.action_range[0]) <= 0.0, "WTF"
+        assert linear_oob_penalty(action_rescaled, self.action_range[0]) <= 0.0001, "WTF"
 
         # Compute energy used
         energy_used = action_rescaled * self.dt_h
@@ -255,7 +255,7 @@ class BatteryEnv(RLDynEnv):
 
         # Check constraint violation
         curr_pred = self._get_scaled_soc(curr_pred)
-        assert linear_oob_penalty(curr_pred, self.soc_bound) <= 0.0, "WTF2"
+        assert linear_oob_penalty(curr_pred, self.soc_bound) <= 0.001, "WTF2"
 
         # Penalty for not having charged enough at the end of the episode.
         if self.n_ts > self.n_ts_per_eps - 1 and curr_pred < self.req_soc:
@@ -290,7 +290,7 @@ class BatteryEnv(RLDynEnv):
         it is clipped, s.t. the bound constraints are always fulfilled.
         """
         # Get default min and max actions from bounds
-        min_ac, max_ac = self._to_scaled(np.array(self.action_range))[0]
+        min_ac, max_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))[0]
 
         # Find the minimum and maximum action satisfying SoC constraints.
         curr_state = self.get_curr_state()

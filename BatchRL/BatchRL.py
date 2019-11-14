@@ -347,10 +347,10 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run tests.
-    run_tests()
+    # run_tests()
 
     # Full test model
-    curr_tests()
+    # curr_tests()
 
     # Train and analyze the battery model
     run_battery()
