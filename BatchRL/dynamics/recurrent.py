@@ -4,8 +4,9 @@ The models are derived from `HyperOptimizableModel` or at least
 from `BaseDynamicsModel`.
 """
 from functools import partial
-from typing import Dict, Optional
+from typing import Dict, Optional, Sequence, Any
 
+import numpy as np
 from hyperopt import hp
 from hyperopt.pyll import scope as ho_scope
 from keras import backend as K
@@ -19,8 +20,8 @@ from data_processing.data import Dataset, get_test_ds
 from data_processing.data import SeriesConstraint
 from ml.keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurrent, IdDense
 from tests.test_keras import get_multi_input_layer_output
+from util.util import EULER, create_dir, rem_first, train_decorator
 from util.visualize import plot_train_history
-from util.util import *
 
 
 def weighted_loss(y_true, y_pred, weights):

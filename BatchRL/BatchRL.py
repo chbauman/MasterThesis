@@ -4,6 +4,10 @@ The `main` function runs all the necessary high-level
 functions. The complicated stuff is hidden in the other
 modules / packages.
 """
+from typing import Tuple
+
+import numpy as np
+
 from agents.agents_heuristic import ConstHeating, RuleBasedHeating
 from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
 from dynamics.base_hyperopt import HyperOptimizableModel
@@ -17,7 +21,7 @@ from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv
 from agents.keras_agents import DDPGBaseAgent
 from opcua_empa.run_opcua import try_opcua
-from util.util import *
+from util.util import EULER
 
 
 def run_tests() -> None:
@@ -36,6 +40,7 @@ def run_tests() -> None:
 
     # Do some cleanup.
     cleanup_test_data()
+    split_desc_units()
 
 
 def run_battery() -> None:

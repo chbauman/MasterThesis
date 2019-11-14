@@ -1,7 +1,8 @@
 from abc import ABC
 
+import numpy as np
+
 from dynamics.base_model import BaseDynamicsModel
-from util.util import *
 from data_processing.data import Dataset
 
 

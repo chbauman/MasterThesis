@@ -1,7 +1,8 @@
+import numpy as np
+
 from dynamics.base_model import BaseDynamicsModel
 from data_processing.data import Dataset
 from util.numerics import add_mean_and_std, rem_mean_and_std
-from util.util import *
 
 
 class SCTimeModel(BaseDynamicsModel):

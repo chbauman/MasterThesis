@@ -1,6 +1,7 @@
+import numpy as np
+
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import make_periodic
-from util.util import *
 from data_processing.data import Dataset
 
 
