@@ -142,7 +142,6 @@ class DDPGBaseAgent(KerasBaseAgent):
                  layers: Sequence[int] = (50, 50),
                  reg: float = 0.01,
                  action_range: RangeListT = None):
-
         """Constructor.
 
         Args:
@@ -197,8 +196,8 @@ class DDPGBaseAgent(KerasBaseAgent):
 
         # Clip actions to desired interval
         if self.action_range is not None:
-            clip_layer = ConstrainOutput(self.action_range)
-            actor.add(clip_layer)
+            pass
+            # actor.add(ConstrainOutput(self.action_range))
 
         # Build critic model
         action_input = Input(shape=(self.nb_actions,), name='action_input')
@@ -206,6 +205,7 @@ class DDPGBaseAgent(KerasBaseAgent):
         flattened_observation = Flatten()(observation_input)
         x = Concatenate()([action_input, flattened_observation])
         x = getMLPModel(mlp_layers=self.layers, out_dim=1, ker_reg=self.reg)(x)
+        x = ConstrainOutput([(0.0, 1.0)])(x)
         critic = Model(inputs=[action_input, observation_input], outputs=x)
 
         # Configure and compile the agent.

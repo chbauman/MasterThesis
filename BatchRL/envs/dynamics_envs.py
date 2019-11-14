@@ -202,7 +202,7 @@ class BatteryEnv(RLDynEnv):
     """
 
     alpha: float = 1.0  #: Reward scaling factor.
-    action_range: Sequence = (-100, 100)  #: The requested active power range.
+    action_range: RangeListT = [(-100, 100)]  #: The requested active power range.
     soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
     scaled_soc_bd: np.ndarray = None  #: `soc_bound` scaled to the model space.
     req_soc: float = 60.0  #: Required SoC at end of episode.
@@ -223,7 +223,7 @@ class BatteryEnv(RLDynEnv):
         name = "Battery" + ext
 
         # Init base class.
-        super().__init__(m, name=name, action_range=(-100, 100), **kwargs)
+        super().__init__(m, name=name, action_range=[(-100, 100)], **kwargs)
 
         self.p = p
         assert p is None, "Cost profile does not make sense here!"
@@ -298,7 +298,7 @@ class BatteryEnv(RLDynEnv):
         it is clipped, s.t. the bound constraints are always fulfilled.
         """
         # Get default min and max actions from bounds
-        min_ac, max_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))[0]
+        min_ac, max_ac = self._to_scaled(np.array(self.action_range[0], dtype=np.float32))[0]
 
         # Find the minimum and maximum action satisfying SoC constraints.
         curr_state = self.get_curr_state()
