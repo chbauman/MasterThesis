@@ -567,6 +567,16 @@ def plot_residuals_acf(residuals: np.ndarray,
         plt.show()
 
 
+def _setup_axis(ax, base_title: str, desc: str, title: bool = True):
+    """Helper function for `plot_env_evaluation`.
+
+    Adds label and title to axis."""
+    t, u = split_desc_units(desc)
+    ax.set_ylabel(u)
+    if title:
+        ax.set_title(base_title + ": " + t)
+
+
 def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
                         rewards: np.ndarray,
                         ds,
@@ -600,7 +610,7 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     rew_ax = fig.add_subplot(gs_rew[-1, :])
     con_axs = [fig.add_subplot(gs_con[i, :], sharex=rew_ax) for i in range(n_actions)]
     state_axs = [fig.add_subplot(gs_state[i, :], sharex=rew_ax) for i in range(n_act_plots, tot_n_plots - 1)]
-    con_fb_axs = [fig.add_subplot(gs_con[i, :], sharex=rew_ax) for i in range(n_actions, n_act_plots)]
+    con_fb_axs = [fig.add_subplot(gs_con_fb[i, :], sharex=rew_ax) for i in range(n_actions, n_act_plots)]
     assert plot_extra or con_fb_axs == [], "Something is wrong!"
 
     # Find legends
@@ -612,15 +622,11 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     # Set titles
     rew_ax.set_title("Rewards")
     for k in range(n_actions):
-        con_axs[k].set_ylabel(f"{clean_desc(control_descs[k])}")
-        con_axs[k].set_title(f"Original control inputs")
+        _setup_axis(con_axs[k], "Original Control Inputs", control_descs[k])
         if plot_extra:
-            con_fb_axs[k].set_title(f"Constrained control inputs")
-            con_fb_axs[k].set_ylabel(f"{clean_desc(control_descs[k])}")
+            _setup_axis(con_fb_axs[k], "Constrained Control Inputs", control_descs[k])
     for k in range(n_feats):
-        if k == 0:
-            state_axs[k].set_title(f"States")
-        state_axs[k].set_ylabel(f"{clean_desc(state_descs[k])}")
+        _setup_axis(state_axs[k], "States", state_descs[k], title=k == 0)
 
     # Plot all the things!
     for k in range(n_agents):

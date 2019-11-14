@@ -404,6 +404,19 @@ def add_dt_and_t_init(m: Sequence, dt_mins: int, dt_init: np.datetime64) -> None
         m[ct]['dt'] = dt_mins
 
 
+def split_desc_units(desc: str) -> Tuple[str, str]:
+    """Splits a description into a title and a unit part.
+
+    Unit needs to be in square brackets, e.g.: [unit]."""
+    parts = desc.split("[")
+    if len(parts) > 2:
+        raise ValueError("String cannot be split.")
+    if len(parts) == 1:
+        return parts[0], ""
+    p1, p2 = parts
+    return p1, "[" + p2
+
+
 #######################################################################################################
 # Os functions
 

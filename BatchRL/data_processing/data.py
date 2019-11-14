@@ -2014,7 +2014,7 @@ def get_test_ds(dat: np.ndarray, c_inds: np.ndarray,
         New dataset with dummy descriptions and unscaled data.
     """
     n_series = dat.shape[1]
-    descs = np.array([str(i) for i in range(n_series)])
+    descs = np.array([f"Series {i} [unit{i}]" for i in range(n_series)])
     is_sc = np.array([False for _ in range(n_series)])
     sc = np.empty((n_series, 2), dtype=np.float32)
     ds = Dataset(dat, dt, t_init, sc, is_sc, descs, c_inds, name=name)
