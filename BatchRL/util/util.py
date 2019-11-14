@@ -473,7 +473,7 @@ def np_datetime_to_datetime(np_dt: np.datetime64) -> datetime:
     Returns:
         Python datetime.
     """
-    ts = (np_dt - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
+    ts = (np_dt - np.datetime64('1970-01-01T00:00:00')) / np.timedelta64(1, 's')
     dt = datetime.utcfromtimestamp(ts)
     return dt
 
