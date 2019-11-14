@@ -600,10 +600,11 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
 
     # We'll use a separate GridSpecs for controls, states and rewards
     fig = plt.figure()
-    gs_con = plt.GridSpec(tot_n_plots, 1, hspace=0.4, top=1.0, bottom=0.0, figure=fig)
-    gs_state = plt.GridSpec(tot_n_plots, 1, hspace=0.4, top=1.0, bottom=0.0, figure=fig)
-    gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=0.4, top=1.0, bottom=0.0, figure=fig)
-    gs_con_fb = plt.GridSpec(tot_n_plots, 1, hspace=0.4, top=1.0, bottom=0.0, figure=fig)
+    h_s = 0.6
+    gs_con = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=1.0, bottom=0.0, figure=fig)
+    gs_state = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=1.0, bottom=0.0, figure=fig)
+    gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=1.0, bottom=0.0, figure=fig)
+    gs_con_fb = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=1.0, bottom=0.0, figure=fig)
 
     # Define axes
     n_act_plots = n_actions * (1 + plot_extra)
@@ -642,10 +643,15 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
         # Plot reward
         rew_ax.plot(rewards[k, :], label=agent_names[k])
 
+    # Set time
+    last_c_ax = con_fb_axs[-1] if plot_extra else con_axs[-1]
+    last_c_ax.set_xlabel(f"Timestep [{ds.dt}min]")
+    state_axs[-1].set_xlabel(f"Timestep [{ds.dt}min]")
+    rew_ax.set_xlabel(f"Timestep [{ds.dt}min]")
+
     # Add legends
     con_axs[0].legend()
     state_axs[0].legend()
-    rew_ax.set_xlabel(f"Timestep [{ds.dt}min]")
     rew_ax.legend()
 
     # Save

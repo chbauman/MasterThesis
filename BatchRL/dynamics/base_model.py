@@ -1,13 +1,15 @@
-import shutil
+import os
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Sequence, Tuple
+
+import numpy as np
 
 from data_processing.data import Dataset, get_test_ds
 from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1
+from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt, rem_dirs
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf
-from util.util import *
 
 
 def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
@@ -850,12 +852,13 @@ def test_dyn_model() -> None:
 
 
 def cleanup_test_data():
-    """Removes all test folders in the `Plots/Models` folders."""
+    """Removes all test folders in the `Plots` folder."""
     n = 10
     plot_dir = "../Plots/Models/"
     ds = construct_test_ds(n)
     test_ds_name = ds.name
     rem_dirs(plot_dir, test_ds_name)
+    rem_dirs(plot_dir, "RNNTestDataset")
     rl_dir = "../Plots/RL/"
     rem_dirs(rl_dir, "TestEnv")
     rem_dirs(rl_dir, "BatteryTest", anywhere=True)
