@@ -396,7 +396,7 @@ class ExtractInput(Layer):
         return s0[0], self.seq_len, s0[2]
 
 
-class TanhConstrainOutput(Layer):
+class ConstrainOutput(Layer):
     """Activation layer.
 
     Applies sigmoid to the tensor and scales the

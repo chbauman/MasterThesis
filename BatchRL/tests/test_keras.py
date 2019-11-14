@@ -7,7 +7,7 @@ from keras.layers import Add
 
 from data_processing.data import SeriesConstraint
 from ml.keras_layers import SeqInput, ConstrainedNoise, FeatureSlice, \
-    ExtractInput, IdDense, IdRecurrent, ClipByValue
+    ExtractInput, IdDense, IdRecurrent, ClipByValue, ConstrainOutput
 from util.util import rem_first
 from util.numerics import check_in_range
 
@@ -149,9 +149,27 @@ class TestKeras(TestCase):
 
     def test_clip_layer(self):
         # Test ClipByValue layer
-        c_layer = ClipByValue(0.0, 1.0, input_shape=rem_first(self.seq_input_long.shape))
+        c_layer = ClipByValue(0.0, 1.0, input_shape=rem_first(self.seq_shape))
         l_out = get_test_layer_output(c_layer, self.seq_input_long)
         self.assertTrue(np.all(l_out >= 0.0) and np.all(l_out <= 1.0),
+                        "ClipByValue not working correctly!")
+
+    def test_constrain_output(self):
+        # Test ConstrainOutput layer
+        ints = [(0.0, 2.0), (-1.0, 5.0), (-1.0, 5.0), (-1.0, 5.0)]
+        c_layer = ConstrainOutput(ints, input_shape=rem_first(self.seq_shape))
+        l_out = get_test_layer_output(c_layer, self.seq_input_long)
+        self.assertTrue(np.all(l_out[:, :, 0] <= 2.0) and np.all(l_out[:, :, 1:] <= 5.0),
+                        "ClipByValue not working correctly!")
+        self.assertTrue(np.all(l_out[:, :, 0] >= 0.0) and np.all(l_out[:, :, 1:] >= -1.0),
+                        "ClipByValue not working correctly!")
+
+        # Test 2d input
+        c_layer_2d = ConstrainOutput(ints[:2], input_shape=rem_first(self.output.shape))
+        l_out = get_test_layer_output(c_layer_2d, self.output)
+        self.assertTrue(np.all(l_out[:, 0] <= 2.0) and np.all(l_out[:, 1:] <= 5.0),
+                        "ClipByValue not working correctly!")
+        self.assertTrue(np.all(l_out[:, 0] >= 0.0) and np.all(l_out[:, 1:] >= -1.0),
                         "ClipByValue not working correctly!")
 
     pass
