@@ -42,6 +42,8 @@ class DynEnv(ABC, gym.Env):
     # Info about the current episode.
     use_noise: bool = True  #: Whether to add noise when simulating.
 
+    orig_actions: np.ndarray  #: Array with fallback actions
+
     # The one day data
     day_ind: int = 0  #: The index of the day in `train_days`.
     n_train_days: int  #: Number of training days
@@ -131,11 +133,13 @@ class DynEnv(ABC, gym.Env):
         """Scales the actions to the correct range."""
         return actions
 
-    def step(self, action: Arr) -> Tuple[np.ndarray, float, bool, Dict]:
+    def step(self, action: Arr, original_a: Arr = None) -> Tuple[np.ndarray, float, bool, Dict]:
         """Evolve the model with the given control input `action`.
 
         Args:
             action: The control input (action).
+            original_a: Original action chosen by the agent, before being constrained
+                by the environment.
 
         Returns:
             The next state, the reward of having chosen that action and a bool
@@ -148,6 +152,13 @@ class DynEnv(ABC, gym.Env):
             curr_pred += self.disturb_fac * self.m.disturb()
         self.hist[:-1, :] = self.hist[1:, :]
         self.hist[-1, :-self.act_dim] = curr_pred
+
+        # assert not np.allclose(original_a, action)
+        if original_a is not None:
+            self.orig_actions[self.n_ts, :] = original_a
+        else:
+            pass
+            # assert False, "Hmmmm"
         self.n_ts += 1
 
         r = np.array(self.compute_reward(curr_pred, action)).item()
@@ -170,6 +181,9 @@ class DynEnv(ABC, gym.Env):
         self.use_noise = use_noise
         self.n_ts = 0
         self.m.reset_disturbance()
+
+        # Reset original actions (necessary?)
+        self.orig_actions = np.empty((self.n_ts_per_eps, self.act_dim), dtype=np.float32)
 
         # Select new start data
         if start_ind is None:
@@ -242,17 +256,19 @@ class DynEnv(ABC, gym.Env):
                 curr_action = a.get_action(curr_state)
                 curr_state, rew, episode_over, extra = self.step(curr_action)
                 action_sequences[a_id, count, :] = curr_action
-                if extra.get('clip_action'):
-                    clipped_action_sequences[a_id, count, :] = extra['clip_action']
                 trajectories[a_id, count, :] = np.copy(curr_state)
                 rewards[a_id, count] = rew
                 count += 1
+
+            # Get original actions
+            clipped_action_sequences[a_id, :self.n_ts, :] = self.orig_actions[:self.n_ts, :]
 
         # Scale the data to the right values
         trajectories = self.m.rescale_output(trajectories, out_put=True)
         action_sequences = self.scale_actions(action_sequences)
         clipped_action_sequences = self.scale_actions(clipped_action_sequences)
         if np.allclose(clipped_action_sequences, action_sequences):
+            #raise ValueError("Fuck")
             clipped_action_sequences = None
 
         # Plot all the things

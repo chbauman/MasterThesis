@@ -48,14 +48,15 @@ def run_battery() -> None:
     bat_name = "Battery"
     get_battery_data()
     bat_ds = Dataset.loadDataset(bat_name)
+    bat_ds.standardize()
     bat_ds.split_data()
 
     # Initialize and fit battery model.
     bat_mod = BatteryModel(bat_ds)
     bat_mod.analyze_bat_model()
-    bat_mod.analyze()
-    bat_mod_naive = ConstModel(bat_ds)
-    bat_mod_naive.analyze()
+    # bat_mod.analyze()
+    # bat_mod_naive = ConstModel(bat_ds)
+    # bat_mod_naive.analyze()
 
     # Define the environment and agents.
     bat_env = BatteryEnv(bat_mod,

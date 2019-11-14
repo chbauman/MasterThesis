@@ -27,9 +27,9 @@ class RLDynEnv(DynEnv, ABC):
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int,
                  action_range: Sequence = (0, 1),
-                 cont_actions: bool = False,
+                 cont_actions: bool = True,
                  n_disc_actions: int = 11,
-                 n_cont_actions: int = None,
+                 n_cont_actions: int = 1,
                  **kwargs):
         """Constructor."""
         super().__init__(m, max_eps=max_eps, **kwargs)
@@ -37,7 +37,7 @@ class RLDynEnv(DynEnv, ABC):
         if cont_actions and n_cont_actions is None:
             raise ValueError("Need to specify action space dimensionality!")
         if not cont_actions:
-            raise NotImplementedError("This is deprecated!")
+            raise NotImplementedError("Discrete actions are deprecated!")
 
         # Save info
         self.action_range = to_list(action_range)
@@ -45,6 +45,9 @@ class RLDynEnv(DynEnv, ABC):
 
         self.nb_actions = n_disc_actions if not cont_actions else n_cont_actions
         self.cont_actions = cont_actions
+
+        # Initialize fallback actions
+        self.fb_actions = np.empty((max_eps, n_cont_actions), dtype=np.float32)
 
         d = m.data
         self.c_ind = d.c_inds
@@ -63,8 +66,8 @@ class RLDynEnv(DynEnv, ABC):
             c_actions_scaled[k] = trf_mean_and_std(cont_action[k], self.scaling[self.c_ind[k]], not to_original)
         return c_actions_scaled
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
-        return super().step(self._to_scaled(action))
+    def step(self, action: np.ndarray, orig_ac: Arr = None) -> Tuple[np.ndarray, float, bool, Any]:
+        return super().step(self._to_scaled(action), orig_ac)
 
 
 class FullRoomEnv(RLDynEnv):
@@ -192,11 +195,19 @@ class BatteryEnv(RLDynEnv):
     p: CProf = None  #: The cost profile.
 
     def __init__(self, m: BatteryModel, p: CProf = None, **kwargs):
+
         d = m.data
-        max_eps = 24 * 60 // d.dt // 2  # max predictions length
+
+        # Add max predictions length to kwargs if not there yet.
+        ep_key = 'max_eps'
+        kwargs[ep_key] = kwargs.get(ep_key, 24 * 60 // d.dt // 2)
+
+        # Define name
         ext = "_" + p.name if p is not None else ""
         name = "Battery" + ext
-        super().__init__(m, max_eps, name=name, action_range=(-100, 100), **kwargs)
+
+        # Init base class.
+        super().__init__(m, name=name, action_range=(-100, 100), **kwargs)
 
         self.p = p
         assert p is None, "Cost profile does not make sense here!"
@@ -259,12 +270,15 @@ class BatteryEnv(RLDynEnv):
             # return True
         return False
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
+    def step(self, action: np.ndarray, orig_a: np.ndarray = None) -> Tuple[np.ndarray, float, bool, Any]:
         """Step function for battery environment.
 
         If the chosen action would result in a SoC outside the bounds,
         it is clipped, s.t. the bound constraints are always fulfilled.
         """
+        assert orig_a is None, "Action is scaled here!"
+        print("Step")
+
         # Get default min and max actions from bounds
         min_ac, max_ac = self._to_scaled(np.array(self.action_range))[0]
 
@@ -289,13 +303,11 @@ class BatteryEnv(RLDynEnv):
                 ac_min = (min_ds_now - b) / c_max
 
         # Clip the actions.
-        chosen_action = self._to_scaled(action)
-        action = np.clip(chosen_action, ac_min, ac_max)
-        extra = {'clip_action': action}
+        scaled_action = self._to_scaled(action)
+        chosen_action = np.clip(scaled_action, ac_min, ac_max)
 
         # Call the step function of DynEnv to avoid another scaling.
-        s, r, e, _ = DynEnv.step(self, action)
-        return s, r, e, extra
+        return DynEnv.step(self, chosen_action, action)
 
     def reset(self, *args, **kwargs) -> np.ndarray:
         super().reset(*args, **kwargs)

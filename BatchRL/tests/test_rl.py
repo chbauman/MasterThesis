@@ -5,8 +5,8 @@ import numpy as np
 from agents import agents_heuristic
 from dynamics.base_model import construct_test_ds, BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
-from envs.dynamics_envs import RLDynEnv
-from tests.test_dynamics import TestModel, ConstTestModelControlled
+from envs.dynamics_envs import RLDynEnv, BatteryEnv
+from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model
 from util.numerics import rem_mean_and_std, add_mean_and_std
 from util.util import Arr
 
@@ -127,4 +127,11 @@ class TestBatteryEnv(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.m = BatteryModel()
+        self.m = get_test_battery_model(linear=False)
+        self.env = BatteryEnv(self.m, max_eps=8)
+        self.ag_1 = agents_heuristic.ConstHeating(self.env, 26.0)
+        self.ag_2 = agents_heuristic.ConstHeating(self.env, -23.0)
+
+    def test_analyze_agents(self):
+        self.env.analyze_agents_visually([self.ag_1, self.ag_2], start_ind=0)
+
