@@ -331,17 +331,6 @@ class BatteryEnv(RLDynEnv):
 
         return chosen_action
 
-    # def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
-    #     """Step function for battery environment.
-    #
-    #     If the chosen action would result in a SoC outside the bounds,
-    #     it is clipped, s.t. the bound constraints are always fulfilled.
-    #     """
-    #     chosen_action = self.scale_action_for_step(action)
-    #
-    #     # Call the step function of DynEnv to avoid another scaling.
-    #     return DynEnv.step(self, chosen_action)
-
     def reset(self, *args, **kwargs) -> np.ndarray:
         super().reset(*args, **kwargs)
 
