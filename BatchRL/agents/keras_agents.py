@@ -5,7 +5,7 @@ here are basically wrappers of those adding functionality
 to work with the present framework.
 """
 import os
-from typing import Sequence
+from typing import Sequence, Dict
 
 from keras import Input, Model, Sequential
 from keras.layers import Flatten, Concatenate, Activation
@@ -19,7 +19,6 @@ from rl.random import OrnsteinUhlenbeckProcess
 
 from agents.base_agent import AgentBase
 from envs.dynamics_envs import FullRoomEnv, RLDynEnv, RangeListT
-from ml.keras_layers import ClipByValue, ConstrainOutput, get_constrain_layer
 from ml.keras_util import getMLPModel, KerasBase
 from util.util import make_param_ext, train_decorator
 from util.visualize import plot_rewards
@@ -217,6 +216,9 @@ class DDPGBaseAgent(KerasBaseAgent):
                            random_process=random_process, gamma=self.gamma, target_model_update=1e-3)
         opt = Adam(lr=self.lr, clipnorm=1.0)
         self.m.compile(opt, metrics=['mae'])
+
+    def get_info(self) -> Dict:
+        return {'action_scaled_01': self.action_range}
 
     def load_if_exists(self, m, name: str) -> bool:
         """Loads the keras model if it exists.

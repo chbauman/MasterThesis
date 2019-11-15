@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Dict
 
 from util.util import Arr, fix_seed
 
@@ -35,6 +35,9 @@ class AgentBase(ABC):
 
     def get_short_name(self):
         return self.name
+
+    def get_info(self) -> Dict:
+        return {}
 
     def eval(self, n_steps: int = 100, reset_seed: bool = False):
         """Evaluates the agent for a given number of steps.

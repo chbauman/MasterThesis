@@ -3,16 +3,17 @@
 Use this class if you want to build an environment
 based on a model of class `BaseDynamicsModel`.
 """
-
+import os
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, Union, List, Tuple
 
 import gym
+import numpy as np
 
 from agents import base_agent
 from dynamics.base_model import BaseDynamicsModel
+from util.util import Arr, create_dir, make_param_ext
 from util.visualize import rl_plot_path, plot_env_evaluation
-from util.util import *
 
 Agents = Union[List, base_agent.AgentBase]
 
@@ -51,6 +52,10 @@ class DynEnv(ABC, gym.Env):
     train_days: List  #: The data of all days, where all data is available.
     day_inds: np.ndarray  #: Index vector storing the timestep offsets to the days
 
+    info: Dict = None  #: A dict with info about the current agent.
+    do_scaling: bool = False
+    a_scaling_pars: Tuple[np.ndarray, np.ndarray] = None
+
     def __init__(self, m: BaseDynamicsModel, name: str = None, max_eps: int = None,
                  disturb_fac: float = 1.0):
         """Initialize the environment.
@@ -77,6 +82,15 @@ class DynEnv(ABC, gym.Env):
         # Set data and initialize env.
         self._set_data("train")
         self.reset()
+
+    def set_agent(self, a: base_agent.AgentBase):
+        self.info = a.get_info()
+        scaling = self.info.get('action_scaled_01')
+        self.do_scaling = scaling is not None
+        if self.do_scaling:
+            p1 = np.array([i[0] for i in scaling], dtype=np.float32)
+            p2 = np.array([i[1] - i[0] for i in scaling], dtype=np.float32)
+            self.a_scaling_pars = p1, p2
 
     def _set_data(self, part_str: str = "train") -> None:
         """Sets the data to use in the env.
@@ -258,6 +272,9 @@ class DynEnv(ABC, gym.Env):
             # Check that agent references this environment
             if not a.env == self:
                 raise ValueError(f"Agent {a_id} was not assigned to this env!")
+
+            # Set agent
+            self.set_agent(a)
 
             # Fit agent if not already fitted
             if not fitted:

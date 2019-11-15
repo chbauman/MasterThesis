@@ -300,6 +300,10 @@ class BatteryEnv(RLDynEnv):
         If the chosen action would result in a SoC outside the bounds,
         it is clipped, s.t. the bound constraints are always fulfilled.
         """
+        # Do scaling if agent wants it
+        if self.do_scaling:
+            action = self.a_scaling_pars[0] + action * self.a_scaling_pars[1]
+
         # Get default min and max actions from bounds
         scaled_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))
         assert len(scaled_ac) == 1 and len(scaled_ac[0]) == 2, "Shape mismatch!"
