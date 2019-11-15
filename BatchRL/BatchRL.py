@@ -21,6 +21,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv
 from util.util import EULER
+from util.visualize import plot_dataset
 
 
 def run_tests() -> None:
@@ -69,14 +70,13 @@ def run_battery() -> None:
     const_ag_1 = ConstHeating(bat_env, 6.0)  # Charge
     const_ag_2 = ConstHeating(bat_env, -3.0)  # Discharge
     dqn_agent = DDPGBaseAgent(bat_env, action_range=bat_env.action_range,
-                              n_steps=10000)
+                              n_steps=20000)
     bat_env.analyze_agents_visually([const_ag_1, const_ag_2],
                                     start_ind=0)
 
     # Fit agent and evaluate.
-    dqn_agent.fit()
     bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
-                                    start_ind=0)
+                                    start_ind=0, fitted=False)
 
 
 def choose_dataset(base_ds_name: str = "Model_Room43",
@@ -308,6 +308,11 @@ def curr_tests() -> None:
 
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
+    print(ds)
+    plot_dataset(ds[0:1], show=False, save_name="test")
+    dat_un_sc = ds.get_unscaled_data()
+    print(np.nanmax(dat_un_sc[:, 0]))
+    print(np.nanmin(dat_un_sc[:, 0]))
 
     # Choose a model
     full_mod_names = [
@@ -327,10 +332,11 @@ def curr_tests() -> None:
         open_agent = ConstHeating(env, 1.0)
         closed_agent = ConstHeating(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        env.analyze_agents_visually([open_agent, open_agent, closed_agent, rule_based_agent],
+        env.analyze_agents_visually([open_agent, closed_agent, rule_based_agent],
                                     start_ind=0,
                                     use_noise=False,
                                     max_steps=None)
+
         continue
 
         # Choose agent and fit to env.
@@ -351,7 +357,8 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    # curr_tests()
+    curr_tests()
+    return
 
     # Train and analyze the battery model
     run_battery()

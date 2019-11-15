@@ -78,8 +78,8 @@ class RLDynEnv(DynEnv, ABC):
             c_actions_scaled[k] = trf_mean_and_std(cont_action[k], self.scaling[self.c_ind[k]], not to_original)
         return c_actions_scaled
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
-        return super().step(self._to_scaled(action))
+    def scale_action_for_step(self, action: Arr):
+        return self._to_scaled(action)
 
 
 class FullRoomEnv(RLDynEnv):
@@ -294,12 +294,7 @@ class BatteryEnv(RLDynEnv):
             # return True
         return False
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
-        """Step function for battery environment.
-
-        If the chosen action would result in a SoC outside the bounds,
-        it is clipped, s.t. the bound constraints are always fulfilled.
-        """
+    def scale_action_for_step(self, action: Arr):
         # Do scaling if agent wants it
         if self.do_scaling:
             action = self.a_scaling_pars[0] + action * self.a_scaling_pars[1]
@@ -334,8 +329,18 @@ class BatteryEnv(RLDynEnv):
         if self.scaling is not None:
             assert not np.array_equal(action, chosen_action)
 
-        # Call the step function of DynEnv to avoid another scaling.
-        return DynEnv.step(self, chosen_action)
+        return chosen_action
+
+    # def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Any]:
+    #     """Step function for battery environment.
+    #
+    #     If the chosen action would result in a SoC outside the bounds,
+    #     it is clipped, s.t. the bound constraints are always fulfilled.
+    #     """
+    #     chosen_action = self.scale_action_for_step(action)
+    #
+    #     # Call the step function of DynEnv to avoid another scaling.
+    #     return DynEnv.step(self, chosen_action)
 
     def reset(self, *args, **kwargs) -> np.ndarray:
         super().reset(*args, **kwargs)

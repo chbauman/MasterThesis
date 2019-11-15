@@ -304,7 +304,7 @@ class TestDecoratorFactory(object):
     and other errors.
     This sucks because it fucks up the debugging.
 
-    TODO: Solve this!
+    TODO: Solve this! (Class decorator?)
     TODO: Find out how or decide to remove!
     """
 

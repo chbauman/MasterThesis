@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
+import numpy as np
+
 from util.util import Arr, fix_seed
 
 
@@ -39,12 +41,13 @@ class AgentBase(ABC):
     def get_info(self) -> Dict:
         return {}
 
-    def eval(self, n_steps: int = 100, reset_seed: bool = False):
+    def eval(self, n_steps: int = 100, reset_seed: bool = False, detailed: bool = False):
         """Evaluates the agent for a given number of steps.
 
         Args:
             n_steps: Number of steps.
             reset_seed: Whether to reset the seed at start.
+            detailed: Whether to return all parts of the reward.
 
         Returns:
             The mean received reward.
@@ -57,11 +60,23 @@ class AgentBase(ABC):
         s_curr = self.env.reset()
         curr_cum_reward = 0.0
 
+        # Detailed stuff
+        if detailed:
+            n_det = len(self.env.reward_descs)
+            det_rewards = np.empty((n_steps, n_det))
+
         # Evaluate for `n_steps` steps.
         for k in range(n_steps):
+
+            # Determine action
             a = self.get_action(s_curr)
+
+
             s_curr, r, fin, _ = self.env.step(a)
             curr_cum_reward += r
+
+            if detailed:
+                det_rewards[k, :] = self.env.detailed_reward()
 
             # Reset env if episode is over.
             if fin:

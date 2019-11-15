@@ -159,11 +159,20 @@ class DynEnv(ABC, gym.Env):
         return False
 
     def scale_actions(self, actions):
-        """Scales the actions to the correct range."""
+        """Scales the actions to the correct range.
+
+        Deprecated!!
+        """
         return actions
+
+    def scale_action_for_step(self, action: Arr):
+        return action
 
     def step(self, action: Arr) -> Tuple[np.ndarray, float, bool, Dict]:
         """Evolve the model with the given control input `action`.
+
+        This function should not be overridden, instead override
+        `scale_action_for_step`!
 
         Args:
             action: The control input (action).
@@ -172,6 +181,9 @@ class DynEnv(ABC, gym.Env):
             The next state, the reward of having chosen that action and a bool
             determining if the episode is over. (And an empty dict)
         """
+        # Scale the action
+        action = self.scale_action_for_step(action)
+
         # Add the control to the history
         self.hist[-1, -self.act_dim:] = action
 
@@ -313,6 +325,26 @@ class DynEnv(ABC, gym.Env):
                             name_list, analysis_plot_path, clipped_action_sequences)
 
     def eval_agents(self, agent_list: Agents, n_steps: int = 100) -> np.ndarray:
+
+        # Make function compatible for single agent input.
+        if not isinstance(agent_list, list):
+            agent_list = [agent_list]
+
+        # Init scores.
+        n_agents = len(agent_list)
+        scores = np.empty((n_agents,), dtype=np.float32)
+
+        for a_id, a in enumerate(agent_list):
+            # Check that agent references this environment
+            if not a.env == self:
+                raise ValueError(f"Agent {a_id} was not assigned to this env!")
+
+            # Evaluate agent.
+            scores[a_id] = a.eval(n_steps, reset_seed=True)
+
+        return scores
+
+    def detailed_eval_agents(self, agent_list: Agents, n_steps: int = 100) -> np.ndarray:
 
         # Make function compatible for single agent input.
         if not isinstance(agent_list, list):
