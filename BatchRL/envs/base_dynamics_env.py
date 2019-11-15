@@ -12,8 +12,9 @@ import numpy as np
 
 from agents import base_agent
 from dynamics.base_model import BaseDynamicsModel
+from util.numerics import npf32
 from util.util import Arr, create_dir, make_param_ext
-from util.visualize import rl_plot_path, plot_env_evaluation
+from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details
 
 Agents = Union[List, base_agent.AgentBase]
 
@@ -319,10 +320,14 @@ class DynEnv(ABC, gym.Env):
 
         # Plot all the things
         name_list = [a.get_short_name() for a in agents]
-        agent_names = '_'.join(name_list)
-        analysis_plot_path = self.get_plt_path("AgentAnalysis_" + str(start_ind) + "_" + agent_names)
+        analysis_plot_path = self._construct_plot_name("AgentAnalysis", start_ind, agents)
         plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
                             name_list, analysis_plot_path, clipped_action_sequences)
+
+    def _construct_plot_name(self, base_name: str, start_ind: int, agent_list: List):
+        name_list = [a.get_short_name() for a in agent_list]
+        agent_names = '_'.join(name_list)
+        return self.get_plt_path(base_name + "_" + str(start_ind) + "_" + agent_names)
 
     def eval_agents(self, agent_list: Agents, n_steps: int = 100) -> np.ndarray:
 
@@ -352,7 +357,9 @@ class DynEnv(ABC, gym.Env):
 
         # Init scores.
         n_agents = len(agent_list)
-        scores = np.empty((n_agents,), dtype=np.float32)
+        n_extra_rewards = len(self.reward_descs)
+        n_tot_rewards = n_extra_rewards + 1
+        all_rewards = npf32((n_agents, n_steps, n_tot_rewards))
 
         for a_id, a in enumerate(agent_list):
             # Check that agent references this environment
@@ -360,6 +367,11 @@ class DynEnv(ABC, gym.Env):
                 raise ValueError(f"Agent {a_id} was not assigned to this env!")
 
             # Evaluate agent.
-            scores[a_id] = a.eval(n_steps, reset_seed=True)
+            rew, ex_rew = a.eval(n_steps, reset_seed=True, detailed=True)
+            all_rewards[a_id, :, 0] = rew
+            all_rewards[a_id, :, 1:] = ex_rew
 
-        return scores
+        # Plot
+        p_name = self._construct_plot_name("DetailAnalysis", n_steps, agent_list)
+        plot_reward_details(agent_list, all_rewards, p_name, self.reward_descs)
+        return all_rewards

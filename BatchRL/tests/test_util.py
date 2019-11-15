@@ -4,10 +4,12 @@ from unittest import TestCase
 
 import numpy as np
 
+from agents.agents_heuristic import ConstHeating
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
-    np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units
+    np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir
+from util.visualize import plot_dir, plot_reward_details
 
 
 class TestNumerics(TestCase):
@@ -265,3 +267,29 @@ class TestUtil(TestCase):
         self.assertEqual(p1, "desc ")
         self.assertEqual(p2, "[1]")
         self.assertEqual("hoi", split_desc_units("hoi")[0])
+
+
+class TestPlot(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.test_plot_dir = os.path.join(plot_dir, "Test")
+
+    def get_test_path(self, base_name: str):
+        create_dir(self.test_plot_dir)
+        return os.path.join(self.test_plot_dir, base_name)
+
+    def make_bar_plot(self, n_ag, n_rew, n_steps):
+        descs = [f"Rew_{i}" for i in range(n_rew - 1)]
+        agents = [ConstHeating(None, 1.0 * i) for i in range(n_ag)]
+        rewards = np.random.normal(2.0, 1.0, (n_ag, n_steps, n_rew))
+        test_path = self.get_test_path(f"test_reward_bar_{n_ag}_{n_rew}_{n_steps}")
+        plot_reward_details(agents, rewards, test_path, descs)
+
+    def test_reward_bar_plot(self):
+        self.make_bar_plot(3, 4, 5)
+        self.make_bar_plot(6, 2, 10)
+        self.make_bar_plot(1, 8, 3)
+
+    pass

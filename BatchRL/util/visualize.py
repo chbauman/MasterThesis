@@ -658,3 +658,50 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
     s = (16, tot_n_plots * 1.8)
     if save_path is not None:
         save_figure(save_path, size=s)
+
+
+def plot_reward_details(a_list: List, rewards: np.ndarray,
+                        path_name: str,
+                        rew_descs: List[str],
+                        title: str = "") -> None:
+
+    n_rewards = rewards.shape[-1]
+    assert n_rewards == len(rew_descs) + 1, "No correct number of descriptions!"
+    labels = [a.name for a in a_list]
+    mean_rewards = np.mean(rewards, axis=1)
+    all_descs = ["Total Reward"] + rew_descs
+
+    x = np.arange(len(labels))  # the label locations
+    width = 0.8 / n_rewards  # the width of the bars
+
+    fig, ax = plt.subplots()
+    offs = (n_rewards - 1) * width / 2
+    rects = [ax.bar(x - offs + i * width,
+                    mean_rewards[:, i],
+                    width,
+                    label=all_descs[i])
+             for i in range(n_rewards)]
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Rewards')
+    ax.set_title(title)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+
+    def auto_label(rect_list):
+        """Attach a text label above each bar in *rects*, displaying its height."""
+        for rect in rect_list:
+            height = rect.get_height()
+            ax.annotate('{:.4g}'.format(height),
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+
+    for r in rects:
+        auto_label(r)
+
+    fig.tight_layout()
+
+    save_figure(save_name=path_name)
