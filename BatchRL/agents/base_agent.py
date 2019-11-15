@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 import numpy as np
 
+from util.numerics import npf32
 from util.util import Arr, fix_seed
 
 
@@ -59,28 +60,34 @@ class AgentBase(ABC):
         # Initialize env and reward.
         s_curr = self.env.reset()
         curr_cum_reward = 0.0
+        all_rewards = npf32((n_steps,))
 
         # Detailed stuff
+        det_rewards = None
         if detailed:
             n_det = len(self.env.reward_descs)
-            det_rewards = np.empty((n_steps, n_det))
+            det_rewards = np.empty((n_steps, n_det), dtype=np.float32)
 
         # Evaluate for `n_steps` steps.
         for k in range(n_steps):
 
             # Determine action
             a = self.get_action(s_curr)
-
-
             s_curr, r, fin, _ = self.env.step(a)
-            curr_cum_reward += r
 
-            if detailed:
-                det_rewards[k, :] = self.env.detailed_reward()
+            # Store rewards
+            all_rewards[k] = r
+            if det_rewards is not None:
+                scaled_a = self.env.scale_action_for_step(a)
+                det_rew = self.env.detailed_reward(scaled_a)
+                det_rewards[k, :] = det_rew
 
             # Reset env if episode is over.
             if fin:
                 s_curr = self.env.reset()
 
+        if detailed:
+            return all_rewards, det_rewards
+
         # Return mean reward.
-        return curr_cum_reward / n_steps
+        return np.sum(all_rewards) / n_steps
