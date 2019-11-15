@@ -686,7 +686,7 @@ def plot_reward_details(a_list: List, rewards: np.ndarray,
              for i in range(n_rewards)]
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Rewards')
+    ax.set_ylabel('Reward')
     ax.set_title(title)
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
