@@ -5,8 +5,7 @@ There is also a function that tests the layers
 for some example input.
 """
 from keras import backend as K, activations
-from keras.layers import Layer, GaussianNoise
-import tensorflow as tf
+from keras.layers import Layer, GaussianNoise, Lambda
 
 from data_processing.data import SeriesConstraint
 from util.util import *
@@ -417,10 +416,26 @@ class ConstrainOutput(Layer):
     def call(self, x, **kwargs):
         """Returns clipped `x`."""
         activated = activations.sigmoid(x)
-        l_tensor = tf.convert_to_tensor(self.low.reshape((1, -1)))
-        d_tensor = tf.convert_to_tensor(self.dist.reshape((1, -1)))
+        l_tensor = K.constant(self.low.reshape((1, -1)))
+        d_tensor = K.constant(self.dist.reshape((1, -1)))
         return activated * d_tensor + l_tensor
 
     def compute_output_shape(self, input_shape):
         """The shape stays the same."""
         return input_shape
+
+
+def get_constrain_layer(ranges: List[Tuple[Num, Num]]):
+    """The same layer as the one above, but using a Lambda layer."""
+    low = np.array([i[0] for i in ranges], dtype=np.float32)
+    dist = np.array([i[1] - i[0] for i in ranges], dtype=np.float32)
+
+    l_tensor = K.constant(low.reshape((1, -1)))
+    d_tensor = K.constant(dist.reshape((1, -1)))
+
+    def constrain_sigmoid(x):
+        activated = activations.sigmoid(x)
+        return activated * d_tensor + l_tensor
+
+    ConstrainOutputLambda = Lambda(constrain_sigmoid)
+    return ConstrainOutputLambda

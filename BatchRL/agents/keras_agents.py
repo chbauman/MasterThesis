@@ -8,7 +8,7 @@ import os
 from typing import Sequence
 
 from keras import Input, Model, Sequential
-from keras.layers import Flatten, Concatenate
+from keras.layers import Flatten, Concatenate, Activation
 from keras.optimizers import Adam
 from rl.agents import DDPGAgent
 from rl.agents.dqn import DQNAgent, NAFAgent
@@ -19,7 +19,7 @@ from rl.random import OrnsteinUhlenbeckProcess
 
 from agents.base_agent import AgentBase
 from envs.dynamics_envs import FullRoomEnv, RLDynEnv, RangeListT
-from ml.keras_layers import ClipByValue, ConstrainOutput
+from ml.keras_layers import ClipByValue, ConstrainOutput, get_constrain_layer
 from ml.keras_util import getMLPModel, KerasBase
 from util.util import make_param_ext, train_decorator
 from util.visualize import plot_rewards
@@ -139,7 +139,7 @@ class DDPGBaseAgent(KerasBaseAgent):
                  n_steps: int = 50000,
                  lr: float = 0.001,
                  gamma: float = 0.9,
-                 layers: Sequence[int] = (50, 50),
+                 layers: Sequence[int] = (50, 50, 50),
                  reg: float = 0.01,
                  action_range: RangeListT = None):
         """Constructor.
@@ -196,6 +196,8 @@ class DDPGBaseAgent(KerasBaseAgent):
 
         # Clip actions to desired interval
         if self.action_range is not None:
+            actor.add(Activation('sigmoid'))
+            # actor.add(get_constrain_layer(self.action_range))
             pass
             # actor.add(ConstrainOutput(self.action_range))
 
@@ -205,7 +207,6 @@ class DDPGBaseAgent(KerasBaseAgent):
         flattened_observation = Flatten()(observation_input)
         x = Concatenate()([action_input, flattened_observation])
         x = getMLPModel(mlp_layers=self.layers, out_dim=1, ker_reg=self.reg)(x)
-        x = ConstrainOutput([(0.0, 1.0)])(x)
         critic = Model(inputs=[action_input, observation_input], outputs=x)
 
         # Configure and compile the agent.

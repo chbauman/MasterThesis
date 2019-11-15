@@ -298,7 +298,9 @@ class BatteryEnv(RLDynEnv):
         it is clipped, s.t. the bound constraints are always fulfilled.
         """
         # Get default min and max actions from bounds
-        min_ac, max_ac = self._to_scaled(np.array(self.action_range[0], dtype=np.float32))[0]
+        scaled_ac = self._to_scaled(np.array(self.action_range[0], dtype=np.float32))
+        assert len(scaled_ac) == 2
+        min_ac, max_ac = scaled_ac[0], scaled_ac[1]
 
         # Find the minimum and maximum action satisfying SoC constraints.
         curr_state = self.get_curr_state()
