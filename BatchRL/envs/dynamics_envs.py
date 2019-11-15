@@ -66,7 +66,10 @@ class RLDynEnv(DynEnv, ABC):
     def _to_scaled(self, action: Arr, to_original: bool = False) -> np.ndarray:
         """Converts actions to the right range."""
         if np.array(action).shape == ():
+            assert self.nb_actions == 1, "Ambiguous for more than one action!"
             action = np.array([action])
+        else:
+            assert len(action) == self.nb_actions, "Not the right amount of actions!"
         cont_action = self.scale_actions(action)
         if self.scaling is None:
             return cont_action
@@ -298,9 +301,9 @@ class BatteryEnv(RLDynEnv):
         it is clipped, s.t. the bound constraints are always fulfilled.
         """
         # Get default min and max actions from bounds
-        scaled_ac = self._to_scaled(np.array(self.action_range[0], dtype=np.float32))
-        assert len(scaled_ac) == 2
-        min_ac, max_ac = scaled_ac[0], scaled_ac[1]
+        scaled_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))
+        assert len(scaled_ac) == 1 and len(scaled_ac[0]) == 2, "Shape mismatch!"
+        min_ac, max_ac = scaled_ac[0]
 
         # Find the minimum and maximum action satisfying SoC constraints.
         curr_state = self.get_curr_state()
