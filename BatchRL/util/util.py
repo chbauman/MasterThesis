@@ -43,7 +43,8 @@ LOrEl = Union[Sequence[T], T]
 #######################################################################################################
 # Python stuff
 
-def yeet():
+def yeet() -> None:
+    """Raises an exception."""
     raise ValueError("YEET")
 
 
