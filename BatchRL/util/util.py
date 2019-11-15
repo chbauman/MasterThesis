@@ -43,6 +43,10 @@ LOrEl = Union[Sequence[T], T]
 #######################################################################################################
 # Python stuff
 
+def yeet():
+    raise ValueError("YEET")
+
+
 def to_list(lore: LOrEl) -> List:
     if not isinstance(lore, list):
         return [lore]
