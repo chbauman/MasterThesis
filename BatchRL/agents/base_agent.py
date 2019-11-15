@@ -59,7 +59,6 @@ class AgentBase(ABC):
 
         # Initialize env and reward.
         s_curr = self.env.reset()
-        curr_cum_reward = 0.0
         all_rewards = npf32((n_steps,))
 
         # Detailed stuff
@@ -73,19 +72,22 @@ class AgentBase(ABC):
 
             # Determine action
             a = self.get_action(s_curr)
+            scaled_a = self.env.scale_action_for_step(a)
+
+            # Execute step
             s_curr, r, fin, _ = self.env.step(a)
 
             # Store rewards
             all_rewards[k] = r
             if det_rewards is not None:
-                scaled_a = self.env.scale_action_for_step(a)
-                det_rew = self.env.detailed_reward(scaled_a)
+                det_rew = self.env.detailed_reward(s_curr, scaled_a)
                 det_rewards[k, :] = det_rew
 
             # Reset env if episode is over.
             if fin:
                 s_curr = self.env.reset()
 
+        # Return all rewards
         if detailed:
             return all_rewards, det_rewards
 

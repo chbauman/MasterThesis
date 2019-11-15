@@ -138,6 +138,14 @@ class TestBatteryEnv(TestCase):
     def test_analyze_agents(self):
         self.env.analyze_agents_visually([self.ag_1, self.ag_2], start_ind=1)
 
+    def test_agent_eval(self):
+        n = 20
+        r, r_other = self.ag_1.eval(n, detailed=True)
+        self.assertTrue(np.allclose(-r, r_other[:, 0]), "agent.eval not correct")
+
+    def test_detailed_analysis(self):
+        self.env.detailed_eval_agents([self.ag_1, self.ag_2], n_steps=10)
+
     def test_scaled(self):
         self.assertTrue(self.env.scaling is not None, "Data should be scaled!!")
 
