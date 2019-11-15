@@ -68,7 +68,8 @@ def run_battery() -> None:
                          n_cont_actions=1)
     const_ag_1 = ConstHeating(bat_env, 6.0)  # Charge
     const_ag_2 = ConstHeating(bat_env, -3.0)  # Discharge
-    dqn_agent = DDPGBaseAgent(bat_env, action_range=bat_env.action_range)
+    dqn_agent = DDPGBaseAgent(bat_env, action_range=bat_env.action_range,
+                              n_steps=10000)
     bat_env.analyze_agents_visually([const_ag_1, const_ag_2],
                                     start_ind=0)
 

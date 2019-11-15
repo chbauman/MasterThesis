@@ -311,19 +311,18 @@ class BatteryEnv(RLDynEnv):
         s_min_scaled, s_max_scaled = self._get_scaled_soc(soc_bound_arr, remove_mean=True)
         b, c_min, gam = self.m.params
         c_max = c_min + gam
-        ac_min = np.maximum((s_min_scaled - b - curr_state) / c_min, min_ac)
-        ac_max = np.minimum((s_max_scaled - b - curr_state) / c_max, max_ac)
 
-        # Compute minimal action to reach SoC goal
-        n_remain_steps = self.n_ts_per_eps - self.n_ts
+        # SoC bounds
         min_goal_soc = self._get_scaled_soc(self.req_soc, remove_mean=True)
-        ds_remain = min_goal_soc - curr_state
-        if ds_remain > 0:
-            max_ds = b + max_ac * c_max
-            n_ts_needed_min = np.ceil(ds_remain / max_ds)
-            if n_ts_needed_min >= n_remain_steps:
-                min_ds_now = ds_remain - (n_ts_needed_min - 1) * max_ds
-                ac_min = (min_ds_now - b) / c_max
+        n_remain_steps = self.n_ts_per_eps - self.n_ts
+        max_ds = b + max_ac * c_max
+        next_d_soc_min = np.maximum(s_min_scaled, min_goal_soc - (n_remain_steps - 1) * max_ds) - b - curr_state
+        if next_d_soc_min < 0:
+            ac_min = np.maximum(next_d_soc_min / c_min, min_ac)
+        else:
+            ac_min = np.maximum(next_d_soc_min / c_max, min_ac)
+        next_d_soc_max = s_max_scaled - b - curr_state
+        ac_max = np.minimum(next_d_soc_max / c_max, max_ac)
 
         # Clip the actions.
         scaled_action = self._to_scaled(action)
