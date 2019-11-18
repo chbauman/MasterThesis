@@ -326,7 +326,7 @@ def curr_tests() -> None:
         open_agent = ConstHeating(env, 1.0)
         closed_agent = ConstHeating(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        ag_list = [open_agent, closed_agent, rule_based_agent, rule_based_agent]
+        ag_list = [open_agent, closed_agent, rule_based_agent]
         env.analyze_agents_visually(ag_list,
                                     start_ind=0,
                                     use_noise=False,
@@ -353,10 +353,11 @@ def main() -> None:
 
     # Full test model
     curr_tests()
-    return
+    # return
 
     # Train and analyze the battery model
     run_battery()
+    return
 
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)

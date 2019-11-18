@@ -242,6 +242,10 @@ class DynEnv(ABC, gym.Env):
     def render(self, mode='human'):
         print("Rendering not implemented!")
 
+    def _to_scaled(self, action: Arr, to_original: bool = False) -> np.ndarray:
+        """Converts actions to the right range."""
+        raise NotImplementedError("Implement this!")
+
     def analyze_agents_visually(self, agents: Union[List, base_agent.AgentBase],
                                 fitted: bool = True,
                                 use_noise: bool = False,
@@ -313,8 +317,10 @@ class DynEnv(ABC, gym.Env):
 
         # Scale the data to the right values
         trajectories = self.m.rescale_output(trajectories, out_put=True)
-        action_sequences = self.scale_actions(action_sequences)
-        clipped_action_sequences = self.scale_actions(clipped_action_sequences)
+        s_ac = clipped_action_sequences.shape
+        for k in range(s_ac[0]):
+            for i in range(s_ac[1]):
+                clipped_action_sequences[k, i] = self._to_scaled(clipped_action_sequences[k, i], to_original=True)
         if np.allclose(clipped_action_sequences, action_sequences):
             clipped_action_sequences = None
 
