@@ -349,8 +349,11 @@ class DynEnv(ABC, gym.Env):
 
         return scores
 
-    def detailed_eval_agents(self, agent_list: Agents, n_steps: int = 100) -> np.ndarray:
+    def detailed_eval_agents(self, agent_list: Agents, n_steps: int = 100, use_noise: bool = False) -> np.ndarray:
+        """Evaluates the given agents for this environment.
 
+        Plots the mean rewards and returns all rewards.
+        """
         # Make function compatible for single agent input.
         if not isinstance(agent_list, list):
             agent_list = [agent_list]
@@ -367,7 +370,7 @@ class DynEnv(ABC, gym.Env):
                 raise ValueError(f"Agent {a_id} was not assigned to this env!")
 
             # Evaluate agent.
-            rew, ex_rew = a.eval(n_steps, reset_seed=True, detailed=True)
+            rew, ex_rew = a.eval(n_steps, reset_seed=True, detailed=True, use_noise=use_noise)
             all_rewards[a_id, :, 0] = rew
             all_rewards[a_id, :, 1:] = ex_rew
 

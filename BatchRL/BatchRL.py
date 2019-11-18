@@ -308,11 +308,6 @@ def curr_tests() -> None:
 
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
-    print(ds)
-    plot_dataset(ds[0:1], show=False, save_name="test")
-    dat_un_sc = ds.get_unscaled_data()
-    print(np.nanmax(dat_un_sc[:, 0]))
-    print(np.nanmin(dat_un_sc[:, 0]))
 
     # Choose a model
     full_mod_names = [
@@ -332,11 +327,12 @@ def curr_tests() -> None:
         open_agent = ConstHeating(env, 1.0)
         closed_agent = ConstHeating(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        env.analyze_agents_visually([open_agent, closed_agent, rule_based_agent],
+        ag_list = [open_agent, closed_agent, rule_based_agent]
+        env.analyze_agents_visually(ag_list,
                                     start_ind=0,
                                     use_noise=False,
                                     max_steps=None)
-
+        env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
         continue
 
         # Choose agent and fit to env.

@@ -42,13 +42,15 @@ class AgentBase(ABC):
     def get_info(self) -> Dict:
         return {}
 
-    def eval(self, n_steps: int = 100, reset_seed: bool = False, detailed: bool = False):
+    def eval(self, n_steps: int = 100, reset_seed: bool = False, detailed: bool = False,
+             use_noise: bool = False):
         """Evaluates the agent for a given number of steps.
 
         Args:
             n_steps: Number of steps.
             reset_seed: Whether to reset the seed at start.
             detailed: Whether to return all parts of the reward.
+            use_noise: Whether to use noise during the evaluation.
 
         Returns:
             The mean received reward.
@@ -58,7 +60,7 @@ class AgentBase(ABC):
             fix_seed()
 
         # Initialize env and reward.
-        s_curr = self.env.reset()
+        s_curr = self.env.reset(use_noise=use_noise)
         all_rewards = npf32((n_steps,))
 
         # Detailed stuff
