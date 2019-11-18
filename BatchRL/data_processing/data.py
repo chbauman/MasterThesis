@@ -448,8 +448,7 @@ def get_from_data_struct(dat_struct: DataStruct,
                          desc_list: np.ndarray = None,
                          c_inds: np.ndarray = None,
                          p_inds: np.ndarray = None,
-                         standardize_data: bool = False,
-                         custom_descs=None) -> 'Dataset':
+                         standardize_data: bool = False) -> 'Dataset':
     """Extracts the specified series and applies
     pre-processing steps to all of them and puts them into a
     Dataset.
@@ -463,6 +462,8 @@ def get_from_data_struct(dat_struct: DataStruct,
     # Try loading data
     try:
         loaded = Dataset.loadDataset(new_name)
+        if desc_list is not None:
+            loaded.descriptions = desc_list
         return loaded
     except FileNotFoundError:
         print("Did not find Dataset:", new_name)
@@ -499,7 +500,7 @@ def get_from_data_struct(dat_struct: DataStruct,
 
         # Save
         return save_ds_from_raw(all_data, m_out, new_name, c_inds, p_inds, standardize_data,
-                                custom_descs=custom_descs)
+                                custom_descs=desc_list)
 
 
 def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int, pl_kwargs,
@@ -583,7 +584,7 @@ def get_battery_data() -> 'Dataset':
     ds = get_from_data_struct(BatteryData, bat_plot_path, dt_mins, name, inds, kws,
                               c_inds=c_inds,
                               standardize_data=True,
-                              custom_descs=custom_descs)
+                              desc_list=custom_descs)
 
     # Plot files
     plot_name_roi = os.path.join(bat_plot_path, "Strange")

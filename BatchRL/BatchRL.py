@@ -11,7 +11,7 @@ import numpy as np
 from agents.agents_heuristic import ConstHeating, RuleBasedHeating
 from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
-    generate_room_datasets, get_DFAB_heating_data, DatasetConstraints, get_data_test, test_rest_client
+    generate_room_datasets, get_DFAB_heating_data, DatasetConstraints, get_data_test, test_rest_client, get_weather_data
 from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
 from dynamics.battery_model import BatteryModel
@@ -331,7 +331,7 @@ def curr_tests() -> None:
                                     start_ind=0,
                                     use_noise=False,
                                     max_steps=None)
-        env.detailed_eval_agents(ag_list, use_noise=False, n_steps=10000)
+        env.detailed_eval_agents(ag_list, use_noise=False, n_steps=100)
         continue
 
         # Choose agent and fit to env.
@@ -353,7 +353,7 @@ def main() -> None:
 
     # Full test model
     curr_tests()
-    # return
+    return
 
     # Train and analyze the battery model
     run_battery()
