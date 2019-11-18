@@ -21,7 +21,6 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv
 from util.util import EULER
-from util.visualize import plot_dataset
 
 
 def run_tests() -> None:
@@ -327,12 +326,12 @@ def curr_tests() -> None:
         open_agent = ConstHeating(env, 1.0)
         closed_agent = ConstHeating(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        ag_list = [open_agent, closed_agent, rule_based_agent]
+        ag_list = [open_agent, closed_agent, rule_based_agent, rule_based_agent]
         env.analyze_agents_visually(ag_list,
                                     start_ind=0,
                                     use_noise=False,
                                     max_steps=None)
-        env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
+        env.detailed_eval_agents(ag_list, use_noise=False, n_steps=10000)
         continue
 
         # Choose agent and fit to env.

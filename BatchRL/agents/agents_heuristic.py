@@ -47,7 +47,7 @@ class ConstHeating(AgentBase):
     """
     rule: float  #: The constant control input / action
 
-    def __init__(self, env: 'DynEnv', rule: float):
+    def __init__(self, env, rule: float):
         super().__init__(env, name=f"Const_{rule}")
 
         self.rule = rule
