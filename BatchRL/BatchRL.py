@@ -70,9 +70,9 @@ def run_battery() -> None:
     const_ag_2 = ConstHeating(bat_env, -3.0)  # Discharge
     dqn_agent = DDPGBaseAgent(bat_env, action_range=bat_env.action_range,
                               n_steps=20000)
-    bat_env.analyze_agents_visually([const_ag_1, const_ag_2],
-                                    start_ind=0)
-    bat_env.detailed_eval_agents([const_ag_1, const_ag_2], use_noise=False, n_steps=1000)
+    bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
+                                    start_ind=100)
+    bat_env.detailed_eval_agents([const_ag_1, const_ag_2, dqn_agent], use_noise=False, n_steps=1000)
 
     # Fit agent and evaluate.
     bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
@@ -363,7 +363,6 @@ def curr_tests() -> None:
                                     use_noise=False,
                                     max_steps=None)
         env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
-        continue
 
         # Choose agent and fit to env.
         if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
@@ -371,7 +370,7 @@ def curr_tests() -> None:
             agent.fit()
             agent_list = [open_agent, closed_agent, rule_based_agent, agent]
             env.analyze_agents_visually(agent_list)
-            print(env.eval_agents(agent_list, n_steps=500))
+            env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
 
 
 def main() -> None:
@@ -383,11 +382,11 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    # curr_tests()
+    curr_tests()
     # return
 
     # Train and analyze the battery model
-    run_battery()
+    # run_battery()
     return
 
     # Get dataset and constraints

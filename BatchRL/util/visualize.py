@@ -670,7 +670,7 @@ def plot_reward_details(a_list: List, rewards: np.ndarray,
 
     n_rewards = rewards.shape[-1]
     assert n_rewards == len(rew_descs) + 1, "No correct number of descriptions!"
-    labels = [a.name for a in a_list]
+    labels = [a.get_short_name() for a in a_list]
     mean_rewards = np.mean(rewards, axis=1)
     all_descs = ["Total Reward"] + rew_descs
 

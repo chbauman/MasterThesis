@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 from typing import Sequence, Tuple, List
 
@@ -124,8 +125,8 @@ class FullRoomEnv(RLDynEnv):
                 w[k] = add_mean_and_std(w[k], self.scaling[w_inds[k]])
         return w
 
-    reward_descs = ["Energy Consumption []",
-                    "Temperature Bound Violation [°Kh]"]
+    reward_descs = [f"Energy Consumption [{0.25 * 65.37 * 4.18 / 3.6} kWh]",
+                    "Temperature Bound Violation [Kh]"]
 
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
 
@@ -138,7 +139,9 @@ class FullRoomEnv(RLDynEnv):
 
         # Check for actions out of range
         action_penalty = linear_oob_penalty(action_rescaled, [0.0, 1.0])
-        assert action_penalty <= 0.0, "Actions scaled wrongly!"
+        if action_penalty > 0:
+            warnings.warn("Actions not in right range")
+        # assert action_penalty <= 0.0, "Actions scaled wrongly!"
 
         # Penalty for constraint violation
         r_temp = self.get_r_temp(curr_pred)
