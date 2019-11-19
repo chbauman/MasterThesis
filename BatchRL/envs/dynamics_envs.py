@@ -125,7 +125,7 @@ class FullRoomEnv(RLDynEnv):
                 w[k] = add_mean_and_std(w[k], self.scaling[w_inds[k]])
         return w
 
-    reward_descs = [f"Energy Consumption [{0.25 * 65.37 * 4.18 / 3.6} kWh]",
+    reward_descs = ["Energy Consumption [{:.4g} kWh]".format(0.25 * 65.37 * 4.18 / 3.6),
                     "Temperature Bound Violation [Kh]"]
 
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
@@ -160,6 +160,23 @@ class FullRoomEnv(RLDynEnv):
         if r_temp > t_bounds[1] + thresh or r_temp < t_bounds[0] - thresh:
             return True
         return False
+
+    def scale_action_for_step(self, action: Arr):
+        # Do scaling if agent wants it
+        if self.do_scaling:
+            action = self.a_scaling_pars[0] + action * self.a_scaling_pars[1]
+
+        # Get default min and max actions from bounds
+        scaled_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))
+        assert len(scaled_ac) == 1 and len(scaled_ac[0]) == 2, "Shape mismatch!"
+        min_ac, max_ac = scaled_ac[0]
+
+        scaled_action = self._to_scaled(action)
+        chosen_action = np.clip(scaled_action, min_ac, max_ac)
+        if self.scaling is not None:
+            assert not np.array_equal(action, chosen_action)
+
+        return chosen_action
 
 
 class CProf(ABC):

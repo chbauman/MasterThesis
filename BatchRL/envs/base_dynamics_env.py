@@ -371,6 +371,10 @@ class DynEnv(ABC, gym.Env):
         all_rewards = npf32((n_agents, n_steps, n_tot_rewards))
 
         for a_id, a in enumerate(agent_list):
+
+            # Set agent
+            self.set_agent(a)
+
             # Check that agent references this environment
             if not a.env == self:
                 raise ValueError(f"Agent {a_id} was not assigned to this env!")

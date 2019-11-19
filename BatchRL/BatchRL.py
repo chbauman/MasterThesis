@@ -366,11 +366,11 @@ def curr_tests() -> None:
 
         # Choose agent and fit to env.
         if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
-            agent = DDPGBaseAgent(env)
+            agent = DDPGBaseAgent(env, action_range=env.action_range, n_steps=20000)
             agent.fit()
             agent_list = [open_agent, closed_agent, rule_based_agent, agent]
             env.analyze_agents_visually(agent_list)
-            env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
+            env.detailed_eval_agents(agent_list, use_noise=False, n_steps=1000)
 
 
 def main() -> None:
