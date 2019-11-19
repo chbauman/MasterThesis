@@ -387,5 +387,6 @@ class DynEnv(ABC, gym.Env):
         # Plot
         p_name = self._construct_plot_name("DetailAnalysis", n_steps, agent_list)
         plot_reward_details(agent_list, all_rewards, p_name,
-                            self.reward_descs, title=f"Mean rewards for {n_steps} steps.")
+                            self.reward_descs,
+                            title=f"Mean rewards for {n_steps} steps (Timestep: {self.m.data.dt} min)")
         return all_rewards
