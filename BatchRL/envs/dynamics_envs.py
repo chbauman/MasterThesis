@@ -269,10 +269,10 @@ class BatteryEnv(RLDynEnv):
         assert linear_oob_penalty(curr_pred, self.soc_bound) <= 0.001, "WTF2"
 
         # Penalty for not having charged enough at the end of the episode.
-        if self.n_ts > self.n_ts_per_eps - 1 and curr_pred < self.req_soc:
+        if self.n_ts > self.n_ts_per_eps - 1 and curr_pred < self.req_soc - 0.001:
             assert linear_oob_penalty(curr_pred, [self.req_soc, 100]) <= 0.0, "Model not working"
 
-        # Total reward is the negative penalty minus energy used.
+        # Total reward is minus the energy used.
         return np.array([energy_used])
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:

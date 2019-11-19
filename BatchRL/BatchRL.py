@@ -57,7 +57,7 @@ def run_battery() -> None:
     # Initialize and fit battery model.
     bat_mod = BatteryModel(bat_ds)
     bat_mod.analyze_bat_model()
-    # bat_mod.analyze()
+    bat_mod.analyze()
     # bat_mod_naive = ConstModel(bat_ds)
     # bat_mod_naive.analyze()
 
@@ -72,6 +72,7 @@ def run_battery() -> None:
                               n_steps=20000)
     bat_env.analyze_agents_visually([const_ag_1, const_ag_2],
                                     start_ind=0)
+    bat_env.detailed_eval_agents([const_ag_1, const_ag_2], use_noise=False, n_steps=1000)
 
     # Fit agent and evaluate.
     bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
@@ -302,11 +303,41 @@ def get_model(name: str, ds: Dataset,
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
-    # try_opcua()
-    # return
-
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
+
+    fit_custom = False
+    if fit_custom:
+        # Basic parameter set
+        name = "RoomTempFromReduced_RNN"
+        hop_pars = {
+            'n_iter_max': 25,
+            'hidden_sizes': (50, 50, 50),
+            'input_noise_std': 0.0001,
+            'lr': 0.0004,
+            'gru': False,
+        }
+        fix_pars = {
+            'name': name,
+            'data': ds,
+            'residual_learning': True,
+            'constraint_list': rnn_consts,
+            'weight_vec': None,
+        }
+        all_out = {'out_inds': np.array([0, 1, 2, 3, 5], dtype=np.int32)}
+        base_params = dict(hop_pars, **fix_pars, **all_out)
+        base_params_no_inds = {k: base_params[k] for k in base_params if k != 'out_inds'}
+        inds = {
+            'out_inds': np.array([5], dtype=np.int32),
+            'in_inds': np.array([0, 2, 4, 5, 6, 7], dtype=np.int32),
+        }
+        rnn = RNNDynamicModel(**inds, **base_params_no_inds)
+        rnn.fit()
+        rnn.analyze()
+        return
+
+    # try_opcua()
+    # return
 
     # Choose a model
     full_mod_names = [
@@ -316,7 +347,7 @@ def curr_tests() -> None:
     ]
 
     # Test all models
-    for m_name in full_mod_names[:1]:
+    for m_name in full_mod_names:
         # Load the model and init env
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
         # m.analyze()
@@ -328,10 +359,10 @@ def curr_tests() -> None:
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
         ag_list = [open_agent, closed_agent, rule_based_agent]
         env.analyze_agents_visually(ag_list,
-                                    start_ind=0,
+                                    # start_ind=0,
                                     use_noise=False,
                                     max_steps=None)
-        env.detailed_eval_agents(ag_list, use_noise=False, n_steps=100)
+        env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
         continue
 
         # Choose agent and fit to env.
@@ -352,8 +383,8 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    curr_tests()
-    return
+    # curr_tests()
+    # return
 
     # Train and analyze the battery model
     run_battery()
@@ -395,7 +426,7 @@ def main() -> None:
     for name, m_to_use in all_mods.items():
         m_to_use.fit()
         print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
-        m_to_use.analyze()
+        m_to_use.analyze(overwrite=True)
         # analyze_control_influence(m_to_use)
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
