@@ -37,6 +37,7 @@ class KerasBaseAgent(AgentBase, KerasBase):
 
     def get_action(self, state):
         """Use the keras-rl model to get an action."""
+        assert not self.m.training, "Still in training mode!"
         return self.m.forward(state)
 
 
@@ -134,6 +135,7 @@ class DDPGBaseAgent(KerasBaseAgent):
     Suited for continuous action and state space.
     Range of allowed actions can be specified.
     """
+
     def __init__(self, env: RLDynEnv,
                  n_steps: int = 50000,
                  lr: float = 0.001,
