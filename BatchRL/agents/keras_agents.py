@@ -138,7 +138,7 @@ class DDPGBaseAgent(KerasBaseAgent):
                  n_steps: int = 50000,
                  lr: float = 0.001,
                  gamma: float = 0.9,
-                 layers: Sequence[int] = (50, 50, 50),
+                 layers: Sequence[int] = (100, 100, 100),
                  reg: float = 0.01,
                  action_range: RangeListT = None):
         """Constructor.
@@ -210,7 +210,7 @@ class DDPGBaseAgent(KerasBaseAgent):
 
         # Configure and compile the agent.
         memory = SequentialMemory(limit=100000, window_length=1)
-        random_process = OrnsteinUhlenbeckProcess(size=self.nb_actions, theta=.15, mu=0., sigma=.3)
+        random_process = OrnsteinUhlenbeckProcess(size=self.nb_actions, theta=.15, mu=0., sigma=.05)
         self.m = DDPGAgent(nb_actions=self.nb_actions, actor=actor, critic=critic, critic_action_input=action_input,
                            memory=memory, nb_steps_warmup_critic=100, nb_steps_warmup_actor=100,
                            random_process=random_process, gamma=self.gamma, target_model_update=1e-3)

@@ -379,6 +379,9 @@ class DynEnv(ABC, gym.Env):
             # Set agent
             self.set_agent(a)
 
+            # Fit agent if not already fitted
+            a.fit()
+
             # Check that agent references this environment
             if not a.env == self:
                 raise ValueError(f"Agent {a_id} was not assigned to this env!")

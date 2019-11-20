@@ -69,14 +69,17 @@ def run_battery() -> None:
     const_ag_1 = ConstHeating(bat_env, 6.0)  # Charge
     const_ag_2 = ConstHeating(bat_env, -3.0)  # Discharge
     dqn_agent = DDPGBaseAgent(bat_env, action_range=bat_env.action_range,
-                              n_steps=20000)
-    bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
-                                    start_ind=100)
+                              n_steps=100000, gamma=0.99)
+
     bat_env.detailed_eval_agents([const_ag_1, const_ag_2, dqn_agent], use_noise=False, n_steps=1000)
 
     # Fit agent and evaluate.
     bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
                                     start_ind=0, fitted=False)
+    bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
+                                    start_ind=1267, fitted=False)
+    bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
+                                    start_ind=100, fitted=False)
 
 
 def choose_dataset(base_ds_name: str = "Model_Room43",
@@ -383,11 +386,11 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    curr_tests()
+    # curr_tests()
     # return
 
     # Train and analyze the battery model
-    # run_battery()
+    run_battery()
     return
 
     # Get dataset and constraints
