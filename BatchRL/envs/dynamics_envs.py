@@ -150,7 +150,8 @@ class FullRoomEnv(RLDynEnv):
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
         """Computes the total reward from the individual components."""
-        return -np.sum(self.detailed_reward(curr_pred, action)).item()
+        det_rew = self.detailed_reward(curr_pred, action)
+        return -det_rew[0] - 2.5 * det_rew[1]
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
 

@@ -4,8 +4,9 @@ import numpy as np
 
 from BatchRL import choose_dataset
 from agents import agents_heuristic
+from agents.keras_agents import DDPGBaseAgent, KerasBaseAgent
 from dynamics.base_model import construct_test_ds, BaseDynamicsModel
-from envs.dynamics_envs import RLDynEnv, BatteryEnv
+from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT
 from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model
 from util.numerics import rem_mean_and_std, add_mean_and_std
 from util.util import Arr
@@ -13,6 +14,7 @@ from util.util import Arr
 
 class TestDynEnv(RLDynEnv):
     """The test environment."""
+
     def __init__(self, m: BaseDynamicsModel, max_eps: int = None):
         super(TestDynEnv, self).__init__(m, max_eps, cont_actions=True,
                                          n_cont_actions=1,
@@ -166,4 +168,68 @@ class TestFullRoomEnv(TestCase):
     def test_something(self):
         pass
 
+    pass
+
+
+class KerasDDPGTest(DDPGBaseAgent):
+    name = "DDPG_Test"
+
+    def __init__(self, env: RLDynEnv, action_range: RangeListT = None, action: float = 0.6):
+        KerasBaseAgent.__init__(self, env=env, name=self.name)
+
+        self.action = action
+        if action_range is not None:
+            assert len(action_range) == env.nb_actions, "Wrong amount of ranges!"
+        self.action_range = action_range
+
+    def fit(self) -> None:
+        pass
+
+    def load_if_exists(self, m, name: str) -> bool:
+        pass
+
+    def get_short_name(self):
+        return self.name
+
+    def get_action(self, state):
+        return self.action
+
+    pass
+
+
+class TestKerasAgent(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.m = get_test_battery_model(linear=False)
+        self.env = BatteryEnv(self.m, max_eps=8)
+        self.env.name = "Test_Keras_Env"
+
+        # Agents
+        action_range = [(-100, 100)]
+        self.const_action: float = 0.55
+        self.true_action = self.const_action * 200 - 100
+        self.test_agent = KerasDDPGTest(self.env,
+                                        action_range=action_range,
+                                        action=self.const_action)
+        self.ag_1 = agents_heuristic.ConstHeating(self.env, 3.0)
+
+    def test_detail_eval(self):
+        self.env.detailed_eval_agents([self.test_agent, self.ag_1], n_steps=10)
+
+    def test_analyze_agents(self):
+        self.env.analyze_agents_visually([self.test_agent, self.ag_1], start_ind=1)
+
+    def test_action(self):
+        ac = self.test_agent.get_action(None)
+        self.assertAlmostEqual(ac, self.const_action)
+
+    def test_step(self):
+        self.env.set_agent(self.test_agent)
+        ac = self.test_agent.get_action(None)
+        scaled_action = self.env.scale_action_for_step(ac)
+        exp = self.env._to_scaled(self.true_action)
+        self.assertAlmostEqual(scaled_action.item(), exp.item(), places=5,
+                               msg="scale_action_for_step is wrong!")
     pass

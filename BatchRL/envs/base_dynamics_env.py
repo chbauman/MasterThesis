@@ -89,6 +89,7 @@ class DynEnv(ABC, gym.Env):
         scaling = self.info.get('action_scaled_01')
         self.do_scaling = scaling is not None
         if self.do_scaling:
+            print(f"Setting scaling for agent: {a.name}")
             p1 = np.array([i[0] for i in scaling], dtype=np.float32)
             p2 = np.array([i[1] - i[0] for i in scaling], dtype=np.float32)
             self.a_scaling_pars = p1, p2
@@ -314,6 +315,11 @@ class DynEnv(ABC, gym.Env):
 
             # Get original actions
             clipped_action_sequences[a_id, :self.n_ts, :] = self.orig_actions[:self.n_ts, :]
+
+            # Scale actions
+            if self.do_scaling:
+                print("Scaaaaliiiiing")
+                action_sequences[a_id] = self.a_scaling_pars[0] + action_sequences[a_id] * self.a_scaling_pars[1]
 
         # Scale the data to the right values
         trajectories = self.m.rescale_output(trajectories, out_put=True)

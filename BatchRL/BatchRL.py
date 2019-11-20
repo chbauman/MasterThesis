@@ -347,7 +347,7 @@ def curr_tests() -> None:
     ]
 
     # Test all models
-    for m_name in full_mod_names:
+    for m_name in full_mod_names[0:1]:
         # Load the model and init env
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
         # m.analyze()
@@ -357,20 +357,21 @@ def curr_tests() -> None:
         open_agent = ConstHeating(env, 1.0)
         closed_agent = ConstHeating(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        ag_list = [open_agent, closed_agent, rule_based_agent]
-        env.analyze_agents_visually(ag_list,
-                                    # start_ind=0,
-                                    use_noise=False,
-                                    max_steps=None)
-        env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
+        # ag_list = [open_agent, closed_agent, rule_based_agent]
+        # env.analyze_agents_visually(ag_list,
+        #                             # start_ind=0,
+        #                             use_noise=False,
+        #                             max_steps=None)
+        # env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
 
         # Choose agent and fit to env.
         if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
-            agent = DDPGBaseAgent(env, action_range=env.action_range, n_steps=20000)
+            agent = DDPGBaseAgent(env, action_range=env.action_range,
+                                  n_steps=50000, gamma=0.99, lr=0.00001)
             agent.fit()
             agent_list = [open_agent, closed_agent, rule_based_agent, agent]
             env.analyze_agents_visually(agent_list)
-            env.detailed_eval_agents(agent_list, use_noise=False, n_steps=1000)
+            env.detailed_eval_agents(agent_list, use_noise=False, n_steps=2000)
 
 
 def main() -> None:
