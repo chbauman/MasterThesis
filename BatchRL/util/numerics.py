@@ -130,7 +130,7 @@ def align_ts(ts_1: np.ndarray, ts_2: np.ndarray, t_init1: str, t_init2: str, dt:
     ti1 = datetime_to_np_datetime(string_to_dt(t_init2))
     ti2 = datetime_to_np_datetime(string_to_dt(t_init1))
 
-    # Ugly bug-fix
+    # Bug-fix: Ugly, but working :P
     if ti1 < ti2:
         d_out, t = align_ts(ts_2, ts_1, t_init2, t_init1, dt)
         d_out_real = np.copy(d_out)

@@ -1250,36 +1250,3 @@ def get_data_test():
 
     add_col(all_data, data2, dt_init1, dt_init2, 2, dt_mins)
     return all_data, m, name
-
-
-def test_align() -> None:
-    """ Tests the alignment of two time series.
-    """
-
-    print("Testing alignment")
-    # Test data
-    t_i1 = '2019-01-01 00:00:00'
-    t_i2 = '2019-01-01 00:30:00'
-    dt = 15
-    ts_1 = np.array([1, 2, 2, 2, 3, 3], dtype=np.float32)
-    ts_2 = np.array([2, 3, 3], dtype=np.float32)
-
-    # Do tests
-    test1 = align_ts(ts_1, ts_2, t_i1, t_i2, dt)
-    exp1 = npf32((2, 6))
-    exp1.fill(np.nan)
-    exp1[0] = ts_1
-    exp1[1:, 2:5] = ts_2
-    assert nan_array_equal(exp1, test1)
-    print('Test 1:', test1)
-    test2 = align_ts(ts_2, ts_1, t_i1, t_i2, dt)
-    print('Test 2:', test2)
-    test3 = align_ts(ts_1, ts_1, t_i1, t_i2, dt)
-    print('Test 3:', test3)
-    test4 = align_ts(ts_1, ts_1, t_i2, t_i1, dt)
-    print('Test 4:', test4)
-    test5 = align_ts(ts_2, ts_1, t_i2, t_i1, dt)
-    print('Test 5:', test5)
-
-    print("Done testing alignment")
-    return

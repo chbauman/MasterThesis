@@ -169,10 +169,25 @@ class TestNumerics(TestCase):
         exp1[:, 0] = ts_1
         exp1[2:5, 1] = ts_2
         self.assertEqual(t_init1, t_i1, msg)
-        print(exp1)
-        print(test1)
         self.assertTrue(nan_array_equal(exp1, test1), msg=msg)
 
+        sh_large = (8, 2)
+        test2, _ = align_ts(ts_2, ts_1, t_i1, t_i2, dt)
+        self.assertEqual(test2.shape, sh_large)
+
+        test3, _ = align_ts(ts_1, ts_1, t_i1, t_i2, dt)
+        self.assertEqual(test3.shape, sh_large)
+        exp3 = npf32(sh_large, fill=np.nan)
+        exp3[:6, 0] = ts_1
+        exp3[2:, 1] = ts_1
+        self.assertTrue(nan_array_equal(exp3, test3), msg=msg)
+
+        test4, _ = align_ts(ts_1, ts_1, t_i2, t_i1, dt)
+        self.assertEqual(test4.shape, sh_large)
+        exp4 = npf32(sh_large, fill=np.nan)
+        exp4[:6, 1] = ts_1
+        exp4[2:, 0] = ts_1
+        self.assertTrue(nan_array_equal(exp4, test4), msg=msg)
 
     pass
 
