@@ -1,9 +1,7 @@
-import os
-
 import numpy as np
 
-from dynamics.base_model import BaseDynamicsModel
 from data_processing.dataset import Dataset
+from dynamics.base_model import BaseDynamicsModel
 from util.numerics import fit_linear_1d, fit_linear_bf_1d
 from util.visualize import scatter_plot
 
@@ -20,13 +18,19 @@ class BatteryModel(BaseDynamicsModel):
     """
     params: np.ndarray = None  #: Parameters of the pw linear model.
 
-    def __init__(self, dataset: Dataset):
+    def __init__(self, dataset: Dataset, base_ind: int = None):
         """Initializes the battery model with the specified dataset.
 
         Args:
             dataset: Dataset with data to fit modes.
         """
-        super().__init__(dataset, dataset.name, None)
+        in_inds, out_inds = None, None
+        if base_ind is not None:
+            in_inds = np.array([base_ind, base_ind + 1], dtype=np.int32)
+            out_inds = np.array([base_ind], dtype=np.int32)
+        super().__init__(dataset, dataset.name,
+                         out_indices=out_inds,
+                         in_indices=in_inds)
 
     def fit(self) -> None:
         """Fits the battery model.

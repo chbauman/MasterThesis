@@ -113,7 +113,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         in_inds = self._get_inds(in_indices, ds, True)
         self.in_indices, self.p_in_indices = in_inds
 
-        # name
+        # Set name
         self.name = self._get_full_name(name)
 
         self.n_pred = len(self.out_inds)

@@ -13,7 +13,7 @@ from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, get_data_test, \
     get_constraints, choose_dataset
 from data_processing.dataset import DatasetConstraints, Dataset
-from dynamics.base_hyperopt import HyperOptimizableModel
+from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
 from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
 from dynamics.battery_model import BatteryModel
 from dynamics.composite import CompositeModel
@@ -107,20 +107,6 @@ def choose_dataset_and_constraints(base_ds_name: str = "Model_Room43",
     return ds, rnn_consts
 
 
-def optimize_model(mod: HyperOptimizableModel) -> None:
-    """Executes the hyperparameter optimization of a model.
-
-    Uses reduced number of model trainings if not on Euler.
-
-    Args:
-        mod: Model whose hyperparameters are to be optimized.
-    """
-    n_opt = 60 if EULER else 3
-    opt_params = mod.optimize(n_opt)
-    # print("All tried parameter combinations: {}.".format(mod.param_list))
-    print("Optimal parameters: {}.".format(opt_params))
-
-
 def analyze_control_influence(m: BaseDynamicsModel):
     n_actions = 2
     env = FullRoomEnv(m, n_disc_actions=n_actions)
@@ -166,7 +152,9 @@ def get_model(name: str, ds: Dataset,
         'weight_vec': None,
     }
     all_out = {'out_inds': np.array([0, 1, 2, 3, 5], dtype=np.int32)}
-    base_params = dict(hop_pars, **fix_pars, **all_out)
+    all_in = {'in_inds': np.array([0, 1, 2, 3, 4, 5, 6, 7], dtype=np.int32)}
+    all_inds = dict(all_out, **all_in)
+    base_params = dict(hop_pars, **fix_pars, **all_inds)
     base_params_no_inds = {k: base_params[k] for k in base_params if k != 'out_inds'}
     if name == "Time_Exact":
         # Time model: Predicts the deterministic time variable exactly.
@@ -178,7 +166,7 @@ def get_model(name: str, ds: Dataset,
         # Full model: Predicting all series except for the controllable and the time
         # series. Weather predictions might depend on apartment data.
         if from_hop:
-            return RNNDynamicModel.from_best_hp(**fix_pars, **all_out)
+            return RNNDynamicModel.from_best_hp(**fix_pars, **all_inds)
         return RNNDynamicModel(**base_params)
     elif name == "WeatherFromWeatherTime_RNN":
         # The weather model, predicting only the weather and the time, i.e. outside temperature and
@@ -194,6 +182,7 @@ def get_model(name: str, ds: Dataset,
         # The apartment model, predicting only the apartment variables, i.e. water
         # temperatures and room temperature based on all input variables including the weather.
         out_inds = {'out_inds': np.array([2, 3, 5], dtype=np.int32)}
+        out_inds = dict(out_inds, **all_in)
         if from_hop:
             return RNNDynamicModel.from_best_hp(**fix_pars, **out_inds)
         return RNNDynamicModel(**out_inds, **base_params_no_inds)
@@ -202,6 +191,7 @@ def get_model(name: str, ds: Dataset,
         # all the variables in the dataset. Can e.g. be used with a constant water
         # temperature model.
         out_inds = {'out_inds': np.array([5], dtype=np.int32)}
+        out_inds = dict(out_inds, **all_in)
         if from_hop:
             return RNNDynamicModel.from_best_hp(**fix_pars, **out_inds)
         return RNNDynamicModel(**out_inds, **base_params_no_inds)

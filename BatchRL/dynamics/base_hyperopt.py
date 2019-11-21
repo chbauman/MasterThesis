@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple
 from hyperopt import fmin, tpe
 
 from dynamics.base_model import BaseDynamicsModel
-from util.util import create_dir
+from util.util import create_dir, EULER
 
 # Define path for optimization results.
 hop_path = "../Models/Hop/"  #: The path to all hyperopt data.
@@ -177,3 +177,19 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             Dict with kwargs for initialization.
         """
         return hp_sample
+
+
+def optimize_model(mod: HyperOptimizableModel, verbose: bool = True) -> None:
+    """Executes the hyperparameter optimization of a model.
+
+    Uses reduced number of model trainings if not on Euler.
+
+    Args:
+        mod: Model whose hyperparameters are to be optimized.
+        verbose: Whether to print the result to the console.
+    """
+    n_opt = 60 if EULER else 3
+    opt_params = mod.optimize(n_opt)
+    # print("All tried parameter combinations: {}.".format(mod.param_list))
+    if verbose:
+        print("Optimal parameters: {}.".format(opt_params))
