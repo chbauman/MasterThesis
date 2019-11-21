@@ -2,8 +2,9 @@ from unittest import TestCase
 
 import numpy as np
 
+from data_processing.data import TestData2
 from data_processing.dataset import ModelDataView, SeriesConstraint, Dataset
-from data_processing.preprocess import standardize, fill_holes_linear_interpolate
+from data_processing.preprocess import standardize, fill_holes_linear_interpolate, remove_outliers, clean_data
 from util.numerics import nan_array_equal, num_nans
 from util.visualize import plot_dataset
 
@@ -179,6 +180,9 @@ class TestDataProcessing(TestCase):
         all_dat[:, 1] = seq2
         self.all_dat = all_dat
 
+        self.dt_mins = 15
+        self.dat, self.m = TestData2.get_data()
+
     def test_standardize(self):
         # Test Standardizing
         m = [{}, {}]
@@ -195,11 +199,27 @@ class TestDataProcessing(TestCase):
         test_ts2 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, np.nan, 7.0])
         fill_holes_linear_interpolate(test_ts, 1)
         fill_holes_linear_interpolate(test_ts2, 2)
-
-        print(test_ts)
-        print(test_ts2)
         self.assertEqual(num_nans(test_ts), 3, msg="fill_holes_linear_interpolate not working!")
-        self.assertEqual(num_nans(test_ts2), 4, msg="fill_holes_linear_interpolate not working!")
+        self.assertEqual(num_nans(test_ts2), 0, msg="fill_holes_linear_interpolate not working!")
 
+    def test_outlier_removal(self):
+        # Test Outlier Removal
+        test_ts3 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0,
+                             5.0, 17.0, 5.0, 2.0, -1.0, np.nan,
+                             7.0, 7.0, 17.0, np.nan, 20.0, 5.0, 6.0])
+        min_val = 0.0
+        max_val = 100.0
+        remove_outliers(test_ts3, 5.0, [min_val, 100.0])
+        self.assertTrue(max_val >= np.nanmin(test_ts3).item() >= min_val, "Outlier removing failed!")
 
-
+    def test_clean_data(self):
+        # Clean data
+        dat = self.dat[2]
+        len_dat = len(dat)
+        values, dates = clean_data(dat, [0.0], 4, [3.3])
+        self.assertEqual(len(values), len_dat - 3, "Removed too many values!")
+        values2, dates2 = clean_data(dat, [0.0], 4)
+        self.assertEqual(len(values2), len_dat - 4,
+                         "Removed too many or too few values!")
+        self.assertEqual(len(values2), len(dates2), "clean_data failed horribly!")
+        pass

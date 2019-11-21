@@ -1189,31 +1189,8 @@ def test_rest_client() -> None:
 def get_data_test():
     name = "Test"
 
-    # Test Sequence Cutting
-    seq1 = np.array([1, 2, np.nan, 1, 2, np.nan, 3, 2, 1, 3, 4, np.nan, np.nan, 3, 2, 3, 1, 3, np.nan, 1, 2])
-    n = seq1.shape[0]
-
-    # Test hole filling by interpolation
-    test_ts = np.array([np.nan, np.nan, 1, 2, 3.5, np.nan, 4.5, np.nan])
-    test_ts2 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, np.nan, 7.0])
-    fill_holes_linear_interpolate(test_ts, 1)
-    fill_holes_linear_interpolate(test_ts2, 2)
-    print(test_ts)
-    print(test_ts2)
-
-    # Test Outlier Removal
-    test_ts3 = np.array(
-        [1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, 17.0, 5.0, 2.0, -1.0, np.nan, 7.0, 7.0, 17.0, np.nan, 20.0, 5.0, 6.0])
-    print(test_ts3)
-    remove_outliers(test_ts3, 5.0, [0.0, 100.0])
-    print(test_ts3)
-
-    # Show plots
     dt_mins = 15
     dat, m = TestData2.get_data()
-
-    # Clean data
-    clean_data(dat[2], [0.0], 4, [3.3])
 
     # Interpolate
     [data1, dt_init1] = interpolate_time_series(dat[0], dt_mins)

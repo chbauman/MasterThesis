@@ -8,7 +8,8 @@ from util.util import Num, floor_datetime_to_min
 
 def clean_data(dat: Tuple, rem_values: Sequence = (),
                n_cons_least: int = 60,
-               const_excepts: Sequence = ()) -> Tuple:
+               const_excepts: Sequence = (),
+               verbose: bool = True) -> Tuple[np.ndarray, np.ndarray]:
     """Removes all values with a specified value 'rem_val'
     and removes all sequences where there are at
     least 'n_cons_least' consecutive
@@ -21,10 +22,14 @@ def clean_data(dat: Tuple, rem_values: Sequence = (),
         rem_values: The sequence of values to remove.
         n_cons_least: The minimum number of consecutive constant values.
         const_excepts: The values that are excepted from removing.
+        verbose: Whether to print info to console.
 
     Returns:
         Tuple with values and datetimes without removed entries.
     """
+    # Check input
+    assert n_cons_least > 0, f"Invalid argument n_cons_least = {n_cons_least}"
+
     # Extract data
     values, dates = dat
     tot_dat = values.shape[0]
@@ -68,7 +73,9 @@ def clean_data(dat: Tuple, rem_values: Sequence = (),
             num_occ = 1
 
     # Return clean data
-    print(tot_dat - count, "data points removed.")
+    if verbose:
+        print(tot_dat - count, "data points removed.")
+    assert count > 0, "All data thrown away while cleaning!"
     return new_values[:count], new_dates[:count]
 
 

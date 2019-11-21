@@ -35,7 +35,6 @@ def run_tests() -> None:
     test_dyn_model()
     test_rest_client()
     get_data_test()
-    # test_align()
 
     # Do some cleanup.
     cleanup_test_data()
