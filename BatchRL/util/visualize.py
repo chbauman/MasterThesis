@@ -75,8 +75,11 @@ def save_figure(save_name, show: bool = False,
         plt.close()
 
 
-def _plot_helper(x, y, m_col='blue', label: str = None, dates: bool = False) -> None:
+def _plot_helper(x, y, m_col='blue', label: str = None,
+                 dates: bool = False, steps: bool = False, ax=plt) -> None:
     """Defining basic plot style for all plots.
+
+    TODO: Make x optional. (Except for `dates` == True case!)
 
     Args:
         x: X values
@@ -84,17 +87,25 @@ def _plot_helper(x, y, m_col='blue', label: str = None, dates: bool = False) -> 
         m_col: Marker and line color.
         label: The label of the current series.
         dates: Whether to use datetimes in x-axis.
+        steps: Whether to plot piecewise constant series.
+        ax: The axis to plot the series on.
     """
+    # Determine style
     ls = ':'
     marker = '^'
     ms = 2
     kwargs = {'marker': marker, 'c': m_col, 'linestyle': ls, 'label': label, 'markersize': ms, 'mfc': m_col,
               'mec': m_col}
 
+    # Choose plotting method
+    plot_method = ax.plot
     if dates:
-        plt.plot_date(x, y, **kwargs)
-    else:
-        plt.plot(x, y, **kwargs)
+        plot_method = ax.plot_date
+    elif steps:
+        plot_method = ax.step
+
+    # Finally plot
+    plot_method(x, y, **kwargs)
 
 
 # Plotting raw data series
@@ -588,7 +599,6 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
                         extra_actions: np.ndarray = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
-    TODO: Fix Size
     """
     assert len(agent_names) == actions.shape[0], "Incorrect number of names!"
     assert rewards.shape[0] == actions.shape[0], "Incorrect shapes!"
@@ -633,18 +643,23 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
         _setup_axis(state_axs[k], "States", state_descs[k])
 
     # Plot all the things!
+    x = range(len(rewards[0]))
     for k in range(n_agents):
         # Plot actions
         for i in range(n_actions):
-            con_axs[i].plot(actions[k, :, i], label=agent_names[k])
+            _plot_helper(x, actions[k, :, i], m_col=clr_map[k],
+                         label=agent_names[k], ax=con_axs[i], steps=True)
             if plot_extra:
-                con_fb_axs[i].plot(extra_actions[k, :, i], label=agent_names[k])
+                _plot_helper(x, extra_actions[k, :, i], m_col=clr_map[k],
+                             label=agent_names[k], ax=con_fb_axs[i], steps=True)
         # Plot states
         for i in range(n_feats):
-            state_axs[i].plot(states[k, :, i], label=agent_names[k])
+            _plot_helper(x, states[k, :, i], m_col=clr_map[k],
+                         label=agent_names[k], ax=state_axs[i])
 
         # Plot reward
-        rew_ax.plot(rewards[k, :], label=agent_names[k])
+        _plot_helper(x, rewards[k, :], m_col=clr_map[k],
+                     label=agent_names[k], ax=rew_ax)
 
     # Set time
     last_c_ax = con_fb_axs[-1] if plot_extra else con_axs[-1]
