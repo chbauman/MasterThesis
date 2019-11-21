@@ -3,6 +3,7 @@ import numpy as np
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import fit_linear_1d, fit_linear_bf_1d
+from util.util import print_if_verb, yeet
 from util.visualize import scatter_plot
 
 
@@ -39,12 +40,22 @@ class BatteryModel(BaseDynamicsModel):
                          out_indices=out_inds,
                          in_indices=in_inds)
 
-    def fit(self) -> None:
+    def fit(self, verbose: int = 0) -> None:
         """Fits the battery model.
 
-        Calls `analyze_bat_model`, there the
-        actual model fitting happens.
+        Does nothing if it has already been fitted.
+        `predict` throws an error if the model wasn't fitted
+        before calling it.
+
+        Args:
+            verbose: Verbosity, 0: silent.
         """
+        if self.params is not None:
+            print_if_verb(verbose, "Battery model already fitted!")
+            return
+        else:
+            print_if_verb(verbose, "Fitting battery model...")
+
         # Get data
         d = self.data
         dat = d.split_dict["train_val"].get_rel_data()
@@ -93,6 +104,8 @@ class BatteryModel(BaseDynamicsModel):
 
     def _eval_at(self, p):
         """Evaluates the model for a given active power `p`."""
+        if self.params is None:
+            yeet("Need to fit battery model first!")
         a1, a2, a3 = self.params
         return a1 + a2 * p + a3 * np.maximum(0, p)
 
@@ -100,8 +113,7 @@ class BatteryModel(BaseDynamicsModel):
         """This is basically the fit method, but it also
         does some data analysis and makes some battery data specific plots.
         """
-        if self.params is None:
-            self.fit()
+        self.fit()
 
         # Get scaling
         d = self.data

@@ -146,10 +146,19 @@ def get_model(name: str, ds: Dataset,
 
     # Helper function to build composite models including the battery model.
     def _build_composite(model_list: List[BaseDynamicsModel], comp_name: str):
+        # Load battery model.
         if battery_used:
             assert battery_mod is not None, "Need to rethink this!"
+            if fit:
+                battery_mod.fit()
             model_list = model_list + [battery_mod]
-            comp_name = comp_name + "Battery"
+
+        # Adjust the name for full models.
+        if comp_name.startswith("FullState_"):
+            if battery_used:
+                comp_name = comp_name + "_Battery"
+            if rnn_consts is not None:
+                comp_name += "_CON"
         return CompositeModel(ds, model_list, new_name=comp_name)
 
     # Fit if required.
@@ -249,8 +258,9 @@ def get_model(name: str, ds: Dataset,
         # variables except for the control and the time variables.
         mod_weather = get_model("WeatherFromWeather_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         mod_apt = get_model("Apartment_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
-        return CompositeModel(ds, [mod_weather, mod_apt],
-                              new_name="Full_Comp_WeatherApt")
+        mod_list = [mod_weather, mod_apt]
+        return _build_composite(mod_list, name)
+
     elif name == "FullState_Comp_WeatherAptTime":
         # The full state model combining the weather only model, the
         # apartment only model and the exact time model to predict all
@@ -258,16 +268,18 @@ def get_model(name: str, ds: Dataset,
         mod_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         mod_apt = get_model("Apartment_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts, from_hop=from_hop)
-        return CompositeModel(ds, [mod_weather, mod_apt, model_time_exact],
-                              new_name="FullState_Comp_WeatherAptTime")
+        mod_list = [mod_weather, mod_apt, model_time_exact]
+        return _build_composite(mod_list, name)
+
     elif name == "FullState_Comp_FullTime":
         # The full state model combining the combined weather and apartment model
         # and the exact time model to predict all
         # variables except for the control variable.
         mod_full = get_model("Full_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
         model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts, from_hop=from_hop)
-        return CompositeModel(ds, [mod_full, model_time_exact],
-                              new_name="FullState_Comp_FullTime")
+        mod_list = [mod_full, model_time_exact]
+        return _build_composite(mod_list, name)
+
     elif name == "FullState_Comp_ReducedTempConstWaterWeather":
         # The full state model combining the weather, the constant water temperature,
         # the reduced room temperature and the exact time model to predict all
@@ -296,7 +308,8 @@ def get_model(name: str, ds: Dataset,
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
-    bat_mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full, fit=True)
+    bat_mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
+                        rnn_consts=rnn_consts_full, fit=True, from_hop=True)
     # bat_mod.analyze_bat_model()
     bat_mod.analyze(overwrite=True)
     return

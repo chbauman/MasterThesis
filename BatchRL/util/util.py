@@ -43,6 +43,12 @@ LOrEl = Union[Sequence[T], T]
 #######################################################################################################
 # Python stuff
 
+def print_if_verb(verb: Union[bool, int] = True, *args, **kwargs):
+    """Prints the given stuff if `verb` is True."""
+    if verb:
+        print(*args, **kwargs)
+
+
 def yeet(msg: str = "YEET") -> None:
     """Raises an exception."""
     raise ValueError(msg)

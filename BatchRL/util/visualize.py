@@ -8,7 +8,7 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 from util.numerics import fit_linear_1d
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
-    create_dir, Num
+    create_dir, Num, yeet
 
 if EULER:
     # Do not use GUI based backend.
@@ -559,7 +559,7 @@ def plot_residuals_acf(residuals: np.ndarray,
         ValueError: If residuals do not have the right shape.
     """
     if len(residuals.shape) != 1:
-        raise ValueError("Residuals needs to be a vector!")
+        yeet("Residuals needs to be a vector!")
 
     # Initialize and plot data
     plt.subplots()
