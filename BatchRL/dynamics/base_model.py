@@ -516,7 +516,8 @@ class BaseDynamicsModel(KerasBase, ABC):
 
     def analyze(self, plot_acf: bool = True,
                 n_steps: Sequence = (1, 4, 20),
-                overwrite: bool = False) -> None:
+                overwrite: bool = False,
+                verbose: bool = True) -> None:
         """Analyzes the trained model.
 
         Makes some plots using the fitted model and the streak data.
@@ -526,8 +527,10 @@ class BaseDynamicsModel(KerasBase, ABC):
             plot_acf: Whether to plot the acf of the residuals.
             n_steps: The list with the number of steps for `const_nts_plot`.
             overwrite: Whether to overwrite existing plot files.
+            verbose: Whether to print info to console.
         """
-        print("Analyzing model {}".format(self.name))
+        if verbose:
+            print("Analyzing model {}".format(self.name))
         d = self.data
 
         # Get residuals and plot autocorrelation

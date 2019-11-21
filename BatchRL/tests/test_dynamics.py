@@ -168,7 +168,7 @@ class TestBaseDynamics(TestCase):
         # TODO: This is slow (~4s), make it faster.
         base_data = np.copy(self.ds_1.data)
         streak = copy_arr_list(self.ds_1.get_streak("train"))
-        self.test_model_2.analyze(plot_acf=False, n_steps=(2,))
+        self.test_model_2.analyze(plot_acf=False, n_steps=(2,), verbose=False)
         streak_after = self.ds_1.get_streak("train")
         self.assertTrue(np.array_equal(base_data, self.ds_1.data), "Data was changed during analysis!")
         for k in range(3):
@@ -326,7 +326,7 @@ class TestComposite(TestCase):
                                    out_indices=np.array([0, 3], dtype=np.int32),
                                    in_indices=self.inds_123)
         mc5 = CompositeModel(self.ds_1, [m9, m10], new_name="CompositeTest4")
-        mc5.analyze(plot_acf=False)
+        mc5.analyze(plot_acf=False, verbose=False, n_steps=(2,))
 
 
 def get_test_battery_model(n: int = 150,
