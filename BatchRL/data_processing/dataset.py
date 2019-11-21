@@ -10,7 +10,7 @@ from typing import List, Union, Dict, Tuple
 
 import numpy as np
 
-from data_processing.data import dataset_data_path
+from rest.client import save_dir
 from util.numerics import get_shape1, check_in_range, prepare_supervised_control, align_ts, add_mean_and_std, \
     has_duplicates, trf_mean_and_std, cut_data, find_rows_with_nans, find_all_streaks, find_disjoint_streaks
 from util.util import day_offset_ts, ts_per_day, datetime_to_np_datetime, string_to_dt, create_dir, Arr, \
@@ -18,6 +18,7 @@ from util.util import day_offset_ts, ts_per_day, datetime_to_np_datetime, string
 from util.visualize import plot_dir, plot_all
 
 
+dataset_data_path = os.path.join(save_dir, "Datasets")  #: Dataset directory
 no_inds = np.array([], dtype=np.int32)  #: Empty index set
 
 

@@ -6,15 +6,12 @@ import numpy as np
 from data_processing.dataset import SeriesConstraint, no_inds, Dataset, ModelDataView
 from data_processing.preprocess import clean_data, remove_out_interval, clip_to_interval, interpolate_time_series, \
     fill_holes_linear_interpolate, remove_outliers, gaussian_filter_ignoring_nans, standardize
+from rest.client import DataStruct
 from util.numerics import align_ts, copy_arr_list, solve_ls, \
     find_rows_with_nans, extract_streak, nan_array_equal
-from rest.client import DataStruct, save_dir
 from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init
 from util.visualize import plot_time_series, plot_all, plot_single, preprocess_plot_path, \
     plot_multiple_time_series, plot_dataset, stack_compare_plot
-
-# Data directories
-dataset_data_path = os.path.join(save_dir, "Datasets")
 
 #######################################################################################################
 # NEST Data

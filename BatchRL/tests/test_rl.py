@@ -163,7 +163,7 @@ class TestFullRoomEnv(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
+        self.ds = choose_dataset('Model_Room43', seq_len=20)
 
     def test_something(self):
         pass
