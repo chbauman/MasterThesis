@@ -8,7 +8,7 @@ from data_processing.preprocess import clean_data, remove_out_interval, clip_to_
     fill_holes_linear_interpolate, remove_outliers, gaussian_filter_ignoring_nans, standardize
 from rest.client import DataStruct
 from util.numerics import align_ts, copy_arr_list, solve_ls, \
-    find_rows_with_nans, extract_streak, npf32, nan_array_equal
+    find_rows_with_nans
 from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init
 from util.visualize import plot_time_series, plot_all, plot_single, preprocess_plot_path, \
     plot_multiple_time_series, plot_dataset, stack_compare_plot
@@ -1191,22 +1191,7 @@ def get_data_test():
 
     # Test Sequence Cutting
     seq1 = np.array([1, 2, np.nan, 1, 2, np.nan, 3, 2, 1, 3, 4, np.nan, np.nan, 3, 2, 3, 1, 3, np.nan, 1, 2])
-    seq2 = np.array([3, 4, np.nan, np.nan, 2, np.nan, 3, 2, 1, 3, 4, 7, np.nan, 3, 2, 3, 1, np.nan, np.nan, 3, 4])
     n = seq1.shape[0]
-    all_dat = np.empty((n, 2), dtype=np.float32)
-    all_dat[:, 0] = seq1
-    all_dat[:, 1] = seq2
-    print(all_dat)
-
-    # Test
-    streak = extract_streak(all_dat, 2, 2)
-    print(streak)
-
-    # Test Standardizing
-    m = [{}, {}]
-    all_dat, m = standardize(all_dat, m)
-    print(all_dat)
-    print(m)
 
     # Test hole filling by interpolation
     test_ts = np.array([np.nan, np.nan, 1, 2, 3.5, np.nan, 4.5, np.nan])

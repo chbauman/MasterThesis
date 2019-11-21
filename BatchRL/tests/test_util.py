@@ -6,7 +6,8 @@ import numpy as np
 
 from agents.agents_heuristic import ConstHeating
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
-    extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts
+    extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
+    num_nans
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet
 from util.visualize import plot_dir, plot_reward_details
@@ -189,6 +190,10 @@ class TestNumerics(TestCase):
         exp4[2:, 0] = ts_1
         self.assertTrue(nan_array_equal(exp4, test4), msg=msg)
 
+    def test_num_nans(self):
+        sh = (2, 3)
+        arr1 = npf32(sh, fill=np.nan)
+        self.assertEqual(num_nans(arr1), tot_size(sh), "num_nans incorrect!")
     pass
 
 

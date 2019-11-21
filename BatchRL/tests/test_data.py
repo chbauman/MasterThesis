@@ -3,7 +3,8 @@ from unittest import TestCase
 import numpy as np
 
 from data_processing.dataset import ModelDataView, SeriesConstraint, Dataset
-from util.numerics import nan_array_equal
+from data_processing.preprocess import standardize, fill_holes_linear_interpolate
+from util.numerics import nan_array_equal, num_nans
 from util.visualize import plot_dataset
 
 
@@ -31,8 +32,8 @@ def get_test_ds(dat: np.ndarray, c_inds: np.ndarray,
     return ds
 
 
-class TestFullRoomEnv(TestCase):
-    """Tests the room RL environment.
+class TestDataset(TestCase):
+    """Tests the dataset class.
     """
 
     def __init__(self, *args, **kwargs):
@@ -160,3 +161,45 @@ class TestFullRoomEnv(TestCase):
                 raise AssertionError("Function: {} with input: {} not giving: {} but: {}!!!".format(fun, inp, sol, out))
 
     pass
+
+
+class TestDataProcessing(TestCase):
+    """Tests the dataset class.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Define data
+        seq1 = np.array([1, 2, np.nan, 1, 2, np.nan, 3, 2, 1, 3, 4, np.nan, np.nan, 3, 2, 3, 1, 3, np.nan, 1, 2])
+        seq2 = np.array([3, 4, np.nan, np.nan, 2, np.nan, 3, 2, 1, 3, 4, 7, np.nan, 3, 2, 3, 1, np.nan, np.nan, 3, 4])
+        n = seq1.shape[0]
+        all_dat = np.empty((n, 2), dtype=np.float32)
+        all_dat[:, 0] = seq1
+        all_dat[:, 1] = seq2
+        self.all_dat = all_dat
+
+    def test_standardize(self):
+        # Test Standardizing
+        m = [{}, {}]
+        all_dat, m = standardize(self.all_dat, m)
+        self.assertAlmostEqual(np.nanmean(all_dat[:, 0]).item(), 0.0, msg="Standardizing failed")
+        mas = m[0].get('mean_and_std')
+        self.assertIsNotNone(mas, msg="Mean and std not added to dict!")
+        self.assertAlmostEqual(np.nanmean(self.all_dat[:, 0]).item(), mas[0],
+                               msg="Standardizing mutating data!")
+
+    def test_hole_fill(self):
+        # Test hole filling by interpolation
+        test_ts = np.array([np.nan, np.nan, 1, 2, 3.5, np.nan, 4.5, np.nan])
+        test_ts2 = np.array([1, 2, 3.5, np.nan, np.nan, 5.0, 5.0, np.nan, 7.0])
+        fill_holes_linear_interpolate(test_ts, 1)
+        fill_holes_linear_interpolate(test_ts2, 2)
+
+        print(test_ts)
+        print(test_ts2)
+        self.assertEqual(num_nans(test_ts), 3, msg="fill_holes_linear_interpolate not working!")
+        self.assertEqual(num_nans(test_ts2), 4, msg="fill_holes_linear_interpolate not working!")
+
+
+

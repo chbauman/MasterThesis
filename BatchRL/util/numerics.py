@@ -6,6 +6,11 @@ import scipy.optimize
 from util.util import datetime_to_np_datetime, string_to_dt, Arr, Num
 
 
+def num_nans(arr: np.ndarray) -> int:
+    """Computes the number of nans in an array."""
+    return np.sum(np.isnan(arr)).item()
+
+
 def npf32(sh: Tuple, fill: float = None) -> np.ndarray:
     """Returns an empty numpy float array of specified shape."""
     empty_arr = np.empty(sh, dtype=np.float32)
