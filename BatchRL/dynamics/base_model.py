@@ -137,15 +137,20 @@ class BaseDynamicsModel(KerasBase, ABC):
 
     @staticmethod
     def _get_full_name_static(data: Dataset, out_inds: np.ndarray,
-                              in_inds: np.ndarray, b_name: str):
-        """Argghhh, duplicate code here."""
+                              in_inds: np.ndarray,
+                              b_name: str,
+                              no_data: bool = False):
+        """Argghhh, duplicate code here. But where is the duplicate part?"""
         out_inds, _ = BaseDynamicsModel._get_inds(out_inds, data, False)
         in_inds, _ = BaseDynamicsModel._get_inds(in_inds, data, True)
         ind_str = _get_inds_str(out_inds, "Out") + _get_inds_str(in_inds)
-        return data.name + ind_str + "_MODEL_" + b_name
+        str_out = ind_str + "_MODEL_" + b_name
+        if not no_data:
+            str_out = data.name + str_out
+        return str_out
 
     @abstractmethod
-    def fit(self) -> None:
+    def fit(self, verbose: int = 0) -> None:
         pass
 
     @abstractmethod
@@ -155,14 +160,15 @@ class BaseDynamicsModel(KerasBase, ABC):
     def init_1day(self, day_data: np.ndarray) -> None:
         """Initializer for models that need more previous data than `seq_len` time steps.
 
+        Deprecated!
+
         Args:
             day_data: The data of one day to initialize model.
         """
         pass
 
     def get_fit_data(self, data_name: str = "train", *, seq_out: bool = False):
-        """
-        Returns the required data for fitting the model
+        """Returns the required data for fitting the model
         taking care of choosing the right series by indexing.
 
         Args:

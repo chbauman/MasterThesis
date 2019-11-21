@@ -155,7 +155,7 @@ class RNNDynamicModel(HyperOptimizableModel):
     n_feats: int  #: Number of input features in train data.
 
     @classmethod
-    def get_base_name(cls, **kwargs):
+    def get_base_name(cls, include_data_name: bool = True, **kwargs):
         super_keys = [
             'data',
             'out_inds',
@@ -171,7 +171,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         if super_kwargs.get('out_inds') is None:
             super_kwargs['out_inds'], _ = cls._get_inds(None, super_kwargs['data'], False)
         b_n = _constr_base_name(**base_kwargs)
-        return cls._get_full_name_static(b_name=b_n, **super_kwargs)
+        return cls._get_full_name_static(b_name=b_n, no_data=not include_data_name, **super_kwargs)
 
     @classmethod
     def _hp_sample_to_kwargs(cls, hp_sample: Dict) -> Dict:
@@ -294,7 +294,9 @@ class RNNDynamicModel(HyperOptimizableModel):
             'constraint_list': constraint_list,
             'train_seq': train_seq,
         }
-        self.base_name = self.get_base_name(**all_kwargs)
+
+        # Construct base name for hop
+        self.base_name = self.get_base_name(include_data_name=False, **all_kwargs)
 
         # Store parameters
         self.constraint_list = constraint_list

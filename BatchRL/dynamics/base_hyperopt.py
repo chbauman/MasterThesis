@@ -148,16 +148,18 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         return os.path.join(hop_path, b_name + "_OPT_HP.pkl")
 
     @classmethod
-    def from_best_hp(cls, **kwargs):
+    def from_best_hp(cls, verbose: int = 0, **kwargs):
         """Initialize a model with the best previously found hyperparameters.
 
         Returns:
              An instance of the same class initialized with the optimal
              hyperparameters.
         """
-        base_name = cls.get_base_name(**kwargs)
+        base_name = cls.get_base_name(include_data_name=False, **kwargs)
         name_hp = cls._get_opt_hp_f_name(base_name)
         try:
+            if verbose:
+                print("Loading model from hyperparameters.")
             opt_hp = load_hp(name_hp)
         except FileNotFoundError:
             print(name_hp)
