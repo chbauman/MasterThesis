@@ -215,10 +215,10 @@ class TestDataProcessing(TestCase):
     def test_clean_data(self):
         # Clean data
         dat = self.dat[2]
-        len_dat = len(dat)
-        values, dates = clean_data(dat, [0.0], 4, [3.3])
+        len_dat = len(dat[0])
+        values, dates = clean_data(dat, [0.0], 4, [3.3], verbose=False)
         self.assertEqual(len(values), len_dat - 3, "Removed too many values!")
-        values2, dates2 = clean_data(dat, [0.0], 4)
+        values2, dates2 = clean_data(dat, n_cons_least=4, verbose=False)
         self.assertEqual(len(values2), len_dat - 4,
                          "Removed too many or too few values!")
         self.assertEqual(len(values2), len(dates2), "clean_data failed horribly!")
