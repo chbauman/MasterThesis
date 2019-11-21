@@ -83,7 +83,9 @@ def run_battery() -> None:
 
 
 def choose_dataset_and_constraints(base_ds_name: str = "Model_Room43",
-                                   seq_len: int = 20) -> Tuple[Dataset, DatasetConstraints]:
+                                   seq_len: int = 20,
+                                   add_battery_data: bool = False,
+                                   ) -> Tuple[Dataset, DatasetConstraints]:
     """Let's you choose a dataset.
 
     Reads a room dataset, if it is not found, it is generated.
@@ -95,13 +97,14 @@ def choose_dataset_and_constraints(base_ds_name: str = "Model_Room43",
         base_ds_name: The name of the base dataset, must be of the form "Model_Room<nr>",
             with nr = 43 or 53.
         seq_len: The sequence length to use for the RNN training.
+        add_battery_data: Whether to add the battery data.
 
     Returns:
         The prepared dataset and the corresponding list of constraints.
     """
 
-    ds = choose_dataset(base_ds_name, seq_len, False)
-    rnn_consts = get_constraints(ds, False)
+    ds = choose_dataset(base_ds_name, seq_len, add_battery_data)
+    rnn_consts = get_constraints(ds, add_battery_data)
 
     # Return
     return ds, rnn_consts
@@ -131,6 +134,10 @@ def get_model(name: str, ds: Dataset,
     Returns:
         The requested model.
     """
+    # Check input
+    # assert ds.d == 8 and ds.n_c == 1
+
+    # Fit if required
     if fit:
         mod = get_model(name, ds, rnn_consts, from_hop, fit=False)
         mod.fit()
@@ -156,12 +163,17 @@ def get_model(name: str, ds: Dataset,
     all_inds = dict(all_out, **all_in)
     base_params = dict(hop_pars, **fix_pars, **all_inds)
     base_params_no_inds = {k: base_params[k] for k in base_params if k != 'out_inds'}
+
+    # Choose the model
     if name == "Time_Exact":
         # Time model: Predicts the deterministic time variable exactly.
         return SCTimeModel(ds, 6)
     elif name == "FullState_Naive":
         # The naive model that predicts all series as the last seen input.
         return ConstModel(ds)
+    elif name == "Battery":
+        # Battery model.
+        return BatteryModel(dataset=ds, base_ind=8)
     elif name == "Full_RNN":
         # Full model: Predicting all series except for the controllable and the time
         # series. Weather predictions might depend on apartment data.
@@ -265,6 +277,12 @@ def get_model(name: str, ds: Dataset,
 
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
+    run_battery()
+    ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
+    bat_mod = get_model("Battery", ds_full, fit=True)
+    bat_mod.analyze_bat_model()
+    bat_mod.analyze(overwrite=True)
+    return
 
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20)
@@ -350,7 +368,7 @@ def main() -> None:
     # return
 
     # Train and analyze the battery model
-    run_battery()
+    # run_battery()
     return
 
     # Get dataset and constraints

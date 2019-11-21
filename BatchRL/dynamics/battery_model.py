@@ -18,6 +18,13 @@ class BatteryModel(BaseDynamicsModel):
     """
     params: np.ndarray = None  #: Parameters of the pw linear model.
 
+    # The data to plot after fitting
+    p: np.ndarray = None
+    ds: np.ndarray = None
+
+    masked_p: np.ndarray = None
+    masked_ds: np.ndarray = None
+
     def __init__(self, dataset: Dataset, base_ind: int = None):
         """Initializes the battery model with the specified dataset.
 
@@ -38,7 +45,31 @@ class BatteryModel(BaseDynamicsModel):
         Calls `analyze_bat_model`, there the
         actual model fitting happens.
         """
-        self.analyze_bat_model()
+        # Get data
+        d = self.data
+        dat = d.split_dict["train_val"].get_rel_data()
+
+        # Extract data
+        s_ind, p_ind = self.in_indices
+        p = np.copy(dat[1:, p_ind])
+        ds = np.copy(dat[1:, s_ind] - dat[:-1, s_ind])
+
+        # Remove nans
+        not_nans = np.logical_not(np.logical_or(np.isnan(p), np.isnan(ds)))
+        self.p = p[not_nans]
+        self.ds = ds[not_nans]
+
+        # Fit linear Model and filter out outliers
+        fitted_ds = fit_linear_1d(self.p, self.ds, self.p)
+        mask = np.logical_or(self.ds > fitted_ds - 0.35, self.p < -1.0)
+        self.masked_p = self.p[mask]
+        self.masked_ds = self.ds[mask]
+
+        # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
+        def feat_fun(x: float):
+            return np.array([1.0, x, max(0.0, x)])
+        params = fit_linear_bf_1d(self.masked_p, self.masked_ds, feat_fun)
+        self.params = params
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """Make predictions using the fitted model on the provided data.
@@ -69,48 +100,31 @@ class BatteryModel(BaseDynamicsModel):
         """This is basically the fit method, but it also
         does some data analysis and makes some battery data specific plots.
         """
-        # Get data
+        if self.params is None:
+            self.fit()
+
+        # Get scaling
         d = self.data
-        dat = d.split_dict["train_val"].get_rel_data()
-        scale = np.copy(d.scaling)
+        scale = np.copy(d.scaling[self.in_indices])
         scale[0, 0] = 0.0
-
-        # Extract data
-        p = np.copy(dat[1:, 1])
-        ds = np.copy(dat[1:, 0] - dat[:-1, 0])
-
-        # Remove nans
-        not_nans = np.logical_not(np.logical_or(np.isnan(p), np.isnan(ds)))
-        p = p[not_nans]
-        ds = ds[not_nans]
 
         # Plot data
         labs = {'title': 'Battery Model', 'xlab': 'Active Power [kW]', 'ylab': r'$\Delta$ SoC [%]'}
         before_plt_path = self.get_plt_path("WithOutliers")
-        scatter_plot(p, ds, lab_dict=labs,
+        scatter_plot(self.p, self.ds, lab_dict=labs,
                      show=False,
                      m_and_std_x=scale[1],
                      m_and_std_y=scale[0],
                      add_line=True,
                      save_name=before_plt_path)
 
-        # Fit linear Model and filter out outliers
-        fitted_ds = fit_linear_1d(p, ds, p)
-        mask = np.logical_or(ds > fitted_ds - 0.35, p < -1.0)
-        masked_p = p[mask]
-        masked_ds = ds[mask]
-
-        # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
-        def feat_fun(x: float):
-            return np.array([1.0, x, max(0.0, x)])
-        params = fit_linear_bf_1d(masked_p, masked_ds, feat_fun)
-        self.params = params
-        x_pw_line = np.array([np.min(p), 0, np.max(p)], dtype=np.float32)
+        # Eval for pw linear line
+        x_pw_line = np.array([np.min(self.p), 0, np.max(self.p)], dtype=np.float32)
         y_pw_line = self._eval_at(x_pw_line)
 
         # Plot model
         after_plt_path = self.get_plt_path("Cleaned")
-        scatter_plot(masked_p, masked_ds, lab_dict=labs,
+        scatter_plot(self.masked_p, self.masked_ds, lab_dict=labs,
                      show=False,
                      add_line=False,
                      m_and_std_x=scale[1],

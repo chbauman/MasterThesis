@@ -590,8 +590,8 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
 
     TODO: Fix Size
     """
-    assert len(agent_names) == actions.shape[0], "Not the right number of names!"
-    assert rewards.shape[0] == actions.shape[0], "Not the right shapes!"
+    assert len(agent_names) == actions.shape[0], "Incorrect number of names!"
+    assert rewards.shape[0] == actions.shape[0], "Incorrect shapes!"
 
     # Check fallback actions
     plot_extra = extra_actions is not None
