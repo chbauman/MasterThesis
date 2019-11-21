@@ -6,7 +6,7 @@ import numpy as np
 
 from agents.agents_heuristic import ConstHeating
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
-    extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control
+    extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet
 from util.visualize import plot_dir, plot_reward_details
@@ -145,6 +145,34 @@ class TestNumerics(TestCase):
         fix_seed()
         self.assertEqual(a, random.randint(-max_int, max_int))
         self.assertTrue(np.array_equal(arr, np.random.normal(0.0, 1.0, 10)))
+
+    def test_npf32(self):
+        sh = (2, 3)
+        arr = npf32(sh)
+        self.assertEqual(arr.shape, sh)
+        val = 3.0
+        arr2 = npf32(sh, fill=val)
+        self.assertTrue(np.all(arr2 == val))
+
+    def test_align(self):
+        # Test data
+        t_i1 = '2019-01-01 00:00:00'
+        t_i2 = '2019-01-01 00:30:00'
+        dt = 15
+        ts_1 = np.array([1, 2, 2, 2, 3, 3], dtype=np.float32)
+        ts_2 = np.array([2, 3, 3], dtype=np.float32)
+        msg = "align_ts not correct!!"
+
+        # Do tests
+        test1, t_init1 = align_ts(ts_1, ts_2, t_i1, t_i2, dt)
+        exp1 = npf32((6, 2), fill=np.nan)
+        exp1[:, 0] = ts_1
+        exp1[2:5, 1] = ts_2
+        self.assertEqual(t_init1, t_i1, msg)
+        print(exp1)
+        print(test1)
+        self.assertTrue(nan_array_equal(exp1, test1), msg=msg)
+
 
     pass
 

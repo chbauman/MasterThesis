@@ -6,9 +6,12 @@ import scipy.optimize
 from util.util import datetime_to_np_datetime, string_to_dt, Arr, Num
 
 
-def npf32(sh: Tuple) -> np.ndarray:
+def npf32(sh: Tuple, fill: float = None) -> np.ndarray:
     """Returns an empty numpy float array of specified shape."""
-    return np.empty(sh, dtype=np.float32)
+    empty_arr = np.empty(sh, dtype=np.float32)
+    if fill is not None:
+        empty_arr.fill(fill)
+    return empty_arr
 
 
 def has_duplicates(arr: np.ndarray) -> bool:

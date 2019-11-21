@@ -8,7 +8,7 @@ from data_processing.preprocess import clean_data, remove_out_interval, clip_to_
     fill_holes_linear_interpolate, remove_outliers, gaussian_filter_ignoring_nans, standardize
 from rest.client import DataStruct
 from util.numerics import align_ts, copy_arr_list, solve_ls, \
-    find_rows_with_nans, extract_streak
+    find_rows_with_nans, extract_streak, npf32, nan_array_equal
 from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init
 from util.visualize import plot_time_series, plot_all, plot_single, preprocess_plot_path, \
     plot_multiple_time_series, plot_dataset, stack_compare_plot
@@ -1253,10 +1253,10 @@ def get_data_test():
 
 
 def test_align() -> None:
-    """
-    Tests the alignment of two time series.
+    """ Tests the alignment of two time series.
     """
 
+    print("Testing alignment")
     # Test data
     t_i1 = '2019-01-01 00:00:00'
     t_i2 = '2019-01-01 00:30:00'
@@ -1266,6 +1266,11 @@ def test_align() -> None:
 
     # Do tests
     test1 = align_ts(ts_1, ts_2, t_i1, t_i2, dt)
+    exp1 = npf32((2, 6))
+    exp1.fill(np.nan)
+    exp1[0] = ts_1
+    exp1[1:, 2:5] = ts_2
+    assert nan_array_equal(exp1, test1)
     print('Test 1:', test1)
     test2 = align_ts(ts_2, ts_1, t_i1, t_i2, dt)
     print('Test 2:', test2)
@@ -1275,4 +1280,6 @@ def test_align() -> None:
     print('Test 4:', test4)
     test5 = align_ts(ts_2, ts_1, t_i2, t_i1, dt)
     print('Test 5:', test5)
+
+    print("Done testing alignment")
     return
