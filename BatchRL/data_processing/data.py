@@ -3,7 +3,7 @@ from typing import Dict, Optional, Sequence, List, Tuple
 
 import numpy as np
 
-from data_processing.dataset import SeriesConstraint, no_inds, Dataset
+from data_processing.dataset import SeriesConstraint, no_inds, Dataset, DatasetConstraints
 from data_processing.preprocess import clean_data, remove_out_interval, clip_to_interval, interpolate_time_series, \
     fill_holes_linear_interpolate, remove_outliers, gaussian_filter_ignoring_nans, standardize
 from rest.client import DataStruct
@@ -1187,3 +1187,31 @@ def get_data_test():
 
     add_col(all_data, data2, dt_init1, dt_init2, 2, dt_mins)
     return all_data, m, name
+
+
+def choose_dataset_and_constraints(base_ds_name: str = "Model_Room43",
+                                   seq_len: int = 20,
+                                   add_battery_data: bool = False,
+                                   ) -> Tuple[Dataset, DatasetConstraints]:
+    """Let's you choose a dataset.
+
+    Reads a room dataset, if it is not found, it is generated.
+    Then the sequence length is set, the time variable is added and
+    it is standardized and split into parts for training, validation
+    and testing. Finally it is returned with the corresponding constraints.
+
+    Args:
+        base_ds_name: The name of the base dataset, must be of the form "Model_Room<nr>",
+            with nr = 43 or 53.
+        seq_len: The sequence length to use for the RNN training.
+        add_battery_data: Whether to add the battery data.
+
+    Returns:
+        The prepared dataset and the corresponding list of constraints.
+    """
+
+    ds = choose_dataset(base_ds_name, seq_len, add_battery_data)
+    rnn_consts = get_constraints(ds, add_battery_data)
+
+    # Return
+    return ds, rnn_consts

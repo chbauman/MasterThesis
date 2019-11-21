@@ -63,7 +63,7 @@ class TestKeras(TestCase):
 
     Run from `BatchRL` folder, otherwise the relative paths
     will be wrong and there will be folders generated in the wrong place.
-    Use the Powershell script `run_tests.ps1` if possible.
+    Use the Powershell script `run_integration_tests.ps1` if possible.
     """
 
     def __init__(self, *args, **kwargs):

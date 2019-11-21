@@ -4,14 +4,14 @@ The `main` function runs all the necessary high-level
 functions. The complicated stuff is hidden in the other
 modules / packages.
 """
-from typing import Tuple, List
+from typing import List
 
 import numpy as np
 
 from agents.agents_heuristic import ConstHeating, RuleBasedHeating
 from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, get_data_test, \
-    get_constraints, choose_dataset
+    choose_dataset_and_constraints
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
 from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
@@ -24,9 +24,23 @@ from envs.dynamics_envs import FullRoomEnv, BatteryEnv
 from rest.client import test_rest_client
 from util.util import EULER
 
+# Define the models by name
+base_rnn_models = [
+    "WeatherFromWeatherTime_RNN",
+    "Apartment_RNN",
+    "RoomTempFromReduced_RNN",
+    "RoomTemp_RNN",
+    "Full_RNN",
+]
+full_models = [
+    "FullState_Comp_ReducedTempConstWaterWeather",
+    "FullState_Comp_TempConstWaterWeather",
+    "FullState_Comp_WeatherAptTime"
+]
 
-def run_tests() -> None:
-    """Runs a few tests.
+
+def run_integration_tests() -> None:
+    """Runs a few rather time consuming tests.
 
     Raises:
         AssertionError: If a test fails.
@@ -70,7 +84,6 @@ def run_battery() -> None:
     const_ag_2 = ConstHeating(bat_env, -3.0)  # Discharge
     dqn_agent = DDPGBaseAgent(bat_env, action_range=bat_env.action_range,
                               n_steps=100000, gamma=0.99)
-
     bat_env.detailed_eval_agents([const_ag_1, const_ag_2, dqn_agent], use_noise=False, n_steps=1000)
 
     # Fit agent and evaluate.
@@ -82,32 +95,94 @@ def run_battery() -> None:
                                     start_ind=100, fitted=False)
 
 
-def choose_dataset_and_constraints(base_ds_name: str = "Model_Room43",
-                                   seq_len: int = 20,
-                                   add_battery_data: bool = False,
-                                   ) -> Tuple[Dataset, DatasetConstraints]:
-    """Let's you choose a dataset.
+def run_dynamic_model_hyperopt(use_bat_data: bool = True,
+                               verbose: int = 1) -> None:
+    """Runs the hyperparameter optimization for all base RNN models.
 
-    Reads a room dataset, if it is not found, it is generated.
-    Then the sequence length is set, the time variable is added and
-    it is standardized and split into parts for training, validation
-    and testing. Finally it is returned with the corresponding constraints.
+    Does not much if not on Euler.
 
     Args:
-        base_ds_name: The name of the base dataset, must be of the form "Model_Room<nr>",
-            with nr = 43 or 53.
-        seq_len: The sequence length to use for the RNN training.
-        add_battery_data: Whether to add the battery data.
-
-    Returns:
-        The prepared dataset and the corresponding list of constraints.
+        use_bat_data: Whether to include the battery data.
+        verbose: Verbosity level.
     """
 
-    ds = choose_dataset(base_ds_name, seq_len, add_battery_data)
-    rnn_consts = get_constraints(ds, add_battery_data)
+    # Get data and constraints
+    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=use_bat_data)
 
-    # Return
-    return ds, rnn_consts
+    # Hyper-optimize model(s)
+    for name in base_rnn_models:
+        mod = get_model(name, ds, rnn_consts, from_hop=False, fit=False)
+        if isinstance(mod, HyperOptimizableModel):
+            if verbose:
+                print(f"Optimizing: {name}")
+            if EULER:
+                optimize_model(mod, verbose=verbose > 0)
+            else:
+                print("Not optimizing!")
+        else:
+            raise ValueError(f"Model {name} not hyperparameter-optimizable!")
+    pass
+
+
+def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
+                                   verbose: int = 1) -> None:
+    """Runs the hyperparameter optimization for all base RNN models.
+
+    Does not much if not on Euler.
+
+    Args:
+        use_bat_data: Whether to include the battery data.
+        verbose: Verbosity level.
+    """
+
+    # Get data and constraints
+    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
+                                                    seq_len=20,
+                                                    add_battery_data=use_bat_data)
+
+    # Load and fit all models
+    all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True, fit=True) for nm in base_rnn_models}
+
+    # Fit or load all initialized models
+    for name, m_to_use in all_mods.items():
+        m_to_use.analyze(overwrite=False)
+        if verbose:
+            print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
+
+        # m_to_use.analyze_disturbed("Valid", 'val', 10)
+        # m_to_use.analyze_disturbed("Train", 'train', 10)
+
+
+def run_room_models() -> None:
+    # Get dataset and constraints
+    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20)
+
+    # Test all models
+    for m_name in full_models[0:1]:
+        # Load the model and init env
+        m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
+        m.analyze(overwrite=False, plot_acf=False)
+        env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3)
+
+        # Define default agents and compare
+        open_agent = ConstHeating(env, 1.0)
+        closed_agent = ConstHeating(env, 0.0)
+        rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
+        # ag_list = [open_agent, closed_agent, rule_based_agent]
+        # env.analyze_agents_visually(ag_list,
+        #                             # start_ind=0,
+        #                             use_noise=False,
+        #                             max_steps=None)
+        # env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
+
+        # Choose agent and fit to env.
+        if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
+            agent = DDPGBaseAgent(env, action_range=env.action_range,
+                                  n_steps=50000, gamma=0.99, lr=0.00001)
+            agent.fit()
+            agent_list = [open_agent, closed_agent, rule_based_agent, agent]
+            env.analyze_agents_visually(agent_list)
+            env.detailed_eval_agents(agent_list, use_noise=False, n_steps=2000)
 
 
 def analyze_control_influence(m: BaseDynamicsModel):
@@ -307,82 +382,12 @@ def get_model(name: str, ds: Dataset,
 
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
+    run_integration_tests()
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
     bat_mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
                         rnn_consts=rnn_consts_full, fit=True, from_hop=True)
-    # bat_mod.analyze_bat_model()
-    bat_mod.analyze(overwrite=True)
+    bat_mod.analyze(overwrite=False, plot_acf=False)
     return
-
-    # Get dataset and constraints
-    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20)
-
-    fit_custom = False
-    if fit_custom:
-        # Basic parameter set
-        name = "RoomTempFromReduced_RNN"
-        hop_pars = {
-            'n_iter_max': 25,
-            'hidden_sizes': (50, 50, 50),
-            'input_noise_std': 0.0001,
-            'lr': 0.0004,
-            'gru': False,
-        }
-        fix_pars = {
-            'name': name,
-            'data': ds,
-            'residual_learning': True,
-            'constraint_list': rnn_consts,
-            'weight_vec': None,
-        }
-        all_out = {'out_inds': np.array([0, 1, 2, 3, 5], dtype=np.int32)}
-        base_params = dict(hop_pars, **fix_pars, **all_out)
-        base_params_no_inds = {k: base_params[k] for k in base_params if k != 'out_inds'}
-        inds = {
-            'out_inds': np.array([5], dtype=np.int32),
-            'in_inds': np.array([0, 2, 4, 5, 6, 7], dtype=np.int32),
-        }
-        rnn = RNNDynamicModel(**inds, **base_params_no_inds)
-        rnn.fit()
-        rnn.analyze()
-        return
-
-    # try_opcua()
-    # return
-
-    # Choose a model
-    full_mod_names = [
-        "FullState_Comp_ReducedTempConstWaterWeather",
-        "FullState_Comp_TempConstWaterWeather",
-        "FullState_Comp_WeatherAptTime"
-    ]
-
-    # Test all models
-    for m_name in full_mod_names[0:1]:
-        # Load the model and init env
-        m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
-        # m.analyze()
-        env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3)
-
-        # Define default agents and compare
-        open_agent = ConstHeating(env, 1.0)
-        closed_agent = ConstHeating(env, 0.0)
-        rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        # ag_list = [open_agent, closed_agent, rule_based_agent]
-        # env.analyze_agents_visually(ag_list,
-        #                             # start_ind=0,
-        #                             use_noise=False,
-        #                             max_steps=None)
-        # env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
-
-        # Choose agent and fit to env.
-        if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
-            agent = DDPGBaseAgent(env, action_range=env.action_range,
-                                  n_steps=50000, gamma=0.99, lr=0.00001)
-            agent.fit()
-            agent_list = [open_agent, closed_agent, rule_based_agent, agent]
-            env.analyze_agents_visually(agent_list)
-            env.detailed_eval_agents(agent_list, use_noise=False, n_steps=2000)
 
 
 def main() -> None:
@@ -390,58 +395,20 @@ def main() -> None:
 
     Changes a lot, so I won't put a more accurate description here ;)
     """
-    # Run tests.
-    # run_tests()
-
-    # Full test model
+    # Run current experiments
     curr_tests()
-    # return
+
+    # Run integration tests.
+    # run_integration_tests()
+
+    # Run hyperparameter optimization
+    run_dynamic_model_hyperopt()
+
+    # Fit and analyze all models
+    run_dynamic_model_fit_from_hop()
 
     # Train and analyze the battery model
     # run_battery()
-    return
-
-    # Get dataset and constraints
-    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20)
-
-    # Get the needed models
-    needed = [
-        # "Time_Exact",
-        # "WaterTemp_Const",
-        # "Full_RNN",
-        "WeatherFromWeatherTime_RNN",
-        "Apartment_RNN",
-        "RoomTempFromReduced_RNN",
-        "RoomTemp_RNN",
-        # "FullState_Comp_WeatherAptTime",
-        # "FullState_Comp_FullTime",
-        # "FullState_Comp_ReducedTempConstWaterWeather",
-        # "FullState_Comp_TempConstWaterWeather",
-    ]
-
-    # Hyper-optimize model(s)
-    for name in needed:
-        mod = get_model(name, ds, rnn_consts, from_hop=False)
-        if isinstance(mod, HyperOptimizableModel):
-            print(f"Optimizing: {name}")
-            if EULER:
-                optimize_model(mod)
-            else:
-                print("Not optimizing!")
-        else:
-            raise ValueError(f"Model {name} not hyperparameter-optimizable!")
-
-    all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True) for nm in needed}
-
-    # Fit or load all initialized models
-    for name, m_to_use in all_mods.items():
-        m_to_use.fit()
-        print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
-        m_to_use.analyze(overwrite=True)
-        # analyze_control_influence(m_to_use)
-        # m_to_use.analyze_disturbed("Valid", 'val', 10)
-        # m_to_use.analyze_disturbed("Train", 'train', 10)
-        pass
 
 
 if __name__ == '__main__':

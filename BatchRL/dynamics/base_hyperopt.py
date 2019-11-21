@@ -190,8 +190,8 @@ def optimize_model(mod: HyperOptimizableModel, verbose: bool = True) -> None:
         mod: Model whose hyperparameters are to be optimized.
         verbose: Whether to print the result to the console.
     """
-    n_opt = 60 if EULER else 3
-    opt_params = mod.optimize(n_opt)
+    n_opt = 40 if EULER else 3
+    opt_params = mod.optimize(n_opt, verbose=verbose)
     # print("All tried parameter combinations: {}.".format(mod.param_list))
     if verbose:
         print("Optimal parameters: {}.".format(opt_params))
