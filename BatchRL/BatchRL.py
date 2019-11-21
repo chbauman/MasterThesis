@@ -10,8 +10,9 @@ import numpy as np
 
 from agents.agents_heuristic import ConstHeating, RuleBasedHeating
 from agents.keras_agents import DDPGBaseAgent
-from data_processing.data import get_battery_data, Dataset, test_dataset_artificially, SeriesConstraint, \
-    generate_room_datasets, get_DFAB_heating_data, DatasetConstraints, get_data_test, test_rest_client, get_weather_data
+from data_processing.data import get_battery_data, Dataset, test_dataset_artificially, DatasetConstraints, \
+    get_data_test, test_rest_client, \
+    get_constraints, choose_dataset
 from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
 from dynamics.battery_model import BatteryModel
@@ -82,8 +83,8 @@ def run_battery() -> None:
                                     start_ind=100, fitted=False)
 
 
-def choose_dataset(base_ds_name: str = "Model_Room43",
-                   seq_len: int = 20) -> Tuple[Dataset, DatasetConstraints]:
+def choose_dataset_and_constraints(base_ds_name: str = "Model_Room43",
+                                   seq_len: int = 20) -> Tuple[Dataset, DatasetConstraints]:
     """Let's you choose a dataset.
 
     Reads a room dataset, if it is not found, it is generated.
@@ -99,39 +100,9 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
     Returns:
         The prepared dataset and the corresponding list of constraints.
     """
-    # Check `base_ds_name`.
-    if base_ds_name[:10] != "Model_Room" or base_ds_name[-2:] not in ["43", "53"]:
-        raise ValueError(f"Dataset: {base_ds_name} does not exist!")
 
-    # Load dataset, generate if not found.
-    try:
-        ds = Dataset.loadDataset(base_ds_name)
-    except FileNotFoundError:
-        get_DFAB_heating_data()
-        generate_room_datasets()
-        ds = Dataset.loadDataset(base_ds_name)
-
-    # Set sequence length
-    ds.seq_len = seq_len
-    ds.name = base_ds_name[-6:] + "_" + str(ds.seq_len)
-
-    # Add time variables, standardize and prepare different parts of dataset.
-    ds = ds.add_time()
-    ds.standardize()
-    ds.split_data()
-
-    # Room temperature model
-    rnn_consts = [
-        SeriesConstraint('interval', [-15.0, 40.0]),
-        SeriesConstraint('interval', [0.0, 1300.0]),
-        SeriesConstraint('interval', [-10.0, 100.0]),
-        SeriesConstraint('interval', [-10.0, 100.0]),
-        SeriesConstraint('interval', [0.0, 1.0]),
-        SeriesConstraint('interval', [0.0, 40.0]),
-        SeriesConstraint('exact'),
-        SeriesConstraint('exact'),
-    ]
-    ds.transform_c_list(rnn_consts)
+    ds = choose_dataset(base_ds_name, seq_len, False)
+    rnn_consts = get_constraints(ds, False)
 
     # Return
     return ds, rnn_consts
@@ -307,7 +278,7 @@ def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
     # Get dataset and constraints
-    ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
+    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20)
 
     fit_custom = False
     if fit_custom:
@@ -386,7 +357,7 @@ def main() -> None:
     # run_tests()
 
     # Full test model
-    # curr_tests()
+    curr_tests()
     # return
 
     # Train and analyze the battery model
@@ -394,7 +365,7 @@ def main() -> None:
     return
 
     # Get dataset and constraints
-    ds, rnn_consts = choose_dataset('Model_Room43', seq_len=20)
+    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20)
 
     # Get the needed models
     needed = [

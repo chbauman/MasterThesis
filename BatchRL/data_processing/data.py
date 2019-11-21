@@ -1818,6 +1818,93 @@ def generate_sin_cos_time_ds(other: Dataset) -> Dataset:
     return ds_sin_cos_time
 
 
+def choose_dataset(base_ds_name: str = "Model_Room43",
+                   seq_len: int = 20,
+                   add_battery: bool = False) -> Dataset:
+    """Let's you choose a dataset.
+
+    Reads a room dataset, if it is not found, it is generated.
+    Then the sequence length is set, the time variable is added and
+    it is standardized and split into parts for training, validation
+    and testing. Finally it is returned with the corresponding constraints.
+
+    Args:
+        base_ds_name: The name of the base dataset, must be of the form "Model_Room<nr>",
+            with nr = 43 or 53.
+        seq_len: The sequence length to use for the RNN training.
+        add_battery: Whether to add the battery dataset.
+
+    Returns:
+        The prepared dataset.
+    """
+    # Check `base_ds_name`.
+    if base_ds_name[:10] != "Model_Room" or base_ds_name[-2:] not in ["43", "53"]:
+        raise ValueError(f"Dataset: {base_ds_name} does not exist!")
+
+    # Load dataset, generate if not found.
+    try:
+        ds = Dataset.loadDataset(base_ds_name)
+    except FileNotFoundError:
+        get_DFAB_heating_data()
+        generate_room_datasets()
+        ds = Dataset.loadDataset(base_ds_name)
+
+    # Set sequence length
+    ds.seq_len = seq_len
+    ds.name = base_ds_name[-6:] + "_" + str(ds.seq_len)
+
+    # Add time variables and optionally the battery data
+    ds = ds.add_time()
+    if add_battery:
+        bat_ds = get_battery_data()
+        assert bat_ds.dt == ds.dt, "Incompatible timestep!"
+        ds = ds + bat_ds
+
+    # Standardize and prepare different parts of dataset.
+    ds.standardize()
+    ds.split_data()
+
+    # Return
+    return ds
+
+
+def get_constraints(ds: Dataset = None, include_bat: bool = False) -> List[SeriesConstraint]:
+    """Defines the constraints for a full dataset.
+
+    Args:
+        ds: Dataset
+        include_bat: Whether the dataset includes the battery data.
+
+    Returns:
+        List of constraints
+    """
+    # Constraints for room dataset.
+    rnn_consts = [
+        SeriesConstraint('interval', [-15.0, 40.0]),
+        SeriesConstraint('interval', [0.0, 1300.0]),
+        SeriesConstraint('interval', [-10.0, 100.0]),
+        SeriesConstraint('interval', [-10.0, 100.0]),
+        SeriesConstraint('interval', [0.0, 1.0]),
+        SeriesConstraint('interval', [0.0, 40.0]),
+        SeriesConstraint('exact'),
+        SeriesConstraint('exact'),
+    ]
+    # Constraints for battery dataset.
+    if include_bat:
+        bat_consts = [
+            SeriesConstraint('interval', [20.0, 80.0]),
+            SeriesConstraint('interval', [-100.0, 100.0]),
+        ]
+        rnn_consts += bat_consts
+
+    # Transform
+    if ds is not None:
+        assert ds.d == len(rnn_consts), "Incorrect number of columns in dataset."
+        ds.transform_c_list(rnn_consts)
+
+    return rnn_consts
+
+
 #######################################################################################################
 # Testing
 
