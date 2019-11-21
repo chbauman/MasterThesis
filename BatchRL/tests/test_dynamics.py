@@ -165,7 +165,6 @@ class TestBaseDynamics(TestCase):
 
     def test_analysis(self):
         # Test model analysis
-        # TODO: This is slow (~4s), make it faster.
         base_data = np.copy(self.ds_1.data)
         streak = copy_arr_list(self.ds_1.get_streak("train"))
         self.test_model_2.analyze(plot_acf=False, n_steps=(2,), verbose=False)

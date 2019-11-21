@@ -571,9 +571,6 @@ class BaseDynamicsModel(KerasBase, ABC):
         n = 60 * 24 // d.dt
 
         # Prepare the data
-        # dat_test = d.get_prepared_data('test')
-        # dat_train_in, dat_train_out, _ = d.get_prepared_data('train_streak')
-        # dat_val_in, dat_val_out, _ = d.get_prepared_data('val_streak')
         dat_train_in, dat_train_out, _ = d.get_streak('train')
         dat_val_in, dat_val_out, _ = d.get_streak('val')
         n_feat = dat_train_out.shape[-1]
