@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Optional, Sequence, List
+from typing import Dict, Optional, Sequence, List, Tuple
 
 import numpy as np
 
@@ -1081,6 +1081,7 @@ def get_constraints(ds: Dataset = None, include_bat: bool = False) -> List[Serie
     # Constraints for battery dataset.
     if include_bat:
         bat_consts = [
+            # TODO: Find a way to remove the hard-coding of the (SoC) constraints
             SeriesConstraint('interval', [20.0, 80.0]),
             SeriesConstraint('interval', [-100.0, 100.0]),
         ]
@@ -1097,22 +1098,21 @@ def get_constraints(ds: Dataset = None, include_bat: bool = False) -> List[Serie
 #######################################################################################################
 # Testing
 
-# Test DataStruct
-TestData = DataStruct(id_list=[421100171, 421100172],
-                      name="Test",
-                      start_date='2019-08-08',
-                      end_date='2019-08-09')
-
 
 # Synthetic class imitating a DataStruct
-class TestDataSynthetic:
-    """
-    Synthetic and short dataset to be used for debugging.
-    Imitates a DataStruct.
+class TestDataSynthetic(DataStruct):
+    """Synthetic and short dataset to be used for debugging.
+
+    Overrides `get_data` to avoid having to use the REST
+    client to load the data, instead it is defined each time
+    it is called.
     """
 
-    @staticmethod
-    def get_data():
+    def __init__(self):
+        name = "SyntheticTest"
+        super().__init__([], name=name)
+
+    def get_data(self) -> Optional[Tuple[List, List]]:
         # First Time series
         dict1 = {'description': "Synthetic Data Series 1: Base Series", 'unit': "Test Unit 1"}
         val_1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
@@ -1161,31 +1161,6 @@ TestData2 = TestDataSynthetic()
 
 
 # Tests
-def test_rest_client() -> None:
-    """
-    Tests the REST client by requesting test data,
-    saving it locally, reading it locally and deleting
-    it again.
-
-    Returns: None
-    """
-
-    # Load using REST api and locally
-    t_dat = TestData
-    t_dat.get_data()
-    t_dat.get_data()
-
-    # Remove data again
-    fol = TestData.get_data_folder()
-    for f in os.listdir(fol):
-        file_path = os.path.join(fol, f)
-        try:
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-        except Exception as e:
-            print(e)
-
-
 def get_data_test():
     name = "Test"
 

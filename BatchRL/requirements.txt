@@ -1,3 +1,4 @@
+requests
 opcua
 tensorflow
 matplotlib

@@ -10,7 +10,7 @@ import numpy as np
 
 from agents.agents_heuristic import ConstHeating, RuleBasedHeating
 from agents.keras_agents import DDPGBaseAgent
-from data_processing.data import get_battery_data, get_data_test, test_rest_client, \
+from data_processing.data import get_battery_data, get_data_test, \
     get_constraints, choose_dataset
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel
@@ -21,6 +21,7 @@ from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv
+from rest.client import test_rest_client
 from util.util import EULER
 
 

@@ -121,7 +121,7 @@ class _Client(object):
             # This fails if the username exists but the password
             # is wrong, but not if the username does not exist?!!
             r = s.get(url=self._URL, auth=self.auth)
-        except TypeError as e:
+        except TypeError:
             print("Login failed, invalid password!")
             return None
         except Exception as e:
@@ -318,3 +318,31 @@ def example():
     # Do something with the data
     # Add your code here...
     print(values, timestamps)
+
+
+# Test DataStruct
+TestData = DataStruct(id_list=[421100171, 421100172],
+                      name="Test",
+                      start_date='2019-08-08',
+                      end_date='2019-08-09')
+
+
+def test_rest_client() -> None:
+    """Tests the REST client by requesting test data,
+    saving it locally, reading it locally and deleting
+    it again."""
+
+    # Load using REST api and locally
+    t_dat = TestData
+    t_dat.get_data()
+    t_dat.get_data()
+
+    # Remove data again
+    fol = TestData.get_data_folder()
+    for f in os.listdir(fol):
+        file_path = os.path.join(fol, f)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(e)
