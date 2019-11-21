@@ -3,7 +3,7 @@ from abc import ABC
 import numpy as np
 
 from dynamics.base_model import BaseDynamicsModel
-from data_processing.data import Dataset
+from data_processing.dataset import Dataset
 
 
 class NoDisturbanceModel(BaseDynamicsModel, ABC):

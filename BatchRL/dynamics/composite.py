@@ -2,7 +2,7 @@ from typing import List
 
 import numpy as np
 
-from data_processing.data import Dataset
+from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import has_duplicates
 

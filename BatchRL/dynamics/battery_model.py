@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from dynamics.base_model import BaseDynamicsModel
-from data_processing.data import Dataset
+from data_processing.dataset import Dataset
 from util.numerics import fit_linear_1d, fit_linear_bf_1d
 from util.visualize import scatter_plot
 

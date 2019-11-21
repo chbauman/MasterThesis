@@ -5,7 +5,7 @@ from keras import Input, Sequential, backend as K
 from keras.engine import Layer
 from keras.layers import Add
 
-from data_processing.data import SeriesConstraint
+from data_processing.dataset import SeriesConstraint
 from ml.keras_layers import SeqInput, ConstrainedNoise, FeatureSlice, \
     ExtractInput, IdDense, IdRecurrent, ClipByValue, ConstrainOutput
 from util.util import rem_first

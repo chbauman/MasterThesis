@@ -1,7 +1,7 @@
 import numpy as np
 
 from dynamics.base_model import BaseDynamicsModel
-from data_processing.data import Dataset
+from data_processing.dataset import Dataset
 from util.numerics import add_mean_and_std, rem_mean_and_std
 
 

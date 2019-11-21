@@ -5,7 +5,7 @@ import numpy as np
 from hyperopt import hp
 from hyperopt.pyll import scope as ho_scope
 
-from data_processing.data import Dataset
+from data_processing.dataset import Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.base_model import BaseDynamicsModel, construct_test_ds
 from dynamics.battery_model import BatteryModel

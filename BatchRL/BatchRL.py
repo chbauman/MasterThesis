@@ -10,9 +10,9 @@ import numpy as np
 
 from agents.agents_heuristic import ConstHeating, RuleBasedHeating
 from agents.keras_agents import DDPGBaseAgent
-from data_processing.data import get_battery_data, Dataset, test_dataset_artificially, DatasetConstraints, \
-    get_data_test, test_rest_client, \
+from data_processing.data import get_battery_data, test_dataset_artificially, get_data_test, test_rest_client, \
     get_constraints, choose_dataset
+from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
 from dynamics.battery_model import BatteryModel

@@ -7,7 +7,7 @@ for some example input.
 from keras import backend as K, activations
 from keras.layers import Layer, GaussianNoise, Lambda
 
-from data_processing.data import SeriesConstraint
+from data_processing.dataset import SeriesConstraint
 from util.util import *
 
 
