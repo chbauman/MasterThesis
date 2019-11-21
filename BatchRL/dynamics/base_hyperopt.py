@@ -87,13 +87,14 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         """
         pass
 
-    def optimize(self, n: int = 100) -> Dict:
+    def optimize(self, n: int = 100, verbose: int = 1) -> Dict:
         """Does the full hyper parameter optimization with
         the given objective and space.
 
         Args:
             n: Number of model initializations, fits and objective
                 computations.
+            verbose: The verbosity level for fmin.
 
         Returns:
             The optimized hyper parameters.
@@ -134,7 +135,9 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             fn=f,
             space=hp_space,
             algo=tpe.suggest,
-            max_evals=n
+            max_evals=n,
+            verbose=verbose,
+            show_progressbar=verbose > 0,
         )
 
         return best

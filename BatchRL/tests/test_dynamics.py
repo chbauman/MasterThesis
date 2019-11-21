@@ -175,7 +175,7 @@ class TestBaseDynamics(TestCase):
             self.assertTrue(np.array_equal(streak_after[k], streak[k]), "Streak data was changed during analysis!")
 
     def test_const_series_test_model(self):
-        """Test the test model."""
+        # Test the test model
         n_feat = self.ds_1.d - self.ds_1.n_c
         preds = list(range(n_feat))
         c_mod = ConstSeriesTestModel(self.ds_1, preds)
@@ -227,15 +227,15 @@ class TestHop(TestCase):
 
         # Define dataset
         self.ds = construct_test_ds(20)
-        self.n = 3
+        self.n = 2
 
     def test_save_and_load(self):
         # Init model
         test_hop_mod_4 = TestHopTable(self.ds, 4, 6)
-        test_hop_mod_4.optimize(self.n)
+        test_hop_mod_4.optimize(self.n, verbose=0)
         assert len(test_hop_mod_4.param_list) == self.n, "Parameter logging incorrect!"
         best_mod_4 = TestHopTable.from_best_hp(ds=self.ds, base_param=4)
-        best_mod_4.optimize(self.n)
+        best_mod_4.optimize(self.n, verbose=0)
 
 
 class TestComposite(TestCase):
