@@ -3,12 +3,12 @@ from typing import Dict, Optional, Sequence, List
 
 import numpy as np
 
-from data_processing.dataset import SeriesConstraint, no_inds, Dataset, ModelDataView
+from data_processing.dataset import SeriesConstraint, no_inds, Dataset
 from data_processing.preprocess import clean_data, remove_out_interval, clip_to_interval, interpolate_time_series, \
     fill_holes_linear_interpolate, remove_outliers, gaussian_filter_ignoring_nans, standardize
 from rest.client import DataStruct
 from util.numerics import align_ts, copy_arr_list, solve_ls, \
-    find_rows_with_nans, extract_streak, nan_array_equal
+    find_rows_with_nans, extract_streak
 from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init
 from util.visualize import plot_time_series, plot_all, plot_single, preprocess_plot_path, \
     plot_multiple_time_series, plot_dataset, stack_compare_plot
@@ -1276,153 +1276,3 @@ def test_align() -> None:
     test5 = align_ts(ts_2, ts_1, t_i2, t_i1, dt)
     print('Test 5:', test5)
     return
-
-
-def get_test_ds(dat: np.ndarray, c_inds: np.ndarray,
-                name: str = "SyntheticTest",
-                dt: int = 60 * 12,
-                t_init: str = '2019-01-01 12:00:00'):
-    """Constructs a test dataset.
-
-    Args:
-        dat: The data array.
-        c_inds: The control indices.
-        name: The name of the dataset.
-        dt: Timestep in minutes.
-        t_init: Initial time.
-
-    Returns:
-        New dataset with dummy descriptions and unscaled data.
-    """
-    n_series = dat.shape[1]
-    descs = np.array([f"Series {i} [unit{i}]" for i in range(n_series)])
-    is_sc = np.array([False for _ in range(n_series)])
-    sc = np.empty((n_series, 2), dtype=np.float32)
-    ds = Dataset(dat, dt, t_init, sc, is_sc, descs, c_inds, name=name)
-    return ds
-
-
-def test_dataset_artificially() -> None:
-    """Constructs a small synthetic dataset and makes tests.
-
-    Tests the plotting and the index conversion of the dataset.
-
-    Returns:
-        None
-
-    Raises:
-        AssertionError: If a test is not passed.
-    """
-
-    dat = np.array([0, 2, 3, 7, 8,
-                    1, 3, 4, 8, 9,
-                    1, 4, 5, 7, 8,
-                    2, 5, 6, 7, 9], dtype=np.float32).reshape((4, -1))
-    c_inds = np.array([1, 3])
-    ds = get_test_ds(dat, c_inds)
-    ds.save()
-    plot_dataset(ds, False, ["Test", "Fuck"])
-
-    # Specify index tests
-    test_list = [
-        (np.array([2, 4], dtype=np.int32), np.array([1, 2], dtype=np.int32), ds.to_prepared),
-        (np.array([2, 3], dtype=np.int32), np.array([1, 4], dtype=np.int32), ds.to_prepared),
-        (np.array([0, 1, 2, 3, 4], dtype=np.int32), np.array([0, 3, 1, 4, 2], dtype=np.int32), ds.to_prepared),
-        (np.array([0, 1, 2], dtype=np.int32), np.array([0, 2, 4], dtype=np.int32), ds.from_prepared),
-        (np.array([2, 3, 4], dtype=np.int32), np.array([4, 1, 3], dtype=np.int32), ds.from_prepared),
-    ]
-
-    # Run index tests
-    for t in test_list:
-        inp, sol, fun = t
-        out = fun(inp)
-        if not np.array_equal(sol, out):
-            print("Test failed :(")
-            raise AssertionError("Function: {} with input: {} not giving: {} but: {}!!!".format(fun, inp, sol, out))
-
-    # Test the constraints and the standardization
-    c_list = [
-        SeriesConstraint('interval', np.array([0.0, 1.0])),
-        SeriesConstraint(),
-        SeriesConstraint(),
-        SeriesConstraint(),
-        SeriesConstraint(),
-    ]
-
-    ds.standardize()
-    if not np.allclose(ds.scaling[0][0], 1.0):
-        raise AssertionError("Standardizing failed!")
-
-    ds.transform_c_list(c_list)
-    if not np.allclose(c_list[0].extra_dat[1], 0.0):
-        raise AssertionError("Interval transformation failed!")
-
-    # Test get_scaling_mul
-    scaling, is_sc = ds.get_scaling_mul(0, 3)
-    is_sc_exp = np.array([True, True, True])
-    sc_mean_exp = np.array([1.0, 1.0, 1.0])
-    if not np.array_equal(is_sc_exp, is_sc):
-        raise AssertionError("get_scaling_mul failed!")
-    if not np.allclose(sc_mean_exp, scaling[:, 0]):
-        raise AssertionError("get_scaling_mul failed!")
-
-    # Test ModelDataView
-    dat_nan = np.array([0, 2, 3, 7, 8,
-                        1, 3, 4, 8, np.nan,
-                        2, 3, 4, 8, np.nan,
-                        3, 3, 4, 8, np.nan,
-                        4, 4, 5, 7, 8,
-                        5, 4, 5, 7, 8,
-                        6, 4, 5, 7, 8,
-                        7, 4, 5, 7, 8,
-                        8, 4, np.nan, 7, 8,
-                        9, 4, np.nan, 7, 8,
-                        10, 5, 6, 7, 9], dtype=np.float32).reshape((-1, 5))
-    ds_nan = get_test_ds(dat_nan, c_inds, name="SyntheticTest")
-    ds_nan.seq_len = 2
-
-    # Test get_rel_data
-    mdv = ModelDataView(ds_nan, "Test", 2, 7)
-    mod_dat = mdv.get_rel_data()
-    if not nan_array_equal(mod_dat, dat_nan[2:9]):
-        raise AssertionError("Something's fucking wrong!!")
-
-    # Test streak extraction
-    mdv.extract_streak(3)
-    str_dat, i = mdv.extract_streak(3)
-    exp_dat = np.array([
-        dat_nan[5:7],
-        dat_nan[6:8],
-    ])
-    if not np.array_equal(str_dat, exp_dat) or not i == 3:
-        raise AssertionError("Something in extract_streak is fucking wrong!!")
-
-    # Test disjoint streak extraction
-    dis_dat, dis_inds = mdv.extract_disjoint_streaks(2, 1)
-    exp_dis = np.array([[
-        dat_nan[4:6],
-        dat_nan[5:7],
-    ]])
-    if not np.array_equal(dis_dat, exp_dis) or not np.array_equal(dis_inds, np.array([2])):
-        raise AssertionError("Something in extract_disjoint_streaks is fucking wrong!!")
-
-    # Test split_data
-    ds_nan.val_percent = 0.33
-    ds_nan.split_data()
-    test_dat = ds_nan.split_dict['test'].get_rel_data()
-    val_dat = ds_nan.split_dict['val'].get_rel_data()
-    if not nan_array_equal(test_dat, dat_nan[7:]):
-        raise AssertionError("Something in split_data is fucking wrong!!")
-    if not nan_array_equal(val_dat, dat_nan[3:7]):
-        raise AssertionError("Something in split_data is fucking wrong!!")
-
-    # Test get_day
-    day_dat, ns = ds_nan.get_days('val')
-    exp_first_out_dat = np.array([
-        [5, 5.0, 8.0],
-        [6, 5.0, 8.0],
-    ], dtype=np.float32)
-    if ns[0] != 4 or not np.array_equal(day_dat[0][1], exp_first_out_dat):
-        raise AssertionError("get_days not implemented correctly!!")
-
-    print("Dataset test passed :)")

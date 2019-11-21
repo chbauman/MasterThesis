@@ -4,8 +4,8 @@ from typing import Optional, Sequence, Tuple
 
 import numpy as np
 
-from data_processing.data import get_test_ds
 from data_processing.dataset import Dataset
+from tests.test_data import get_test_ds
 from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1
