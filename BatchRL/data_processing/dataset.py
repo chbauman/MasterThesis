@@ -172,12 +172,14 @@ class Dataset:
         if part_str not in [s[0] for s in self.pats_defs]:
             raise ValueError(f"{part_str} is not valid for specifying a part of the data!")
 
-    def get_streak(self, str_desc: str, n_days: int = 7) -> Tuple[np.ndarray, np.ndarray, int]:
+    def get_streak(self, str_desc: str, n_days: int = 7,
+                   other_len: int = None) -> Tuple[np.ndarray, np.ndarray, int]:
         """Extracts a streak from the selected part of the dataset.
 
         Args:
             str_desc: Part of the dataset, in ['train', 'val', 'test']
             n_days: Number of days in a streak.
+            other_len: If set, returns all streaks of that length, including initial steps.
 
         Returns:
             Streak data prepared for supervised training and an offset in timesteps
@@ -187,7 +189,8 @@ class Dataset:
         self.check_part(str_desc)
         mdv = self.split_dict[str_desc]
         n_off = mdv.n
-        s_len_curr = n_days * self._day_len + self.seq_len - 1
+        s_len_curr = n_days * self._day_len if other_len is None else other_len
+        s_len_curr += self.seq_len - 1
 
         # Extract, prepare and return
         sequences, streak_offs = mdv.extract_streak(s_len_curr)

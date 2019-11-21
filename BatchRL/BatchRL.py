@@ -402,7 +402,7 @@ def main() -> None:
     # run_integration_tests()
 
     # Run hyperparameter optimization
-    run_dynamic_model_hyperopt()
+    run_dynamic_model_hyperopt(use_bat_data=True)
 
     # Fit and analyze all models
     run_dynamic_model_fit_from_hop()

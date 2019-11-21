@@ -2,9 +2,9 @@ from unittest import TestCase
 
 import numpy as np
 
-from BatchRL import choose_dataset
 from agents import agents_heuristic
 from agents.keras_agents import DDPGBaseAgent, KerasBaseAgent
+from data_processing.data import choose_dataset
 from dynamics.base_model import construct_test_ds, BaseDynamicsModel
 from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT
 from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model
