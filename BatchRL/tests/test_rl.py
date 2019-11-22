@@ -91,8 +91,8 @@ class TestEnvs(TestCase):
 
     def test_agent_analysis(self):
         # Test agent analysis
-        const_ag_1 = agents_heuristic.ConstHeating(self.test_env, 0.0)
-        const_ag_2 = agents_heuristic.ConstHeating(self.test_env, 1.0)
+        const_ag_1 = agents_heuristic.ConstActionAgent(self.test_env, 0.0)
+        const_ag_2 = agents_heuristic.ConstActionAgent(self.test_env, 1.0)
         self.test_env.analyze_agents_visually([const_ag_1, const_ag_2])
 
     def test_reset(self):
@@ -136,8 +136,8 @@ class TestBatteryEnv(TestCase):
 
         self.m = get_test_battery_model(linear=False)
         self.env = BatteryEnv(self.m, max_eps=8)
-        self.ag_1 = agents_heuristic.ConstHeating(self.env, 3.0)
-        self.ag_2 = agents_heuristic.ConstHeating(self.env, -7.0)
+        self.ag_1 = agents_heuristic.ConstActionAgent(self.env, 3.0)
+        self.ag_2 = agents_heuristic.ConstActionAgent(self.env, -7.0)
 
     def test_analyze_agents(self):
         self.env.analyze_agents_visually([self.ag_1, self.ag_2], start_ind=1)
@@ -215,7 +215,7 @@ class TestKerasAgent(TestCase):
         self.test_agent = KerasDDPGTest(self.env,
                                         action_range=action_range,
                                         action=self.const_action)
-        self.ag_1 = agents_heuristic.ConstHeating(self.env, 3.0)
+        self.ag_1 = agents_heuristic.ConstActionAgent(self.env, 3.0)
 
     def test_detail_eval(self):
         self.env.detailed_eval_agents([self.test_agent, self.ag_1], n_steps=10)
@@ -246,7 +246,7 @@ class TestFullEnv(TestCase):
 
         mod = get_full_composite_model()
         assert isinstance(mod, CompositeModel), "No composite model!"
-        self.full_env = RoomBatteryEnv(mod)
+        self.full_env = RoomBatteryEnv(mod, max_eps=5)
 
     def test_reset_and_step(self):
         init_state = self.full_env.reset()
@@ -254,5 +254,16 @@ class TestFullEnv(TestCase):
         next_state, rew, over, _ = self.full_env.step(action)
 
         self.assertEqual(len(init_state), len(next_state), "Incompatible shapes!")
+        control_working = np.allclose(next_state[2:4], init_state[2:4] + 1.0)
+        self.assertTrue(control_working, "Control not working as expected!")
+        battery_working = np.allclose(next_state[-1], init_state[-1] + 2.0)
+        self.assertTrue(battery_working, "Battery part not working as expected!")
+        weather_working = np.allclose(next_state[:2], init_state[:2])
+        self.assertTrue(weather_working, "Weather part not working as expected!")
 
+    def test_visual_agent_analysis(self):
+        ag1 = agents_heuristic.ConstActionAgent(self.full_env, 1.0)
+        ag2 = agents_heuristic.ConstActionAgent(self.full_env, -1.0)
+        self.full_env.analyze_agents_visually([ag1, ag2],
+                                              use_noise=False, fitted=True)
     pass

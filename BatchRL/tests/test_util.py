@@ -4,7 +4,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from agents.agents_heuristic import ConstHeating
+from agents.agents_heuristic import ConstActionAgent
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans
@@ -333,7 +333,7 @@ class TestPlot(TestCase):
 
     def make_bar_plot(self, n_ag, n_rew, n_steps):
         descs = [f"Rew_{i}" for i in range(n_rew - 1)]
-        agents = [ConstHeating(None, 1.0 * i) for i in range(n_ag)]
+        agents = [ConstActionAgent(None, 1.0 * i) for i in range(n_ag)]
         rewards = np.random.normal(2.0, 1.0, (n_ag, n_steps, n_rew))
         test_path = self.get_test_path(f"test_reward_bar_{n_ag}_{n_rew}_{n_steps}")
         plot_reward_details(agents, rewards, test_path, descs)

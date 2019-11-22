@@ -8,7 +8,7 @@ from typing import List
 
 import numpy as np
 
-from agents.agents_heuristic import ConstHeating, RuleBasedHeating
+from agents.agents_heuristic import ConstActionAgent, RuleBasedHeating
 from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, get_data_test, \
     choose_dataset_and_constraints
@@ -80,8 +80,8 @@ def run_battery() -> None:
                          disturb_fac=0.3,
                          cont_actions=True,
                          n_cont_actions=1)
-    const_ag_1 = ConstHeating(bat_env, 6.0)  # Charge
-    const_ag_2 = ConstHeating(bat_env, -3.0)  # Discharge
+    const_ag_1 = ConstActionAgent(bat_env, 6.0)  # Charge
+    const_ag_2 = ConstActionAgent(bat_env, -3.0)  # Discharge
     dqn_agent = DDPGBaseAgent(bat_env, action_range=bat_env.action_range,
                               n_steps=100000, gamma=0.99)
     bat_env.detailed_eval_agents([const_ag_1, const_ag_2, dqn_agent], use_noise=False, n_steps=1000)
@@ -165,8 +165,8 @@ def run_room_models() -> None:
         env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3)
 
         # Define default agents and compare
-        open_agent = ConstHeating(env, 1.0)
-        closed_agent = ConstHeating(env, 0.0)
+        open_agent = ConstActionAgent(env, 1.0)
+        closed_agent = ConstActionAgent(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
         # ag_list = [open_agent, closed_agent, rule_based_agent]
         # env.analyze_agents_visually(ag_list,
@@ -188,8 +188,8 @@ def run_room_models() -> None:
 def analyze_control_influence(m: BaseDynamicsModel):
     n_actions = 2
     env = FullRoomEnv(m, n_disc_actions=n_actions)
-    const_ag_1 = ConstHeating(env, 0)
-    const_ag_2 = ConstHeating(env, n_actions - 1)
+    const_ag_1 = ConstActionAgent(env, 0)
+    const_ag_2 = ConstActionAgent(env, n_actions - 1)
     env.analyze_agents_visually([const_ag_1, const_ag_2])
 
 

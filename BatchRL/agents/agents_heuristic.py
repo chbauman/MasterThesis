@@ -1,5 +1,7 @@
 from typing import Sequence
 
+import numpy as np
+
 from agents.base_agent import AgentBase
 from util.util import Arr
 
@@ -38,18 +40,20 @@ class RuleBasedHeating(AgentBase):
         return 0.0
 
 
-class ConstHeating(AgentBase):
+class ConstActionAgent(AgentBase):
     """Applies a constant control input.
 
     Can be used for comparison, e.g. if you want
     to compare an agent to always heating or never heating.
     Does not really need the environment.
     """
-    rule: float  #: The constant control input / action
+    rule: float  #: The constant control input / action.
+    out_num: int  #: The dimensionality of the action space.
 
     def __init__(self, env, rule: float):
         super().__init__(env, name=f"Const_{rule}")
 
+        self.out_num = env.nb_actions
         self.rule = rule
 
     def get_action(self, state) -> Arr:
@@ -61,4 +65,4 @@ class ConstHeating(AgentBase):
         Returns:
             Next control action.
         """
-        return self.rule
+        return self.rule * np.ones((self.out_num,), dtype=np.float32)
