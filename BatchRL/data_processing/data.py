@@ -172,7 +172,7 @@ BatteryData = DataStruct(id_list=[40200000,
                                   40200107,
                                   40200108],
                          name="Battery",
-                         start_date='2018-01-01',
+                         start_date='2019-01-01',
                          end_date='2019-12-31')
 
 
