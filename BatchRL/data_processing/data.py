@@ -334,7 +334,7 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind: int, dt_mins,
                              pipeline_kwargs: Dict = None,
                              n_cols=None,
                              col_ind=None):
-    """Adds the series with index `ind` to `curr_all_dat`
+    """Adds the series with index `orig_ind` to `curr_all_dat`
     and plots the series before and after processing
     with the pipeline.
 

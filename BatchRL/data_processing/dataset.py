@@ -656,7 +656,7 @@ class Dataset:
     def get_scaling_mul(self, ind: int, n: int) -> Tuple[np.ndarray, np.ndarray]:
         """Repeats scaling info of a specific series.
 
-        Returns the scaling information of the series with index `ind`
+        Returns the scaling information of the series with index `orig_ind`
         for a possible new dataset with `n` series.
 
         Args:

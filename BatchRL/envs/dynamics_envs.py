@@ -110,11 +110,11 @@ class RLDynEnv(DynEnv, ABC):
         return self._to_scaled(action)
 
     def _state_to_scale(self, original_state: np.ndarray,
-                        ind: int,
+                        orig_ind: int,
                         remove_mean: bool = False) -> np.ndarray:
-        """Scales the state according to `ind`."""
+        """Scales the state according to `orig_ind`."""
         if self.scaling is not None:
-            return trf_mean_and_std(original_state, self.scaling[ind], remove=remove_mean)
+            return trf_mean_and_std(original_state, self.scaling[orig_ind], remove=remove_mean)
         return original_state
 
 
@@ -183,11 +183,11 @@ class FullRoomEnv(RLDynEnv):
         assert d.d == 8 and d.n_c == 1, "Not the correct number of series in dataset!"
 
     def get_r_temp(self, curr_pred: np.ndarray) -> float:
-        return self._state_to_scale(curr_pred[4], ind=5, remove_mean=False).item()
+        return self._state_to_scale(curr_pred[4], orig_ind=5, remove_mean=False).item()
 
     def get_w_temp(self, curr_pred: np.ndarray) -> List[float]:
         w_inds = 2, 3
-        return [self._state_to_scale(curr_pred[i], ind=i, remove_mean=False).item() for i in w_inds]
+        return [self._state_to_scale(curr_pred[i], orig_ind=i, remove_mean=False).item() for i in w_inds]
 
     reward_descs = [ROOM_ENERGY, TEMP_BOUND_PEN]
 
@@ -380,7 +380,7 @@ class BatteryEnv(RLDynEnv):
 
     def _get_scaled_soc(self, unscaled_soc, remove_mean: bool = False):
         """Scales the state-of-charge."""
-        return self._state_to_scale(unscaled_soc, ind=0, remove_mean=remove_mean)
+        return self._state_to_scale(unscaled_soc, orig_ind=0, remove_mean=remove_mean)
 
     reward_descs = [BAT_ENERGY]  #: Description of the detailed reward.
 
@@ -506,7 +506,7 @@ class RoomBatteryEnv(RLDynEnv):
         scaled_water = curr_pred[prep_inds]
         orig_water = np.copy(scaled_water)
         for ct, el in enumerate(orig_water):
-            orig_water[ct] = self._state_to_scale(el, ind=inds[ct], remove_mean=False).item()
+            orig_water[ct] = self._state_to_scale(el, orig_ind=inds[ct], remove_mean=False).item()
         return scaled_water, orig_water
 
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
@@ -516,7 +516,7 @@ class RoomBatteryEnv(RLDynEnv):
         # Compute penalty for room temperature
         r_inds = self.prep_inds[-2], self.inds[-2]
         room_temp_scaled = curr_pred[r_inds[0]]
-        orig_room_temp = self._state_to_scale(room_temp_scaled, ind=r_inds[1], remove_mean=False).item()
+        orig_room_temp = self._state_to_scale(room_temp_scaled, orig_ind=r_inds[1], remove_mean=False).item()
         temp_pen = temp_penalty(orig_room_temp, TEMP_BOUNDS, self.dt_h)
 
         # Compute room energy
@@ -554,17 +554,18 @@ class RoomBatteryEnv(RLDynEnv):
         scaled_ac = self.action_range_scaled[1]
         curr_state = self.get_curr_state()
         soc_bound_arr = np.array(SOC_BOUND, copy=True)
-        bat_soc_ind = 9
+        bat_soc_ind = self.inds[-1]
+        bat_soc_ind_prep = self.prep_inds[-1]
         scaled_soc_bound = self._state_to_scale(soc_bound_arr,
-                                                ind=bat_soc_ind,
+                                                orig_ind=bat_soc_ind,
                                                 remove_mean=True)
         min_goal_soc = self._state_to_scale(np.array(SOC_GOAL),
-                                            ind=bat_soc_ind,
+                                            orig_ind=bat_soc_ind,
                                             remove_mean=True)
 
         # Clip the actions.
         bat_action_clipped = clip_battery_action(bat_action,
-                                                 curr_state,
+                                                 curr_state[bat_soc_ind_prep],
                                                  scaled_soc_bound,
                                                  scaled_ac,
                                                  bat_mod.params,

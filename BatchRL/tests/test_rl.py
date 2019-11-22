@@ -251,7 +251,7 @@ class TestFullEnv(TestCase):
     def test_reset_and_step(self):
         init_state = self.full_env.reset()
         room_action = 1.0
-        battery_action = 3.0
+        battery_action = 2.0
         action = np.array([room_action, battery_action])
         next_state, rew, over, _ = self.full_env.step(action)
 
