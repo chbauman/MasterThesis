@@ -138,7 +138,7 @@ def temp_penalty(room_temp: Num, temp_bounds: RangeT, t_h: Num = 0.25):
     return t_h * linear_oob_penalty(room_temp, temp_bounds)
 
 
-def energy_used(water_temps: Sequence, valve_action: Num, t_h: Num):
+def room_energy_used(water_temps: Sequence, valve_action: Num, t_h: Num):
     """Computes the energy used from the water temperature and the action.
 
     Needs the actions and the water temperatures to be
@@ -185,13 +185,11 @@ class FullRoomEnv(RLDynEnv):
         assert d.d == 8 and d.n_c == 1, "Not the correct number of series in dataset!"
 
     def get_r_temp(self, curr_pred: np.ndarray) -> float:
-        r_temp = self._state_to_scale(curr_pred[4], ind=5, remove_mean=False).item()
-        return r_temp
+        return self._state_to_scale(curr_pred[4], ind=5, remove_mean=False).item()
 
     def get_w_temp(self, curr_pred: np.ndarray) -> List[float]:
         w_inds = 2, 3
-        w = [self._state_to_scale(curr_pred[i], ind=i, remove_mean=False).item() for i in w_inds]
-        return w
+        return [self._state_to_scale(curr_pred[i], ind=i, remove_mean=False).item() for i in w_inds]
 
     reward_descs = [ROOM_ENERGY, TEMP_BOUND_PEN]
 
@@ -200,14 +198,12 @@ class FullRoomEnv(RLDynEnv):
         # Compute energy used
         action_rescaled = self._to_scaled(action, True)[0]
         w_temps = self.get_w_temp(curr_pred)
-        tot_energy_used = energy_used(w_temps, action_rescaled, self.dt_h)
-        # assert 10.0 <= w_temps[0] <= 50.0, "Water temperature scaled incorrectly!"
+        tot_energy_used = room_energy_used(w_temps, action_rescaled, self.dt_h)
 
         # Check for actions out of range
         action_penalty = linear_oob_penalty(action_rescaled, [0.0, 1.0])
         if action_penalty > 0:
             warnings.warn("Actions not in right range")
-        # assert action_penalty <= 0.0, "Actions scaled wrongly!"
 
         # Penalty for constraint violation
         r_temp = self.get_r_temp(curr_pred)
@@ -504,21 +500,61 @@ class RoomBatteryEnv(RLDynEnv):
 
         # Set prepared indices
         self.prep_inds = d.to_prepared(self.inds)
-        print(self.prep_inds)
 
-        pass
+    def get_water_temp(self, ind_pos: int, curr_pred: np.ndarray):
+        """Retrieves the scaled and the original water temperatures."""
+        pos_inds = [ind_pos, ind_pos + 1]
+        prep_inds = self.prep_inds[pos_inds]
+        inds = self.inds[pos_inds]
+        scaled_water = curr_pred[prep_inds]
+        orig_water = np.copy(scaled_water)
+        for ct, el in enumerate(orig_water):
+            orig_water[ct] = self._state_to_scale(el, ind=inds[ct], remove_mean=False).item()
+        return scaled_water, orig_water
 
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
-        pass
+
+        # Compute original actions
+        orig_actions = self._to_scaled(action, True)
+
+        # Compute penalty for room temperature
+        r_inds = self.prep_inds[-2], self.inds[-2]
+        room_temp_scaled = curr_pred[r_inds[0]]
+        orig_room_temp = self._state_to_scale(room_temp_scaled, ind=r_inds[1], remove_mean=False).item()
+        temp_pen = temp_penalty(orig_room_temp, TEMP_BOUNDS, self.dt_h)
+
+        # Compute room energy
+        scaled_water, orig_water = self.get_water_temp(0, curr_pred)
+        room_eng = room_energy_used(orig_water, orig_actions[0], self.dt_h)
+
+        # Compute battery energy
+        bat_eng = orig_actions[1]
+
+        # Return all parts
+        return np.array([temp_pen, room_eng, bat_eng])
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
         """Compute the reward for choosing action `action`.
 
         The reward takes into account the energy used.
         """
-        # Return minus the energy used.
-        e_used = self.detailed_reward(curr_pred, action)
-        return -e_used.item() * self.alpha
+        # Return minus the energy used minus the temperature penalty.
+        det_rew = self.detailed_reward(curr_pred, action)
+        energy = det_rew[1] + det_rew[2]
+        return -energy * self.alpha - det_rew[0]
+
+    def scale_action_for_step(self, action: Arr):
+        # Get default min and max actions from bounds
+        scaled_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))
+        assert len(scaled_ac) == 1 and len(scaled_ac[0]) == 2, "Shape mismatch!"
+        min_ac, max_ac = scaled_ac[0]
+
+        scaled_action = self._to_scaled(action, extra_scaling=True)
+        chosen_action = np.clip(scaled_action, min_ac, max_ac)
+        if self.scaling is not None:
+            assert not np.array_equal(action, chosen_action)
+
+        return chosen_action
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
         # Let it diverge!
