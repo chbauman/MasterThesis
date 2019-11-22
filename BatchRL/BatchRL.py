@@ -382,6 +382,7 @@ def get_model(name: str, ds: Dataset,
 
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
+    assert False, "Fuck"
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
     mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
                     rnn_consts=rnn_consts_full, fit=True, from_hop=True)

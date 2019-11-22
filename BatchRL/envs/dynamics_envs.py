@@ -8,7 +8,7 @@ from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
 from dynamics.composite import CompositeModel
 from envs.base_dynamics_env import DynEnv
-from util.numerics import trf_mean_and_std, rem_mean_and_std
+from util.numerics import trf_mean_and_std, rem_mean_and_std, npf32
 from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list, yeet
 
 RangeT = Tuple[Num, Num]  #: Range for single state / action series.
@@ -57,13 +57,19 @@ class RLDynEnv(DynEnv, ABC):
         if not cont_actions:
             raise NotImplementedError("Discrete actions are deprecated!")
 
-        # Save info
-        self.action_range = to_list(action_range)
-        assert len(self.action_range) == n_cont_actions, "False amount of action ranges!"
-
+        # Set parameters
         self.nb_actions = n_disc_actions if not cont_actions else n_cont_actions
         self.cont_actions = cont_actions
 
+        # Save action range, original and scaled.
+        self.action_range = to_list(action_range)
+        assert len(self.action_range) == n_cont_actions, "False amount of action ranges!"
+        action_range_scaled = npf32((n_cont_actions, 2))
+        for k in range(2):
+            action_bd = np.array([ac[k] for ac in self.action_range])
+            action_range_scaled[:, k] = self._to_scaled(action_bd, to_original=False)
+        self.action_range_scaled = action_range_scaled
+        
         # Initialize fallback actions
         self.fb_actions = np.empty((max_eps, n_cont_actions), dtype=np.float32)
 
@@ -72,14 +78,6 @@ class RLDynEnv(DynEnv, ABC):
         self.c_ind = d.c_inds
         if np.all(d.is_scaled):
             self.scaling = d.scaling
-
-        # Scaled action range
-        ac_r_scales = np.empty((n_cont_actions, 2), dtype=np.float32)
-        for k in range(n_cont_actions):
-            ac_r_scales[k] = np.array(self.action_range[k])
-            if self.scaling is not None:
-                ac_r_scales[k] = rem_mean_and_std(ac_r_scales[k],
-                                                  self.scaling[self.c_ind[k]])
 
     def _to_scaled(self, action: Arr, to_original: bool = False,
                    extra_scaling: bool = False) -> np.ndarray:
@@ -543,18 +541,18 @@ class RoomBatteryEnv(RLDynEnv):
         return -energy * self.alpha - det_rew[0]
 
     def scale_action_for_step(self, action: Arr):
-        return action
-        # Get default min and max actions from bounds
-        scaled_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))
-        assert len(scaled_ac) == 1 and len(scaled_ac[0]) == 2, "Shape mismatch!"
-        min_ac, max_ac = scaled_ac[0]
-
+        # TODO: Clip the fucking actions!
+        assert len(action) == 2, "Invalid action"
         scaled_action = self._to_scaled(action, extra_scaling=True)
-        chosen_action = np.clip(scaled_action, min_ac, max_ac)
-        if self.scaling is not None:
-            assert not np.array_equal(action, chosen_action)
+        room_action, bat_action = scaled_action
 
-        return chosen_action
+        # Clip room action
+        room_action_clipped = np.clip(room_action, *self.action_range_scaled[0])
+
+        # Clip battery action
+        bat_action_clipped = bat_action
+
+        return np.array([room_action_clipped, bat_action_clipped])
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
         # Let it diverge!

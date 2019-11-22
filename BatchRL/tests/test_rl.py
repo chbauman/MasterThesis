@@ -250,13 +250,15 @@ class TestFullEnv(TestCase):
 
     def test_reset_and_step(self):
         init_state = self.full_env.reset()
-        action = np.array([1.0, 1.0])
+        room_action = 1.0
+        battery_action = 3.0
+        action = np.array([room_action, battery_action])
         next_state, rew, over, _ = self.full_env.step(action)
 
         self.assertEqual(len(init_state), len(next_state), "Incompatible shapes!")
-        control_working = np.allclose(next_state[2:4], init_state[2:4] + 1.0)
+        control_working = np.allclose(next_state[2:4], init_state[2:4] + room_action)
         self.assertTrue(control_working, "Control not working as expected!")
-        battery_working = np.allclose(next_state[-1], init_state[-1] + 2.0)
+        battery_working = np.allclose(next_state[-1], init_state[-1] + 2 * battery_action)
         self.assertTrue(battery_working, "Battery part not working as expected!")
         weather_working = np.allclose(next_state[:2], init_state[:2])
         self.assertTrue(weather_working, "Weather part not working as expected!")
