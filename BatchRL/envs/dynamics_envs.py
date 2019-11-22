@@ -75,7 +75,7 @@ class RLDynEnv(DynEnv, ABC):
 
         # This should not do anything
         cont_action = self.scale_actions(action)
-        assert np.array_equal(cont_action, action, "This is deprecated!!")
+        assert np.array_equal(cont_action, action), "This is deprecated!!"
 
         # Do the extra scaling for rl agents with output in [0, 1]
         if extra_scaling and self.do_scaling:
@@ -276,7 +276,7 @@ class BatteryEnv(RLDynEnv):
 
     def _get_scaled_soc(self, unscaled_soc, remove_mean: bool = False):
         """Scales the state-of-charge."""
-        return self._state_to_scale(unscaled_soc, ind=0, remove_mean=remove_mean).item()
+        return self._state_to_scale(unscaled_soc, ind=0, remove_mean=remove_mean)
 
     reward_descs = ["Energy Consumption [kWh]"]  #: Description of the detailed reward.
 
