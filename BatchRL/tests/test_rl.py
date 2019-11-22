@@ -180,6 +180,7 @@ class KerasDDPGTest(DDPGBaseAgent):
         KerasBaseAgent.__init__(self, env=env, name=self.name)
 
         self.action = action
+        self.nb_actions = len(action_range)
         if action_range is not None:
             assert len(action_range) == env.nb_actions, "Wrong amount of ranges!"
         self.action_range = action_range
@@ -194,7 +195,7 @@ class KerasDDPGTest(DDPGBaseAgent):
         return self.name
 
     def get_action(self, state):
-        return self.action
+        return self.action * np.ones((self.nb_actions,))
 
     pass
 
@@ -234,6 +235,7 @@ class TestKerasAgent(TestCase):
         exp = self.env._to_scaled(self.true_action)
         self.assertAlmostEqual(scaled_action.item(), exp.item(), places=5,
                                msg="scale_action_for_step is wrong!")
+
     pass
 
 
@@ -269,11 +271,20 @@ class TestFullEnv(TestCase):
         self.full_env.analyze_agents_visually([ag1, ag2], start_ind=0,
                                               use_noise=False, fitted=True)
 
+    def test_visual_keras_agent_analysis(self):
+        action_range = self.full_env.action_range
+        test_agent = KerasDDPGTest(self.full_env,
+                                   action_range=action_range,
+                                   action=0.5)
+        ag1 = agents_heuristic.ConstActionAgent(self.full_env, 10.0)
+        self.full_env.analyze_agents_visually([ag1, test_agent], start_ind=0,
+                                              use_noise=False, fitted=True)
+
     def test_agents_eval(self):
         ag1 = agents_heuristic.ConstActionAgent(self.full_env, 10.0)
         ag2 = agents_heuristic.ConstActionAgent(self.full_env, -10.0)
-        print(self.full_env.reward_descs)
         self.assertEqual(len(self.full_env.reward_descs), 4,
                          "Reward descriptions incorrect!")
         self.full_env.detailed_eval_agents([ag1, ag2], n_steps=3, use_noise=False)
+
     pass
