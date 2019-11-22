@@ -241,6 +241,25 @@ def clip_battery_action(scaled_action,
                         time_step: int = None,
                         max_steps: int = None,
                         ):
+    """Scales the actions s.t. the SoC will always be in a valid range.
+
+    If `use_goal_state_fallback` is true, the SoC goal at the end of the
+    episode will be reached by constraining the actions.
+
+    Args:
+        scaled_action: The standardized actions.
+        curr_scaled_soc: The standardized current SoC.
+        scaled_soc_bound: The standardized SoC bound.
+        scaled_action_range: The standardized action range.
+        bat_params: The parameters of the piecewise linear battery model.
+        use_goal_state_fallback: Whether to assert reaching the goal SoC at end of episode.
+        scaled_req_soc: The standardized SoC goal at end of episode.
+        time_step: The current time step.
+        max_steps: The total number of time steps until the episode is over.
+
+    Returns:
+        The clipped action that will not violate any bounds.
+    """
     # Check input
     if use_goal_state_fallback:
         if time_step is None or max_steps is None or scaled_req_soc is None:
