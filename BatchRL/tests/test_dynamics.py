@@ -17,11 +17,14 @@ from util.numerics import copy_arr_list
 from util.util import Num, tot_size
 
 
-def get_full_composite_model() -> BaseDynamicsModel:
+def get_full_composite_model(standardized: bool = False) -> BaseDynamicsModel:
 
     # Get full dataset
     n = 100
     ds = get_full_model_dataset(n)
+    if standardized:
+        ds.standardize()
+    ds.split_data()
 
     # Define and fit battery model
     bat_mod = BatteryModel(ds, base_ind=8)
@@ -361,10 +364,9 @@ class TestComposite(TestCase):
         mc5.analyze(plot_acf=False, verbose=False, n_steps=(2,))
 
     def test_full_composite(self):
-
         # Define model
         full_comp = get_full_composite_model()
-        
+
         # Predict
         s = full_comp.data.seq_len - 1
         init_state = 0.5 * np.ones((1, s, 10), dtype=np.float32)

@@ -6,9 +6,10 @@ from agents import agents_heuristic
 from agents.keras_agents import DDPGBaseAgent, KerasBaseAgent
 from data_processing.data import choose_dataset
 from dynamics.base_model import BaseDynamicsModel
+from dynamics.composite import CompositeModel
 from tests.test_data import construct_test_ds
-from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT
-from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model
+from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT, RoomBatteryEnv
+from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model, get_full_composite_model
 from util.numerics import rem_mean_and_std, add_mean_and_std
 from util.util import Arr
 
@@ -243,9 +244,15 @@ class TestFullEnv(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.ds = choose_dataset('Model_Room43', seq_len=20)
+        mod = get_full_composite_model()
+        assert isinstance(mod, CompositeModel), "No composite model!"
+        self.full_env = RoomBatteryEnv(mod)
 
-    def test_something(self):
-        pass
+    def test_reset_and_step(self):
+        init_state = self.full_env.reset()
+        action = np.array([1.0, 1.0])
+        next_state, rew, over, _ = self.full_env.step(action)
+
+        self.assertEqual(len(init_state), len(next_state), "Incompatible shapes!")
 
     pass

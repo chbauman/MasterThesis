@@ -88,7 +88,7 @@ class Dataset:
 
     # The split data
     split_dict: Dict[str, 'ModelDataView'] = None  #: The saved splits.
-    pats_defs: List[Tuple]  #: List of tuples specifying the subsets of the data.
+    pats_defs: List[Tuple] = None  #: List of tuples specifying the subsets of the data.
 
     def __init__(self, all_data: np.ndarray, dt: int, t_init, scaling: np.ndarray,
                  is_scaled: np.ndarray,
@@ -163,12 +163,18 @@ class Dataset:
     def check_part(self, part_str: str):
         """Checks if `part_str` is a valid string for part of data specification.
 
+        If the dataset hasn't been split it will be done here.
         Args:
             part_str: The string specifying the part.
 
         Raises:
             ValueError: If the string is not valid.
         """
+        # Split data if it wasn't done before.
+        if self.pats_defs is None:
+            self.split_data()
+
+        # Check if part exists.
         if part_str not in [s[0] for s in self.pats_defs]:
             raise ValueError(f"{part_str} is not valid for specifying a part of the data!")
 
@@ -209,8 +215,11 @@ class Dataset:
         Returns:
             Data prepared for training.
         """
+        # Check split
+        self.check_part(str_desc)
+
         # Get sequences and offsets
-        mdv = self.split_dict[str_desc]
+        mdv = self.split_dict.get(str_desc)
         sequences = mdv.sequences
         offs = mdv.seq_inds
 
