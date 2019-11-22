@@ -194,6 +194,7 @@ class TestNumerics(TestCase):
         sh = (2, 3)
         arr1 = npf32(sh, fill=np.nan)
         self.assertEqual(num_nans(arr1), tot_size(sh), "num_nans incorrect!")
+
     pass
 
 
@@ -333,7 +334,11 @@ class TestPlot(TestCase):
 
     def make_bar_plot(self, n_ag, n_rew, n_steps):
         descs = [f"Rew_{i}" for i in range(n_rew - 1)]
-        agents = [ConstActionAgent(None, 1.0 * i) for i in range(n_ag)]
+
+        class Dummy:
+            nb_actions = 1
+
+        agents = [ConstActionAgent(Dummy(), 1.0 * i) for i in range(n_ag)]
         rewards = np.random.normal(2.0, 1.0, (n_ag, n_steps, n_rew))
         test_path = self.get_test_path(f"test_reward_bar_{n_ag}_{n_rew}_{n_steps}")
         plot_reward_details(agents, rewards, test_path, descs)

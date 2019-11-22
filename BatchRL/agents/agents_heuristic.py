@@ -3,6 +3,7 @@ from typing import Sequence
 import numpy as np
 
 from agents.base_agent import AgentBase
+from envs.dynamics_envs import FullRoomEnv
 from util.util import Arr
 
 
@@ -12,7 +13,7 @@ class RuleBasedHeating(AgentBase):
     """
     rule: Sequence  #: The sequence specifying the rule for control.
 
-    def __init__(self, env: 'FullRoomEnv', rule: Sequence):
+    def __init__(self, env: FullRoomEnv, rule: Sequence):
         name = "RuleBasedHeating"
         super().__init__(env, name=name)
 

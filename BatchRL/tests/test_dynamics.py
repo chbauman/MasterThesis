@@ -45,6 +45,7 @@ def get_full_composite_model(standardized: bool = False) -> BaseDynamicsModel:
     # Create full model and return
     mod_list = [weather_mod_const, varying_mod, time_mod, bat_mod]
     full_mod = CompositeModel(ds, mod_list)
+    full_mod.name = "FullTestModel"
     return full_mod
 
 
