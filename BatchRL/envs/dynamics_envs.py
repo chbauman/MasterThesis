@@ -6,6 +6,7 @@ import numpy as np
 
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
+from dynamics.composite import CompositeModel
 from envs.base_dynamics_env import DynEnv
 from util.numerics import trf_mean_and_std, rem_mean_and_std
 from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list, yeet
@@ -13,6 +14,17 @@ from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_li
 RangeT = Tuple[Num, Num]
 InRangeT = LOrEl[RangeT]  #: The type of action ranges.
 RangeListT = List[RangeT]
+
+# General parameters for the environments
+
+# For the room environment:
+TEMP_BOUNDS: Sequence = (22.0, 26.0)  #: The requested temperature range.
+HEAT_ACTION_BOUNDS: Sequence = (0.0, 1.0)  #: The action range for the valve opening time.
+
+# For the battery environment:
+BATTERY_ACTION_BOUNDS: Sequence = (-100.0, 100.0)  #: The action range for the active power.
+SOC_BOUND: Sequence = (20, 80)  #: The desired state-of-charge range.
+SOC_GOAL: float = 60.0  #: Desired SoC at end of episode.
 
 
 class RLDynEnv(DynEnv, ABC):
@@ -106,7 +118,7 @@ class RLDynEnv(DynEnv, ABC):
 class FullRoomEnv(RLDynEnv):
     """The environment modeling one room only."""
     alpha: float = 1.0  #: Weight factor for reward.
-    temp_bounds: Sequence = (22.0, 26.0)  #: The requested temperature range.
+    TEMP_BOUNDS: Sequence = TEMP_BOUNDS  #: The requested temperature range.
     bound_violation_penalty: float = 2.0  #: The penalty in the reward for temperatures out of bound.
 
     def __init__(self, m: BaseDynamicsModel,
@@ -297,10 +309,10 @@ class BatteryEnv(RLDynEnv):
     """
 
     alpha: float = 1.0  #: Reward scaling factor.
-    action_range: RangeListT = [(-100, 100)]  #: The requested active power range.
-    soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
+    action_range: RangeListT = [BATTERY_ACTION_BOUNDS]  #: The requested active power range.
+    soc_bound: Sequence = SOC_BOUND  #: The requested state-of-charge range.
     scaled_soc_bd: np.ndarray = None  #: `soc_bound` scaled to the model space.
-    req_soc: float = 60.0  #: Required SoC at end of episode.
+    req_soc: float = SOC_GOAL  #: Required SoC at end of episode.
     prev_pred: np.ndarray  #: The previous prediction.
     m: BatteryModel  #: The battery model.
     p: CProf = None  #: The cost profile.
@@ -418,3 +430,23 @@ class BatteryEnv(RLDynEnv):
                                   self.scaled_soc_bd[0],
                                   self.scaled_soc_bd[1])
         return np.copy(self.hist[-1, :-self.act_dim])
+
+
+class RoomBatteryEnv(RLDynEnv):
+    """The environment for the battery model.
+
+    """
+
+    alpha: float = 1.0  #: Reward scaling factor.
+    action_range: RangeListT = [(-100, 100)]  #: The requested active power range.
+    soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
+    scaled_soc_bd: np.ndarray = None  #: `soc_bound` scaled to the model space.
+    req_soc: float = 60.0  #: Required SoC at end of episode.
+    prev_pred: np.ndarray  #: The previous prediction.
+    m: CompositeModel  #: The battery model.
+    p: CProf = None  #: The cost profile.
+
+    def __init__(self, m: CompositeModel, p: CProf = None, **kwargs):
+
+        self.m = m
+        pass
