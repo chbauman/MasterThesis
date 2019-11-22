@@ -43,10 +43,12 @@ class KerasBaseAgent(AgentBase, KerasBase):
 
 class DQNBaseAgent(KerasBaseAgent):
 
-    def __init__(self, env: FullRoomEnv):
+    def __init__(self, env: FullRoomEnv, n_train_steps: int = 10000):
         # Initialize super class
         name = "DQN"
         super().__init__(env=env, name=name)
+
+        self.n_train_steps = n_train_steps
 
         # Build Q-function model.
         nb_actions = env.nb_actions
@@ -70,7 +72,7 @@ class DQNBaseAgent(KerasBaseAgent):
     @train_decorator(True)
     def fit(self) -> None:
         # Fit and plot rewards
-        hist = self.m.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
+        hist = self.m.fit(self.env, nb_steps=self.n_train_steps, visualize=False, verbose=1)
         train_plot = self.env.get_plt_path("test")
         plot_rewards(hist, train_plot)
         # dqn.test(env, nb_episodes=5, visualize=True)
@@ -258,13 +260,14 @@ class DDPGBaseAgent(KerasBaseAgent):
         m.save_weights(self.get_path(name))
 
     @train_decorator(True)
-    def fit(self) -> None:
+    def fit(self, verbose: int = 1) -> None:
         """Fit the agent using the environment.
 
         Makes a plot of the rewards received during the training.
         """
         # Fit and plot rewards
-        hist = self.m.fit(self.env, nb_steps=self.n_steps, visualize=False, verbose=1, nb_max_episode_steps=200)
+        hist = self.m.fit(self.env, nb_steps=self.n_steps,
+                          visualize=False, verbose=verbose, nb_max_episode_steps=200)
         train_plot = self.env.get_plt_path(self.name + "_train_rewards")
         plot_rewards(hist, train_plot)
 

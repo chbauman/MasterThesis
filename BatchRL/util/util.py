@@ -351,18 +351,21 @@ class TestDecoratorFactory(object):
         return decorated
 
 
-def train_decorator(verbose: bool = True):
+def train_decorator(verb: bool = True):
     """Decorator factory for fit method of ML model.
 
     Assumes the model has a keras model `m` as member
     variable and a name `name`. Then it tries loading
     the model, if that fails the actual fitting is done.
+
+    # TODO: Remove `verb` in argument of decorator.
+    # TODO: Fix warning when using `verbose` in fit after decorating.
     """
 
     def decorator(fit):
 
         @wraps(fit)
-        def decorated(self):
+        def decorated(self, verbose: int = 0, **kwargs):
 
             loaded = self.load_if_exists(self.m, self.name)
             if not loaded:
@@ -372,7 +375,7 @@ def train_decorator(verbose: bool = True):
                 # Fit and save
                 if verbose:
                     print("Fitting Model...")
-                fit(self)
+                fit(self, verbose, **kwargs)
                 self.save_model(self.m, self.name)
             elif verbose:
                 print("Restored trained model")

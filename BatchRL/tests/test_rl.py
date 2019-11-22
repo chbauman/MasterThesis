@@ -14,6 +14,22 @@ from util.numerics import rem_mean_and_std, add_mean_and_std
 from util.util import Arr
 
 
+def get_keras_test_agent(env: RLDynEnv) -> KerasBaseAgent:
+    """Defines a keras DDPG agent for testing.
+
+    Args:
+        env: The env the agent will be using.
+
+    Returns:
+        The agent.
+    """
+    ac_range_list = env.action_range
+    ag = DDPGBaseAgent(env, n_steps=5,
+                       layers=(5,),
+                       action_range=ac_range_list)
+    return ag
+
+
 class TestDynEnv(RLDynEnv):
     """The test environment."""
 
@@ -287,4 +303,7 @@ class TestFullEnv(TestCase):
                          "Reward descriptions incorrect!")
         self.full_env.detailed_eval_agents([ag1, ag2], n_steps=3, use_noise=False)
 
+    def test_ddpg_test_agent(self):
+        ddpg_ag = get_keras_test_agent(self.full_env)
+        ddpg_ag.fit(verbose=0)
     pass
