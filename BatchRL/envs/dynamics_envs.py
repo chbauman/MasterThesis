@@ -8,7 +8,7 @@ from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
 from envs.base_dynamics_env import DynEnv
 from util.numerics import trf_mean_and_std, rem_mean_and_std
-from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list
+from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list, yeet
 
 RangeT = Tuple[Num, Num]
 InRangeT = LOrEl[RangeT]  #: The type of action ranges.
@@ -231,6 +231,47 @@ class PWProfile(CProf):
             return 1.0
 
 
+def clip_battery_action(scaled_action,
+                        curr_scaled_soc,
+                        scaled_soc_bound,
+                        scaled_action_range,
+                        bat_params,
+                        use_goal_state_fallback: bool = True,
+                        scaled_req_soc=None,
+                        time_step: int = None,
+                        max_steps: int = None,
+                        ):
+    # Check input
+    if use_goal_state_fallback:
+        if time_step is None or max_steps is None or scaled_req_soc is None:
+            yeet("Need to specify max_steps, scaled_req_soc and time_step")
+
+    # Extract values from input
+    min_ac, max_ac = scaled_action_range
+    s_min_scaled, s_max_scaled = scaled_soc_bound
+    b, c_min, gam = bat_params
+    c_max = c_min + gam
+
+    # Compute min and max action
+    min_soc = s_min_scaled
+    if use_goal_state_fallback:
+        # Satisfy goal SoC requirements
+        n_remain_steps = max_steps - time_step
+        max_ds = b + max_ac * c_max
+        min_soc_goal = scaled_req_soc - (n_remain_steps - 1) * max_ds
+        min_soc = np.maximum(min_soc, min_soc_goal)
+    next_d_soc_min = min_soc - b - curr_scaled_soc
+    if next_d_soc_min < 0:
+        ac_min = np.maximum(next_d_soc_min / c_min, min_ac)
+    else:
+        ac_min = np.maximum(next_d_soc_min / c_max, min_ac)
+    next_d_soc_max = s_max_scaled - b - curr_scaled_soc
+    ac_max = np.minimum(next_d_soc_max / c_max, max_ac)
+
+    # Clip and return
+    return np.clip(scaled_action, ac_min, ac_max)
+
+
 class BatteryEnv(RLDynEnv):
     """The environment for the battery model.
 
@@ -295,7 +336,7 @@ class BatteryEnv(RLDynEnv):
             assert False, "No pricing for battery only!"
 
         # Check constraint violation
-        curr_pred = self._get_scaled_soc(curr_pred)
+        curr_pred = self._get_scaled_soc(curr_pred).item()
         assert linear_oob_penalty(curr_pred, self.soc_bound) <= 0.001, "WTF2"
 
         # Penalty for not having charged enough at the end of the episode.
@@ -326,37 +367,27 @@ class BatteryEnv(RLDynEnv):
 
     def scale_action_for_step(self, action: Arr):
 
-        # Get default min and max actions from bounds
+        # Get scaled actions and bound
         scaled_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))
         assert len(scaled_ac) == 1 and len(scaled_ac[0]) == 2, "Shape mismatch!"
-        min_ac, max_ac = scaled_ac[0]
+        scaled_action = self._to_scaled(action, extra_scaling=True)
 
-        # Find the minimum and maximum action satisfying SoC constraints.
+        # Extract and scale current soc, bound and goal
         curr_state = self.get_curr_state()
         soc_bound_arr = np.array(self.soc_bound, copy=True)
-        s_min_scaled, s_max_scaled = self._get_scaled_soc(soc_bound_arr, remove_mean=True)
-        b, c_min, gam = self.m.params
-        c_max = c_min + gam
-
-        # SoC bounds
+        scaled_soc_bound = self._get_scaled_soc(soc_bound_arr, remove_mean=True)
         min_goal_soc = self._get_scaled_soc(self.req_soc, remove_mean=True)
-        n_remain_steps = self.n_ts_per_eps - self.n_ts
-        max_ds = b + max_ac * c_max
-        next_d_soc_min = np.maximum(s_min_scaled, min_goal_soc - (n_remain_steps - 1) * max_ds) - b - curr_state
-        if next_d_soc_min < 0:
-            ac_min = np.maximum(next_d_soc_min / c_min, min_ac)
-        else:
-            ac_min = np.maximum(next_d_soc_min / c_max, min_ac)
-        next_d_soc_max = s_max_scaled - b - curr_state
-        ac_max = np.minimum(next_d_soc_max / c_max, max_ac)
 
         # Clip the actions.
-        scaled_action = self._to_scaled(action, extra_scaling=True)
-        chosen_action = np.clip(scaled_action, ac_min, ac_max)
-        if self.scaling is not None:
-            assert not np.array_equal(action, chosen_action)
-
-        return chosen_action
+        return clip_battery_action(scaled_action,
+                                   curr_state,
+                                   scaled_soc_bound,
+                                   scaled_ac[0],
+                                   self.m.params,
+                                   True,
+                                   min_goal_soc,
+                                   self.n_ts,
+                                   self.n_ts_per_eps)
 
     def reset(self, *args, **kwargs) -> np.ndarray:
         super().reset(*args, **kwargs)
