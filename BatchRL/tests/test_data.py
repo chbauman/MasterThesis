@@ -33,6 +33,25 @@ def get_test_ds(dat: np.ndarray, c_inds: np.ndarray,
     return ds
 
 
+def get_full_model_dataset(n: int = 150) -> Dataset:
+    """Creates a test dataset for the full model.
+
+    Includes the room and the battery.
+
+    Args:
+        n: Number of rows in data.
+
+    Returns:
+        Dataset with normal data.
+    """
+    shape = (n, 10)
+    data = np.random.normal(1.0, 1.0, shape)
+    c_inds = np.array([4, 9])
+    ds = get_test_ds(data, c_inds)
+
+    return ds
+
+
 class TestDataset(TestCase):
     """Tests the dataset class.
     """
@@ -69,6 +88,15 @@ class TestDataset(TestCase):
 
         # Create MDV
         self.mdv = ModelDataView(self.ds_nan, "Test", 2, 7)
+
+    def test_full_test_ds(self):
+        n_rows = 10
+        ds = get_full_model_dataset(n_rows)
+        self.assertEqual(ds.data.shape, (n_rows, 10))
+        ex_inds = np.array([1, 5, 8, 9])
+        exp_prep_inds = np.array([1, 4, 7, 9])
+        self.assertTrue(np.array_equal(exp_prep_inds, ds.to_prepared(ex_inds)),
+                        "Indices conversion invalid!")
 
     def test_saving(self):
         self.ds.save()
