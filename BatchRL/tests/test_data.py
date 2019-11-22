@@ -9,10 +9,44 @@ from util.numerics import nan_array_equal, num_nans
 from util.visualize import plot_dataset
 
 
+def construct_test_ds(n: int = 201, c_series: int = 3, n_feats: int = 4) -> Dataset:
+    """Constructs a dataset for testing.
+
+    Args:
+        n: Number of rows.
+        c_series: The index of the control series.
+        n_feats: Number of columns in data.
+
+    Returns:
+        A dataset with 4 series, one of which is controllable.
+    """
+    # Check input
+    assert n_feats >= 2, "At least two columns required!"
+    assert c_series < n_feats, "Control index out of bounds!"
+
+    # Define dataset
+    dat = np.empty((n, n_feats), dtype=np.float32)
+    dat[:, 0] = np.arange(n)
+    dat[:, 1] = np.reciprocal(1.0 + np.arange(n))
+    if n_feats > 2:
+        dat[:, 2] = np.reciprocal(1.0 + np.arange(n))
+    if n_feats > 3:
+        dat[:, 3] = 1 + np.reciprocal(1.0 + np.arange(n))
+    if n_feats > 4:
+        for k in range(n_feats - 4):
+            dat[:, 4 + k] = np.sin(np.arange(n))
+    c_inds = np.array([c_series])
+    ds = get_test_ds(dat, c_inds, dt=60 * 6, name="SyntheticModelData")
+    ds.seq_len = 8
+    ds.val_percent = 0.3
+    ds.split_data()
+    return ds
+
+
 def get_test_ds(dat: np.ndarray, c_inds: np.ndarray,
                 name: str = "SyntheticTest",
                 dt: int = 60 * 12,
-                t_init: str = '2019-01-01 12:00:00'):
+                t_init: str = '2019-01-01 12:00:00') -> Dataset:
     """Constructs a test dataset.
 
     Args:
@@ -48,6 +82,14 @@ def get_full_model_dataset(n: int = 150) -> Dataset:
     data = np.random.normal(1.0, 1.0, shape)
     c_inds = np.array([4, 9])
     ds = get_test_ds(data, c_inds)
+
+    # Scale sin and cos time accordingly
+    dat = np.copy(data[:, 6])
+    data[:, 6] = np.sin(dat)
+    data[:, 7] = np.cos(dat)
+
+    ds.seq_len = 8
+    ds.val_percent = 0.3
 
     return ds
 
@@ -97,6 +139,10 @@ class TestDataset(TestCase):
         exp_prep_inds = np.array([1, 4, 7, 9])
         self.assertTrue(np.array_equal(exp_prep_inds, ds.to_prepared(ex_inds)),
                         "Indices conversion invalid!")
+
+        for k in [6, 7]:
+            self.assertTrue(np.all(ds.data[:, k] <= 1.0), "Too large values!")
+            self.assertTrue(np.all(ds.data[:, k] >= -1.0), "Too small values!")
 
     def test_saving(self):
         self.ds.save()
@@ -251,37 +297,3 @@ class TestDataProcessing(TestCase):
                          "Removed too many or too few values!")
         self.assertEqual(len(values2), len(dates2), "clean_data failed horribly!")
         pass
-
-
-def construct_test_ds(n: int = 201, c_series: int = 3, n_feats: int = 4) -> Dataset:
-    """Constructs a dataset for testing.
-
-    Args:
-        n: Number of rows.
-        c_series: The index of the control series.
-        n_feats: Number of columns in data.
-
-    Returns:
-        A dataset with 4 series, one of which is controllable.
-    """
-    # Check input
-    assert n_feats >= 2, "At least two columns required!"
-    assert c_series < n_feats, "Control index out of bounds!"
-
-    # Define dataset
-    dat = np.empty((n, n_feats), dtype=np.float32)
-    dat[:, 0] = np.arange(n)
-    dat[:, 1] = np.reciprocal(1.0 + np.arange(n))
-    if n_feats > 2:
-        dat[:, 2] = np.reciprocal(1.0 + np.arange(n))
-    if n_feats > 3:
-        dat[:, 3] = 1 + np.reciprocal(1.0 + np.arange(n))
-    if n_feats > 4:
-        for k in range(n_feats - 4):
-            dat[:, 4 + k] = np.sin(np.arange(n))
-    c_inds = np.array([c_series])
-    ds = get_test_ds(dat, c_inds, dt=60 * 6, name="SyntheticModelData")
-    ds.seq_len = 8
-    ds.val_percent = 0.3
-    ds.split_data()
-    return ds

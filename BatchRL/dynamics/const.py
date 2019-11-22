@@ -44,7 +44,7 @@ class ConstModel(BaseDynamicsModel):
         in_inds = kwargs.get('in_indices')
         if in_inds is None:
             kwargs['in_indices'] = pred_inds
-        else:
+        elif pred_inds is not None:
             if len(in_inds) < len(pred_inds):
                 raise ValueError("Need at least as many input series as output series!")
 
@@ -55,9 +55,9 @@ class ConstModel(BaseDynamicsModel):
         self.n_out = len(self.out_inds)
         self.nc = dataset.n_c
 
-    def fit(self) -> None:
+    def fit(self, verbose: int = 0) -> None:
         """No need to fit anything."""
-        pass
+        print("Model const, no fitting needed!")
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """Make predictions by just returning the last input.

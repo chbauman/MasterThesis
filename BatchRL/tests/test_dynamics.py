@@ -11,6 +11,7 @@ from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
 from dynamics.composite import CompositeModel
 from dynamics.const import NoDisturbanceModel, ConstModel
+from dynamics.sin_cos_time import SCTimeModel
 from tests.test_data import get_full_model_dataset, construct_test_ds
 from util.numerics import copy_arr_list
 from util.util import Num, tot_size
@@ -18,9 +19,30 @@ from util.util import Num, tot_size
 
 def get_full_composite_model() -> BaseDynamicsModel:
 
+    # Get full dataset
     n = 100
     ds = get_full_model_dataset(n)
-    return
+
+    # Define and fit battery model
+    bat_mod = BatteryModel(ds, base_ind=8)
+    bat_mod.params = np.array([0, 1, 1])
+
+    # The weather model predicting constant weather.
+    weather_mod_const = ConstTestModel(ds, pred_inds=np.array([0, 1]))
+
+    # The room and heating model
+    in_inds = np.array([2, 3, 4])
+    out_inds = np.array([2, 3, 5])
+    varying_mod = ConstTestModelControlled(ds, in_indices=in_inds,
+                                           pred_inds=out_inds)
+
+    # The exact time model
+    time_mod = SCTimeModel(ds, time_ind=6)
+
+    # Create full model and return
+    mod_list = [weather_mod_const, varying_mod, time_mod, bat_mod]
+    full_mod = CompositeModel(ds, mod_list)
+    return full_mod
 
 
 class TestModel(BaseDynamicsModel):
@@ -337,6 +359,22 @@ class TestComposite(TestCase):
                                    in_indices=self.inds_123)
         mc5 = CompositeModel(self.ds_1, [m9, m10], new_name="CompositeTest4")
         mc5.analyze(plot_acf=False, verbose=False, n_steps=(2,))
+
+    def test_full_composite(self):
+
+        # Define model
+        full_comp = get_full_composite_model()
+        
+        # Predict
+        s = full_comp.data.seq_len - 1
+        init_state = 0.5 * np.ones((1, s, 10), dtype=np.float32)
+        out = full_comp.predict(init_state)
+
+        # Check prediction
+        const_weather = np.allclose(out[0, :2], 0.5)
+        self.assertTrue(const_weather, "Weather part not constant")
+        increase_room = np.allclose(out[0, 2:5], 1.0)
+        self.assertTrue(increase_room, "Room part not correct!")
 
 
 def get_test_battery_model(n: int = 150,
