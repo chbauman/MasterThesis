@@ -387,7 +387,10 @@ def curr_tests() -> None:
                     rnn_consts=rnn_consts_full, fit=True, from_hop=True)
     # mod.analyze(overwrite=False, plot_acf=False)
 
+    assert isinstance(mod, CompositeModel), "Model not suited"
     full_env = RoomBatteryEnv(mod)
+    full_env.reset()
+    full_env.step(np.array([0.5, 10.0]))
     return
 
 

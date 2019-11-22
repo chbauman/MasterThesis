@@ -472,7 +472,6 @@ class RoomBatteryEnv(RLDynEnv):
     """
 
     alpha: float = 1.0  #: Reward scaling factor.
-    m: CompositeModel  #: The dynamics model.
     p: CProf = None  #: The cost profile.
 
     # Indices specifying series
@@ -544,6 +543,7 @@ class RoomBatteryEnv(RLDynEnv):
         return -energy * self.alpha - det_rew[0]
 
     def scale_action_for_step(self, action: Arr):
+        return action
         # Get default min and max actions from bounds
         scaled_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))
         assert len(scaled_ac) == 1 and len(scaled_ac[0]) == 2, "Shape mismatch!"
