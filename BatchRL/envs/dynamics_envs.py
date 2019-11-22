@@ -7,7 +7,7 @@ import numpy as np
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
 from envs.base_dynamics_env import DynEnv
-from util.numerics import trf_mean_and_std, add_mean_and_std, rem_mean_and_std
+from util.numerics import trf_mean_and_std, rem_mean_and_std
 from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list
 
 RangeT = Tuple[Num, Num]
@@ -64,23 +64,43 @@ class RLDynEnv(DynEnv, ABC):
                 ac_r_scales[k] = rem_mean_and_std(ac_r_scales[k],
                                                   self.scaling[self.c_ind[k]])
 
-    def _to_scaled(self, action: Arr, to_original: bool = False) -> np.ndarray:
+    def _to_scaled(self, action: Arr, to_original: bool = False,
+                   extra_scaling: bool = False) -> np.ndarray:
         """Converts actions to the right range."""
         if np.array(action).shape == ():
             assert self.nb_actions == 1, "Ambiguous for more than one action!"
             action = np.array([action])
         else:
             assert len(action) == self.nb_actions, "Not the right amount of actions!"
+
+        # This should not do anything
         cont_action = self.scale_actions(action)
-        if self.scaling is None:
-            return cont_action
-        c_actions_scaled = np.empty_like(cont_action)
-        for k in range(self.nb_actions):
-            c_actions_scaled[k] = trf_mean_and_std(cont_action[k], self.scaling[self.c_ind[k]], not to_original)
+        assert np.array_equal(cont_action, action, "This is deprecated!!")
+
+        # Do the extra scaling for rl agents with output in [0, 1]
+        if extra_scaling and self.do_scaling:
+            cont_action = self.a_scaling_pars[0] + cont_action * self.a_scaling_pars[1]
+
+        # Revert standardization
+        c_actions_scaled = cont_action
+        if self.scaling is not None:
+            c_actions_scaled = np.empty_like(cont_action)
+            for k in range(self.nb_actions):
+                c_actions_scaled[k] = trf_mean_and_std(cont_action[k], self.scaling[self.c_ind[k]], not to_original)
+
+        # Return scaled actions
         return c_actions_scaled
 
     def scale_action_for_step(self, action: Arr):
         return self._to_scaled(action)
+
+    def _state_to_scale(self, original_state: np.ndarray,
+                        ind: int,
+                        remove_mean: bool = False) -> np.ndarray:
+        """Scales the state according to `ind`."""
+        if self.scaling is not None:
+            return trf_mean_and_std(original_state, self.scaling[ind], remove=remove_mean)
+        return original_state
 
 
 class FullRoomEnv(RLDynEnv):
@@ -112,17 +132,12 @@ class FullRoomEnv(RLDynEnv):
         assert d.d == 8 and d.n_c == 1, "Not the correct number of series in dataset!"
 
     def get_r_temp(self, curr_pred: np.ndarray) -> float:
-        r_temp = curr_pred[4]
-        if self.scaling is not None:
-            r_temp = add_mean_and_std(r_temp, self.scaling[5])
+        r_temp = self._state_to_scale(curr_pred[4], ind=5, remove_mean=False).item()
         return r_temp
 
-    def get_w_temp(self, curr_pred: np.ndarray):
+    def get_w_temp(self, curr_pred: np.ndarray) -> List[float]:
         w_inds = 2, 3
-        w = [curr_pred[i] for i in w_inds]
-        if self.scaling is not None:
-            for k in range(2):
-                w[k] = add_mean_and_std(w[k], self.scaling[w_inds[k]])
+        w = [self._state_to_scale(curr_pred[i], ind=i, remove_mean=False).item() for i in w_inds]
         return w
 
     reward_descs = ["Energy Consumption [{:.4g} kWh]".format(0.25 * 65.37 * 4.18 / 3.6),
@@ -163,16 +178,12 @@ class FullRoomEnv(RLDynEnv):
         return False
 
     def scale_action_for_step(self, action: Arr):
-        # Do scaling if agent wants it
-        if self.do_scaling:
-            action = self.a_scaling_pars[0] + action * self.a_scaling_pars[1]
-
         # Get default min and max actions from bounds
         scaled_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))
         assert len(scaled_ac) == 1 and len(scaled_ac[0]) == 2, "Shape mismatch!"
         min_ac, max_ac = scaled_ac[0]
 
-        scaled_action = self._to_scaled(action)
+        scaled_action = self._to_scaled(action, extra_scaling=True)
         chosen_action = np.clip(scaled_action, min_ac, max_ac)
         if self.scaling is not None:
             assert not np.array_equal(action, chosen_action)
@@ -265,9 +276,7 @@ class BatteryEnv(RLDynEnv):
 
     def _get_scaled_soc(self, unscaled_soc, remove_mean: bool = False):
         """Scales the state-of-charge."""
-        if self.scaling is not None:
-            return trf_mean_and_std(unscaled_soc, self.scaling[0], remove=remove_mean)
-        return unscaled_soc
+        return self._state_to_scale(unscaled_soc, ind=0, remove_mean=remove_mean).item()
 
     reward_descs = ["Energy Consumption [kWh]"]  #: Description of the detailed reward.
 
@@ -316,9 +325,6 @@ class BatteryEnv(RLDynEnv):
         return False
 
     def scale_action_for_step(self, action: Arr):
-        # Do scaling if agent wants it
-        if self.do_scaling:
-            action = self.a_scaling_pars[0] + action * self.a_scaling_pars[1]
 
         # Get default min and max actions from bounds
         scaled_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))
@@ -345,7 +351,7 @@ class BatteryEnv(RLDynEnv):
         ac_max = np.minimum(next_d_soc_max / c_max, max_ac)
 
         # Clip the actions.
-        scaled_action = self._to_scaled(action)
+        scaled_action = self._to_scaled(action, extra_scaling=True)
         chosen_action = np.clip(scaled_action, ac_min, ac_max)
         if self.scaling is not None:
             assert not np.array_equal(action, chosen_action)
