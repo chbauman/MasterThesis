@@ -11,20 +11,25 @@ from envs.base_dynamics_env import DynEnv
 from util.numerics import trf_mean_and_std, rem_mean_and_std
 from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list, yeet
 
-RangeT = Tuple[Num, Num]
+RangeT = Tuple[Num, Num]  #: Range for single state / action series.
 InRangeT = LOrEl[RangeT]  #: The type of action ranges.
 RangeListT = List[RangeT]
 
 # General parameters for the environments
 
 # For the room environment:
-TEMP_BOUNDS: Sequence = (22.0, 26.0)  #: The requested temperature range.
-HEAT_ACTION_BOUNDS: Sequence = (0.0, 1.0)  #: The action range for the valve opening time.
+TEMP_BOUNDS: RangeT = (22.0, 26.0)  #: The requested temperature range.
+HEAT_ACTION_BOUNDS: RangeT = (0.0, 1.0)  #: The action range for the valve opening time.
 
 # For the battery environment:
-BATTERY_ACTION_BOUNDS: Sequence = (-100.0, 100.0)  #: The action range for the active power.
-SOC_BOUND: Sequence = (20, 80)  #: The desired state-of-charge range.
-SOC_GOAL: float = 60.0  #: Desired SoC at end of episode.
+BATTERY_ACTION_BOUNDS: RangeT = (-100.0, 100.0)  #: The action range for the active power.
+SOC_BOUND: RangeT = (20.0, 80.0)  #: The desired state-of-charge range.
+SOC_GOAL: Num = 60.0  #: Desired SoC at end of episode.
+
+# Reward parts descriptions
+BAT_ENERGY: str = "Energy Consumption [kWh]"
+ROOM_ENERGY: str = "Energy Consumption [{:.4g} kWh]".format(0.25 * 65.37 * 4.18 / 3.6)
+TEMP_BOUND_PEN: str = "Temperature Bound Violation [Kh]"
 
 
 class RLDynEnv(DynEnv, ABC):
@@ -39,7 +44,7 @@ class RLDynEnv(DynEnv, ABC):
 
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int,
-                 action_range: Sequence = (0, 1),
+                 action_range: Sequence = (0.0, 1.0),
                  cont_actions: bool = True,
                  n_disc_actions: int = 11,
                  n_cont_actions: int = 1,
@@ -115,15 +120,51 @@ class RLDynEnv(DynEnv, ABC):
         return original_state
 
 
+def temp_penalty(room_temp: Num, temp_bounds: RangeT, t_h: Num = 0.25):
+    """Computes the penalty for temperatures out of bound.
+
+    Needs the `room_temp` and the `temp_bounds` to be scaled
+    to original scale, i.e. physically meaningful ones.
+    Uses the absolute error.
+
+    Args:
+        room_temp: The actual room temperature.
+        temp_bounds: The temperature bounds.
+        t_h: The time step length in hours.
+
+    Returns:
+        The temperature bound violation penalty.
+    """
+    return t_h * linear_oob_penalty(room_temp, temp_bounds)
+
+
+def energy_used(water_temps: Sequence, valve_action: Num, t_h: Num):
+    """Computes the energy used from the water temperature and the action.
+
+    Needs the actions and the water temperatures to be
+    in the original (physical) space.
+
+    Args:
+        water_temps: The current water temperatures.
+        valve_action: The action taken.
+        t_h: The timestep length in hours.
+
+    Returns:
+        The amount of energy used.
+    """
+    d_temp = np.abs(water_temps[0] - water_temps[1])
+    return np.clip(valve_action, 0.0, 1.0) * d_temp * t_h
+
+
 class FullRoomEnv(RLDynEnv):
     """The environment modeling one room only."""
     alpha: float = 1.0  #: Weight factor for reward.
-    TEMP_BOUNDS: Sequence = TEMP_BOUNDS  #: The requested temperature range.
+    temp_bounds: RangeT = TEMP_BOUNDS  #: The requested temperature range.
     bound_violation_penalty: float = 2.0  #: The penalty in the reward for temperatures out of bound.
 
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int = 48,
-                 temp_bounds: Sequence = None,
+                 temp_bounds: RangeT = None,
                  **kwargs):
         # Define name
         ext = make_param_ext([("NEP", max_eps), ("TBD", temp_bounds)])
@@ -152,16 +193,14 @@ class FullRoomEnv(RLDynEnv):
         w = [self._state_to_scale(curr_pred[i], ind=i, remove_mean=False).item() for i in w_inds]
         return w
 
-    reward_descs = ["Energy Consumption [{:.4g} kWh]".format(0.25 * 65.37 * 4.18 / 3.6),
-                    "Temperature Bound Violation [Kh]"]
+    reward_descs = [ROOM_ENERGY, TEMP_BOUND_PEN]
 
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
 
         # Compute energy used
         action_rescaled = self._to_scaled(action, True)[0]
         w_temps = self.get_w_temp(curr_pred)
-        d_temp = np.abs(w_temps[0] - w_temps[1])
-        energy_used = np.clip(action_rescaled, 0.0, 1.0) * d_temp * self.dt_h
+        tot_energy_used = energy_used(w_temps, action_rescaled, self.dt_h)
         # assert 10.0 <= w_temps[0] <= 50.0, "Water temperature scaled incorrectly!"
 
         # Check for actions out of range
@@ -172,8 +211,8 @@ class FullRoomEnv(RLDynEnv):
 
         # Penalty for constraint violation
         r_temp = self.get_r_temp(curr_pred)
-        temp_pen = self.dt_h * linear_oob_penalty(r_temp, self.temp_bounds)
-        return np.array([energy_used, temp_pen])
+        temp_pen = temp_penalty(r_temp, self.temp_bounds, self.dt_h)
+        return np.array([tot_energy_used, temp_pen])
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
         """Computes the total reward from the individual components."""
@@ -349,7 +388,7 @@ class BatteryEnv(RLDynEnv):
         """Scales the state-of-charge."""
         return self._state_to_scale(unscaled_soc, ind=0, remove_mean=remove_mean)
 
-    reward_descs = ["Energy Consumption [kWh]"]  #: Description of the detailed reward.
+    reward_descs = [BAT_ENERGY]  #: Description of the detailed reward.
 
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
         """Computes the energy used by dis- / charging the battery."""
@@ -437,7 +476,6 @@ class RoomBatteryEnv(RLDynEnv):
     """
 
     alpha: float = 1.0  #: Reward scaling factor.
-    prev_pred: np.ndarray  #: The previous prediction.
     m: CompositeModel  #: The dynamics model.
     p: CProf = None  #: The cost profile.
 
@@ -463,7 +501,6 @@ class RoomBatteryEnv(RLDynEnv):
 
         # Set cost profile
         self.p = p
-        print(d)
 
         # Set prepared indices
         self.prep_inds = d.to_prepared(self.inds)
@@ -474,5 +511,15 @@ class RoomBatteryEnv(RLDynEnv):
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
         pass
 
+    def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
+        """Compute the reward for choosing action `action`.
+
+        The reward takes into account the energy used.
+        """
+        # Return minus the energy used.
+        e_used = self.detailed_reward(curr_pred, action)
+        return -e_used.item() * self.alpha
+
     def episode_over(self, curr_pred: np.ndarray) -> bool:
-        pass
+        # Let it diverge!
+        return False
