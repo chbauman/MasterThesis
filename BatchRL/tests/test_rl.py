@@ -8,7 +8,7 @@ from data_processing.data import choose_dataset
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.composite import CompositeModel
 from tests.test_data import construct_test_ds
-from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT, RoomBatteryEnv
+from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT, RoomBatteryEnv, PWProfile
 from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model, get_full_composite_model
 from util.numerics import rem_mean_and_std, add_mean_and_std
 from util.util import Arr
@@ -246,7 +246,8 @@ class TestFullEnv(TestCase):
 
         mod = get_full_composite_model()
         assert isinstance(mod, CompositeModel), "No composite model!"
-        self.full_env = RoomBatteryEnv(mod, max_eps=5)
+        p = PWProfile()
+        self.full_env = RoomBatteryEnv(mod, p, max_eps=5)
 
     def test_reset_and_step(self):
         init_state = self.full_env.reset()
@@ -271,5 +272,8 @@ class TestFullEnv(TestCase):
     def test_agents_eval(self):
         ag1 = agents_heuristic.ConstActionAgent(self.full_env, 10.0)
         ag2 = agents_heuristic.ConstActionAgent(self.full_env, -10.0)
+        print(self.full_env.reward_descs)
+        self.assertEqual(len(self.full_env.reward_descs), 4,
+                         "Reward descriptions incorrect!")
         self.full_env.detailed_eval_agents([ag1, ag2], n_steps=3, use_noise=False)
     pass

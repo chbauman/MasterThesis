@@ -30,6 +30,7 @@ SOC_GOAL: Num = 60.0  #: Desired SoC at end of episode.
 BAT_ENERGY: str = "Battery Energy Consumption [kWh]"
 ROOM_ENERGY: str = "Heating Energy Consumption [{:.4g} kWh]".format(0.25 * 65.37 * 4.18 / 3.6)
 TEMP_BOUND_PEN: str = "Temperature Bound Violation [Kh]"
+ENG_COST: str = "Energy Costs []"
 
 
 class RLDynEnv(DynEnv, ABC):
@@ -473,7 +474,7 @@ class RoomBatteryEnv(RLDynEnv):
     p: CProf = None  #: The cost profile.
     m: CompositeModel
 
-    reward_descs = [TEMP_BOUND_PEN, ROOM_ENERGY, BAT_ENERGY]  #: Description of the detailed reward.
+    reward_descs = list([TEMP_BOUND_PEN, ROOM_ENERGY, BAT_ENERGY])  #: Description of the detailed reward.
 
     # Indices specifying series
     inds: np.ndarray = np.array([2, 3, 5, 8], dtype=np.int32)  #: The indices of water temps, room temp and soc
@@ -495,7 +496,9 @@ class RoomBatteryEnv(RLDynEnv):
                          n_cont_actions=2, **kwargs)
 
         # Set cost profile
-        self.p = p
+        if p is not None:
+            self.p = p
+            self.reward_descs = list(self.reward_descs) + [ENG_COST]
 
         # Set prepared indices
         self.prep_inds = d.to_prepared(self.inds)
@@ -529,7 +532,10 @@ class RoomBatteryEnv(RLDynEnv):
         bat_eng = orig_actions[1]
 
         # Return all parts
-        return np.array([temp_pen, room_eng, bat_eng])
+        all_rew = [temp_pen, room_eng, bat_eng]
+        if self.p is not None:
+            all_rew += [(room_eng + bat_eng) * self.p(self.n_ts)]
+        return np.array(all_rew, dtype=np.float32)
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
         """Compute the reward for choosing action `action`.
