@@ -5,7 +5,8 @@ import numpy as np
 from agents import agents_heuristic
 from agents.keras_agents import DDPGBaseAgent, KerasBaseAgent
 from data_processing.data import choose_dataset
-from dynamics.base_model import construct_test_ds, BaseDynamicsModel
+from dynamics.base_model import BaseDynamicsModel
+from tests.test_data import construct_test_ds
 from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT
 from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model
 from util.numerics import rem_mean_and_std, add_mean_and_std

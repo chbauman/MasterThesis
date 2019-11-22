@@ -5,7 +5,7 @@ from typing import Optional, Sequence, Tuple
 import numpy as np
 
 from data_processing.dataset import Dataset
-from tests.test_data import get_test_ds
+from tests.test_data import construct_test_ds
 from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1
@@ -750,40 +750,6 @@ class BaseDynamicsModel(KerasBase, ABC):
 
 ##########################################################################
 # Testing stuff
-
-
-def construct_test_ds(n: int = 201, c_series: int = 3, n_feats: int = 4) -> Dataset:
-    """Constructs a dataset for testing.
-
-    Args:
-        n: Number of rows.
-        c_series: The index of the control series.
-        n_feats: Number of columns in data.
-
-    Returns:
-        A dataset with 4 series, one of which is controllable.
-    """
-    # Check input
-    assert n_feats >= 2, "At least two columns required!"
-    assert c_series < n_feats, "Control index out of bounds!"
-
-    # Define dataset
-    dat = np.empty((n, n_feats), dtype=np.float32)
-    dat[:, 0] = np.arange(n)
-    dat[:, 1] = np.reciprocal(1.0 + np.arange(n))
-    if n_feats > 2:
-        dat[:, 2] = np.reciprocal(1.0 + np.arange(n))
-    if n_feats > 3:
-        dat[:, 3] = 1 + np.reciprocal(1.0 + np.arange(n))
-    if n_feats > 4:
-        for k in range(n_feats - 4):
-            dat[:, 4 + k] = np.sin(np.arange(n))
-    c_inds = np.array([c_series])
-    ds = get_test_ds(dat, c_inds, dt=60 * 6, name="SyntheticModelData")
-    ds.seq_len = 8
-    ds.val_percent = 0.3
-    ds.split_data()
-    return ds
 
 
 def test_dyn_model() -> None:

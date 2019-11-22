@@ -7,12 +7,20 @@ from hyperopt.pyll import scope as ho_scope
 
 from data_processing.dataset import Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel
-from dynamics.base_model import BaseDynamicsModel, construct_test_ds
+from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
 from dynamics.composite import CompositeModel
 from dynamics.const import NoDisturbanceModel, ConstModel
+from tests.test_data import get_full_model_dataset, construct_test_ds
 from util.numerics import copy_arr_list
 from util.util import Num, tot_size
+
+
+def get_full_composite_model() -> BaseDynamicsModel:
+
+    n = 100
+    ds = get_full_model_dataset(n)
+    return
 
 
 class TestModel(BaseDynamicsModel):
