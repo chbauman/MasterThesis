@@ -326,8 +326,7 @@ class BatteryEnv(RLDynEnv):
         kwargs[ep_key] = kwargs.get(ep_key, 24 * 60 // d.dt // 2)
 
         # Define name
-        ext = "_" + p.name if p is not None else ""
-        name = "Battery" + ext
+        name = "Battery"
 
         # Init base class.
         super().__init__(m, name=name, action_range=[(-100, 100)], **kwargs)
@@ -433,20 +432,47 @@ class BatteryEnv(RLDynEnv):
 
 
 class RoomBatteryEnv(RLDynEnv):
-    """The environment for the battery model.
+    """The joint environment for the room model and the battery model.
 
     """
 
     alpha: float = 1.0  #: Reward scaling factor.
-    action_range: RangeListT = [(-100, 100)]  #: The requested active power range.
-    soc_bound: Sequence = (20, 80)  #: The requested state-of-charge range.
-    scaled_soc_bd: np.ndarray = None  #: `soc_bound` scaled to the model space.
-    req_soc: float = 60.0  #: Required SoC at end of episode.
     prev_pred: np.ndarray  #: The previous prediction.
-    m: CompositeModel  #: The battery model.
+    m: CompositeModel  #: The dynamics model.
     p: CProf = None  #: The cost profile.
+
+    # Indices specifying series
+    inds: np.ndarray = np.array([2, 3, 5, 8], dtype=np.int32)  #: The indices of water temps, room temp and soc
+    prep_inds: np.ndarray  #: The same indices but prepared.
 
     def __init__(self, m: CompositeModel, p: CProf = None, **kwargs):
 
-        self.m = m
+        d = m.data
+
+        # Add max predictions length to kwargs if not there yet.
+        ep_key = 'max_eps'
+        kwargs[ep_key] = kwargs.get(ep_key, 24 * 60 // d.dt // 2)
+
+        # Define name
+        name = "RoomBattery"
+
+        # Init base class.
+        act_ranges = [HEAT_ACTION_BOUNDS, BATTERY_ACTION_BOUNDS]
+        super().__init__(m, name=name, action_range=act_ranges,
+                         n_cont_actions=2, **kwargs)
+
+        # Set cost profile
+        self.p = p
+        print(d)
+
+        # Set prepared indices
+        self.prep_inds = d.to_prepared(self.inds)
+        print(self.prep_inds)
+
+        pass
+
+    def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
+        pass
+
+    def episode_over(self, curr_pred: np.ndarray) -> bool:
         pass

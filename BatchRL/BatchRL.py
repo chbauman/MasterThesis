@@ -20,7 +20,7 @@ from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dynamics.sin_cos_time import SCTimeModel
-from envs.dynamics_envs import FullRoomEnv, BatteryEnv
+from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
 from util.util import EULER
 
@@ -382,11 +382,12 @@ def get_model(name: str, ds: Dataset,
 
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
-    run_integration_tests()
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
-    bat_mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
-                        rnn_consts=rnn_consts_full, fit=True, from_hop=True)
-    bat_mod.analyze(overwrite=False, plot_acf=False)
+    mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
+                    rnn_consts=rnn_consts_full, fit=True, from_hop=True)
+    # mod.analyze(overwrite=False, plot_acf=False)
+
+    full_env = RoomBatteryEnv(mod)
     return
 
 
@@ -396,13 +397,13 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run current experiments
-    # curr_tests()
+    curr_tests()
 
     # Run integration tests.
     # run_integration_tests()
 
     # Run hyperparameter optimization
-    run_dynamic_model_hyperopt(use_bat_data=True)
+    # run_dynamic_model_hyperopt(use_bat_data=True)
 
     # Fit and analyze all models
     # run_dynamic_model_fit_from_hop()
