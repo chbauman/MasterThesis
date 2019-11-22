@@ -69,7 +69,7 @@ class RLDynEnv(DynEnv, ABC):
             action_bd = np.array([ac[k] for ac in self.action_range])
             action_range_scaled[:, k] = self._to_scaled(action_bd, to_original=False)
         self.action_range_scaled = action_range_scaled
-        
+
         # Initialize fallback actions
         self.fb_actions = np.empty((max_eps, n_cont_actions), dtype=np.float32)
 
@@ -471,13 +471,13 @@ class RoomBatteryEnv(RLDynEnv):
 
     alpha: float = 1.0  #: Reward scaling factor.
     p: CProf = None  #: The cost profile.
+    m: CompositeModel
 
     # Indices specifying series
     inds: np.ndarray = np.array([2, 3, 5, 8], dtype=np.int32)  #: The indices of water temps, room temp and soc
     prep_inds: np.ndarray  #: The same indices but prepared.
 
     def __init__(self, m: CompositeModel, p: CProf = None, **kwargs):
-
         d = m.data
 
         # Add max predictions length to kwargs if not there yet.
@@ -510,7 +510,6 @@ class RoomBatteryEnv(RLDynEnv):
         return scaled_water, orig_water
 
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
-
         # Compute original actions
         orig_actions = self._to_scaled(action, True)
 
@@ -550,7 +549,29 @@ class RoomBatteryEnv(RLDynEnv):
         room_action_clipped = np.clip(room_action, *self.action_range_scaled[0])
 
         # Clip battery action
-        bat_action_clipped = bat_action
+        bat_mod = self.m.model_list[-1]
+        assert isinstance(bat_mod, BatteryModel), "Supposed to be a battery model!"
+        scaled_ac = self.action_range_scaled[1]
+        curr_state = self.get_curr_state()
+        soc_bound_arr = np.array(SOC_BOUND, copy=True)
+        bat_soc_ind = 9
+        scaled_soc_bound = self._state_to_scale(soc_bound_arr,
+                                                ind=bat_soc_ind,
+                                                remove_mean=True)
+        min_goal_soc = self._state_to_scale(np.array(SOC_GOAL),
+                                            ind=bat_soc_ind,
+                                            remove_mean=True)
+
+        # Clip the actions.
+        bat_action_clipped = clip_battery_action(bat_action,
+                                                 curr_state,
+                                                 scaled_soc_bound,
+                                                 scaled_ac,
+                                                 bat_mod.params,
+                                                 True,
+                                                 min_goal_soc,
+                                                 self.n_ts,
+                                                 self.n_ts_per_eps)
 
         return np.array([room_action_clipped, bat_action_clipped])
 
