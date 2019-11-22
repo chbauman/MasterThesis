@@ -254,7 +254,6 @@ class TestFullEnv(TestCase):
         battery_action = 2.0
         action = np.array([room_action, battery_action])
         next_state, rew, over, _ = self.full_env.step(action)
-
         self.assertEqual(len(init_state), len(next_state), "Incompatible shapes!")
         control_working = np.allclose(next_state[2:4], init_state[2:4] + room_action)
         self.assertTrue(control_working, "Control not working as expected!")

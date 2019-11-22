@@ -540,7 +540,7 @@ class RoomBatteryEnv(RLDynEnv):
         return -energy * self.alpha - det_rew[0]
 
     def scale_action_for_step(self, action: Arr):
-        # TODO: Clip the fucking actions!
+        # Clips the fucking actions!
         assert len(action) == 2, "Invalid action"
         scaled_action = self._to_scaled(action, extra_scaling=True)
         room_action, bat_action = scaled_action

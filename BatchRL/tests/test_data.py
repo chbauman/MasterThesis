@@ -88,6 +88,9 @@ def get_full_model_dataset(n: int = 150) -> Dataset:
     data[:, 6] = np.sin(dat)
     data[:, 7] = np.cos(dat)
 
+    # Assert SoC bounds
+    data[:, 8] += 50.0
+
     ds.seq_len = 8
     ds.val_percent = 0.3
 
