@@ -263,8 +263,13 @@ class TestFullEnv(TestCase):
         self.assertTrue(weather_working, "Weather part not working as expected!")
 
     def test_visual_agent_analysis(self):
-        ag1 = agents_heuristic.ConstActionAgent(self.full_env, 1.0)
-        ag2 = agents_heuristic.ConstActionAgent(self.full_env, -1.0)
-        self.full_env.analyze_agents_visually([ag1, ag2],
+        ag1 = agents_heuristic.ConstActionAgent(self.full_env, 10.0)
+        ag2 = agents_heuristic.ConstActionAgent(self.full_env, -10.0)
+        self.full_env.analyze_agents_visually([ag1, ag2], start_ind=0,
                                               use_noise=False, fitted=True)
+
+    def test_agents_eval(self):
+        ag1 = agents_heuristic.ConstActionAgent(self.full_env, 10.0)
+        ag2 = agents_heuristic.ConstActionAgent(self.full_env, -10.0)
+        self.full_env.detailed_eval_agents([ag1, ag2], n_steps=3, use_noise=False)
     pass

@@ -27,8 +27,8 @@ SOC_BOUND: RangeT = (20.0, 80.0)  #: The desired state-of-charge range.
 SOC_GOAL: Num = 60.0  #: Desired SoC at end of episode.
 
 # Reward parts descriptions
-BAT_ENERGY: str = "Energy Consumption [kWh]"
-ROOM_ENERGY: str = "Energy Consumption [{:.4g} kWh]".format(0.25 * 65.37 * 4.18 / 3.6)
+BAT_ENERGY: str = "Battery Energy Consumption [kWh]"
+ROOM_ENERGY: str = "Heating Energy Consumption [{:.4g} kWh]".format(0.25 * 65.37 * 4.18 / 3.6)
 TEMP_BOUND_PEN: str = "Temperature Bound Violation [Kh]"
 
 
@@ -472,6 +472,8 @@ class RoomBatteryEnv(RLDynEnv):
     alpha: float = 1.0  #: Reward scaling factor.
     p: CProf = None  #: The cost profile.
     m: CompositeModel
+
+    reward_descs = [TEMP_BOUND_PEN, ROOM_ENERGY, BAT_ENERGY]  #: Description of the detailed reward.
 
     # Indices specifying series
     inds: np.ndarray = np.array([2, 3, 5, 8], dtype=np.int32)  #: The indices of water temps, room temp and soc
