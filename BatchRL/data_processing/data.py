@@ -548,7 +548,7 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
 #######################################################################################################
 # Full Data Retrieval and Pre-processing
 
-def get_battery_data() -> 'Dataset':
+def get_battery_data(analyze: bool = False) -> 'Dataset':
     """Loads the battery dataset if existing.
 
     Else it is created from the raw data and a few plots are make.
@@ -579,6 +579,10 @@ def get_battery_data() -> 'Dataset':
                               c_inds=c_inds,
                               standardize_data=True,
                               desc_list=custom_descs)
+
+    # Return if no analysis wanted.
+    if not analyze:
+        return ds
 
     # Plot files
     plot_name_roi = os.path.join(bat_plot_path, "Strange")
