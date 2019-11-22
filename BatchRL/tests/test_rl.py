@@ -233,3 +233,18 @@ class TestKerasAgent(TestCase):
         self.assertAlmostEqual(scaled_action.item(), exp.item(), places=5,
                                msg="scale_action_for_step is wrong!")
     pass
+
+
+class TestFullEnv(TestCase):
+    """Tests the room RL environment.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.ds = choose_dataset('Model_Room43', seq_len=20)
+
+    def test_something(self):
+        pass
+
+    pass

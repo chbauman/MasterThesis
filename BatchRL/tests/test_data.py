@@ -1,4 +1,3 @@
-import os
 from unittest import TestCase
 
 import numpy as np
@@ -6,7 +5,6 @@ import numpy as np
 from data_processing.data import TestData2
 from data_processing.dataset import ModelDataView, SeriesConstraint, Dataset
 from data_processing.preprocess import standardize, fill_holes_linear_interpolate, remove_outliers, clean_data
-from rest.client import DataStruct
 from util.numerics import nan_array_equal, num_nans
 from util.visualize import plot_dataset
 
