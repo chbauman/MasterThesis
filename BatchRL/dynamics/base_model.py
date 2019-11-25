@@ -575,16 +575,20 @@ class BaseDynamicsModel(KerasBase, ABC):
         if verbose:
             print(f"Analyzing performance of {self.name}")
 
-        d = self.data
+        # Specify the parts of the data to use
         parts = ["train", "val"]
-        ext_list = ["Train", "Validation"]
-        ext_list = [f"{e}_All" for e in ext_list]
+
+        # Get the data
+        d = self.data
+
+        # Create file names
+        ext_list = [s.capitalize() for s in parts]
         save_names = [f"Perf_{e}_dt_{d.dt}.txt" for e in ext_list]
         save_names = [f"Perf_Inds_dt_{d.dt}.txt"] + save_names
+        save_names = [self.get_plt_path(s) for s in save_names]
 
         # Check if file already exists
-        plot_path = self.get_plt_path(save_names[0])
-        if not overwrite and os.path.isfile(plot_path):
+        if not overwrite and os.path.isfile(save_names[0]):
             return
 
         # Performance values
@@ -596,7 +600,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         for ct, p_str in enumerate(parts):
 
             # Get relevant data
-            dat_1, dat_2, n = d.get_streak(p_str)
+            dat_1, dat_2, n = d.get_streak(p_str, use_max_len=True)
             in_d, out_d = np.copy(dat_1), np.copy(dat_2)
 
             # Compute n-step predictions
@@ -613,7 +617,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                     k_prep = self.data.to_prepared(k_orig_arr)[0]
 
                     # Compute performance
-                    perf = mse(out_d[:, k_prep], full_pred[:, k])
+                    perf = mse(out_d[(n_ts - 1):, k_prep], full_pred[:, k])
                     perf_values[ct, k, step_ct] = perf
 
         # Save performances

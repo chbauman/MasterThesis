@@ -209,6 +209,10 @@ class TestBaseDynamics(TestCase):
         for k in range(3):
             self.assertTrue(np.array_equal(streak_after[k], streak[k]), "Streak data was changed during analysis!")
 
+    def test_analyze_performance(self):
+        print(self.test_model_2.name)
+        self.test_model_2.analyze_performance(n_steps=(1, 3), overwrite=True)
+
     def test_const_series_test_model(self):
         # Test the test model
         n_feat = self.ds_1.d - self.ds_1.n_c

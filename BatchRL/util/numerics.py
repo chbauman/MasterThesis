@@ -16,8 +16,9 @@ def mse(arr1: np.ndarray, arr2: np.ndarray) -> float:
     Returns:
         MSE between `arr1` and `arr2`.
     """
-    if arr1.shape != arr2.shape:
-        raise ValueError("Shape mismatch!!")
+    s1, s2 = arr1.shape, arr2.shape
+    if s1 != s2:
+        raise ValueError(f"Shape mismatch: {s1} != {s2}!!")
     return ((arr1 - arr2) ** 2).mean()
 
 
