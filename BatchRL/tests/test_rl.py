@@ -14,7 +14,7 @@ from util.numerics import rem_mean_and_std, add_mean_and_std
 from util.util import Arr
 
 
-def get_keras_test_agent(env: RLDynEnv) -> KerasBaseAgent:
+def get_keras_test_agent(env: RLDynEnv) -> DDPGBaseAgent:
     """Defines a keras DDPG agent for testing.
 
     Args:

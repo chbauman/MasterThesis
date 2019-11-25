@@ -382,15 +382,26 @@ def get_model(name: str, ds: Dataset,
 
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
+
+    # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
     mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
                     rnn_consts=rnn_consts_full, fit=True, from_hop=True)
-    # mod.analyze(overwrite=False, plot_acf=False)
 
+    # Setup env
     assert isinstance(mod, CompositeModel), "Model not suited"
     full_env = RoomBatteryEnv(mod)
-    full_env.reset()
-    full_env.step(np.array([0.5, 10.0]))
+
+    # Define agent and fit
+    ac_range_list = full_env.action_range
+    ddpg_ag = DDPGBaseAgent(full_env, n_steps=5,
+                            layers=(5,),
+                            action_range=ac_range_list)
+    ddpg_ag.fit(verbose=1)
+
+    # Evaluate
+    full_env.detailed_eval_agents([ddpg_ag, ag2], n_steps=3, use_noise=False)
+
     return
 
 

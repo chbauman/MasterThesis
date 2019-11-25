@@ -48,17 +48,24 @@ class ConstActionAgent(AgentBase):
     to compare an agent to always heating or never heating.
     Does not really need the environment.
     """
-    rule: float  #: The constant control input / action.
+    rule: Arr  #: The constant control input / action.
     out_num: int  #: The dimensionality of the action space.
 
-    def __init__(self, env, rule: float):
+    def __init__(self, env, rule: Arr):
         super().__init__(env, name=f"Const_{rule}")
 
         self.out_num = env.nb_actions
         self.rule = rule
 
+        # Check rule
+        if isinstance(rule, (np.ndarray, np.generic) ):
+            assert rule.shape == (self.out_num, )
+
     def get_action(self, state) -> Arr:
         """Defines the control strategy.
+
+        Using broadcasting it can handle numpy array rules
+        of shape (`out_num`, )
 
         Args:
             state: The current state.
