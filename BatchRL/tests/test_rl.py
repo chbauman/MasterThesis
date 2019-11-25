@@ -201,7 +201,7 @@ class KerasDDPGTest(DDPGBaseAgent):
             assert len(action_range) == env.nb_actions, "Wrong amount of ranges!"
         self.action_range = action_range
 
-    def fit(self) -> None:
+    def fit(self, verbose: int = 0) -> None:
         pass
 
     def load_if_exists(self, m, name: str) -> bool:
@@ -306,4 +306,5 @@ class TestFullEnv(TestCase):
     def test_ddpg_test_agent(self):
         ddpg_ag = get_keras_test_agent(self.full_env)
         ddpg_ag.fit(verbose=0)
+
     pass

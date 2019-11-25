@@ -400,7 +400,7 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run current experiments
-    curr_tests()
+    # curr_tests()
 
     # Run integration tests.
     # run_integration_tests()
@@ -409,7 +409,7 @@ def main() -> None:
     # run_dynamic_model_hyperopt(use_bat_data=True)
 
     # Fit and analyze all models
-    # run_dynamic_model_fit_from_hop()
+    run_dynamic_model_fit_from_hop()
 
     # Train and analyze the battery model
     # run_battery()

@@ -400,7 +400,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                    dpi=500)
 
     @train_decorator(True)
-    def fit(self) -> None:
+    def fit(self, verbose: int = 0) -> None:
         """Fit the model if it hasn't been fitted before.
 
         Else it loads the trained model.
