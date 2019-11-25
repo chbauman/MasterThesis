@@ -6,6 +6,21 @@ import scipy.optimize
 from util.util import datetime_to_np_datetime, string_to_dt, Arr, Num, tot_size
 
 
+def mse(arr1: np.ndarray, arr2: np.ndarray) -> float:
+    """Computes the mean square error between two arrays.
+
+    Args:
+        arr1: First array.
+        arr2: Second array.
+
+    Returns:
+        MSE between `arr1` and `arr2`.
+    """
+    if arr1.shape != arr2.shape:
+        raise ValueError("Shape mismatch!!")
+    return ((arr1 - arr2) ** 2).mean()
+
+
 def num_nans(arr: np.ndarray) -> int:
     """Computes the number of nans in an array."""
     return np.sum(np.isnan(arr)).item()

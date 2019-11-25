@@ -8,7 +8,7 @@ from data_processing.dataset import Dataset
 from tests.test_data import construct_test_ds
 from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
-from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1
+from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32
 from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt, rem_dirs
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf
 
@@ -385,7 +385,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         """Creates a plot that shows the performance of the
         trained model when predicting a fixed number of timesteps into
         the future.
-        If predict_ind is None, all series that can be
+        If `predict_ind` is None, all series that can be
         predicted are predicted simultaneously and each predicted
         series is plotted individually.
 
@@ -569,24 +569,77 @@ class BaseDynamicsModel(KerasBase, ABC):
                                     overwrite=overwrite)
 
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
-                            verbose: int = 0):
+                            verbose: int = 0,
+                            overwrite: bool = False,
+                            make_plots: bool = False):
         # Print to console
         if verbose:
             print(f"Analyzing performance of {self.name}")
 
         d = self.data
+        dt = d.dt
         parts = ["train", "val"]
         ext_list = ["Train", "Validation"]
         ext_list = [e + "_All" for e in ext_list]
 
+        # Check if plot file already exists
+        time_str = mins_to_str(dt * n_steps[0])
+        name = time_str + 'Ahead_0_' + ext_list[0] + '.pdf'
+        plot_path = self.get_plt_path(name)
+        if not overwrite and os.path.isfile(plot_path):
+            return
+
+        # Performance values
+        n_pred = len(self.out_inds)
+        n_n_steps = len(n_steps)
+        perf_values = npf32((n_pred, n_n_steps))
+
         for ct, p_str in enumerate(parts):
+
+            ext = ext_list[ct]
+
+            # Get relevant data
             dat_1, dat_2, n = d.get_streak(p_str)
             dat = [dat_1, dat_2]
             dat_copy = copy_arr_list(dat)
+            in_d, out_d = dat
+            s = in_d.shape
             self.const_nts_plot(dat_copy, n_steps, ext=ext_list[ct], n_ts_off=n,
                                 overwrite=False)
-            pass
-        pass
+
+            # Compute n-step predictions
+            for n_ts in n_steps:
+
+                # Predict
+                full_pred = self.n_step_predict([in_d, out_d], n_ts, pred_ind=None)
+
+                # Plot all
+                for k in range(n_pred):
+                    # Handle indices
+                    k_orig = self.out_inds[k]
+                    k_orig_arr = np.array([k_orig])
+                    k_prep = self.data.to_prepared(k_orig_arr)[0]
+
+                    # Extract data
+                    curr_truth = np.copy(out_d[:, k_prep])
+                    curr_pred = np.copy(full_pred[:, k])
+
+                    # Compute performance
+                    perf = mse(curr_truth, curr_pred)
+
+                    if make_plots:
+                        # Construct dataset and plot them
+                        new_ds = get_plot_ds(s, curr_truth, d, k_orig_arr, 0)
+                        desc = d.descriptions[k_orig]
+                        new_ds.data[(n_ts - 1):, 0] = curr_pred
+                        new_ds.data[:(n_ts - 1), 0] = np.nan
+                        time_str = mins_to_str(dt * n_ts)
+                        title_and_ylab = [time_str + ' Ahead Predictions', desc]
+                        s_name = self.get_plt_path(time_str + 'Ahead_' + str(k) + "_" + ext)
+                        plot_dataset(new_ds,
+                                     show=False,
+                                     title_and_ylab=title_and_ylab,
+                                     save_name=s_name)
 
     def analyze_6_days(self) -> None:
         """Analyzes this model using the 7 day streaks.
