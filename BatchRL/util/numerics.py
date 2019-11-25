@@ -1,4 +1,4 @@
-from typing import Tuple, Sequence, Any
+from typing import Tuple, Sequence, Any, List
 
 import numpy as np
 import scipy.optimize
@@ -19,6 +19,27 @@ def mse(arr1: np.ndarray, arr2: np.ndarray) -> float:
     if arr1.shape != arr2.shape:
         raise ValueError("Shape mismatch!!")
     return ((arr1 - arr2) ** 2).mean()
+
+
+def save_performance(perf_arr: np.ndarray, n_steps: Sequence[int], file_names: List[str]) -> None:
+
+    # Check input
+    sh = perf_arr.shape
+    if not check_dim(perf_arr, 3):
+        raise ValueError("Array needs exactly 3 dimensions!")
+    if sh[0] + 1 != len(file_names):
+        raise ValueError("Incorrect number of filenames provided!")
+    if sh[2] != len(n_steps):
+        raise ValueError("Wrong shape in 3rd dimension.")
+
+    # Save n steps info
+    step_data = np.array(n_steps, dtype=np.int32)
+    # TODO: Fix the fucking warning!?!?!?!
+    np.savetxt(file_names[0], step_data)
+
+    # Save all other files
+    for ct, k in enumerate(file_names):
+        np.savetxt(file_names[ct + 1], perf_arr[ct])
 
 
 def num_nans(arr: np.ndarray) -> int:
