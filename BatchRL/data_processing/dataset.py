@@ -804,7 +804,8 @@ class ModelDataView:
             n_timesteps = end_ind - i
 
         assert i != -1, "This should never ever happen, " \
-                        "there should have been a ValueError before!"
+                        "there should have been a ValueError before, I " \
+                        "seriously fucked up here!"
 
         # Get the data, cut and return
         data = self.get_rel_data()[i:(i + n_timesteps)]

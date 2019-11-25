@@ -178,6 +178,17 @@ class TestDataset(TestCase):
         if not np.array_equal(dis_dat, exp_dis) or not np.array_equal(dis_inds, np.array([2])):
             raise AssertionError("Something in extract_disjoint_streaks is fucking wrong!!")
 
+    def test_model_data_view_4(self):
+        # Test longest streak extraction
+        dis_dat, i = self.mdv.extract_streak(3, True, True)
+        exp_dat = np.array([
+            self.dat_nan[4:6],
+            self.dat_nan[5:7],
+            self.dat_nan[6:8],
+        ])
+        self.assertTrue(np.array_equal(dis_dat, exp_dat), "Extracted data wrong!")
+        self.assertEqual(i, 2, "Extracted indices wrong!")
+
     def test_split_data(self):
         # Test split_data
         test_dat = self.ds_nan.split_dict['test'].get_rel_data()
