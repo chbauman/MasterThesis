@@ -461,9 +461,11 @@ class BaseDynamicsModel(KerasBase, ABC):
                            overwrite: bool = True) -> None:
         """Makes a plot by continuously predicting with
         the fitted model and comparing it to the ground
-        truth. If predict_ind is None, all series that can be
+        truth. If `predict_ind` is None, all series that can be
         predicted are predicted simultaneously and each predicted
         series is plotted individually.
+
+        TODO: Refactor this, this is very ugly!
 
         Args:
             predict_ind: The index of the series to be plotted. If None, all series are plotted.
@@ -546,33 +548,44 @@ class BaseDynamicsModel(KerasBase, ABC):
                 plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResACF_{k}'))
                 plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResPACF_{k}'), partial=True)
 
-        # Prepare the data
-        dat_train = d.get_streak('train')
-        dat_val = d.get_streak('val')
+        # Define the string lists
+        parts = ["train", "val"]
+        ext_list = ["Train", "Validation"]
+        ext_list = [e + "_All" for e in ext_list]
 
-        n_train = dat_train[2]
-        n_val = dat_val[2]
-        dat_train = [dat_train[0], dat_train[1]]
-        dat_val = [dat_val[0], dat_val[1]]
+        # Do the same for train and validation set
+        for ct, p_str in enumerate(parts):
+            dat_1, dat_2, n = d.get_streak(p_str)
+            dat = [dat_1, dat_2]
+            dat_copy = copy_arr_list(dat)
 
-        # Plot for fixed number of time-steps
-        val_copy = copy_arr_list(dat_val)
-        train_copy = copy_arr_list(dat_train)
-        self.const_nts_plot(val_copy, n_steps, ext='Validation_All', n_ts_off=n_val,
-                            overwrite=overwrite)
-        self.const_nts_plot(train_copy, n_steps, ext='Train_All', n_ts_off=n_train,
-                            overwrite=overwrite)
-
-        # Plot for continuous predictions
-        self.one_week_pred_plot(copy_arr_list(dat_val), "Validation_All",
-                                n_ts_off=n_val,
-                                overwrite=overwrite)
-        self.one_week_pred_plot(copy_arr_list(dat_train), "Train_All",
-                                n_ts_off=n_train,
+            # Plot for fixed number of time-steps
+            self.const_nts_plot(dat_copy, n_steps, ext=ext_list[ct], n_ts_off=n,
                                 overwrite=overwrite)
 
-    def analyze_performance(self, n_steps: Sequence = (1, 4, 20),):
+            # Plot for continuous predictions
+            self.one_week_pred_plot(copy_arr_list(dat_copy), ext_list[ct],
+                                    n_ts_off=n,
+                                    overwrite=overwrite)
 
+    def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
+                            verbose: int = 0):
+        # Print to console
+        if verbose:
+            print(f"Analyzing performance of {self.name}")
+
+        d = self.data
+        parts = ["train", "val"]
+        ext_list = ["Train", "Validation"]
+        ext_list = [e + "_All" for e in ext_list]
+
+        for ct, p_str in enumerate(parts):
+            dat_1, dat_2, n = d.get_streak(p_str)
+            dat = [dat_1, dat_2]
+            dat_copy = copy_arr_list(dat)
+            self.const_nts_plot(dat_copy, n_steps, ext=ext_list[ct], n_ts_off=n,
+                                overwrite=False)
+            pass
         pass
 
     def analyze_6_days(self) -> None:
