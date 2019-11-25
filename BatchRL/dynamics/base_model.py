@@ -570,7 +570,16 @@ class BaseDynamicsModel(KerasBase, ABC):
 
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
                             verbose: int = 0,
-                            overwrite: bool = False):
+                            overwrite: bool = False) -> None:
+        """Analyzes the multistep prediction performance of the model.
+
+        TODO: Implement scaling to get meaningful error.
+
+        Args:
+            n_steps: The list with the timesteps to predict.
+            verbose: Whether to output to console.
+            overwrite: Whether to overwrite existing files.
+        """
         # Print to console
         if verbose:
             print(f"Analyzing performance of {self.name}")
@@ -582,9 +591,8 @@ class BaseDynamicsModel(KerasBase, ABC):
         d = self.data
 
         # Create file names
-        ext_list = [s.capitalize() for s in parts]
+        ext_list = ["Inds"] + [s.capitalize() for s in parts]
         save_names = [f"Perf_{e}_dt_{d.dt}.txt" for e in ext_list]
-        save_names = [f"Perf_Inds_dt_{d.dt}.txt"] + save_names
         save_names = [self.get_plt_path(s) for s in save_names]
 
         # Check if file already exists
