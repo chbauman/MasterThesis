@@ -7,7 +7,7 @@ import numpy as np
 from agents.agents_heuristic import ConstActionAgent
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
-    num_nans
+    num_nans, find_longest_streak
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet
 from util.visualize import plot_dir, plot_reward_details
@@ -79,6 +79,17 @@ class TestNumerics(TestCase):
         d1_exp = self.data_array_with_nans[:6]
         if not nan_array_equal(d2, d2_exp) or n != 7 or not nan_array_equal(d1, d1_exp):
             raise AssertionError("extract_streak not working correctly!!")
+
+    def test_longest_sequence(self):
+        # Test find_longest_streak
+        ex_1 = (0, 1)
+        ls_first = find_longest_streak(self.bool_vec, last=False)
+        ls_last = find_longest_streak(self.bool_vec, last=True)
+        self.assertEqual(ls_first, ex_1, "find_longest_streak incorrect!")
+        self.assertEqual(ls_last, (7, 8), "find_longest_streak incorrect!")
+        another_bool = np.array([0, 1, 1, 1, 0, 1, 0], dtype=np.bool)
+        ls_last = find_longest_streak(another_bool, last=True)
+        self.assertEqual(ls_last, (1, 4), "find_longest_streak incorrect!")
 
     def test_seq_cutting(self):
         # Test sequence cutting

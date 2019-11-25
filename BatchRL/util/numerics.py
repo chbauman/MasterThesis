@@ -450,6 +450,38 @@ def find_all_streaks(col_has_nan: np.ndarray, s_len: int) -> np.ndarray:
     return inds
 
 
+def find_longest_streak(a1: np.ndarray,
+                        last: bool = True,
+                        seq_val: int = 1) -> Tuple[int, int]:
+    """Finds the longest sequence of True in the bool array `a1`.
+
+    From: https://stackoverflow.com/questions/38161606/find-the-start-position-of-the-longest-sequence-of-1s
+    And: https://stackoverflow.com/questions/17568612/how-to-make-numpy-argmax-return-all-occurrences-of-the-maximum/17568803 # noqa
+
+    Args:
+        a1: The 1d boolean array to analyze.
+        last: Whether to return the last of the longest sequences
+            when multiple occur.
+        seq_val: Value of which the sequence is made off.
+
+    Returns:
+        The start index and the length of the sequence.
+    """
+    # Decide whether to use the last or the first occurrence
+    max_ind = -1 if last else 0
+
+    # Get start, stop index pairs for islands/seq. of 1s
+    idx_pairs = np.where(np.diff(np.hstack(([False], a1 == seq_val, [False]))))[0].reshape(-1, 2)
+
+    # Get the island lengths, whose argmax would give us the ID of longest island.
+    # Start index of that island would be the desired output
+    lengths = np.diff(idx_pairs, axis=1).reshape((-1,))
+    all_argmax = np.argwhere(lengths == np.amax(lengths)).reshape((-1,))
+    start_seq, end_seq = idx_pairs[all_argmax][max_ind]
+
+    return start_seq, end_seq
+
+
 def cut_data(all_data: np.ndarray, seq_len: int) -> Tuple[np.ndarray, np.ndarray]:
     """Cut the data into sequences.
 
