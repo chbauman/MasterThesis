@@ -3,7 +3,7 @@ from typing import Tuple, Sequence, Any
 import numpy as np
 import scipy.optimize
 
-from util.util import datetime_to_np_datetime, string_to_dt, Arr, Num
+from util.util import datetime_to_np_datetime, string_to_dt, Arr, Num, tot_size
 
 
 def num_nans(arr: np.ndarray) -> int:
@@ -360,16 +360,24 @@ def find_rows_with_nans(all_data: np.ndarray) -> np.ndarray:
     rows of 'all_dat' contain NaNs.
 
     Args:
-        all_data: Numpy array with data series as columns.
+        all_data: 2d numpy array with data series as columns.
 
     Returns:
         1D array of bool specifying rows containing nans.
-    """
-    n = all_data.shape[0]
-    m = all_data.shape[1]
-    row_has_nan = np.empty((n,), dtype=np.bool)
-    row_has_nan.fill(False)
 
+    Raises:
+        ValueError: If the provided array is not 2d, or has size 0.
+    """
+    # Check shape of data
+    sh = all_data.shape
+    if not check_dim(all_data, 2) or tot_size(sh) == 0:
+        raise ValueError("Invalid data")
+
+    # Initialize
+    n, m = sh
+    row_has_nan = np.empty((n,), dtype=np.bool).fill(False)
+
+    # Apply or over all columns
     for k in range(m):
         row_has_nan = np.logical_or(row_has_nan, np.isnan(all_data[:, k]))
 
