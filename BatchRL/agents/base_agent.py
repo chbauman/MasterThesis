@@ -20,7 +20,7 @@ class AgentBase(ABC):
         self.env = env
         self.name = name
 
-    def fit(self) -> None:
+    def fit(self, verbose: int = 0) -> None:
         """No fitting needed."""
         pass
 
