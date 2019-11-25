@@ -520,10 +520,10 @@ class BaseDynamicsModel(KerasBase, ABC):
                          title_and_ylab=title_and_ylab,
                          save_name=self.get_plt_path('OneWeek' + ext))
 
-    def analyze(self, plot_acf: bool = True,
-                n_steps: Sequence = (1, 4, 20),
-                overwrite: bool = False,
-                verbose: bool = True) -> None:
+    def analyze_visually(self, plot_acf: bool = True,
+                         n_steps: Sequence = (1, 4, 20),
+                         overwrite: bool = False,
+                         verbose: bool = True) -> None:
         """Analyzes the trained model.
 
         Makes some plots using the fitted model and the streak data.
@@ -571,8 +571,15 @@ class BaseDynamicsModel(KerasBase, ABC):
                                 n_ts_off=n_train,
                                 overwrite=overwrite)
 
+    def analyze_performance(self, n_steps: Sequence = (1, 4, 20),):
+
+        pass
+
     def analyze_6_days(self) -> None:
-        """Analyzes this model using the 7 day streaks."""
+        """Analyzes this model using the 7 day streaks.
+
+        Deprecated!
+        """
         d = self.data
         n = 60 * 24 // d.dt
 
@@ -696,7 +703,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             series_ind = d.to_prepared(np.array([series_ind]))
         elif series_ind is None:
             series_ind = self.p_out_inds
-        in_d, out_d, _ = d.get_streak('val')
+        in_d, out_d, _ = d.get_streak('val', use_max_len=True)
         tr = np.copy(out_d[:, series_ind])
 
         # Predict and compute residuals

@@ -71,9 +71,9 @@ def run_battery() -> None:
     # Initialize and fit battery model.
     bat_mod = BatteryModel(bat_ds)
     bat_mod.analyze_bat_model()
-    bat_mod.analyze()
+    bat_mod.analyze_visually()
     # bat_mod_naive = ConstModel(bat_ds)
-    # bat_mod_naive.analyze()
+    # bat_mod_naive.analyze_visually()
 
     # Define the environment and agents.
     bat_env = BatteryEnv(bat_mod,
@@ -145,7 +145,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
 
     # Fit or load all initialized models
     for name, m_to_use in all_mods.items():
-        m_to_use.analyze(overwrite=False)
+        m_to_use.analyze_visually(overwrite=False)
         if verbose:
             print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
 
@@ -161,7 +161,7 @@ def run_room_models() -> None:
     for m_name in full_models[0:1]:
         # Load the model and init env
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
-        m.analyze(overwrite=False, plot_acf=False)
+        m.analyze_visually(overwrite=False, plot_acf=False)
         env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3)
 
         # Define default agents and compare

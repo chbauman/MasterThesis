@@ -203,7 +203,7 @@ class TestBaseDynamics(TestCase):
         # Test model analysis
         base_data = np.copy(self.ds_1.data)
         streak = copy_arr_list(self.ds_1.get_streak("train"))
-        self.test_model_2.analyze(plot_acf=False, n_steps=(2,), verbose=False)
+        self.test_model_2.analyze_visually(plot_acf=False, n_steps=(2,), verbose=False)
         streak_after = self.ds_1.get_streak("train")
         self.assertTrue(np.array_equal(base_data, self.ds_1.data), "Data was changed during analysis!")
         for k in range(3):
@@ -350,7 +350,7 @@ class TestComposite(TestCase):
         assert np.array_equal(exp_out_4, act_out), "Composite model prediction wrong!"
 
     def test_analyze(self):
-        # Test analyze()
+        # Test analyze_visually()
         m9 = ConstSeriesTestModel(self.ds_1,
                                   pred_val_list=[2.0],
                                   predict_input_check=self.inds_2,
@@ -362,7 +362,7 @@ class TestComposite(TestCase):
                                    out_indices=np.array([0, 3], dtype=np.int32),
                                    in_indices=self.inds_123)
         mc5 = CompositeModel(self.ds_1, [m9, m10], new_name="CompositeTest4")
-        mc5.analyze(plot_acf=False, verbose=False, n_steps=(2,))
+        mc5.analyze_visually(plot_acf=False, verbose=False, n_steps=(2,))
 
     def test_full_composite(self):
         # Define model
