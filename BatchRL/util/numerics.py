@@ -22,7 +22,16 @@ def mse(arr1: np.ndarray, arr2: np.ndarray) -> float:
 
 
 def save_performance(perf_arr: np.ndarray, n_steps: Sequence[int], file_names: List[str]) -> None:
+    """Saves the performance evaluation results from a dynamics model.
 
+    Also saves an extra file with the `n_steps`, its filename
+    must be contained in the filename list `file_names`.
+
+    Args:
+        perf_arr: The array containing the results.
+        n_steps: The number of steps that were used to evaluate.
+        file_names: A list of file names.
+    """
     # Check input
     sh = perf_arr.shape
     if not check_dim(perf_arr, 3):
@@ -35,10 +44,10 @@ def save_performance(perf_arr: np.ndarray, n_steps: Sequence[int], file_names: L
     # Save n steps info
     step_data = np.array(n_steps, dtype=np.int32)
     # TODO: Fix the fucking warning!?!?!?!
-    np.savetxt(file_names[0], step_data)
+    np.savetxt(file_names[0], step_data, fmt="%i")
 
     # Save all other files
-    for ct, k in enumerate(file_names):
+    for ct, k in enumerate(file_names[1:]):
         np.savetxt(file_names[ct + 1], perf_arr[ct])
 
 

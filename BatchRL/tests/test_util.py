@@ -7,10 +7,13 @@ import numpy as np
 from agents.agents_heuristic import ConstActionAgent
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
-    num_nans, find_longest_streak, mse
+    num_nans, find_longest_streak, mse, save_performance
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet
 from util.visualize import plot_dir, plot_reward_details
+
+
+TEST_DIR = "../Plots/Test/"  #: Directory for test output.
 
 
 class TestNumerics(TestCase):
@@ -214,6 +217,12 @@ class TestNumerics(TestCase):
         arr1 = npf32(sh, fill=np.nan)
         self.assertEqual(num_nans(arr1), tot_size(sh), "num_nans incorrect!")
 
+    def test_save_performance(self):
+        n, n_f = 4, 2
+        inds = range(n)
+        np_arr = np.ones((n_f, 3, n))
+        f_names = [os.path.join(TEST_DIR, f"tsp_{i}.txt") for i in range(n_f + 1)]
+        save_performance(np_arr, inds, f_names)
     pass
 
 
