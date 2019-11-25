@@ -44,8 +44,7 @@ def save_performance(perf_arr: np.ndarray, n_steps: Sequence[int], file_names: L
 
     # Save n steps info
     step_data = np.array(n_steps, dtype=np.int32)
-    # TODO: Fix the fucking warning!?!?!?!
-    np.savetxt(file_names[0], step_data, fmt="%i")
+    np.savetxt(file_names[0], step_data[:], fmt="%i")
 
     # Save all other files
     for ct, k in enumerate(file_names[1:]):

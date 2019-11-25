@@ -820,8 +820,7 @@ def test_dyn_model() -> None:
 
     DEPRECATED: Use unit tests!
 
-    Returns:
-        None
+    TODO: Make unit tests out of this function.
 
     Raises:
         AssertionError: If a test fails.
