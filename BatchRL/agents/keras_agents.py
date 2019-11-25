@@ -37,6 +37,9 @@ class KerasBaseAgent(AgentBase, KerasBase):
 
     def get_action(self, state):
         """Use the keras-rl model to get an action."""
+        if self.m.training:
+            # TODO: Is this OK?
+            self.m.training = False
         assert not self.m.training, "Still in training mode!"
         return self.m.forward(state)
 
@@ -124,7 +127,7 @@ class NAFBaseAgent(KerasBaseAgent):
                           gamma=.99, target_model_update=1e-3)
         self.m.compile(Adam(lr=.001, clipnorm=1.), metrics=['mae'])
 
-    def fit(self) -> None:
+    def fit(self, verbose: int = 0) -> None:
         # Fit and plot rewards
         hist = self.m.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
         train_plot = self.env.get_plt_path("test")

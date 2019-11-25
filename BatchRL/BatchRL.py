@@ -390,17 +390,20 @@ def curr_tests() -> None:
 
     # Setup env
     assert isinstance(mod, CompositeModel), "Model not suited"
-    full_env = RoomBatteryEnv(mod)
+    full_env = RoomBatteryEnv(mod, max_eps=24)
 
     # Define agent and fit
     ac_range_list = full_env.action_range
-    ddpg_ag = DDPGBaseAgent(full_env, n_steps=5,
-                            layers=(5,),
+    ddpg_ag = DDPGBaseAgent(full_env, n_steps=1000,
+                            layers=(10, 10),
                             action_range=ac_range_list)
     ddpg_ag.fit(verbose=1)
 
+    # Define agents to compare with.
+    ag1 = ConstActionAgent(full_env, np.array([0.0, 0.0], dtype=np.float32))
+
     # Evaluate
-    full_env.detailed_eval_agents([ddpg_ag, ag2], n_steps=3, use_noise=False)
+    full_env.detailed_eval_agents([ddpg_ag, ag1], n_steps=3, use_noise=False)
 
     return
 
@@ -411,7 +414,7 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run current experiments
-    # curr_tests()
+    curr_tests()
 
     # Run integration tests.
     # run_integration_tests()
@@ -420,7 +423,7 @@ def main() -> None:
     # run_dynamic_model_hyperopt(use_bat_data=True)
 
     # Fit and analyze all models
-    run_dynamic_model_fit_from_hop()
+    # run_dynamic_model_fit_from_hop()
 
     # Train and analyze the battery model
     # run_battery()
