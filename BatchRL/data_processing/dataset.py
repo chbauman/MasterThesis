@@ -12,7 +12,8 @@ import numpy as np
 
 from rest.client import save_dir
 from util.numerics import get_shape1, check_in_range, prepare_supervised_control, align_ts, add_mean_and_std, \
-    has_duplicates, trf_mean_and_std, cut_data, find_rows_with_nans, find_all_streaks, find_disjoint_streaks
+    has_duplicates, trf_mean_and_std, cut_data, find_rows_with_nans, find_all_streaks, find_disjoint_streaks, \
+    find_longest_streak
 from util.util import day_offset_ts, ts_per_day, datetime_to_np_datetime, string_to_dt, create_dir, Arr, \
     n_mins_to_np_dt, str_to_np_dt, np_dt_to_str, repl
 from util.visualize import plot_dir, plot_all
@@ -179,13 +180,15 @@ class Dataset:
             raise ValueError(f"{part_str} is not valid for specifying a part of the data!")
 
     def get_streak(self, str_desc: str, n_days: int = 7,
-                   other_len: int = None) -> Tuple[np.ndarray, np.ndarray, int]:
+                   other_len: int = None,
+                   use_max_len: bool = False) -> Tuple[np.ndarray, np.ndarray, int]:
         """Extracts a streak from the selected part of the dataset.
 
         Args:
             str_desc: Part of the dataset, in ['train', 'val', 'test']
             n_days: Number of days in a streak.
             other_len: If set, returns all streaks of that length, including initial steps.
+            use_max_len: Whether to use the longest available streak instead.
 
         Returns:
             Streak data prepared for supervised training and an offset in timesteps
@@ -199,7 +202,7 @@ class Dataset:
         s_len_curr += self.seq_len - 1
 
         # Extract, prepare and return
-        sequences, streak_offs = mdv.extract_streak(s_len_curr)
+        sequences, streak_offs = mdv.extract_streak(s_len_curr, use_max_len=use_max_len)
         n_off += streak_offs
         input_data, output_data = prepare_supervised_control(sequences, self.c_inds, False)
         return input_data, output_data, n_off
@@ -760,7 +763,8 @@ class ModelDataView:
         """
         return self._get_data(self.n, self.n + self.n_len)
 
-    def extract_streak(self, n_timesteps: int, take_last: bool = True) -> Tuple[np.ndarray, int]:
+    def extract_streak(self, n_timesteps: int, take_last: bool = True,
+                       use_max_len: bool = False) -> Tuple[np.ndarray, int]:
         """Extracts a streak of length `n_timesteps` from the associated data.
 
         If `take_last` is True, then the last such streak is returned,
@@ -769,22 +773,38 @@ class ModelDataView:
         Args:
             n_timesteps: The required length of the streak.
             take_last: Whether to use the last possible streak or the first.
+            use_max_len: Whether to extract the longest available sequence instead.
 
         Returns:
             A streak of length `n_timesteps`.
         """
-        return self._extract_streak((n_timesteps, take_last))
+        return self._extract_streak((n_timesteps, take_last, use_max_len))
 
-    def _extract_streak(self, n: Tuple[int, bool]) -> Tuple[np.ndarray, int]:
+    def _extract_streak(self, n: Tuple[int, bool, bool]) -> Tuple[np.ndarray, int]:
         # Extract parameters
-        n_timesteps, take_last = n
+        n_timesteps, take_last, use_max_len = n
+
+        # Initialize i
+        i = -1
 
         # Find nans and all streaks
         nans = find_rows_with_nans(self.get_rel_data())
-        inds = find_all_streaks(nans, n_timesteps)
-        if len(inds) < 1:
-            raise ValueError("No streak of length {} found!!".format(n_timesteps))
-        i = inds[-1] if take_last else inds[0]
+        if not use_max_len:
+            # Find sequence of specified size, if not found, use longest available one.
+            inds = find_all_streaks(nans, n_timesteps)
+            if len(inds) < 1:
+                warnings.warn(f"No streak of length {n_timesteps} found, using "
+                              f"longest available one instead!!")
+                use_max_len = True
+            i = inds[-1] if take_last else inds[0]
+
+        if use_max_len:
+            # Use the longest available sequence
+            i, end_ind = find_longest_streak(nans, last=take_last, seq_val=False)
+            n_timesteps = end_ind - i
+
+        assert i != -1, "This should never ever happen, " \
+                        "there should have been a ValueError before!"
 
         # Get the data, cut and return
         data = self.get_rel_data()[i:(i + n_timesteps)]

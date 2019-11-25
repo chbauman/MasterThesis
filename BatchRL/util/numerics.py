@@ -466,6 +466,9 @@ def find_longest_streak(a1: np.ndarray,
 
     Returns:
         The start index and the length of the sequence.
+
+    Raises:
+        ValueError: If there is no occurrence of `seq_val` in `a1`.
     """
     # Decide whether to use the last or the first occurrence
     max_ind = -1 if last else 0

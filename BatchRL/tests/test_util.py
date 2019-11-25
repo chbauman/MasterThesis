@@ -90,6 +90,9 @@ class TestNumerics(TestCase):
         another_bool = np.array([0, 1, 1, 1, 0, 1, 0], dtype=np.bool)
         ls_last = find_longest_streak(another_bool, last=True)
         self.assertEqual(ls_last, (1, 4), "find_longest_streak incorrect!")
+        one_only = np.array([1, 1, 1, 1])
+        with self.assertRaises(ValueError):
+            find_longest_streak(one_only, last=True, seq_val=0)
 
     def test_seq_cutting(self):
         # Test sequence cutting
