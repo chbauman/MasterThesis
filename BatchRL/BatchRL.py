@@ -51,6 +51,8 @@ def run_integration_tests() -> None:
     test_rest_client()
     get_data_test()
 
+
+def test_cleanup():
     # Do some cleanup.
     cleanup_test_data()
 
@@ -420,7 +422,8 @@ def main() -> None:
     # curr_tests()
 
     # Run integration tests.
-    run_integration_tests()
+    # run_integration_tests()
+    test_cleanup()
 
     # Run hyperparameter optimization
     # run_dynamic_model_hyperopt(use_bat_data=True)
@@ -429,10 +432,10 @@ def main() -> None:
     # run_dynamic_model_fit_from_hop()
 
     # Train and analyze the battery model
-    run_battery()
-    
+    # run_battery()
+
     # Room model
-    # run_room_models()
+    run_room_models()
 
 
 if __name__ == '__main__':
