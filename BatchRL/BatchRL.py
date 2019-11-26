@@ -422,9 +422,9 @@ def main() -> None:
     # Run current experiments
     # curr_tests()
 
-    # Run integration tests.
+    # Run integration tests and optionally the cleanup after.
     # run_integration_tests()
-    test_cleanup()
+    # test_cleanup()
 
     # Run hyperparameter optimization
     # run_dynamic_model_hyperopt(use_bat_data=True)
@@ -433,10 +433,10 @@ def main() -> None:
     # run_dynamic_model_fit_from_hop()
 
     # Train and analyze the battery model
-    # run_battery()
+    run_battery()
 
     # Room model
-    # run_room_models()
+    run_room_models()
 
 
 if __name__ == '__main__':
