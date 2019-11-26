@@ -145,7 +145,7 @@ class DDPGBaseAgent(KerasBaseAgent):
                  n_steps: int = 50000,
                  lr: float = 0.001,
                  gamma: float = 0.9,
-                 layers: Sequence[int] = (100, 100, 100),
+                 layers: Sequence[int] = (100, 100),
                  reg: float = 0.01,
                  action_range: RangeListT = None):
         """Constructor.

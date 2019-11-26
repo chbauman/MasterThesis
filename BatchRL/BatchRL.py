@@ -82,9 +82,15 @@ def run_battery() -> None:
                          n_cont_actions=1)
     const_ag_1 = ConstActionAgent(bat_env, 6.0)  # Charge
     const_ag_2 = ConstActionAgent(bat_env, -3.0)  # Discharge
-    dqn_agent = DDPGBaseAgent(bat_env, action_range=bat_env.action_range,
-                              n_steps=100000, gamma=0.99)
-    bat_env.detailed_eval_agents([const_ag_1, const_ag_2, dqn_agent], use_noise=False, n_steps=1000)
+    n_steps = 1000000 if EULER else 1000
+    dqn_agent = DDPGBaseAgent(bat_env,
+                              action_range=bat_env.action_range,
+                              n_steps=n_steps,
+                              gamma=0.99)
+    n_eval_steps = 10000 if EULER else 100
+    bat_env.detailed_eval_agents([const_ag_1, const_ag_2, dqn_agent],
+                                 use_noise=False,
+                                 n_steps=n_eval_steps)
 
     # Fit agent and evaluate.
     bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
@@ -176,21 +182,16 @@ def run_room_models() -> None:
         # env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
 
         # Choose agent and fit to env.
+        n_steps = 1000000 if EULER else 1000
         if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
-            agent = DDPGBaseAgent(env, action_range=env.action_range,
-                                  n_steps=50000, gamma=0.99, lr=0.00001)
+            agent = DDPGBaseAgent(env,
+                                  action_range=env.action_range,
+                                  n_steps=n_steps,
+                                  gamma=0.99, lr=0.00001)
             agent.fit()
             agent_list = [open_agent, closed_agent, rule_based_agent, agent]
             env.analyze_agents_visually(agent_list)
             env.detailed_eval_agents(agent_list, use_noise=False, n_steps=2000)
-
-
-def analyze_control_influence(m: BaseDynamicsModel):
-    n_actions = 2
-    env = FullRoomEnv(m, n_disc_actions=n_actions)
-    const_ag_1 = ConstActionAgent(env, 0)
-    const_ag_2 = ConstActionAgent(env, n_actions - 1)
-    env.analyze_agents_visually([const_ag_1, const_ag_2])
 
 
 def get_model(name: str, ds: Dataset,
@@ -394,8 +395,10 @@ def curr_tests() -> None:
 
     # Define agent and fit
     ac_range_list = full_env.action_range
-    ddpg_ag = DDPGBaseAgent(full_env, n_steps=1000,
-                            layers=(10, 10),
+    n_steps = 1000000 if EULER else 1000
+    ddpg_ag = DDPGBaseAgent(full_env,
+                            n_steps=n_steps,
+                            layers=(50, 50),
                             action_range=ac_range_list)
     ddpg_ag.fit(verbose=1)
 
@@ -414,10 +417,10 @@ def main() -> None:
     Changes a lot, so I won't put a more accurate description here ;)
     """
     # Run current experiments
-    curr_tests()
+    # curr_tests()
 
     # Run integration tests.
-    # run_integration_tests()
+    run_integration_tests()
 
     # Run hyperparameter optimization
     # run_dynamic_model_hyperopt(use_bat_data=True)
@@ -426,7 +429,10 @@ def main() -> None:
     # run_dynamic_model_fit_from_hop()
 
     # Train and analyze the battery model
-    # run_battery()
+    run_battery()
+    
+    # Room model
+    # run_room_models()
 
 
 if __name__ == '__main__':
