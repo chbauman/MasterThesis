@@ -58,7 +58,7 @@ class ConstActionAgent(AgentBase):
         self.rule = rule
 
         # Check rule
-        if isinstance(rule, (np.ndarray, np.generic) ):
+        if isinstance(rule, (np.ndarray, np.generic)):
             assert rule.shape == (self.out_num, )
 
     def get_action(self, state) -> Arr:

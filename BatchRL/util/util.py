@@ -21,6 +21,7 @@ SEED: int = 42  #: Default seed value.
 
 # Define paths
 model_dir = "../Models"
+dynamic_model_dir = os.path.join(model_dir, "Dynamics")
 
 
 def fix_seed(seed: int = SEED) -> None:
@@ -364,6 +365,8 @@ def train_decorator(verb: bool = True):
     # TODO: Remove `verb` in argument of decorator.
     # TODO: Fix warning when using `verbose` in fit after decorating.
     """
+    if not verb:
+        print("This is deprecated!")
 
     def decorator(fit):
 
@@ -633,6 +636,6 @@ def day_offset_ts(t_init: str, mins: int = 15) -> int:
     return tot_n_ts - n_ts_passed
 
 
-# Define and create folder for stored models
-dynamic_model_dir = os.path.join(model_dir, "Dynamics")
+# Create paths
+create_dir(model_dir)
 create_dir(dynamic_model_dir)
