@@ -8,17 +8,16 @@ from agents.agents_heuristic import ConstActionAgent
 from data_processing.dataset import dataset_data_path
 from dynamics.base_hyperopt import hop_path
 from dynamics.recurrent import RNN_TEST_DATA_NAME
-from rest.client import save_dir
-from tests.test_data import construct_test_ds, SYNTH_DATA_NAME
+from tests.test_data import SYNTH_DATA_NAME
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans, find_longest_streak, mse, save_performance
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
-    model_dir, dynamic_model_dir
+    dynamic_model_dir
 from util.visualize import plot_dir, plot_reward_details, model_plot_path, rl_plot_path
 
-TEST_DIR = "../Plots/Test/"  #: Directory for test output.
+TEST_DIR = os.path.join(plot_dir, "Test")  #: Directory for test output.
 
 
 class TestNumerics(TestCase):
@@ -385,7 +384,7 @@ class TestPlot(TestCase):
 
 
 def cleanup_test_data(verbose: int = 0):
-    """Removes all test folders in the `Plots` folder."""
+    """Removes all test folders and files."""
 
     if verbose:
         print("Cleaning up some test files...")
@@ -397,5 +396,6 @@ def cleanup_test_data(verbose: int = 0):
     rem_dirs(hop_path, "TestHop", anywhere=True)
     rem_dirs(rl_plot_path, "TestEnv")
     rem_dirs(rl_plot_path, "BatteryTest", anywhere=True)
+    rem_dirs(rl_plot_path, "FullTest", anywhere=True)
     rem_dirs(dataset_data_path, "Test", anywhere=True)
-
+    rem_dirs(TEST_DIR, "")

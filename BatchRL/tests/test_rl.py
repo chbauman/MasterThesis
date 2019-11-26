@@ -186,8 +186,6 @@ class TestFullRoomEnv(TestCase):
     def test_something(self):
         pass
 
-    pass
-
 
 class KerasDDPGTest(DDPGBaseAgent):
     name = "DDPG_Test"

@@ -559,8 +559,9 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
         else:
             self.deb("Restored trained model")
 
-    pass
 
+##########################################################################
+# Testing stuff
 
 RNN_TEST_DATA_NAME = "RNNTestDataset"
 
