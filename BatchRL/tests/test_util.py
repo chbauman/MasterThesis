@@ -18,6 +18,7 @@ from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, m
 from util.visualize import plot_dir, plot_reward_details, model_plot_path, rl_plot_path
 
 TEST_DIR = os.path.join(plot_dir, "Test")  #: Directory for test output.
+create_dir(TEST_DIR)
 
 
 class TestNumerics(TestCase):
