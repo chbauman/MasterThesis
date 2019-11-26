@@ -529,7 +529,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
             self._plot_model(train_mod, "TrainModel.png", expand=False)
         self.train_mod = train_mod
 
-    def fit(self) -> None:
+    def fit(self, verbose: int = 0) -> None:
         """Fits the model using the data from the dataset.
 
         TODO: Use decorator for 'loading if existing' to avoid duplicate
@@ -562,6 +562,9 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
     pass
 
 
+RNN_TEST_DATA_NAME = "RNNTestDataset"
+
+
 def test_rnn_models():
     """Tests the RNN model classes.
 
@@ -572,7 +575,7 @@ def test_rnn_models():
     n, n_feat = 200, 7
     dat = np.arange(n * n_feat).reshape((n, n_feat))
     c_inds = np.array([4, 6], dtype=np.int32)
-    ds = get_test_ds(dat, c_inds, name="RNNTestDataset", dt=4 * 60)
+    ds = get_test_ds(dat, c_inds, name=RNN_TEST_DATA_NAME, dt=4 * 60)
     ds.seq_len = 6
     ds.val_percent = 0.3
     train_s_len = ds.seq_len - 1

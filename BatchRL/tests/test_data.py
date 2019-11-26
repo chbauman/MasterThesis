@@ -8,6 +8,8 @@ from data_processing.preprocess import standardize, fill_holes_linear_interpolat
 from util.numerics import nan_array_equal, num_nans
 from util.visualize import plot_dataset
 
+SYNTH_DATA_NAME = "SyntheticModelData"
+
 
 def construct_test_ds(n: int = 201, c_series: int = 3, n_feats: int = 4) -> Dataset:
     """Constructs a dataset for testing.
@@ -36,7 +38,7 @@ def construct_test_ds(n: int = 201, c_series: int = 3, n_feats: int = 4) -> Data
         for k in range(n_feats - 4):
             dat[:, 4 + k] = np.sin(np.arange(n))
     c_inds = np.array([c_series])
-    ds = get_test_ds(dat, c_inds, dt=60 * 6, name="SyntheticModelData")
+    ds = get_test_ds(dat, c_inds, dt=60 * 6, name=SYNTH_DATA_NAME)
     ds.seq_len = 8
     ds.val_percent = 0.3
     ds.split_data()

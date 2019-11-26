@@ -5,16 +5,18 @@ from unittest import TestCase
 import numpy as np
 
 from agents.agents_heuristic import ConstActionAgent
+from data_processing.dataset import dataset_data_path
 from dynamics.base_hyperopt import hop_path
-from tests.test_data import construct_test_ds
+from dynamics.recurrent import RNN_TEST_DATA_NAME
+from rest.client import save_dir
+from tests.test_data import construct_test_ds, SYNTH_DATA_NAME
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans, find_longest_streak, mse, save_performance
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
-    model_dir
-from util.visualize import plot_dir, plot_reward_details
-
+    model_dir, dynamic_model_dir
+from util.visualize import plot_dir, plot_reward_details, model_plot_path, rl_plot_path
 
 TEST_DIR = "../Plots/Test/"  #: Directory for test output.
 
@@ -388,21 +390,12 @@ def cleanup_test_data(verbose: int = 0):
     if verbose:
         print("Cleaning up some test files...")
 
-    # Choose directories
-    model_plot_dir = "../Plots/Models/"
-    rl_dir = "../Plots/RL/"
-    dyn_dir = os.path.join(model_dir, "Dynamics")
-
-    # Get test dataset name
-    n = 1
-    ds = construct_test_ds(n)
-    test_ds_name = ds.name
-
     # Remove files
-    rem_dirs(model_plot_dir, test_ds_name)
-    rem_dirs(model_plot_dir, "RNNTestDataset")
-    rem_dirs(dyn_dir, "RNNTestDataset")
+    rem_dirs(model_plot_path, SYNTH_DATA_NAME)
+    rem_dirs(model_plot_path, RNN_TEST_DATA_NAME)
+    rem_dirs(dynamic_model_dir, RNN_TEST_DATA_NAME)
     rem_dirs(hop_path, "TestHop", anywhere=True)
-    rem_dirs(rl_dir, "TestEnv")
-    rem_dirs(rl_dir, "BatteryTest", anywhere=True)
+    rem_dirs(rl_plot_path, "TestEnv")
+    rem_dirs(rl_plot_path, "BatteryTest", anywhere=True)
+    rem_dirs(dataset_data_path, "Test", anywhere=True)
 

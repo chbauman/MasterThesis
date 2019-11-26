@@ -436,7 +436,7 @@ def main() -> None:
     # run_battery()
 
     # Room model
-    run_room_models()
+    # run_room_models()
 
 
 if __name__ == '__main__':
