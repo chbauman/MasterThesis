@@ -6,6 +6,7 @@ from keras.layers import Dense, Dropout, BatchNormalization
 from keras.models import Sequential
 from keras.regularizers import l2
 
+from util.util import dynamic_model_dir
 
 KerasModel = Union[Sequential, Model]
 
@@ -93,7 +94,7 @@ class KerasBase:
     Provides an interface for saving and loading models.
     """
 
-    model_path: str = "../Models/Dynamics/"
+    model_path: str = dynamic_model_dir
     m: KerasModel
 
     def save_model(self, m, name: str) -> None:

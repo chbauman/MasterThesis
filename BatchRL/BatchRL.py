@@ -14,7 +14,8 @@ from data_processing.data import get_battery_data, get_data_test, \
     choose_dataset_and_constraints
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
-from dynamics.base_model import test_dyn_model, BaseDynamicsModel, cleanup_test_data
+from dynamics.base_model import test_dyn_model, BaseDynamicsModel
+from tests.test_util import cleanup_test_data
 from dynamics.battery_model import BatteryModel
 from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
@@ -54,7 +55,7 @@ def run_integration_tests() -> None:
 
 def test_cleanup():
     # Do some cleanup.
-    cleanup_test_data()
+    cleanup_test_data(verbose=1)
 
 
 def run_battery() -> None:

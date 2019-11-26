@@ -5,11 +5,14 @@ from unittest import TestCase
 import numpy as np
 
 from agents.agents_heuristic import ConstActionAgent
+from dynamics.base_hyperopt import hop_path
+from tests.test_data import construct_test_ds
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans, find_longest_streak, mse, save_performance
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
-    np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet
+    np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
+    model_dir
 from util.visualize import plot_dir, plot_reward_details
 
 
@@ -377,3 +380,29 @@ class TestPlot(TestCase):
         self.make_bar_plot(1, 8, 3)
 
     pass
+
+
+def cleanup_test_data(verbose: int = 0):
+    """Removes all test folders in the `Plots` folder."""
+
+    if verbose:
+        print("Cleaning up some test files...")
+
+    # Choose directories
+    model_plot_dir = "../Plots/Models/"
+    rl_dir = "../Plots/RL/"
+    dyn_dir = os.path.join(model_dir, "Dynamics")
+
+    # Get test dataset name
+    n = 1
+    ds = construct_test_ds(n)
+    test_ds_name = ds.name
+
+    # Remove files
+    rem_dirs(model_plot_dir, test_ds_name)
+    rem_dirs(model_plot_dir, "RNNTestDataset")
+    rem_dirs(dyn_dir, "RNNTestDataset")
+    rem_dirs(hop_path, "TestHop", anywhere=True)
+    rem_dirs(rl_dir, "TestEnv")
+    rem_dirs(rl_dir, "BatteryTest", anywhere=True)
+

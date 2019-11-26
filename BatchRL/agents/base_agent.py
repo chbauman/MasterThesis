@@ -1,10 +1,15 @@
+import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
 import numpy as np
 
 from util.numerics import npf32
-from util.util import Arr, fix_seed
+from util.util import Arr, fix_seed, model_dir, create_dir
+
+# Define directory for agent models
+rl_model_dir = os.path.join(model_dir, "RL")
+create_dir(rl_model_dir)
 
 
 class AgentBase(ABC):

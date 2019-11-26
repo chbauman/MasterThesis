@@ -19,6 +19,9 @@ EULER: bool = os.name != 'nt'
 
 SEED: int = 42  #: Default seed value.
 
+# Define paths
+model_dir = "../Models"
+
 
 def fix_seed(seed: int = SEED) -> None:
     """Fixes the random seed."""
@@ -628,3 +631,8 @@ def day_offset_ts(t_init: str, mins: int = 15) -> int:
     n_ts_passed = int((np_t_init - t_0) / dt_int)
     tot_n_ts = int(np.timedelta64(1, 'D') / dt_int)
     return tot_n_ts - n_ts_passed
+
+
+# Define and create folder for stored models
+dynamic_model_dir = os.path.join(model_dir, "Dynamics")
+create_dir(dynamic_model_dir)

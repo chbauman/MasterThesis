@@ -17,7 +17,7 @@ from rl.memory import SequentialMemory
 from rl.policy import BoltzmannQPolicy
 from rl.random import OrnsteinUhlenbeckProcess
 
-from agents.base_agent import AgentBase
+from agents.base_agent import AgentBase, rl_model_dir
 from envs.dynamics_envs import FullRoomEnv, RLDynEnv, RangeListT
 from ml.keras_util import getMLPModel, KerasBase
 from util.util import make_param_ext, train_decorator
@@ -28,7 +28,7 @@ class KerasBaseAgent(AgentBase, KerasBase):
     """The interface for all keras-rl agent wrappers."""
 
     m: Agent  #: The keras-rl agent.
-    model_path: str = "../Models/RL/"  #: Where to store the model parameters.
+    model_path: str = rl_model_dir  #: Where to store the model parameters.
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -11,10 +11,10 @@ from typing import Dict, List, Tuple
 from hyperopt import fmin, tpe
 
 from dynamics.base_model import BaseDynamicsModel
-from util.util import create_dir, EULER
+from util.util import create_dir, EULER, model_dir
 
 # Define path for optimization results.
-hop_path = "../Models/Hop/"  #: The path to all hyperopt data.
+hop_path = os.path.join(model_dir, "Hop")  #: The path to all hyperopt data.
 create_dir(hop_path)
 
 OptHP = Tuple[Dict, float]  #: The type of the stored info.
