@@ -49,4 +49,5 @@ $ source ../load_euler
 ```
 Also remember to copy the data if it has changed 
 since the last time. The command for doing this
-is in [Data](../Data).
+is in [Data](../Data). You also might need to make the 
+script files executable, for that purpose, use: `chmod +x script.ext`.
