@@ -38,12 +38,15 @@ python libraries, do this using the flag `--user`.
 
 ### Running on Euler
 
-Run:
+To load the necessary libraries, run:
 ```console
 $ module load python
 $ module load hdf5
 ```
-to load the necessary libraries. 
+or, alternatively, execute the script that does that:
+```console
+$ source ../load_euler
+```
 Also remember to copy the data if it has changed 
 since the last time. The command for doing this
 is in [Data](../Data).
