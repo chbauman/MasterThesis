@@ -17,6 +17,7 @@ from data_processing.data import get_battery_data, get_data_test, \
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
 from dynamics.base_model import test_dyn_model, BaseDynamicsModel
+from opcua_empa.run_opcua import try_opcua
 from tests.test_util import cleanup_test_data
 from dynamics.battery_model import BatteryModel
 from dynamics.composite import CompositeModel
@@ -389,6 +390,9 @@ def get_model(name: str, ds: Dataset,
 
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
+
+    try_opcua()
+    return
 
     # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
