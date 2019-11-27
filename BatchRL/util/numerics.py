@@ -6,6 +6,7 @@ import scipy.optimize
 from util.util import datetime_to_np_datetime, string_to_dt, Arr, Num, tot_size
 
 
+# Error metrics
 def mse(arr1: np.ndarray, arr2: np.ndarray) -> float:
     """Computes the mean square error between two arrays.
 
@@ -20,6 +21,38 @@ def mse(arr1: np.ndarray, arr2: np.ndarray) -> float:
     if s1 != s2:
         raise ValueError(f"Shape mismatch: {s1} != {s2}!!")
     return ((arr1 - arr2) ** 2).mean()
+
+
+def mae(arr1: np.ndarray, arr2: np.ndarray) -> float:
+    """Computes the mean absolute error between two arrays.
+
+    Args:
+        arr1: First array.
+        arr2: Second array.
+
+    Returns:
+        MAE between `arr1` and `arr2`.
+    """
+    s1, s2 = arr1.shape, arr2.shape
+    if s1 != s2:
+        raise ValueError(f"Shape mismatch: {s1} != {s2}!!")
+    return np.abs(arr1 - arr2).mean()
+
+
+def max_abs_err(arr1: np.ndarray, arr2: np.ndarray) -> float:
+    """Computes the maximum absolute error between two arrays.
+
+    Args:
+        arr1: First array.
+        arr2: Second array.
+
+    Returns:
+        Max absolute error between `arr1` and `arr2`.
+    """
+    s1, s2 = arr1.shape, arr2.shape
+    if s1 != s2:
+        raise ValueError(f"Shape mismatch: {s1} != {s2}!!")
+    return np.abs(np.max(arr1 - arr2))
 
 
 def save_performance(perf_arr: np.ndarray, n_steps: Sequence[int], file_names: List[str]) -> None:

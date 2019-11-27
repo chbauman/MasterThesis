@@ -391,8 +391,8 @@ def get_model(name: str, ds: Dataset,
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
-    try_opcua()
-    return
+    # try_opcua()
+    # return
 
     # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
@@ -434,6 +434,7 @@ def main() -> None:
     arg_def_list = [
         # The following arguments can be provided.
         ("verbose", "Increase output verbosity."),
+        ("mod_eval", "Fit and evaluate the room models."),
         ("battery", "Run the battery model."),
         ("room", "Run the room model."),
         ("test", "Run tests."),
@@ -459,7 +460,8 @@ def main() -> None:
     # run_dynamic_model_hyperopt(use_bat_data=True)
 
     # Fit and analyze all models
-    # run_dynamic_model_fit_from_hop()
+    if args.mod_eval:
+        run_dynamic_model_fit_from_hop()
 
     if args.battery:
         # Train and analyze the battery model

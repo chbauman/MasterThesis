@@ -573,7 +573,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                             overwrite: bool = False) -> None:
         """Analyzes the multistep prediction performance of the model.
 
-        TODO: Implement scaling to get meaningful error.
+        TODO: Implement scaling to get meaningful error?.
 
         Args:
             n_steps: The list with the timesteps to predict.
