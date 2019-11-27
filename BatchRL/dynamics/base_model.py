@@ -586,7 +586,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         """
         # Print to console
         if verbose:
-            print(f"Analyzing performance of {self.name}")
+            print(f"Analyzing performance of model {self.name}.")
 
         # Specify the parts of the data to use
         parts = ["train", "val"]

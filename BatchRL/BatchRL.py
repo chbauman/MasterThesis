@@ -26,6 +26,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
+from util.numerics import max_abs_err, mae, mse
 from util.util import EULER, get_rl_steps, print_if_verb
 
 # Define the models by name
@@ -139,7 +140,9 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
 
 
 def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
-                                   verbose: int = 1) -> None:
+                                   verbose: int = 1,
+                                   visual_analyze: bool = True,
+                                   perf_analyze: bool = False) -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
     Does not much if not on Euler.
@@ -147,7 +150,12 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
     Args:
         use_bat_data: Whether to include the battery data.
         verbose: Verbosity level.
+        visual_analyze: Whether to do the visual analysis.
+        perf_analyze: Whether to do the performance analysis.
     """
+    # Data for performance analysis
+    n_steps = (1, 4, 24, 48)
+    metrics = (mse, mae, max_abs_err)
 
     # Get data and constraints
     ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
@@ -159,9 +167,17 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
 
     # Fit or load all initialized models
     for name, m_to_use in all_mods.items():
-        m_to_use.analyze_visually(overwrite=False)
-        if verbose:
-            print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
+        # Virtual analysis
+        if visual_analyze:
+            m_to_use.analyze_visually(overwrite=False)
+
+        # Do the performance analysis
+        if perf_analyze:
+            if verbose:
+                print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
+            m_to_use.analyze_performance(n_steps, verbose=verbose,
+                                         overwrite=False,
+                                         metrics=metrics)
 
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
@@ -435,6 +451,7 @@ def main() -> None:
         # The following arguments can be provided.
         ("verbose", "Increase output verbosity."),
         ("mod_eval", "Fit and evaluate the room models."),
+        ("optimize", "Execute the hyperparameter optimization."),
         ("battery", "Run the battery model."),
         ("room", "Run the room model."),
         ("test", "Run tests."),
@@ -447,7 +464,8 @@ def main() -> None:
     # Parse arguments
     parser.parse_args()
     args = parser.parse_args()
-    if args.verbose:
+    verbose = args.verbose
+    if verbose:
         print("Verbosity turned on.")
 
     # Run integration tests and optionally the cleanup after.
@@ -457,11 +475,12 @@ def main() -> None:
         test_cleanup()
 
     # Run hyperparameter optimization
-    # run_dynamic_model_hyperopt(use_bat_data=True)
+    if args.optimize:
+        run_dynamic_model_hyperopt(use_bat_data=True)
 
     # Fit and analyze all models
     if args.mod_eval:
-        run_dynamic_model_fit_from_hop()
+        run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=True)
 
     if args.battery:
         # Train and analyze the battery model
