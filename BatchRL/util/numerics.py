@@ -131,6 +131,7 @@ def save_performance_extended(perf_arr: np.ndarray,
     n_n_steps = len(n_steps)
     exp_shape = (n_data_parts, -1, n_metrics, n_n_steps)
     check_shape(perf_arr, exp_shape, err_msg="Incorrect shape!")
+    n_series = perf_arr.shape[1]
 
     # Save n steps info
     step_data = np.array(n_steps, dtype=np.int32)
@@ -142,16 +143,13 @@ def save_performance_extended(perf_arr: np.ndarray,
         f_name = file_names[ct + 1]
 
         with open(f_name, 'w') as f:
-            for m_ct, m_name in metric_names:
+            for m_ct, m_name in enumerate(metric_names):
                 f.write(f"# Metric: {m_name}\n")
 
-                for i in range(n_n_steps):
-                    curr_line_array = perf_arr[ct, ]
-                    f.write(f"# Metric: {m_name}\n")
-                pass
-
-        np.savetxt(file_names[ct + 1], perf_arr[ct])
-    pass
+                for i in range(n_series):
+                    curr_line_array = perf_arr[ct, i, m_ct, :]
+                    a_str = np.array2string(curr_line_array, precision=2, separator=', ')
+                    f.write(f"{a_str[1:-1]}\n")
 
 
 def num_nans(arr: np.ndarray) -> int:

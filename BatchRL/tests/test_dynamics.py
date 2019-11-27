@@ -210,8 +210,7 @@ class TestBaseDynamics(TestCase):
             self.assertTrue(np.array_equal(streak_after[k], streak[k]), "Streak data was changed during analysis!")
 
     def test_analyze_performance(self):
-        print(self.test_model_2.name)
-        self.test_model_2.analyze_performance(n_steps=(1, 3), overwrite=True)
+        self.test_model_2.analyze_performance(n_steps=(1, 3), overwrite=True, verbose=0)
 
     def test_const_series_test_model(self):
         # Test the test model

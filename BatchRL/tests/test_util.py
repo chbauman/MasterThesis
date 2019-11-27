@@ -11,7 +11,7 @@ from dynamics.recurrent import RNN_TEST_DATA_NAME
 from tests.test_data import SYNTH_DATA_NAME
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
-    num_nans, find_longest_streak, mse, save_performance, mae, max_abs_err, check_shape
+    num_nans, find_longest_streak, mse, save_performance, mae, max_abs_err, check_shape, save_performance_extended
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
     dynamic_model_dir
@@ -231,6 +231,15 @@ class TestNumerics(TestCase):
         np_arr = np.ones((n_f, 3, n))
         f_names = [os.path.join(TEST_DIR, f"tsp_{i}.txt") for i in range(n_f + 1)]
         save_performance(np_arr, inds, f_names)
+
+    def test_save_performance_extended(self):
+        n, n_f = 4, 2
+        inds = range(n)
+        met_list = ["met1", "met2"]
+        n_metrics = len(met_list)
+        np_arr = np.ones((n_f, 3, n_metrics, n))
+        f_names = [os.path.join(TEST_DIR, f"test_extended_{i}.txt") for i in range(n_f + 1)]
+        save_performance_extended(np_arr, inds, f_names, met_list)
     pass
 
 
