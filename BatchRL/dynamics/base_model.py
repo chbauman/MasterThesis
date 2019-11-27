@@ -629,12 +629,16 @@ class BaseDynamicsModel(KerasBase, ABC):
                     k_orig_arr = np.array([k_orig])
                     k_prep = self.data.to_prepared(k_orig_arr)[0]
 
-                    # Compute performance
-                    perf = metrics[0](out_d[(n_ts - 1):, k_prep], full_pred[:, series_ind])
-                    perf_values[part_ind, series_ind, 0, step_ct] = perf
+                    # Extract prediction and ground truth
+                    gt = out_d[(n_ts - 1):, k_prep]
+                    pred = full_pred[:, series_ind]
+
+                    # Compute performance metrics
+                    for m_id, m in enumerate(metrics):
+                        perf = m(gt, pred)
+                        perf_values[part_ind, series_ind, m_id, step_ct] = perf
 
         # Save performances
-        # save_performance(perf_values, n_steps, save_names)
         met_names = [m.__name__ for m in metrics]
         save_performance_extended(perf_values, n_steps, save_names, met_names)
 

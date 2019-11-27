@@ -13,7 +13,7 @@ from dynamics.composite import CompositeModel
 from dynamics.const import NoDisturbanceModel, ConstModel
 from dynamics.sin_cos_time import SCTimeModel
 from tests.test_data import get_full_model_dataset, construct_test_ds
-from util.numerics import copy_arr_list
+from util.numerics import copy_arr_list, mse, mae
 from util.util import Num, tot_size
 
 
@@ -211,6 +211,8 @@ class TestBaseDynamics(TestCase):
 
     def test_analyze_performance(self):
         self.test_model_2.analyze_performance(n_steps=(1, 3), overwrite=True, verbose=0)
+        met_list = [mse, mae]
+        self.test_model_2.analyze_performance(n_steps=(1, 3), overwrite=True, verbose=0, metrics=met_list)
 
     def test_const_series_test_model(self):
         # Test the test model
