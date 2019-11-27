@@ -23,7 +23,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
-from util.util import EULER, get_rl_steps
+from util.util import EULER, get_rl_steps, print_if_verb
 
 # Define the models by name
 base_rnn_models = [
@@ -79,8 +79,8 @@ def run_battery() -> None:
     # bat_mod_naive.analyze_visually()
 
     # Get numbers of steps
-    n_steps = get_rl_steps()
-    n_eval_steps = 10000 if EULER else 100
+    n_steps = get_rl_steps(True)
+    n_eval_steps = 10000  # if EULER else 100
 
     # Define the environment
     bat_env = BatteryEnv(bat_mod,
@@ -97,13 +97,11 @@ def run_battery() -> None:
                               gamma=0.99)
 
     # Fit agents and evaluate.
-    bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
-                                    start_ind=0, fitted=False)
-    bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
-                                    start_ind=1267, fitted=False)
-    bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
-                                    start_ind=100, fitted=False)
-    bat_env.detailed_eval_agents([const_ag_1, const_ag_2, dqn_agent],
+    ag_list = [const_ag_1, const_ag_2, dqn_agent]
+    bat_env.analyze_agents_visually(ag_list, start_ind=0, fitted=False)
+    bat_env.analyze_agents_visually(ag_list, start_ind=1267, fitted=False)
+    bat_env.analyze_agents_visually(ag_list, start_ind=100, fitted=False)
+    bat_env.detailed_eval_agents(ag_list,
                                  use_noise=False,
                                  n_steps=n_eval_steps)
 
@@ -166,7 +164,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
 
-def run_room_models() -> None:
+def run_room_models(verbose: int = 1) -> None:
     # Get dataset and constraints
     ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20)
 
@@ -174,34 +172,30 @@ def run_room_models() -> None:
     for m_name in full_models[0:1]:
         # Load the model and init env
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
-        m.analyze_visually(overwrite=False, plot_acf=False)
-        alpha = None
-        env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3)
+        m.analyze_visually(overwrite=False, plot_acf=False, verbose=False)
+        alpha = 10.0
+        env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3, alpha=alpha)
 
         # Define default agents and compare
         open_agent = ConstActionAgent(env, 1.0)
         closed_agent = ConstActionAgent(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-        # ag_list = [open_agent, closed_agent, rule_based_agent]
-        # env.analyze_agents_visually(ag_list,
-        #                             # start_ind=0,
-        #                             use_noise=False,
-        #                             max_steps=None)
-        # env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
 
         # Choose agent and fit to env.
-        n_steps = get_rl_steps()
-        n_eval_steps = get_rl_steps() // 100
+        n_steps = get_rl_steps() * 10
+        n_eval_steps = n_steps // 100
         if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
             agent = DDPGBaseAgent(env,
                                   action_range=env.action_range,
                                   n_steps=n_steps,
                                   gamma=0.99, lr=0.00001)
             agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}"
+            print_if_verb(verbose, "Fitting agent...")
             agent.fit()
+            print_if_verb(verbose, "Analyzing agents...")
             agent_list = [open_agent, closed_agent, rule_based_agent, agent]
             env.analyze_agents_visually(agent_list)
-            env.detailed_eval_agents(agent_list, use_noise=False, n_steps=2000)
+            env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
 
 
 def get_model(name: str, ds: Dataset,
@@ -439,10 +433,10 @@ def main() -> None:
     # run_dynamic_model_fit_from_hop()
 
     # Train and analyze the battery model
-    run_battery()
+    # run_battery()
 
     # Room model
-    # run_room_models()
+    run_room_models()
 
 
 if __name__ == '__main__':
