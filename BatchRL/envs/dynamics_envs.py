@@ -158,22 +158,24 @@ def room_energy_used(water_temps: Sequence, valve_action: Num, t_h: Num):
 
 class FullRoomEnv(RLDynEnv):
     """The environment modeling one room only."""
-    alpha: float = 1.0  #: Weight factor for reward.
+    alpha: float = 1.0  #: Weight factor for temperature penalty in reward.
     temp_bounds: RangeT = TEMP_BOUNDS  #: The requested temperature range.
     bound_violation_penalty: float = 2.0  #: The penalty in the reward for temperatures out of bound.
 
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int = 48,
                  temp_bounds: RangeT = None,
+                 alpha: float = 2.5,
                  **kwargs):
         # Define name
-        ext = make_param_ext([("NEP", max_eps), ("TBD", temp_bounds)])
+        ext = make_param_ext([("NEP", max_eps), ("AL", alpha), ("TBD", temp_bounds)])
         name = "FullRoom" + ext
 
         # Initialize super class
         super(FullRoomEnv, self).__init__(m, max_eps, name=name, **kwargs)
 
         # Save parameters
+        self.alpha = alpha
         d = m.data
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds
@@ -213,7 +215,7 @@ class FullRoomEnv(RLDynEnv):
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
         """Computes the total reward from the individual components."""
         det_rew = self.detailed_reward(curr_pred, action)
-        return -det_rew[0] - 2.5 * det_rew[1]
+        return -det_rew[0] - self.alpha * det_rew[1]
 
     def episode_over(self, curr_pred: np.ndarray) -> bool:
 
