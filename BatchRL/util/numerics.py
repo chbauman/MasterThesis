@@ -6,6 +6,43 @@ import scipy.optimize
 from util.util import datetime_to_np_datetime, string_to_dt, Arr, Num, tot_size
 
 
+def _return_or_error(cond: bool, err_msg: str = None) -> bool:
+    if not cond:
+        if err_msg is not None:
+            raise ValueError(err_msg)
+        else:
+            return False
+    return True
+
+
+def check_shape(arr: np.ndarray, exp_shape: Tuple[int, ...], err_msg: str = None):
+    """Checks whether the shape of arr agrees with the expected shape `exp_shape`.
+
+    If `err_msg` is not None, an error will be raised if the
+    check fails with the given message, otherwise a bool will be returned.
+    If `exp_shape` contains integers < 0, the shape can be arbitrary in that dimension.
+
+    Args:
+        arr: The array whose shape to check.
+        exp_shape: The expected shape.
+        err_msg: The message to show if an error should be thrown.
+
+    Returns:
+        A bool indicating whether the check failed.
+
+    Raises:
+        ValueError: If the message is not None and the check fails.
+    """
+    s = arr.shape
+    check_passed = len(s) == len(exp_shape)
+    if not _return_or_error(check_passed, err_msg):
+        return False
+    for n1, n2 in zip(s, exp_shape):
+        if n2 >= 0 and n2 != n1:
+            check_passed = False
+    return _return_or_error(check_passed, err_msg)
+
+
 # Error metrics
 def mse(arr1: np.ndarray, arr2: np.ndarray) -> float:
     """Computes the mean square error between two arrays.
@@ -82,6 +119,39 @@ def save_performance(perf_arr: np.ndarray, n_steps: Sequence[int], file_names: L
     # Save all other files
     for ct, k in enumerate(file_names[1:]):
         np.savetxt(file_names[ct + 1], perf_arr[ct])
+
+
+def save_performance_extended(perf_arr: np.ndarray,
+                              n_steps: Sequence[int],
+                              file_names: List[str],
+                              metric_names: List[str]):
+    # Check input
+    n_data_parts = len(file_names) - 1
+    n_metrics = len(metric_names)
+    n_n_steps = len(n_steps)
+    exp_shape = (n_data_parts, -1, n_metrics, n_n_steps)
+    check_shape(perf_arr, exp_shape, err_msg="Incorrect shape!")
+
+    # Save n steps info
+    step_data = np.array(n_steps, dtype=np.int32)
+    np.savetxt(file_names[0], step_data[:], fmt="%i")
+
+    # Save all other files
+    for ct, k in enumerate(file_names[1:]):
+
+        f_name = file_names[ct + 1]
+
+        with open(f_name, 'w') as f:
+            for m_ct, m_name in metric_names:
+                f.write(f"# Metric: {m_name}\n")
+
+                for i in range(n_n_steps):
+                    curr_line_array = perf_arr[ct, ]
+                    f.write(f"# Metric: {m_name}\n")
+                pass
+
+        np.savetxt(file_names[ct + 1], perf_arr[ct])
+    pass
 
 
 def num_nans(arr: np.ndarray) -> int:

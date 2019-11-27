@@ -570,15 +570,18 @@ class BaseDynamicsModel(KerasBase, ABC):
 
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
                             verbose: int = 0,
-                            overwrite: bool = False) -> None:
+                            overwrite: bool = False,
+                            metrics: Sequence = (mse, )) -> None:
         """Analyzes the multistep prediction performance of the model.
 
+        Uses the metrics provided by `metrics`.
         TODO: Implement scaling to get meaningful error?.
 
         Args:
             n_steps: The list with the timesteps to predict.
             verbose: Whether to output to console.
             overwrite: Whether to overwrite existing files.
+            metrics: A sequence of metric functions that can be applied to two arrays.
         """
         # Print to console
         if verbose:
@@ -625,7 +628,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                     k_prep = self.data.to_prepared(k_orig_arr)[0]
 
                     # Compute performance
-                    perf = mse(out_d[(n_ts - 1):, k_prep], full_pred[:, k])
+                    perf = metrics[0](out_d[(n_ts - 1):, k_prep], full_pred[:, k])
                     perf_values[ct, k, step_ct] = perf
 
         # Save performances
