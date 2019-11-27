@@ -11,7 +11,7 @@ from dynamics.recurrent import RNN_TEST_DATA_NAME
 from tests.test_data import SYNTH_DATA_NAME
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
-    num_nans, find_longest_streak, mse, save_performance
+    num_nans, find_longest_streak, mse, save_performance, mae, max_abs_err
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
     dynamic_model_dir
@@ -63,6 +63,23 @@ class TestNumerics(TestCase):
              [4, 3, 4]],
         ])
         self.c_inds = np.array([1])
+
+    def test_mse(self):
+        a1 = np.array([1, 2])
+        a2 = np.array([1, 1])
+        self.assertAlmostEqual(mse(a1, a2), 0.5, msg="mse incorrect")
+
+    def test_max_abs_err(self):
+        a1 = np.array([1, 2])
+        a2 = np.array([1, 1])
+        a3 = np.array([-1, -1])
+
+    def test_mae(self):
+        a1 = np.array([1, 2])
+        a2 = np.array([1, 1])
+        a3 = np.array([-1, -1])
+        self.assertAlmostEqual(mae(a1, a2), 0.5, msg="mae incorrect")
+        self.assertAlmostEqual(mae(a3, a2), 2.0, msg="mae incorrect")
 
     def test_has_duplicates(self):
         self.assertTrue(has_duplicates(self.ind_arr) and not has_duplicates(self.ind_arr_no_dup),
@@ -171,11 +188,6 @@ class TestNumerics(TestCase):
         self.assertEqual(a, random.randint(-max_int, max_int))
         self.assertTrue(np.array_equal(arr, np.random.normal(0.0, 1.0, 10)))
 
-    def test_mse(self):
-        a1 = np.array([1, 2])
-        a2 = np.array([1, 1])
-        self.assertAlmostEqual(mse(a1, a2), 0.5, msg="mse incorrect")
-
     def test_npf32(self):
         sh = (2, 3)
         arr = npf32(sh)
@@ -231,6 +243,29 @@ class TestNumerics(TestCase):
         f_names = [os.path.join(TEST_DIR, f"tsp_{i}.txt") for i in range(n_f + 1)]
         save_performance(np_arr, inds, f_names)
     pass
+
+
+class TestMetrics(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Define some index arrays
+        self.a1 = np.array([1, 2])
+        self.a2 = np.array([1, 1])
+        self.a3 = np.array([-1, -1])
+
+    def test_mse(self):
+        self.assertAlmostEqual(mse(self.a1, self.a2), 0.5, msg="mse incorrect")
+        self.assertAlmostEqual(mse(self.a3, self.a2), 4.0, msg="mse incorrect")
+
+    def test_max_abs_err(self):
+        self.assertAlmostEqual(max_abs_err(self.a1, self.a2), 1.0, msg="max_abs_err incorrect")
+        self.assertAlmostEqual(max_abs_err(self.a3, self.a2), 2.0, msg="mae incorrect")
+
+    def test_mae(self):
+        self.assertAlmostEqual(mae(self.a1, self.a2), 0.5, msg="mae incorrect")
+        self.assertAlmostEqual(mae(self.a3, self.a2), 2.0, msg="mae incorrect")
 
 
 class TestUtil(TestCase):
