@@ -23,7 +23,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
-from util.util import EULER
+from util.util import EULER, get_rl_steps
 
 # Define the models by name
 base_rnn_models = [
@@ -78,30 +78,38 @@ def run_battery() -> None:
     # bat_mod_naive = ConstModel(bat_ds)
     # bat_mod_naive.analyze_visually()
 
-    # Define the environment and agents.
+    # Get numbers of steps
+    n_steps = get_rl_steps()
+    n_eval_steps = 10000 if EULER else 100
+
+    # Define the environment
     bat_env = BatteryEnv(bat_mod,
                          disturb_fac=0.3,
                          cont_actions=True,
                          n_cont_actions=1)
+
+    # Define the agents
     const_ag_1 = ConstActionAgent(bat_env, 6.0)  # Charge
     const_ag_2 = ConstActionAgent(bat_env, -3.0)  # Discharge
-    n_steps = 1000000 if EULER else 1000
     dqn_agent = DDPGBaseAgent(bat_env,
                               action_range=bat_env.action_range,
                               n_steps=n_steps,
                               gamma=0.99)
-    n_eval_steps = 10000 if EULER else 100
+
     bat_env.detailed_eval_agents([const_ag_1, const_ag_2, dqn_agent],
                                  use_noise=False,
                                  n_steps=n_eval_steps)
 
-    # Fit agent and evaluate.
+    # Fit agents and evaluate.
     bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
                                     start_ind=0, fitted=False)
     bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
                                     start_ind=1267, fitted=False)
     bat_env.analyze_agents_visually([const_ag_1, const_ag_2, dqn_agent],
                                     start_ind=100, fitted=False)
+    bat_env.detailed_eval_agents([const_ag_1, const_ag_2, dqn_agent],
+                                 use_noise=False,
+                                 n_steps=n_eval_steps)
 
 
 def run_dynamic_model_hyperopt(use_bat_data: bool = True,
@@ -185,12 +193,13 @@ def run_room_models() -> None:
         # env.detailed_eval_agents(ag_list, use_noise=False, n_steps=1000)
 
         # Choose agent and fit to env.
-        n_steps = 1000000 if EULER else 1000
+        n_steps = get_rl_steps()
         if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
             agent = DDPGBaseAgent(env,
                                   action_range=env.action_range,
                                   n_steps=n_steps,
                                   gamma=0.99, lr=0.00001)
+            agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}"
             agent.fit()
             agent_list = [open_agent, closed_agent, rule_based_agent, agent]
             env.analyze_agents_visually(agent_list)
@@ -265,7 +274,6 @@ def get_model(name: str, ds: Dataset,
     all_in = {'in_inds': np.array([0, 1, 2, 3, 4, 5, 6, 7], dtype=np.int32)}
     all_inds = dict(all_out, **all_in)
     base_params = dict(hop_pars, **fix_pars, **all_inds)
-    # base_params_no_inds = {k: base_params[k] for k in base_params if k != 'out_inds'}
     base_params_no_inds = dict(hop_pars, **fix_pars)
 
     # Choose the model
@@ -398,7 +406,7 @@ def curr_tests() -> None:
 
     # Define agent and fit
     ac_range_list = full_env.action_range
-    n_steps = 1000000 if EULER else 1000
+    n_steps = get_rl_steps()
     ddpg_ag = DDPGBaseAgent(full_env,
                             n_steps=n_steps,
                             layers=(50, 50),
@@ -433,7 +441,7 @@ def main() -> None:
     # run_dynamic_model_fit_from_hop()
 
     # Train and analyze the battery model
-    run_battery()
+    # run_battery()
 
     # Room model
     run_room_models()

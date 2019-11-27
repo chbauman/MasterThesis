@@ -14,14 +14,28 @@ from typing import Union, List, Tuple, Any, Sequence, TypeVar
 
 import numpy as np
 
+#######################################################################################################
+# Platform specific stuff
+
 # Determine platform, assuming we are on Euler if it is not a windows platform.
 EULER: bool = os.name != 'nt'
 
-SEED: int = 42  #: Default seed value.
+
+def get_rl_steps(eul: bool = EULER):
+    return 1000000 if eul else 1000
+
+
+#######################################################################################################
+# Relative paths, relative to folder "BatchRL"
 
 # Define paths
 model_dir = "../Models"
 dynamic_model_dir = os.path.join(model_dir, "Dynamics")
+
+#######################################################################################################
+# Random seed
+
+SEED: int = 42  #: Default seed value.
 
 
 def fix_seed(seed: int = SEED) -> None:
