@@ -4,6 +4,8 @@ The `main` function runs all the necessary high-level
 functions. The complicated stuff is hidden in the other
 modules / packages.
 """
+import argparse
+from functools import reduce
 from typing import List
 
 import numpy as np
@@ -182,8 +184,8 @@ def run_room_models(verbose: int = 1) -> None:
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
 
         # Choose agent and fit to env.
-        n_steps = get_rl_steps() * 10
-        n_eval_steps = n_steps // 100
+        n_steps = get_rl_steps() * 30
+        n_eval_steps = 2000  # n_steps // 100
         if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
             agent = DDPGBaseAgent(env,
                                   action_range=env.action_range,
@@ -195,6 +197,7 @@ def run_room_models(verbose: int = 1) -> None:
             print_if_verb(verbose, "Analyzing agents...")
             agent_list = [open_agent, closed_agent, rule_based_agent, agent]
             env.analyze_agents_visually(agent_list)
+            env.analyze_agents_visually(agent_list, start_ind=0)
             env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
 
 
@@ -419,12 +422,30 @@ def main() -> None:
 
     Changes a lot, so I won't put a more accurate description here ;)
     """
-    # Run current experiments
-    # curr_tests()
+    # Define argument parser
+    parser = argparse.ArgumentParser()
+    arg_def_list = [
+        ("verbose", "Increase output verbosity."),
+        ("battery", "Run the battery model."),
+        ("room", "Run the room model."),
+        ("test", "Run tests."),
+        ("cleanup", "Run test cleanup."),
+    ]
+    for kw, h in arg_def_list:
+        short_kw = "-" + kw[0]
+        parser.add_argument(short_kw, "--" + kw, action="store_true", help=h)
+
+    # Parse arguments
+    parser.parse_args()
+    args = parser.parse_args()
+    if args.verbose:
+        print("Verbosity turned on.")
 
     # Run integration tests and optionally the cleanup after.
-    # run_integration_tests()
-    # test_cleanup()
+    if args.test:
+        run_integration_tests()
+    if args.cleanup:
+        test_cleanup()
 
     # Run hyperparameter optimization
     # run_dynamic_model_hyperopt(use_bat_data=True)
@@ -432,11 +453,20 @@ def main() -> None:
     # Fit and analyze all models
     # run_dynamic_model_fit_from_hop()
 
-    # Train and analyze the battery model
-    # run_battery()
+    if args.battery:
+        # Train and analyze the battery model
+        run_battery()
 
-    # Room model
-    run_room_models()
+    if args.room:
+        # Room model
+        run_room_models()
+
+    # Check if any flag is set, if not, do current experiments.
+    var_dict = vars(args)
+    any_flag_set = reduce(lambda x, k: x or var_dict[k], var_dict, 0)
+    if not any_flag_set:
+        print("No flags set")
+        curr_tests()
 
 
 if __name__ == '__main__':
