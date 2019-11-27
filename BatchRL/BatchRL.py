@@ -420,11 +420,15 @@ def curr_tests() -> None:
 def main() -> None:
     """The main function, here all the important, high-level stuff happens.
 
-    Changes a lot, so I won't put a more accurate description here ;)
+    Defines command line arguments that can be specified to run certain
+    portions of the code. If no such flag is specified, the current
+    experiments (defined in the function `curr_tests`) are run, especially
+    this is the default in PyCharm.
     """
     # Define argument parser
     parser = argparse.ArgumentParser()
     arg_def_list = [
+        # The following arguments can be provided.
         ("verbose", "Increase output verbosity."),
         ("battery", "Run the battery model."),
         ("room", "Run the room model."),
