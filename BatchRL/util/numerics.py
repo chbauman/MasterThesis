@@ -35,6 +35,8 @@ def check_shape(arr: np.ndarray, exp_shape: Tuple[int, ...], err_msg: str = None
     """
     s = arr.shape
     check_passed = len(s) == len(exp_shape)
+    if err_msg is not None:
+        err_msg += f" Expected shape: {exp_shape}, actual shape: {s}!"
     if not _return_or_error(check_passed, err_msg):
         return False
     for n1, n2 in zip(s, exp_shape):

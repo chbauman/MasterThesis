@@ -8,7 +8,8 @@ from data_processing.dataset import Dataset
 from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
 from tests.test_data import construct_test_ds
-from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, mse, save_performance
+from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, mse, save_performance, \
+    save_performance_extended
 from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf
 
@@ -606,9 +607,10 @@ class BaseDynamicsModel(KerasBase, ABC):
         n_sets = len(parts)
         n_pred = len(self.out_inds)
         n_n_steps = len(n_steps)
-        perf_values = npf32((n_sets, n_pred, n_n_steps))
+        n_metrics = len(metrics)
+        perf_values = npf32((n_sets, n_pred, n_metrics, n_n_steps))
 
-        for ct, p_str in enumerate(parts):
+        for part_ind, p_str in enumerate(parts):
 
             # Get relevant data
             dat_1, dat_2, n = d.get_streak(p_str, use_max_len=True)
@@ -621,18 +623,20 @@ class BaseDynamicsModel(KerasBase, ABC):
                 full_pred = self.n_step_predict([in_d, out_d], n_ts, pred_ind=None)
 
                 # Plot all
-                for k in range(n_pred):
+                for series_ind in range(n_pred):
                     # Handle indices
-                    k_orig = self.out_inds[k]
+                    k_orig = self.out_inds[series_ind]
                     k_orig_arr = np.array([k_orig])
                     k_prep = self.data.to_prepared(k_orig_arr)[0]
 
                     # Compute performance
-                    perf = metrics[0](out_d[(n_ts - 1):, k_prep], full_pred[:, k])
-                    perf_values[ct, k, step_ct] = perf
+                    perf = metrics[0](out_d[(n_ts - 1):, k_prep], full_pred[:, series_ind])
+                    perf_values[part_ind, series_ind, 0, step_ct] = perf
 
         # Save performances
-        save_performance(perf_values, n_steps, save_names)
+        # save_performance(perf_values, n_steps, save_names)
+        met_names = [m.__name__ for m in metrics]
+        save_performance_extended(perf_values, n_steps, save_names, met_names)
 
     def analyze_6_days(self) -> None:
         """Analyzes this model using the 7 day streaks.
