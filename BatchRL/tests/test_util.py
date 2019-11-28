@@ -258,8 +258,11 @@ class TestNumerics(TestCase):
         self.assertTrue(np.array_equal(inds, inds_loaded))
 
         class DatTest:
-            descriptions = [f"Series{i}" for i in range(n_series)]
+            descriptions = np.array([f"Series{i}" for i in range(n_series)])
             dt = dt_used
+            d = n_series
+            n_c = 0
+            c_inds = np.array([], dtype=np.int32)
 
         # Test plotting
         class Mod:
