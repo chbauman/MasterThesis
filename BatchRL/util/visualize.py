@@ -778,13 +778,21 @@ def _load_all_model_data(model_list: List, parts: List[str], metric_list: List[s
     return data_array, inds
 
 
-def plot_performance_table(model_list: List, parts: List[str], metric_list: List[str]) -> None:
+def plot_performance_table(model_list: List, parts: List[str], metric_list: List[str],
+                           name: str = "Test") -> None:
 
     # Define the ordering of the rows.
     order = (0, 1, 4, 2, 3)
 
-    sec_order = np.argsort(order)
+    # Get some more labels
+    series_descs = model_list[0].data.descriptions
+    mod_names = [m.name for m in model_list]
 
+    base_dir = os.path.join(model_plot_path, "EvalTables")
+    create_dir(base_dir)
+    plot_path = os.path.join(base_dir, name)
+
+    sec_order = np.argsort(order)
     last_ind = order[-1]
 
     data_array, inds = _load_all_model_data(model_list, parts, metric_list)
@@ -804,9 +812,6 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
 
     table_array = np.empty((tot_n_rows, n_dim - 1 + n_last), dtype="<U30")
 
-    series_descs = model_list[0].data.descriptions
-    mod_names = [m.name for m in model_list]
-
     for k in range(tot_n_rows):
 
         all_inds = [(k // n) % m for n, m in n_sub]
@@ -820,8 +825,6 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
         for i in range(n_last):
             ind_list = np.array(all_inds + [i])[sec_order]
             table_array[k, 4 + i] = f"{data_array[tuple(ind_list)]}"
-
-    print(table_array)
 
     # Define column labels
     col_labels = ["Model", "Set", "Steps", "Series"]
@@ -838,7 +841,7 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
 
     fig.tight_layout()
 
-    save_figure("../test")
+    save_figure(plot_path)
 
 
 

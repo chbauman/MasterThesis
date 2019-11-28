@@ -30,6 +30,8 @@ from util.numerics import max_abs_err, mae, mse
 from util.util import EULER, get_rl_steps, print_if_verb
 
 # Define the models by name
+from util.visualize import plot_performance_table
+
 base_rnn_models = [
     "WeatherFromWeatherTime_RNN",
     "Apartment_RNN",
@@ -40,7 +42,8 @@ base_rnn_models = [
 full_models = [
     "FullState_Comp_ReducedTempConstWaterWeather",
     "FullState_Comp_TempConstWaterWeather",
-    "FullState_Comp_WeatherAptTime"
+    "FullState_Comp_WeatherAptTime",
+    "FullState_Naive",
 ]
 
 
@@ -186,6 +189,16 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
 
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
+
+    # Create the performance table
+    n_full_mods = len(full_models)
+    full_mods = all_mods[:-n_full_mods]
+    parts = ["Val", "Train"]
+    metric_list = ["MSE", "MAE", "Max. Err."]
+    name = "AllFullPerf"
+    if use_bat_data:
+        name += "WithBat"
+    plot_performance_table(full_mods, parts, metric_list, name)
 
 
 def run_room_models(verbose: int = 1) -> None:
