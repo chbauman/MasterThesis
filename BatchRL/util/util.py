@@ -81,7 +81,6 @@ class ProgWrap(object):
         if self.v:
             sys.stdout.flush()
             sys.stdout.write(self.init_str + " Done.\n")
-        return True
 
 
 def print_if_verb(verb: Union[bool, int] = True, *args, **kwargs):

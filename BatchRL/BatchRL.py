@@ -46,6 +46,12 @@ full_models = [
     "FullState_Comp_WeatherAptTime",
     "FullState_Naive",
 ]
+full_models_short_names = [
+    "Weather, Constant Water, reduced Room Temp",
+    "Weather, Constant Water, Room Temp.",
+    "Weather, joint Room and Water",
+    "Naive",
+]
 
 
 def run_integration_tests() -> None:
@@ -183,7 +189,8 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
         # Do the performance analysis
         if perf_analyze:
             if verbose:
-                print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
+                print(f"Model: {name}")
+                # print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
             m_to_use.analyze_performance(n_steps, verbose=verbose,
                                          overwrite=False,
                                          metrics=metrics)
@@ -192,15 +199,21 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
     # Create the performance table
-    if verbose:
-        print("Creating performance table...")
-    full_mods = [all_mods[n] for n in full_models]
-    parts = ["Val", "Train"]
-    metric_list = ["MSE", "MAE", "Max. Err."]
-    name = "AllFullPerf"
-    if use_bat_data:
-        name += "WithBat"
-    plot_performance_table(full_mods, parts, metric_list, name)
+    with ProgWrap("Creating performance table...", verbose > 0):
+
+        orig_mask = np.array([0, 1, 2, 3, 5])
+
+        full_mods = [all_mods[n] for n in full_models]
+        parts = ["Val", "Train"]
+        metric_list = ["MSE", "MAE", "Max. Err."]
+        name = "AllFullPerf"
+
+        if use_bat_data:
+            name += "WithBat"
+
+        plot_performance_table(full_mods, parts, metric_list, name,
+                               short_mod_names=full_models_short_names,
+                               series_mask=orig_mask)
 
 
 def run_room_models(verbose: int = 1) -> None:
@@ -433,8 +446,6 @@ def curr_tests() -> None:
     with ProgWrap("Testing..."):
         time.sleep(5)
 
-    return
-
     # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
     mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
@@ -508,7 +519,8 @@ def main() -> None:
 
     # Fit and analyze all models
     if args.mod_eval:
-        run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=True,
+        run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=False,
+                                       visual_analyze=False,
                                        include_composite=True)
 
     if args.battery:

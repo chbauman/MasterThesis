@@ -779,14 +779,29 @@ def _load_all_model_data(model_list: List, parts: List[str], metric_list: List[s
 
 
 def plot_performance_table(model_list: List, parts: List[str], metric_list: List[str],
-                           name: str = "Test") -> None:
+                           name: str = "Test", short_mod_names: List = None,
+                           remove_units: bool = True,
+                           series_mask=None) -> None:
 
     # Define the ordering of the rows.
     order = (0, 1, 4, 2, 3)
 
     # Get some more labels
-    series_descs = model_list[0].data.descriptions
+    d = model_list[0].data
+    all_desc = np.ones((d.d,), dtype=np.bool)
+    all_desc[d.c_inds] = False
+    if series_mask is None:
+        series_descs = d.descriptions[all_desc]
+    else:
+        series_descs = d.descriptions[series_mask]
+
     mod_names = [m.name for m in model_list]
+    if short_mod_names is not None:
+        assert len(short_mod_names) == len(mod_names), "Incorrect number of model names!"
+        mod_names = short_mod_names
+
+    if remove_units:
+        series_descs = [sd.split("[")[0] for sd in series_descs]
 
     base_dir = os.path.join(model_plot_path, "EvalTables")
     create_dir(base_dir)
@@ -796,6 +811,12 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     last_ind = order[-1]
 
     data_array, inds = _load_all_model_data(model_list, parts, metric_list)
+
+    # Reduce data
+    if series_mask is not None:
+        prep_mask = d.to_prepared(series_mask)
+        data_array = data_array[:, :, prep_mask]
+
     dat_shape = data_array.shape
     n_dim = len(dat_shape)
     n_models, n_parts, n_series, n_metrics, n_steps = dat_shape
@@ -810,7 +831,7 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
         curr_sz //= curr_sh
         n_sub += [(curr_sz, curr_sh)]
 
-    table_array = np.empty((tot_n_rows, n_dim - 1 + n_last), dtype="<U30")
+    table_array = np.empty((tot_n_rows, n_dim - 1 + n_last), dtype="<U50")
 
     for k in range(tot_n_rows):
 
@@ -819,17 +840,21 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
         # Fill header cols
         table_array[k, 0] = mod_names[all_inds[0]]
         table_array[k, 1] = parts[all_inds[1]]
-        table_array[k, 2] = inds[all_inds[2]]
+        table_array[k, 2] = "{}".format(int(inds[all_inds[2]]))
         table_array[k, 3] = series_descs[all_inds[3]]
 
         for i in range(n_last):
             ind_list = np.array(all_inds + [i])[sec_order]
-            table_array[k, 4 + i] = f"{data_array[tuple(ind_list)]}"
+            table_array[k, 4 + i] = "{:.4g}".format(data_array[tuple(ind_list)])
 
     # Define column labels
     col_labels = ["Model", "Set", "Steps", "Series"]
     for k in range(n_last):
         col_labels += [metric_list[k]]
+
+    base_w = 0.07
+    col_w = [base_w for _ in col_labels]
+    col_w[0] = col_w[3] = base_w * 4
 
     fig, ax = plt.subplots()
 
@@ -837,7 +862,8 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     ax.axis('off')
     ax.axis('tight')
 
-    ax.table(cellText=table_array, colLabels=col_labels, loc='center')
+    ax.table(cellText=table_array, colLabels=col_labels,
+             loc='center', colWidths=col_w)
 
     fig.tight_layout()
 
