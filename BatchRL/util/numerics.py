@@ -112,6 +112,7 @@ def save_performance_extended(perf_arr: np.ndarray,
     n_data_parts = len(file_names) - 1
     n_metrics = len(metric_names)
     n_n_steps = len(n_steps)
+    assert n_n_steps > 0 and n_metrics > 0 and n_data_parts > 0, "No data to save!"
     exp_shape = (n_data_parts, -1, n_metrics, n_n_steps)
     check_shape(perf_arr, exp_shape, err_msg="Incorrect shape!")
     n_series = perf_arr.shape[1]
@@ -131,13 +132,38 @@ def save_performance_extended(perf_arr: np.ndarray,
 
                 for i in range(n_series):
                     curr_line_array = perf_arr[ct, i, m_ct, :]
-                    a_str = np.array2string(curr_line_array, precision=2, separator=', ')
+                    a_str = np.array2string(curr_line_array, precision=7, separator=', ')
                     f.write(f"{a_str[1:-1]}\n")
 
 
-def load_performance():
+def load_performance(path_gen_func, parts: List[str], dt: int, n_metrics: int) -> Tuple[np.ndarray, np.ndarray]:
 
-    pass
+    # 
+    n_other = len(parts)
+    assert n_other > 0, "No parts specified!"
+    files = get_metrics_eval_save_name_list(parts, dt)
+    f_paths = [path_gen_func(f) for f in files]
+
+    # Load indices
+    inds = np.genfromtxt(f_paths[0])
+
+    # Load first file to get shape
+    first_dat = np.genfromtxt(f_paths[1], delimiter=", ")
+    s = first_dat.shape
+    s0, s1 = s
+    assert s0 % n_metrics == 0, "Shape mismatch!"
+    assert s1 == len(inds), "Shape mismatch!"
+    n_series = s0 // n_metrics
+
+    # Initialize and fill full data
+    eval_data = npf32((n_other, n_series, n_metrics, s[1]))
+    for k in range(n_other):
+        gft = np.genfromtxt(f_paths[k + 1], delimiter=", ")
+        for i in range(n_metrics):
+            eval_data[k, :, i] = gft[i * n_series: (i + 1) * n_series]
+
+    # Return data and indices
+    return eval_data, inds
 
 
 def num_nans(arr: np.ndarray) -> int:

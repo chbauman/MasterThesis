@@ -12,7 +12,7 @@ from tests.test_data import SYNTH_DATA_NAME
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
-    get_metrics_eval_save_name_list
+    get_metrics_eval_save_name_list, load_performance
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
     dynamic_model_dir
@@ -233,13 +233,31 @@ class TestNumerics(TestCase):
         self.assertEqual(len(name_list), len(lst) + 1)
 
     def test_save_performance_extended(self):
-        n, n_f = 4, 2
+        n = 4
+        dt = 30
         inds = range(n)
         met_list = ["met1", "met2"]
+        p_list = ["first", "second"]
+        n_f = len(p_list)
         n_metrics = len(met_list)
-        np_arr = np.ones((n_f, 3, n_metrics, n))
-        f_names = [os.path.join(TEST_DIR, f"test_extended_{i}.txt") for i in range(n_f + 1)]
+        sh = (n_f, 3, n_metrics, n)
+        tot_sz = tot_size(sh)
+        np_arr = np.arange(tot_sz).reshape(sh)
+
+        # Save data
+        f_names = get_metrics_eval_save_name_list(p_list, dt)
+        f_names = [os.path.join(TEST_DIR, i) for i in f_names]
         save_performance_extended(np_arr, inds, f_names, met_list)
+
+        # Try loading again
+        def path_gen(name):
+            return os.path.join(TEST_DIR, name)
+
+        perf_arrays, inds_loaded = load_performance(path_gen, p_list, dt, n_metrics)
+
+        self.assertTrue(np.allclose(perf_arrays, np_arr))
+        self.assertTrue(np.array_equal(inds, inds_loaded))
+
     pass
 
 
