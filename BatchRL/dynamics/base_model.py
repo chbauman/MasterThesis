@@ -1,4 +1,5 @@
 import os
+import warnings
 from abc import ABC, abstractmethod
 from typing import Optional, Sequence, Tuple
 
@@ -317,6 +318,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             orig_pred_inds = np.copy(self.out_inds)
             out_inds = np.arange(n_pred)
         else:
+            warnings.warn("Deprecated!")
             # Predict pred_ind'th series only
             mod_pred_ind = self.out_inds[pred_ind]
             orig_pred_inds = np.array([mod_pred_ind], dtype=np.int32)
@@ -619,7 +621,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             for step_ct, n_ts in enumerate(n_steps):
 
                 # Predict
-                full_pred = self.n_step_predict([in_d, out_d], n_ts, pred_ind=None)
+                full_pred = self.n_step_predict(copy_arr_list([in_d, out_d]), n_ts, pred_ind=None)
 
                 # Plot all
                 for series_ind in range(n_pred):

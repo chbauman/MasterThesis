@@ -50,13 +50,7 @@ def get_full_composite_model(standardized: bool = False) -> BaseDynamicsModel:
 
 
 def test_testing():
-    print("hooisjdfoisjfdoisjdfoidsjf")
-    print("hooisjdfoisjfdoisjdfoidsjf")
-    print("hooisjdfoisjfdoisjdfoidsjf")
-    print("hooisjdfoisjfdoisjdfoidsjf")
-    print("hooisjdfoisjfdoisjdfoidsjf")
-    print("hooisjdfoisjfdoisjdfoidsjf")
-    print("hooisjdfoisjfdoisjdfoidsjf")
+    print("hey, test me, too!!")
 
 
 class TestModel(BaseDynamicsModel):
@@ -232,6 +226,11 @@ class TestBaseDynamics(TestCase):
         exp_out = np.copy(preds).reshape((1, -1))
         self.assertTrue(np.array_equal(exp_out, c_mod.predict(exp_out)),
                         "ConstSeriesTestModel implemented incorrectly!")
+
+    def test_n_step_predict(self):
+        # TODO!
+        dat = 0
+        assert dat == 0
 
 
 class TestHopTable(HyperOptimizableModel):
