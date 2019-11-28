@@ -5,6 +5,7 @@ functions. The complicated stuff is hidden in the other
 modules / packages.
 """
 import argparse
+import time
 from functools import reduce
 from typing import List
 
@@ -27,7 +28,7 @@ from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
 from util.numerics import max_abs_err, mae, mse
-from util.util import EULER, get_rl_steps, print_if_verb
+from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap
 
 # Define the models by name
 from util.visualize import plot_performance_table
@@ -191,8 +192,9 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
     # Create the performance table
-    n_full_mods = len(full_models)
-    full_mods = all_mods[:-n_full_mods]
+    if verbose:
+        print("Creating performance table...")
+    full_mods = [all_mods[n] for n in full_models]
     parts = ["Val", "Train"]
     metric_list = ["MSE", "MAE", "Max. Err."]
     name = "AllFullPerf"
@@ -427,6 +429,11 @@ def curr_tests() -> None:
 
     # try_opcua()
     # return
+
+    with ProgWrap("Testing..."):
+        time.sleep(5)
+
+    return
 
     # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)

@@ -8,6 +8,7 @@ tests of these functions are included.
 import os
 import random
 import shutil
+import sys
 from datetime import datetime
 from functools import wraps
 from typing import Union, List, Tuple, Any, Sequence, TypeVar
@@ -60,6 +61,28 @@ LOrEl = Union[Sequence[T], T]
 
 #######################################################################################################
 # Python stuff
+
+class ProgWrap(object):
+    """Context manager that wraps the body with output to the console.
+
+    If `verbose` is False, this does absolutely nothing.
+    """
+
+    def __init__(self, init_str: str = "Starting...", verbose: bool = True):
+        self.init_str = init_str
+        self.v = verbose
+
+    def __enter__(self):
+        if self.v:
+            sys.stdout.write(self.init_str + "\r")
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        if self.v:
+            sys.stdout.flush()
+            sys.stdout.write(self.init_str + " Done.\n")
+        return True
+
 
 def print_if_verb(verb: Union[bool, int] = True, *args, **kwargs):
     """Prints the given stuff if `verb` is True."""
