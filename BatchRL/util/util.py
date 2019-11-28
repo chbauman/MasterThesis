@@ -653,3 +653,18 @@ def day_offset_ts(t_init: str, mins: int = 15) -> int:
 # Create paths
 create_dir(model_dir)
 create_dir(dynamic_model_dir)
+
+
+def get_metrics_eval_save_name_list(parts: List[str], dt: int) -> List[str]:
+    """Defines the filenames for performance evaluation.
+
+    Args:
+        parts: The list with the strings specifying the parts of the dataset.
+        dt: The number of minutes in a timestep.
+
+    Returns:
+        A list with the filenames.
+    """
+    ext_list = ["Inds"] + [s.capitalize() for s in parts]
+    save_names = [f"Perf_{e}_dt_{dt}.txt" for e in ext_list]
+    return save_names

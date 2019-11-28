@@ -14,7 +14,7 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
     num_nans, find_longest_streak, mse, save_performance, mae, max_abs_err, check_shape, save_performance_extended
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
-    dynamic_model_dir
+    dynamic_model_dir, get_metrics_eval_save_name_list
 from util.visualize import plot_dir, plot_reward_details, model_plot_path, rl_plot_path
 
 
@@ -387,6 +387,12 @@ class TestUtil(TestCase):
         self.assertEqual(p1, "desc ")
         self.assertEqual(p2, "[1]")
         self.assertEqual("hoi", split_desc_units("hoi")[0])
+
+    def test_file_name_generation(self):
+        lst = ["test", "foo"]
+        dt = 100
+        name_list = get_metrics_eval_save_name_list(lst, dt)
+        self.assertEqual(len(name_list), len(lst) + 1)
 
 
 class TestPlot(TestCase):

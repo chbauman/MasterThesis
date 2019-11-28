@@ -8,7 +8,7 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 from util.numerics import fit_linear_1d
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
-    create_dir, Num, yeet
+    create_dir, Num, yeet, get_metrics_eval_save_name_list
 
 if EULER:
     # Do not use GUI based backend.
@@ -737,6 +737,9 @@ def plot_reward_details(a_list: List, rewards: np.ndarray,
     save_figure(save_name=path_name)
 
 
-def plot_performance_table():
+def plot_performance_table(model_dir_list: List[str], parts: List[str], dt: int) -> None:
 
+    f_names = get_metrics_eval_save_name_list(parts, dt)
+    for m_dir in model_dir_list:
+        f_paths = [os.path.join(m_dir, f) for f in f_names]
     pass

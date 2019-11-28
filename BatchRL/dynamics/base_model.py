@@ -8,9 +8,10 @@ from data_processing.dataset import Dataset
 from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
 from tests.test_data import construct_test_ds
-from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, mse, save_performance, \
+from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, mse, \
     save_performance_extended
-from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt
+from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt, \
+    get_metrics_eval_save_name_list
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf
 
 
@@ -595,8 +596,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         d = self.data
 
         # Create file names
-        ext_list = ["Inds"] + [s.capitalize() for s in parts]
-        save_names = [f"Perf_{e}_dt_{d.dt}.txt" for e in ext_list]
+        save_names = get_metrics_eval_save_name_list(parts, d.dt)
         save_names = [self.get_plt_path(s) for s in save_names]
 
         # Check if file already exists
