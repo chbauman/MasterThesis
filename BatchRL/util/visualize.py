@@ -591,7 +591,8 @@ def _setup_axis(ax, base_title: str, desc: str, title: bool = True):
         ax.set_title(base_title + ": " + t)
 
 
-def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
+def plot_env_evaluation(actions: np.ndarray,
+                        states: np.ndarray,
                         rewards: np.ndarray,
                         ds,
                         agent_names: Sequence[str],
@@ -599,6 +600,7 @@ def plot_env_evaluation(actions: np.ndarray, states: np.ndarray,
                         extra_actions: np.ndarray = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
+    Only for one specific initial condition.
     """
     assert len(agent_names) == actions.shape[0], "Incorrect number of names!"
     assert rewards.shape[0] == actions.shape[0], "Incorrect shapes!"
@@ -682,17 +684,26 @@ def plot_reward_details(a_list: List, rewards: np.ndarray,
                         path_name: str,
                         rew_descs: List[str],
                         title: str = "") -> None:
+    """Creates a bar plot with the different rewards of the different agents.
 
+    Args:
+        a_list: List with agents.
+        rewards: Array with all rewards for all agents.
+        path_name: Path of the plot to save.
+        rew_descs: Descriptions of the parts of the reward.
+        title: Plot title.
+    """
     n_rewards = rewards.shape[-1]
     assert n_rewards == len(rew_descs) + 1, "No correct number of descriptions!"
     labels = [a.get_short_name() for a in a_list]
     mean_rewards = np.mean(rewards, axis=1)
     all_descs = ["Total Reward"] + rew_descs
 
+    fig, ax = plt.subplots()
+
+    # Define the bars
     x = np.arange(len(labels))  # the label locations
     width = 0.8 / n_rewards  # the width of the bars
-
-    fig, ax = plt.subplots()
     offs = (n_rewards - 1) * width / 2
     rects = [ax.bar(x - offs + i * width,
                     mean_rewards[:, i],
@@ -707,6 +718,7 @@ def plot_reward_details(a_list: List, rewards: np.ndarray,
     ax.set_xticklabels(labels)
     ax.legend()
 
+    # Label the rectangles with the values.
     def auto_label(rect_list):
         """Attach a text label above each bar in *rects*, displaying its height."""
         for rect in rect_list:
@@ -720,6 +732,11 @@ def plot_reward_details(a_list: List, rewards: np.ndarray,
     for r in rects:
         auto_label(r)
 
+    # Set layout and save
     fig.tight_layout()
-
     save_figure(save_name=path_name)
+
+
+def plot_performance_table():
+
+    pass

@@ -168,7 +168,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
     lst = base_rnn_models[:]
     if include_composite:
         lst += full_models
-    all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True, fit=True) for nm in base_rnn_models}
+    all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True, fit=True) for nm in lst}
 
     # Fit or load all initialized models
     for name, m_to_use in all_mods.items():
