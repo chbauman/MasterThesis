@@ -138,7 +138,7 @@ def save_performance_extended(perf_arr: np.ndarray,
 
 def load_performance(path_gen_func, parts: List[str], dt: int, n_metrics: int) -> Tuple[np.ndarray, np.ndarray]:
 
-    # 
+    #
     n_other = len(parts)
     assert n_other > 0, "No parts specified!"
     files = get_metrics_eval_save_name_list(parts, dt)

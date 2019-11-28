@@ -6,7 +6,7 @@ import matplotlib as mpl
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from util.numerics import fit_linear_1d, get_metrics_eval_save_name_list
+from util.numerics import fit_linear_1d, get_metrics_eval_save_name_list, load_performance, npf32, check_shape
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
     create_dir, Num, yeet
 
@@ -737,10 +737,52 @@ def plot_reward_details(a_list: List, rewards: np.ndarray,
     save_figure(save_name=path_name)
 
 
-def plot_performance_table(model_dir_list: List[str], parts: List[str], dataset) -> None:
+def _load_all_model_data(model_list: List, parts: List[str], metric_list: List[str]) -> Tuple[np.ndarray, np.ndarray]:
+    """Helper function for `plot_performance_table` to load the performance data of all models.
 
-    dt = dataset.dt
-    f_names = get_metrics_eval_save_name_list(parts, dt)
-    for m_dir in model_dir_list:
-        f_paths = [os.path.join(m_dir, f) for f in f_names]
-    pass
+    Args:
+        model_list:
+        parts:
+        metric_list:
+
+    Returns:
+        The loaded data.
+    """
+    # Get sizes and check them
+    n_models, n_parts, n_metrics = len(model_list), len(parts), len(metric_list)
+    assert n_models > 0 and n_parts > 0 and n_metrics > 0, "Nothing to do here!"
+    dt = model_list[0].data.dt
+
+    # Load data of all models
+    data_list = []
+    inds = None
+    for ct, m in enumerate(model_list):
+
+        # # Define function generating path.
+        # def gen_fun(name):
+        #     return m.get_plt_path(name)
+
+        # Load data of current model and check shape
+        data, inds_curr = load_performance(m.get_plt_path, parts, dt, n_metrics)
+        if ct == 0:
+            inds = inds_curr
+        else:
+            assert np.array_equal(inds, inds_curr)
+            check_shape(data_list[0], data.shape)
+        data_list += [data]
+
+    # Check shape and stack
+    check_shape(data_list[0], (n_parts, -1, n_metrics, len(inds)))
+    data_array = np.stack(data_list)
+
+    return data_array, inds
+
+
+def plot_performance_table(model_list: List, parts: List[str], metric_list: List[str]) -> None:
+
+    data_array, inds = _load_all_model_data(model_list, parts, metric_list)
+    n_models, n_parts, n_series, n_metrics, n_steps = data_array.shape
+
+    tot_n_rows = n_models * n_parts * n_series * n_metrics
+
+
