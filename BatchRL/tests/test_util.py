@@ -11,10 +11,11 @@ from dynamics.recurrent import RNN_TEST_DATA_NAME
 from tests.test_data import SYNTH_DATA_NAME
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
-    num_nans, find_longest_streak, mse, save_performance, mae, max_abs_err, check_shape, save_performance_extended
+    num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
+    get_metrics_eval_save_name_list
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
-    dynamic_model_dir, get_metrics_eval_save_name_list
+    dynamic_model_dir
 from util.visualize import plot_dir, plot_reward_details, model_plot_path, rl_plot_path
 
 
@@ -225,12 +226,11 @@ class TestNumerics(TestCase):
         arr1 = npf32(sh, fill=np.nan)
         self.assertEqual(num_nans(arr1), tot_size(sh), "num_nans incorrect!")
 
-    def test_save_performance(self):
-        n, n_f = 4, 2
-        inds = range(n)
-        np_arr = np.ones((n_f, 3, n))
-        f_names = [os.path.join(TEST_DIR, f"tsp_{i}.txt") for i in range(n_f + 1)]
-        save_performance(np_arr, inds, f_names)
+    def test_file_name_generation(self):
+        lst = ["test", "foo"]
+        dt = 100
+        name_list = get_metrics_eval_save_name_list(lst, dt)
+        self.assertEqual(len(name_list), len(lst) + 1)
 
     def test_save_performance_extended(self):
         n, n_f = 4, 2
@@ -387,12 +387,6 @@ class TestUtil(TestCase):
         self.assertEqual(p1, "desc ")
         self.assertEqual(p2, "[1]")
         self.assertEqual("hoi", split_desc_units("hoi")[0])
-
-    def test_file_name_generation(self):
-        lst = ["test", "foo"]
-        dt = 100
-        name_list = get_metrics_eval_save_name_list(lst, dt)
-        self.assertEqual(len(name_list), len(lst) + 1)
 
 
 class TestPlot(TestCase):

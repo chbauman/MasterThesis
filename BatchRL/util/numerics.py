@@ -15,7 +15,7 @@ def _return_or_error(cond: bool, err_msg: str = None) -> bool:
     return True
 
 
-def check_shape(arr: np.ndarray, exp_shape: Tuple[int, ...], err_msg: str = None):
+def check_shape(arr: np.ndarray, exp_shape: Tuple[int, ...], err_msg: str = "Shape Mismatch!"):
     """Checks whether the shape of arr agrees with the expected shape `exp_shape`.
 
     If `err_msg` is not None, an error will be raised if the
@@ -56,9 +56,7 @@ def mse(arr1: np.ndarray, arr2: np.ndarray) -> float:
     Returns:
         MSE between `arr1` and `arr2`.
     """
-    s1, s2 = arr1.shape, arr2.shape
-    if s1 != s2:
-        raise ValueError(f"Shape mismatch: {s1} != {s2}!!")
+    check_shape(arr1, arr2.shape)
     return ((arr1 - arr2) ** 2).mean()
 
 
@@ -72,9 +70,7 @@ def mae(arr1: np.ndarray, arr2: np.ndarray) -> float:
     Returns:
         MAE between `arr1` and `arr2`.
     """
-    s1, s2 = arr1.shape, arr2.shape
-    if s1 != s2:
-        raise ValueError(f"Shape mismatch: {s1} != {s2}!!")
+    check_shape(arr1, arr2.shape)
     return np.abs(arr1 - arr2).mean()
 
 
@@ -89,38 +85,23 @@ def max_abs_err(arr1: np.ndarray, arr2: np.ndarray) -> float:
         Max absolute error between `arr1` and `arr2`.
     """
     s1, s2 = arr1.shape, arr2.shape
-    if s1 != s2:
-        raise ValueError(f"Shape mismatch: {s1} != {s2}!!")
+    check_shape(arr1, arr2.shape)
     return np.abs(np.max(arr1 - arr2))
 
 
-def save_performance(perf_arr: np.ndarray, n_steps: Sequence[int], file_names: List[str]) -> None:
-    """Saves the performance evaluation results from a dynamics model.
-
-    Also saves an extra file with the `n_steps`, its filename
-    must be contained in the filename list `file_names`.
+def get_metrics_eval_save_name_list(parts: List[str], dt: int) -> List[str]:
+    """Defines the filenames for performance evaluation.
 
     Args:
-        perf_arr: The array containing the results.
-        n_steps: The number of steps that were used to evaluate.
-        file_names: A list of file names.
+        parts: The list with the strings specifying the parts of the dataset.
+        dt: The number of minutes in a timestep.
+
+    Returns:
+        A list with the filenames.
     """
-    # Check input
-    sh = perf_arr.shape
-    if not check_dim(perf_arr, 3):
-        raise ValueError("Array needs exactly 3 dimensions!")
-    if sh[0] + 1 != len(file_names):
-        raise ValueError("Incorrect number of filenames provided!")
-    if sh[2] != len(n_steps):
-        raise ValueError("Wrong shape in 3rd dimension.")
-
-    # Save n steps info
-    step_data = np.array(n_steps, dtype=np.int32)
-    np.savetxt(file_names[0], step_data[:], fmt="%i")
-
-    # Save all other files
-    for ct, k in enumerate(file_names[1:]):
-        np.savetxt(file_names[ct + 1], perf_arr[ct])
+    ext_list = ["Inds"] + [s.capitalize() for s in parts]
+    save_names = [f"Perf_{e}_dt_{dt}.txt" for e in ext_list]
+    return save_names
 
 
 def save_performance_extended(perf_arr: np.ndarray,
@@ -152,6 +133,11 @@ def save_performance_extended(perf_arr: np.ndarray,
                     curr_line_array = perf_arr[ct, i, m_ct, :]
                     a_str = np.array2string(curr_line_array, precision=2, separator=', ')
                     f.write(f"{a_str[1:-1]}\n")
+
+
+def load_performance():
+
+    pass
 
 
 def num_nans(arr: np.ndarray) -> int:
