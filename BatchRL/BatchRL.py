@@ -142,7 +142,8 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
 def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
                                    verbose: int = 1,
                                    visual_analyze: bool = True,
-                                   perf_analyze: bool = False) -> None:
+                                   perf_analyze: bool = False,
+                                   include_composite: bool = False) -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
     Does not much if not on Euler.
@@ -152,6 +153,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
         verbose: Verbosity level.
         visual_analyze: Whether to do the visual analysis.
         perf_analyze: Whether to do the performance analysis.
+        include_composite: Whether to also do all the stuff for the composite models.
     """
     # Data for performance analysis
     n_steps = (1, 4, 24, 48)
@@ -163,6 +165,9 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
                                                     add_battery_data=use_bat_data)
 
     # Load and fit all models
+    lst = base_rnn_models[:]
+    if include_composite:
+        lst += full_models
     all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True, fit=True) for nm in base_rnn_models}
 
     # Fit or load all initialized models
@@ -437,14 +442,7 @@ def curr_tests() -> None:
     return
 
 
-def main() -> None:
-    """The main function, here all the important, high-level stuff happens.
-
-    Defines command line arguments that can be specified to run certain
-    portions of the code. If no such flag is specified, the current
-    experiments (defined in the function `curr_tests`) are run, especially
-    this is the default in PyCharm.
-    """
+def def_parser() -> argparse.ArgumentParser:
     # Define argument parser
     parser = argparse.ArgumentParser()
     arg_def_list = [
@@ -460,9 +458,19 @@ def main() -> None:
     for kw, h in arg_def_list:
         short_kw = "-" + kw[0]
         parser.add_argument(short_kw, "--" + kw, action="store_true", help=h)
+    return parser
 
+
+def main() -> None:
+    """The main function, here all the important, high-level stuff happens.
+
+    Defines command line arguments that can be specified to run certain
+    portions of the code. If no such flag is specified, the current
+    experiments (defined in the function `curr_tests`) are run, especially
+    this is the default in PyCharm.
+    """
     # Parse arguments
-    parser.parse_args()
+    parser = def_parser()
     args = parser.parse_args()
     verbose = args.verbose
     if verbose:
@@ -480,7 +488,8 @@ def main() -> None:
 
     # Fit and analyze all models
     if args.mod_eval:
-        run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=True)
+        run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=True,
+                                       include_composite=True)
 
     if args.battery:
         # Train and analyze the battery model
