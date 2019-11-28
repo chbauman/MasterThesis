@@ -8,7 +8,7 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 from util.numerics import fit_linear_1d, get_metrics_eval_save_name_list, load_performance, npf32, check_shape
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
-    create_dir, Num, yeet
+    create_dir, Num, yeet, tot_size
 
 if EULER:
     # Do not use GUI based backend.
@@ -780,9 +780,66 @@ def _load_all_model_data(model_list: List, parts: List[str], metric_list: List[s
 
 def plot_performance_table(model_list: List, parts: List[str], metric_list: List[str]) -> None:
 
-    data_array, inds = _load_all_model_data(model_list, parts, metric_list)
-    n_models, n_parts, n_series, n_metrics, n_steps = data_array.shape
+    # Define the ordering of the rows.
+    order = (0, 1, 4, 2, 3)
 
-    tot_n_rows = n_models * n_parts * n_series * n_metrics
+    sec_order = np.argsort(order)
+
+    last_ind = order[-1]
+
+    data_array, inds = _load_all_model_data(model_list, parts, metric_list)
+    dat_shape = data_array.shape
+    n_dim = len(dat_shape)
+    n_models, n_parts, n_series, n_metrics, n_steps = dat_shape
+    tot_s = tot_size(dat_shape)
+    n_last = dat_shape[last_ind]
+    tot_n_rows = tot_s // n_last
+
+    n_sub = []
+    curr_sz = tot_n_rows
+    for k in range(n_dim - 1):
+        curr_sh = dat_shape[order[k]]
+        curr_sz //= curr_sh
+        n_sub += [(curr_sz, curr_sh)]
+
+    table_array = np.empty((tot_n_rows, n_dim - 1 + n_last), dtype="<U30")
+
+    series_descs = model_list[0].data.descriptions
+    mod_names = [m.name for m in model_list]
+
+    for k in range(tot_n_rows):
+
+        all_inds = [(k // n) % m for n, m in n_sub]
+
+        # Fill header cols
+        table_array[k, 0] = mod_names[all_inds[0]]
+        table_array[k, 1] = parts[all_inds[1]]
+        table_array[k, 2] = inds[all_inds[2]]
+        table_array[k, 3] = series_descs[all_inds[3]]
+
+        for i in range(n_last):
+            ind_list = np.array(all_inds + [i])[sec_order]
+            table_array[k, 4 + i] = f"{data_array[tuple(ind_list)]}"
+
+    print(table_array)
+
+    # Define column labels
+    col_labels = ["Model", "Set", "Steps", "Series"]
+    for k in range(n_last):
+        col_labels += [metric_list[k]]
+
+    fig, ax = plt.subplots()
+
+    # hide axes
+    ax.axis('off')
+    ax.axis('tight')
+
+    ax.table(cellText=table_array, colLabels=col_labels, loc='center')
+
+    fig.tight_layout()
+
+    save_figure("../test")
+
+
 
 

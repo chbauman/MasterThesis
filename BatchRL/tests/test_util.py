@@ -16,8 +16,7 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
     dynamic_model_dir
-from util.visualize import plot_dir, plot_reward_details, model_plot_path, rl_plot_path
-
+from util.visualize import plot_dir, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table
 
 # Define and create directory for test files.
 TEST_DIR = os.path.join(plot_dir, "Test")  #: Directory for test output.
@@ -233,19 +232,19 @@ class TestNumerics(TestCase):
         self.assertEqual(len(name_list), len(lst) + 1)
 
     def test_save_performance_extended(self):
-        n = 4
-        dt = 30
+        n, n_series = 4, 3
+        dt_used = 30
         inds = range(n)
         met_list = ["met1", "met2"]
         p_list = ["first", "second"]
         n_f = len(p_list)
         n_metrics = len(met_list)
-        sh = (n_f, 3, n_metrics, n)
+        sh = (n_f, n_series, n_metrics, n)
         tot_sz = tot_size(sh)
         np_arr = np.arange(tot_sz).reshape(sh)
 
         # Save data
-        f_names = get_metrics_eval_save_name_list(p_list, dt)
+        f_names = get_metrics_eval_save_name_list(p_list, dt_used)
         f_names = [os.path.join(TEST_DIR, i) for i in f_names]
         save_performance_extended(np_arr, inds, f_names, met_list)
 
@@ -253,10 +252,27 @@ class TestNumerics(TestCase):
         def path_gen(name):
             return os.path.join(TEST_DIR, name)
 
-        perf_arrays, inds_loaded = load_performance(path_gen, p_list, dt, n_metrics)
+        perf_arrays, inds_loaded = load_performance(path_gen, p_list, dt_used, n_metrics)
 
         self.assertTrue(np.allclose(perf_arrays, np_arr))
         self.assertTrue(np.array_equal(inds, inds_loaded))
+
+        class DatTest:
+            descriptions = [f"Series{i}" for i in range(n_series)]
+            dt = dt_used
+
+        # Test plotting
+        class Mod:
+            name = "TestMod"
+            data = DatTest()
+
+            @staticmethod
+            def get_plt_path(name):
+                return os.path.join(TEST_DIR, name)
+
+        t_mod = Mod()
+
+        plot_performance_table([t_mod], p_list, met_list)
 
     pass
 

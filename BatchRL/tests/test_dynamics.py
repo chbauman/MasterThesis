@@ -49,6 +49,16 @@ def get_full_composite_model(standardized: bool = False) -> BaseDynamicsModel:
     return full_mod
 
 
+def test_testing():
+    print("hooisjdfoisjfdoisjdfoidsjf")
+    print("hooisjdfoisjfdoisjdfoidsjf")
+    print("hooisjdfoisjfdoisjdfoidsjf")
+    print("hooisjdfoisjfdoisjdfoidsjf")
+    print("hooisjdfoisjfdoisjdfoidsjf")
+    print("hooisjdfoisjfdoisjdfoidsjf")
+    print("hooisjdfoisjfdoisjdfoidsjf")
+
+
 class TestModel(BaseDynamicsModel):
     """Dummy dynamics model class for testing.
 
