@@ -239,7 +239,7 @@ def run_room_models(verbose: int = 1) -> None:
 
         # Choose agent and fit to env.
         n_steps = get_rl_steps() * 30
-        n_eval_steps = 200  # n_steps // 100
+        n_eval_steps = 2000  # n_steps // 100
         if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
             agent = DDPGBaseAgent(env,
                                   action_range=env.action_range,
