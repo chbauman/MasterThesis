@@ -545,11 +545,14 @@ class BaseDynamicsModel(KerasBase, ABC):
         d = self.data
 
         # Get residuals and plot autocorrelation
-        res = self.get_residuals("train")
         if plot_acf:
-            for k in range(get_shape1(res)):
-                plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResACF_{k}'))
-                plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResPACF_{k}'), partial=True)
+            # Check if file already exist.
+            first_acf_name = self.get_plt_path(f'ResACF_0.pdf')
+            if overwrite or not os.path.isfile(first_acf_name):
+                res = self.get_residuals("train")
+                for k in range(get_shape1(res)):
+                    plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResACF_{k}'))
+                    plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResPACF_{k}'), partial=True)
 
         # Define the string lists
         parts = ["train", "val"]
