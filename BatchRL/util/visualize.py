@@ -692,10 +692,12 @@ def plot_env_evaluation(actions: np.ndarray,
         save_figure(save_path, size=s)
 
 
-def plot_reward_details(a_list: List, rewards: np.ndarray,
+def plot_reward_details(a_list: List,
+                        rewards: np.ndarray,
                         path_name: str,
                         rew_descs: List[str],
-                        title: str = "") -> None:
+                        dt: int = 15,
+                        n_eval_steps: int = 2000) -> None:
     """Creates a bar plot with the different rewards of the different agents.
 
     Args:
@@ -703,13 +705,18 @@ def plot_reward_details(a_list: List, rewards: np.ndarray,
         rewards: Array with all rewards for all agents.
         path_name: Path of the plot to save.
         rew_descs: Descriptions of the parts of the reward.
-        title: Plot title.
+        dt: Number of minutes in a timestep.
+        n_eval_steps: Number of evaluation steps.
     """
     n_rewards = rewards.shape[-1]
     assert n_rewards == len(rew_descs) + 1, "No correct number of descriptions!"
     labels = [a.get_short_name() for a in a_list]
     mean_rewards = np.mean(rewards, axis=1)
     all_descs = ["Total Reward"] + rew_descs
+
+    title = f"Mean rewards per hour for {n_eval_steps} steps."
+    fac = 60 / dt
+    mean_rewards *= fac
 
     fig, ax = plt.subplots()
 
