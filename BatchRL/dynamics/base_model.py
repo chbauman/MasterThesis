@@ -577,7 +577,8 @@ class BaseDynamicsModel(KerasBase, ABC):
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
                             verbose: int = 0,
                             overwrite: bool = False,
-                            metrics: Sequence = (mse, )) -> None:
+                            metrics: Sequence = (mse, ),
+                            n_days: int = 14) -> None:
         """Analyzes the multistep prediction performance of the model.
 
         Uses the metrics provided by `metrics`.
@@ -588,6 +589,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             verbose: Whether to output to console.
             overwrite: Whether to overwrite existing files.
             metrics: A sequence of metric functions that can be applied to two arrays.
+            n_days: Length of sequence to perform analysis.
         """
         # Print to console
         if verbose:
@@ -618,7 +620,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
             # Get relevant data
             dat_1, dat_2, n = d.get_streak(p_str, use_max_len=True)
-            dat_1, dat_2, n = d.get_streak(p_str, n_days=14)
+            dat_1, dat_2, n = d.get_streak(p_str, n_days=n_days)
             in_d, out_d = np.copy(dat_1), np.copy(dat_2)
 
             # Compute n-step predictions
