@@ -722,10 +722,12 @@ def plot_reward_details(a_list: List,
         title += title_ext
     fac = 60 / dt
     mean_rewards *= fac
-    
+
     if scale_tot_rew:
+        # Scale the maximum reward to the same magnitude of any of the other parts
+        max_tot = np.max(np.abs(mean_rewards[:, 0]))
         max_not_tot = np.max(np.abs(mean_rewards[:, 1:]))
-        mean_rewards[:, 0] /= max_not_tot
+        mean_rewards[:, 0] *= max_not_tot / max_tot
 
     fig, ax = plt.subplots()
 
