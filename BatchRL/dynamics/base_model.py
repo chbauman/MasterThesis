@@ -615,6 +615,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
             # Get relevant data
             dat_1, dat_2, n = d.get_streak(p_str, use_max_len=True)
+            dat_1, dat_2, n = d.get_streak(p_str, n_days=14)
             in_d, out_d = np.copy(dat_1), np.copy(dat_2)
 
             # Compute n-step predictions

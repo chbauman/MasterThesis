@@ -166,7 +166,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
         include_composite: Whether to also do all the stuff for the composite models.
     """
     # Data for performance analysis
-    n_steps = (1, 4, 24, 48)
+    n_steps = (1, 4, 12, 24, 48)
     metrics = (mse, mae, max_abs_err)
 
     # Get data and constraints
@@ -192,7 +192,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
                 print(f"Model: {name}")
                 # print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
             m_to_use.analyze_performance(n_steps, verbose=verbose,
-                                         overwrite=False,
+                                         overwrite=True,
                                          metrics=metrics)
 
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
@@ -211,9 +211,9 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
         if use_bat_data:
             name += "WithBat"
 
-        # plot_performance_table(full_mods, parts, metric_list, name,
-        #                        short_mod_names=full_models_short_names,
-        #                        series_mask=orig_mask)
+        plot_performance_table(full_mods, parts, metric_list, name,
+                               short_mod_names=full_models_short_names,
+                               series_mask=orig_mask)
         plot_performance_graph(full_mods, parts, metric_list, name,
                                short_mod_names=full_models_short_names,
                                series_mask=orig_mask)
