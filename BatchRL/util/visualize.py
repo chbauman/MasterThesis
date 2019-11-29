@@ -698,7 +698,8 @@ def plot_reward_details(a_list: List,
                         rew_descs: List[str],
                         dt: int = 15,
                         n_eval_steps: int = 2000,
-                        title_ext: str = None) -> None:
+                        title_ext: str = None,
+                        scale_tot_rew: bool = True) -> None:
     """Creates a bar plot with the different rewards of the different agents.
 
     Args:
@@ -721,6 +722,10 @@ def plot_reward_details(a_list: List,
         title += title_ext
     fac = 60 / dt
     mean_rewards *= fac
+    
+    if scale_tot_rew:
+        max_not_tot = np.max(np.abs(mean_rewards[:, 1:]))
+        mean_rewards[:, 0] /= max_not_tot
 
     fig, ax = plt.subplots()
 
