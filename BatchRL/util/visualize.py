@@ -717,7 +717,7 @@ def plot_reward_details(a_list: List,
     mean_rewards = np.mean(rewards, axis=1)
     all_descs = ["Total Reward"] + rew_descs
 
-    title = f"Mean rewards per hour for {n_eval_steps} steps."
+    title = f"Mean rewards per hour for {n_eval_steps} steps. "
     if title_ext is not None:
         title += title_ext
     fac = 60 / dt
