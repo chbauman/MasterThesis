@@ -778,6 +778,29 @@ def _load_all_model_data(model_list: List, parts: List[str], metric_list: List[s
     return data_array, inds
 
 
+def _get_descs(model_list: List, remove_units: bool = True,
+               series_mask=None, short_mod_names: List = None):
+
+    # Edit series descriptions
+    d = model_list[0].data
+    all_desc = np.ones((d.d,), dtype=np.bool)
+    all_desc[d.c_inds] = False
+    if series_mask is None:
+        series_descs = d.descriptions[all_desc]
+    else:
+        series_descs = d.descriptions[series_mask]
+    if remove_units:
+        series_descs = [sd.split("[")[0] for sd in series_descs]
+
+    # Edit model names
+    mod_names = [m.name for m in model_list]
+    if short_mod_names is not None:
+        assert len(short_mod_names) == len(mod_names), "Incorrect number of model names!"
+        mod_names = short_mod_names
+
+    return series_descs, mod_names
+
+
 def plot_performance_table(model_list: List, parts: List[str], metric_list: List[str],
                            name: str = "Test", short_mod_names: List = None,
                            remove_units: bool = True,
@@ -786,37 +809,26 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     # Define the ordering of the rows.
     order = (0, 1, 4, 2, 3)
 
-    # Get some more labels
-    d = model_list[0].data
-    all_desc = np.ones((d.d,), dtype=np.bool)
-    all_desc[d.c_inds] = False
-    if series_mask is None:
-        series_descs = d.descriptions[all_desc]
-    else:
-        series_descs = d.descriptions[series_mask]
+    # Prepare the labels
+    series_descs, mod_names = _get_descs(model_list, remove_units, series_mask, short_mod_names)
 
-    mod_names = [m.name for m in model_list]
-    if short_mod_names is not None:
-        assert len(short_mod_names) == len(mod_names), "Incorrect number of model names!"
-        mod_names = short_mod_names
-
-    if remove_units:
-        series_descs = [sd.split("[")[0] for sd in series_descs]
-
+    # Construct the path of the plot
     base_dir = os.path.join(model_plot_path, "EvalTables")
     create_dir(base_dir)
     plot_path = os.path.join(base_dir, name)
 
-    sec_order = np.argsort(order)
-    last_ind = order[-1]
-
+    # Load data
     data_array, inds = _load_all_model_data(model_list, parts, metric_list)
 
     # Reduce data
     if series_mask is not None:
+        d = model_list[0].data
         prep_mask = d.to_prepared(series_mask)
         data_array = data_array[:, :, prep_mask]
 
+    # Handle indices and shapes
+    sec_order = np.argsort(order)
+    last_ind = order[-1]
     dat_shape = data_array.shape
     n_dim = len(dat_shape)
     n_models, n_parts, n_series, n_metrics, n_steps = dat_shape
@@ -824,6 +836,7 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     n_last = dat_shape[last_ind]
     tot_n_rows = tot_s // n_last
 
+    # Compute indices to convert 5d array to 2d
     n_sub = []
     curr_sz = tot_n_rows
     for k in range(n_dim - 1):
@@ -831,6 +844,7 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
         curr_sz //= curr_sh
         n_sub += [(curr_sz, curr_sh)]
 
+    # Initialize empty string array
     table_array = np.empty((tot_n_rows, n_dim - 1 + n_last), dtype="<U50")
 
     for k in range(tot_n_rows):
@@ -870,5 +884,5 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     save_figure(plot_path)
 
 
-
-
+def plot_performance_graph():
+    pass
