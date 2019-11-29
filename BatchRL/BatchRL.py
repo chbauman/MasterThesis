@@ -331,7 +331,8 @@ def get_model(name: str, ds: Dataset,
         return SCTimeModel(ds, 6)
     elif name == "FullState_Naive":
         # The naive model that predicts all series as the last seen input.
-        return ConstModel(ds)
+        inds = np.array([0, 1, 2, 3, 5, 6, 7, 8], dtype=np.int32)
+        return ConstModel(ds, in_indices=inds, pred_inds=inds)
     elif name == "Battery":
         # Battery model.
         assert battery_mod is not None, "I fucked up somewhere!"
@@ -524,7 +525,7 @@ def main() -> None:
     # Fit and analyze all models
     if args.mod_eval:
         run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=True,
-                                       visual_analyze=False,
+                                       visual_analyze=True,
                                        include_composite=True)
 
     if args.battery:

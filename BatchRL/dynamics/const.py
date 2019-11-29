@@ -62,10 +62,13 @@ class ConstModel(BaseDynamicsModel):
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """Make predictions by just returning the last input.
 
+        TODO: Fix this!
+
         Args:
             in_data: Prepared data.
 
         Returns:
             Same as input
         """
+        # return np.copy(in_data[:, -1, self.p_out_inds])
         return np.copy(in_data[:, -1, :self.n_out])
