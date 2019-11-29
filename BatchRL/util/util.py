@@ -487,7 +487,7 @@ def create_dir(dirname: str) -> None:
 
 
 def rem_dirs(base_dir: str, pat: str, anywhere: bool = False) -> None:
-    """Removes all files / folders in the directory `base_dir` based on `pat`.
+    """Removes all files / folders in the directory `EVAL_MODEL_PLOT_DIR` based on `pat`.
 
     If `anywhere` is True, then all files and directories that contain
     the `pat` anywhere are removed. Otherwise only if they contain
@@ -507,7 +507,7 @@ def rem_dirs(base_dir: str, pat: str, anywhere: bool = False) -> None:
         else:
             return f_name[:pat_len] == pat
 
-    # Iterate over files / dirs in `base_dir`.
+    # Iterate over files / dirs in `EVAL_MODEL_PLOT_DIR`.
     for f in os.listdir(base_dir):
         if cond(f):
             fol = os.path.join(base_dir, f)

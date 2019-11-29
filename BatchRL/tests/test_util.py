@@ -16,10 +16,10 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
     dynamic_model_dir
-from util.visualize import plot_dir, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table
+from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table
 
 # Define and create directory for test files.
-TEST_DIR = os.path.join(plot_dir, "Test")  #: Directory for test output.
+TEST_DIR = os.path.join(PLOT_DIR, "Test")  #: Directory for test output.
 create_dir(TEST_DIR)
 
 
@@ -431,7 +431,7 @@ class TestPlot(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.test_plot_dir = os.path.join(plot_dir, "Test")
+        self.test_plot_dir = os.path.join(PLOT_DIR, "Test")
 
     def get_test_path(self, base_name: str):
         create_dir(self.test_plot_dir)

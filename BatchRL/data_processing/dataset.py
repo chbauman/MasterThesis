@@ -16,7 +16,7 @@ from util.numerics import get_shape1, check_in_range, prepare_supervised_control
     find_longest_streak
 from util.util import day_offset_ts, ts_per_day, datetime_to_np_datetime, string_to_dt, create_dir, Arr, \
     n_mins_to_np_dt, str_to_np_dt, np_dt_to_str, repl
-from util.visualize import plot_dir, plot_all
+from util.visualize import PLOT_DIR, plot_all
 
 
 dataset_data_path = os.path.join(save_dir, "Datasets")  #: Dataset directory
@@ -606,7 +606,7 @@ class Dataset:
         Args:
             name_ext: Name extension.
         """
-        nan_plot_dir = os.path.join(plot_dir, "NanPlots")
+        nan_plot_dir = os.path.join(PLOT_DIR, "NanPlots")
         create_dir(nan_plot_dir)
         s_name = os.path.join(nan_plot_dir, self.name)
         not_nans = np.logical_not(np.isnan(self.data))

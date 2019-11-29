@@ -49,15 +49,17 @@ styles = [
 joint_styles = [j + i for i, j in styles]
 
 # Saving
-plot_dir = '../Plots'  #: Base plot folder.
-preprocess_plot_path = os.path.join(plot_dir, "Preprocessing")  #: Data processing plot folder.
-model_plot_path = os.path.join(plot_dir, "Models")  #: Dynamics modeling plot folder.
-rl_plot_path = os.path.join(plot_dir, "RL")
+PLOT_DIR = '../Plots'  #: Base plot folder.
+preprocess_plot_path = os.path.join(PLOT_DIR, "Preprocessing")  #: Data processing plot folder.
+model_plot_path = os.path.join(PLOT_DIR, "Models")  #: Dynamics modeling plot folder.
+rl_plot_path = os.path.join(PLOT_DIR, "RL")
+EVAL_MODEL_PLOT_DIR = os.path.join(model_plot_path, "EvalTables")
 
 # Create folders if they do not exist
 create_dir(preprocess_plot_path)
 create_dir(model_plot_path)
 create_dir(rl_plot_path)
+create_dir(EVAL_MODEL_PLOT_DIR)
 
 
 def save_figure(save_name, show: bool = False,
@@ -832,9 +834,7 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     series_descs, mod_names = _get_descs(model_list, remove_units, series_mask, short_mod_names)
 
     # Construct the path of the plot
-    base_dir = os.path.join(model_plot_path, "EvalTables")
-    create_dir(base_dir)
-    plot_path = os.path.join(base_dir, name)
+    plot_path = os.path.join(EVAL_MODEL_PLOT_DIR, name)
 
     # Load data
     data_array, inds = _load_all_model_data(model_list, parts, metric_list, series_mask)
@@ -909,37 +909,36 @@ def plot_performance_graph(model_list: List, parts: List[str], metric_list: List
     data_array, inds = _load_all_model_data(model_list, parts, metric_list, series_mask)
     n_models, n_parts, n_series, n_metrics, n_steps = data_array.shape
 
-    model_ind = 0
-    share_y = False
-    dt = model_list[0].data.dt
+    for model_ind, m_name in enumerate(mod_names):
 
-    if n_parts > len(joint_styles):
-        warnings.warn("Duplicate plot styles!")
+        share_y = False
+        dt = model_list[0].data.dt
 
-    ax1 = None
-    for ct_m, m_str in enumerate(metric_list):
-        subplot_ind = 311 + ct_m
-        ax1 = plt.subplot(subplot_ind, sharex=ax1, sharey=ax1 if share_y else None)
-        plt.xticks(inds)
-        plt.ylabel(m_str)
+        if n_parts > len(joint_styles):
+            warnings.warn("Duplicate plot styles!")
 
-        # Plot all series
-        for set_id in range(n_parts):
-            for series_id in range(n_series):
-                lab = parts[set_id] + ": " + series_descs[series_id]
-                si = data_array[model_ind, set_id, series_id, ct_m]
-                plt.plot(inds, si, joint_styles[set_id],
-                         c=clr_map[series_id], label=lab)
+        ax1 = None
+        for ct_m, m_str in enumerate(metric_list):
+            subplot_ind = 311 + ct_m
+            ax1 = plt.subplot(subplot_ind, sharex=ax1, sharey=ax1 if share_y else None)
+            plt.xticks(inds)
+            plt.ylabel(m_str)
 
-        # Add title, legend and x-label
-        if ct_m == 0:
-            plt.title(mod_names[model_ind])
-            plt.legend()
-        if ct_m == len(metric_list) - 1:
-            plt.xlabel(f"Steps [{mins_to_str(dt)}]")
+            # Plot all series
+            for set_id in range(n_parts):
+                for series_id in range(n_series):
+                    lab = parts[set_id] + ": " + series_descs[series_id]
+                    si = data_array[model_ind, set_id, series_id, ct_m]
+                    plt.plot(inds, si, joint_styles[set_id],
+                             c=clr_map[series_id], label=lab)
 
-    # Construct the path of the plot
-    base_dir = os.path.join(model_plot_path, "EvalTables")
-    create_dir(base_dir)
-    plot_path = os.path.join(base_dir, "PerfPlotTest")
-    save_figure(plot_path)
+            # Add title, legend and x-label
+            if ct_m == 0:
+                plt.title(mod_names[model_ind])
+                plt.legend()
+            if ct_m == len(metric_list) - 1:
+                plt.xlabel(f"Steps [{mins_to_str(dt)}]")
+
+        # Construct the path of the plot
+        plot_path = os.path.join(EVAL_MODEL_PLOT_DIR, f"{name}_{m_name}")
+        save_figure(plot_path)

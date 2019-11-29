@@ -192,21 +192,21 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
                 print(f"Model: {name}")
                 # print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
             m_to_use.analyze_performance(n_steps, verbose=verbose,
-                                         overwrite=True,
+                                         overwrite=False,
                                          metrics=metrics)
 
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
 
     # Create the performance table
-    with ProgWrap("Creating performance table...", verbose > 0):
+    with ProgWrap("Creating performance table and plots...", verbose > 0):
 
         orig_mask = np.array([0, 1, 2, 3, 5])
 
         full_mods = [all_mods[n] for n in full_models]
         parts = ["Val", "Train"]
         metric_list = ["MSE", "MAE", "Max. Err."]
-        name = "AllFullPerf"
+        name = "EvalTable"
 
         if use_bat_data:
             name += "WithBat"
@@ -214,7 +214,8 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
         plot_performance_table(full_mods, parts, metric_list, name,
                                short_mod_names=full_models_short_names,
                                series_mask=orig_mask)
-        plot_performance_graph(full_mods, parts, metric_list, name,
+        plot_name = "EvalPlot"
+        plot_performance_graph(full_mods, parts, metric_list, plot_name,
                                short_mod_names=full_models_short_names,
                                series_mask=orig_mask)
 
