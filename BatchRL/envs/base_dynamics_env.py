@@ -359,6 +359,10 @@ class DynEnv(ABC, gym.Env):
 
         return scores
 
+    def get_detail_eval_title_ext(self):
+        # This is so fucking ugly!
+        return None
+
     def detailed_eval_agents(self, agent_list: Agents, n_steps: int = 100, use_noise: bool = False) -> np.ndarray:
         """Evaluates the given agents for this environment.
 
@@ -393,6 +397,8 @@ class DynEnv(ABC, gym.Env):
 
         # Plot
         p_name = self._construct_plot_name("DetailAnalysis", n_steps, agent_list)
+        title_ext = self.get_detail_eval_title_ext()
         plot_reward_details(agent_list, all_rewards, p_name,
-                            self.reward_descs, self.m.data.dt, n_steps)
+                            self.reward_descs, self.m.data.dt, n_steps,
+                            title_ext=title_ext)
         return all_rewards

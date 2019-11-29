@@ -697,7 +697,8 @@ def plot_reward_details(a_list: List,
                         path_name: str,
                         rew_descs: List[str],
                         dt: int = 15,
-                        n_eval_steps: int = 2000) -> None:
+                        n_eval_steps: int = 2000,
+                        title_ext: str = None) -> None:
     """Creates a bar plot with the different rewards of the different agents.
 
     Args:
@@ -707,6 +708,7 @@ def plot_reward_details(a_list: List,
         rew_descs: Descriptions of the parts of the reward.
         dt: Number of minutes in a timestep.
         n_eval_steps: Number of evaluation steps.
+        title_ext: Extension to add to the title.
     """
     n_rewards = rewards.shape[-1]
     assert n_rewards == len(rew_descs) + 1, "No correct number of descriptions!"
@@ -715,6 +717,8 @@ def plot_reward_details(a_list: List,
     all_descs = ["Total Reward"] + rew_descs
 
     title = f"Mean rewards per hour for {n_eval_steps} steps."
+    if title_ext is not None:
+        title += title_ext
     fac = 60 / dt
     mean_rewards *= fac
 

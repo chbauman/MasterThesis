@@ -238,6 +238,9 @@ class FullRoomEnv(RLDynEnv):
             assert not np.array_equal(action, chosen_action)
 
         return chosen_action
+    
+    def get_detail_eval_title_ext(self):
+        return f"Bound violation scaling factor: {self.alpha}"
 
 
 class CProf(ABC):
