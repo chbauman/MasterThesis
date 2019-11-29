@@ -20,7 +20,7 @@ RangeListT = List[RangeT]
 # For the room environment:
 TEMP_BOUNDS: RangeT = (22.0, 26.0)  #: The requested temperature range.
 HEAT_ACTION_BOUNDS: RangeT = (0.0, 1.0)  #: The action range for the valve opening time.
-ROOM_ENG_FAC: float = 0.25 * 65.37 * 4.18 / 3.6
+ROOM_ENG_FAC: float = 65.37 * 4.18 / 3.6
 
 # For the battery environment:
 BATTERY_ACTION_BOUNDS: RangeT = (-100.0, 100.0)  #: The action range for the active power.
@@ -29,7 +29,7 @@ SOC_GOAL: Num = 60.0  #: Desired SoC at end of episode.
 
 # Reward parts descriptions
 BAT_ENERGY: str = "Battery Energy Consumption [kWh]"
-ROOM_ENERGY: str = "Heating Energy Consumption [{:.4g} kWh]".format(ROOM_ENG_FAC)
+ROOM_ENERGY: str = "Heating Energy Consumption [{:.4g} Wh]".format(ROOM_ENG_FAC)
 TEMP_BOUND_PEN: str = "Temperature Bound Violation [Kh]"
 ENG_COST: str = "Energy Costs []"
 
