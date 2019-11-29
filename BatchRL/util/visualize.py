@@ -1,14 +1,15 @@
 import os
+import warnings
 from typing import Dict, Sequence, Tuple, List
 
-import numpy as np
 import matplotlib as mpl
+import numpy as np
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from util.numerics import fit_linear_1d, get_metrics_eval_save_name_list, load_performance, npf32, check_shape
+from util.numerics import fit_linear_1d, load_performance, check_shape
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
-    create_dir, Num, yeet, tot_size
+    create_dir, Num, yeet, tot_size, mins_to_str
 
 if EULER:
     # Do not use GUI based backend.
@@ -37,6 +38,15 @@ colors = mpl_colors.TABLEAU_COLORS
 names = list(colors)
 clr_map = [colors[name] for name in names]
 n_cols: int = len(clr_map)  #: Number of colors in colormap.
+
+# Plotting styles
+styles = [
+    ("--", 'o'),
+    ("-", 's'),
+    ("-.", 'v'),
+    (":", '*'),
+]
+joint_styles = [j + i for i, j in styles]
 
 # Saving
 plot_dir = '../Plots'  #: Base plot folder.
@@ -737,7 +747,10 @@ def plot_reward_details(a_list: List, rewards: np.ndarray,
     save_figure(save_name=path_name)
 
 
-def _load_all_model_data(model_list: List, parts: List[str], metric_list: List[str]) -> Tuple[np.ndarray, np.ndarray]:
+def _load_all_model_data(model_list: List,
+                         parts: List[str],
+                         metric_list: List[str],
+                         series_mask=None) -> Tuple[np.ndarray, np.ndarray]:
     """Helper function for `plot_performance_table` to load the performance data of all models.
 
     Args:
@@ -774,6 +787,12 @@ def _load_all_model_data(model_list: List, parts: List[str], metric_list: List[s
     # Check shape and stack
     check_shape(data_list[0], (n_parts, -1, n_metrics, len(inds)))
     data_array = np.stack(data_list)
+
+    # Reduce data
+    if series_mask is not None:
+        d = model_list[0].data
+        prep_mask = d.to_prepared(series_mask)
+        data_array = data_array[:, :, prep_mask]
 
     return data_array, inds
 
@@ -818,13 +837,7 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     plot_path = os.path.join(base_dir, name)
 
     # Load data
-    data_array, inds = _load_all_model_data(model_list, parts, metric_list)
-
-    # Reduce data
-    if series_mask is not None:
-        d = model_list[0].data
-        prep_mask = d.to_prepared(series_mask)
-        data_array = data_array[:, :, prep_mask]
+    data_array, inds = _load_all_model_data(model_list, parts, metric_list, series_mask)
 
     # Handle indices and shapes
     sec_order = np.argsort(order)
@@ -884,5 +897,49 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     save_figure(plot_path)
 
 
-def plot_performance_graph():
-    pass
+def plot_performance_graph(model_list: List, parts: List[str], metric_list: List[str],
+                           name: str = "Test", short_mod_names: List = None,
+                           remove_units: bool = True,
+                           series_mask=None) -> None:
+
+    # Prepare the labels
+    series_descs, mod_names = _get_descs(model_list, remove_units, series_mask, short_mod_names)
+
+    # Load data
+    data_array, inds = _load_all_model_data(model_list, parts, metric_list, series_mask)
+    n_models, n_parts, n_series, n_metrics, n_steps = data_array.shape
+
+    model_ind = 0
+    share_y = False
+    dt = model_list[0].data.dt
+
+    if n_parts > len(joint_styles):
+        warnings.warn("Duplicate plot styles!")
+
+    ax1 = None
+    for ct_m, m_str in enumerate(metric_list):
+        subplot_ind = 311 + ct_m
+        ax1 = plt.subplot(subplot_ind, sharex=ax1, sharey=ax1 if share_y else None)
+        plt.xticks(inds)
+        plt.ylabel(m_str)
+
+        # Plot all series
+        for set_id in range(n_parts):
+            for series_id in range(n_series):
+                lab = parts[set_id] + ": " + series_descs[series_id]
+                si = data_array[model_ind, set_id, series_id, ct_m]
+                plt.plot(inds, si, joint_styles[set_id],
+                         c=clr_map[series_id], label=lab)
+
+        # Add title, legend and x-label
+        if ct_m == 0:
+            plt.title(mod_names[model_ind])
+            plt.legend()
+        if ct_m == len(metric_list) - 1:
+            plt.xlabel(f"Steps [{mins_to_str(dt)}]")
+
+    # Construct the path of the plot
+    base_dir = os.path.join(model_plot_path, "EvalTables")
+    create_dir(base_dir)
+    plot_path = os.path.join(base_dir, "PerfPlotTest")
+    save_figure(plot_path)

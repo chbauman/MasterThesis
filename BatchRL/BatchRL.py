@@ -31,7 +31,7 @@ from util.numerics import max_abs_err, mae, mse
 from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap
 
 # Define the models by name
-from util.visualize import plot_performance_table
+from util.visualize import plot_performance_table, plot_performance_graph
 
 base_rnn_models = [
     "WeatherFromWeatherTime_RNN",
@@ -211,7 +211,10 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
         if use_bat_data:
             name += "WithBat"
 
-        plot_performance_table(full_mods, parts, metric_list, name,
+        # plot_performance_table(full_mods, parts, metric_list, name,
+        #                        short_mod_names=full_models_short_names,
+        #                        series_mask=orig_mask)
+        plot_performance_graph(full_mods, parts, metric_list, name,
                                short_mod_names=full_models_short_names,
                                series_mask=orig_mask)
 
