@@ -250,9 +250,12 @@ def run_room_models(verbose: int = 1) -> None:
             agent.fit()
             print_if_verb(verbose, "Analyzing agents...")
             agent_list = [open_agent, closed_agent, rule_based_agent, agent]
-            env.analyze_agents_visually(agent_list)
-            env.analyze_agents_visually(agent_list, start_ind=0)
-            env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
+            mask = np.array([0, 1, 4])
+            for s in [0, None]:
+                env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
+                                            plot_constrain_actions=False)
+
+            # env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
 
 
 def get_model(name: str, ds: Dataset,

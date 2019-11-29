@@ -250,7 +250,9 @@ class DynEnv(ABC, gym.Env):
                                 fitted: bool = True,
                                 use_noise: bool = False,
                                 start_ind: int = None,
-                                max_steps: int = None) -> None:
+                                max_steps: int = None,
+                                state_mask: np.ndarray = None,
+                                plot_constrain_actions: bool = True) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:
@@ -259,6 +261,8 @@ class DynEnv(ABC, gym.Env):
             use_noise: Whether to use noise in the predictions.
             start_ind: Index of initial configuration, random if None.
             max_steps: The maximum number of steps of an episode.
+            state_mask: Mask defining which series to plot.
+            plot_constrain_actions: Whether to plot the actions constrained by the env.
         """
         # Make function compatible for single agent input
         if not isinstance(agents, list):
@@ -325,14 +329,15 @@ class DynEnv(ABC, gym.Env):
         for k in range(s_ac[0]):
             for i in range(s_ac[1]):
                 clipped_action_sequences[k, i] = self._to_scaled(clipped_action_sequences[k, i], to_original=True)
-        if np.allclose(clipped_action_sequences, action_sequences):
+        if not plot_constrain_actions or np.allclose(clipped_action_sequences, action_sequences):
             clipped_action_sequences = None
 
         # Plot all the things
         name_list = [a.get_short_name() for a in agents]
         analysis_plot_path = self._construct_plot_name("AgentAnalysis", start_ind, agents)
         plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
-                            name_list, analysis_plot_path, clipped_action_sequences)
+                            name_list, analysis_plot_path, clipped_action_sequences,
+                            state_mask)
 
     def _construct_plot_name(self, base_name: str, start_ind: int, agent_list: List):
         name_list = [a.get_short_name() for a in agent_list]
@@ -359,7 +364,7 @@ class DynEnv(ABC, gym.Env):
 
         return scores
 
-    def get_detail_eval_title_ext(self):
+    def _get_detail_eval_title_ext(self):
         # This is so fucking ugly!
         return None
 
@@ -397,7 +402,7 @@ class DynEnv(ABC, gym.Env):
 
         # Plot
         p_name = self._construct_plot_name("DetailAnalysis", n_steps, agent_list)
-        title_ext = self.get_detail_eval_title_ext()
+        title_ext = self._get_detail_eval_title_ext()
         plot_reward_details(agent_list, all_rewards, p_name,
                             self.reward_descs, self.m.data.dt, n_steps,
                             title_ext=title_ext)

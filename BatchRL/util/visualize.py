@@ -609,29 +609,37 @@ def plot_env_evaluation(actions: np.ndarray,
                         ds,
                         agent_names: Sequence[str],
                         save_path: str = None,
-                        extra_actions: np.ndarray = None) -> None:
+                        extra_actions: np.ndarray = None,
+                        series_mask: np.ndarray = None,
+                        title_ext: str = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     Only for one specific initial condition.
     """
     assert len(agent_names) == actions.shape[0], "Incorrect number of names!"
     assert rewards.shape[0] == actions.shape[0], "Incorrect shapes!"
+    if series_mask is not None:
+        check_shape(series_mask, (-1,))
+        assert len(series_mask) < states.shape[2]
 
     # Check fallback actions
     plot_extra = extra_actions is not None
 
     # Extract shapes
     n_agents, episode_len, n_feats = states.shape
+    if series_mask is not None:
+        n_feats = len(series_mask)
     n_actions = actions.shape[-1]
     tot_n_plots = n_actions + n_feats + 1 + plot_extra * n_actions
 
     # We'll use a separate GridSpecs for controls, states and rewards
     fig = plt.figure()
     h_s = 0.6
-    gs_con = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=1.0, bottom=0.0, figure=fig)
-    gs_state = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=1.0, bottom=0.0, figure=fig)
-    gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=1.0, bottom=0.0, figure=fig)
-    gs_con_fb = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=1.0, bottom=0.0, figure=fig)
+    t = 0.95
+    gs_con = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
+    gs_state = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
+    gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
+    gs_con_fb = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
 
     # Define axes
     n_act_plots = n_actions * (1 + plot_extra)
@@ -646,6 +654,11 @@ def plot_env_evaluation(actions: np.ndarray,
     c_inds = ds.c_inds
     control_descs = [ds.descriptions[c] for c in c_inds]
     state_descs = [ds.descriptions[c] for c in range(n_tot_vars) if c not in c_inds]
+
+    # Reduce series
+    if series_mask is not None:
+        state_descs = [state_descs[i] for i in series_mask]
+        states = states[:, :, series_mask]
 
     # Set titles
     rew_ax.set_title("Rewards")
@@ -686,6 +699,16 @@ def plot_env_evaluation(actions: np.ndarray,
     state_axs[0].legend()
     rew_ax.legend()
 
+    # Super title
+    sup_t = 'Visual Analysis. '
+    if title_ext is not None:
+        sup_t += title_ext
+    con_axs[0].annotate('Visual Analysis. ', (0.5, 0.975),
+                        xycoords='figure fraction', ha='center',
+                        fontsize=24)
+    # plt.suptitle('Main title')
+    # plt.subplots_adjust(top=1.85)
+
     # Save
     s = (16, tot_n_plots * 1.8)
     if save_path is not None:
@@ -710,6 +733,7 @@ def plot_reward_details(a_list: List,
         dt: Number of minutes in a timestep.
         n_eval_steps: Number of evaluation steps.
         title_ext: Extension to add to the title.
+        scale_tot_rew: Whether to scale the total reward to a nice range.
     """
     n_rewards = rewards.shape[-1]
     assert n_rewards == len(rew_descs) + 1, "No correct number of descriptions!"
@@ -819,7 +843,6 @@ def _load_all_model_data(model_list: List,
 
 def _get_descs(model_list: List, remove_units: bool = True,
                series_mask=None, short_mod_names: List = None):
-
     # Edit series descriptions
     d = model_list[0].data
     all_desc = np.ones((d.d,), dtype=np.bool)
@@ -844,7 +867,6 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
                            name: str = "Test", short_mod_names: List = None,
                            remove_units: bool = True,
                            series_mask=None) -> None:
-
     # Define the ordering of the rows.
     order = (0, 1, 4, 2, 3)
 
@@ -919,7 +941,6 @@ def plot_performance_graph(model_list: List, parts: List[str], metric_list: List
                            name: str = "Test", short_mod_names: List = None,
                            remove_units: bool = True,
                            series_mask=None) -> None:
-
     # Prepare the labels
     series_descs, mod_names = _get_descs(model_list, remove_units, series_mask, short_mod_names)
 

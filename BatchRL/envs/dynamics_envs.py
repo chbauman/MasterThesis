@@ -239,7 +239,7 @@ class FullRoomEnv(RLDynEnv):
 
         return chosen_action
 
-    def get_detail_eval_title_ext(self):
+    def _get_detail_eval_title_ext(self):
         return f"Bound violation scaling factor: {self.alpha}"
 
 
