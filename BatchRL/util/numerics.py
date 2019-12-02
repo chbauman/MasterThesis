@@ -1,4 +1,4 @@
-from typing import Tuple, Sequence, Any, List
+from typing import Tuple, Sequence, Any, List, Callable
 
 import numpy as np
 import scipy.optimize
@@ -84,9 +84,63 @@ def max_abs_err(arr1: np.ndarray, arr2: np.ndarray) -> float:
     Returns:
         Max absolute error between `arr1` and `arr2`.
     """
-    s1, s2 = arr1.shape, arr2.shape
     check_shape(arr1, arr2.shape)
-    return np.abs(np.max(arr1 - arr2))
+    return np.max(np.abs(arr1 - arr2))
+
+
+Metric = Callable[[np.ndarray, np.ndarray], float]
+UnitTrafo = Callable[[str], str]
+ErrScaling = Callable[[Arr, float], Arr]
+
+
+def lin_scaling(errs: Arr, std: float):
+    return std * errs
+
+
+def pow_scaling(power: int = 2) -> ErrScaling:
+    def scaling(errs: Arr, std: float):
+        return (std ** power) * errs
+
+    return scaling
+
+
+def unit_trf_id(unit: str):
+    return unit
+
+
+def unit_trf_pow(p: int = 2) -> UnitTrafo:
+    def unit_trf(unit: str):
+        return f"({unit})^{p}"
+    return unit_trf
+
+
+# This is the interface for an error metric.
+class ErrMetric:
+    name: str
+    long_name: str = None
+    err_fun: Metric
+    scaling_fun: ErrScaling = lin_scaling
+    unit_trf: UnitTrafo = unit_trf_id
+
+
+class MSE(ErrMetric):
+    name = "MSE"
+    long_name = "Mean Squared Error"
+    err_fun = mse
+    scaling_fun = pow_scaling(2)
+    unit_trf = unit_trf_pow(2)
+
+
+class MAE(ErrMetric):
+    name = "MAE"
+    long_name = "Mean Absolute Error"
+    err_fun = mae
+
+
+class MaxAbsEer(ErrMetric):
+    name = "Max. Err."
+    long_name = "Maximum Absolute Error"
+    err_fun = mae
 
 
 def get_metrics_eval_save_name_list(parts: List[str], dt: int) -> List[str]:
@@ -137,7 +191,6 @@ def save_performance_extended(perf_arr: np.ndarray,
 
 
 def load_performance(path_gen_func, parts: List[str], dt: int, n_metrics: int) -> Tuple[np.ndarray, np.ndarray]:
-
     #
     n_other = len(parts)
     assert n_other > 0, "No parts specified!"
