@@ -252,7 +252,8 @@ class DynEnv(ABC, gym.Env):
                                 start_ind: int = None,
                                 max_steps: int = None,
                                 state_mask: np.ndarray = None,
-                                plot_constrain_actions: bool = True) -> None:
+                                plot_constrain_actions: bool = True,
+                                show_rewards: bool = True) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:
@@ -337,7 +338,7 @@ class DynEnv(ABC, gym.Env):
         analysis_plot_path = self._construct_plot_name("AgentAnalysis", start_ind, agents)
         plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
                             name_list, analysis_plot_path, clipped_action_sequences,
-                            state_mask)
+                            state_mask, show_rewards=show_rewards)
 
     def _construct_plot_name(self, base_name: str, start_ind: int, agent_list: List):
         name_list = [a.get_short_name() for a in agent_list]

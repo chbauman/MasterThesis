@@ -30,13 +30,18 @@ the training of a keras neural network.
 
 register_matplotlib_converters()
 
-plt.rc('font', family='serif')
+font = {'family': 'serif',
+        # 'weight': 'bold',
+        'size': 18}
+
+plt.rc('font', **font)
 # plt.rc('text', usetex=True)  # Makes Problems with the Celsius sign :(
 
 # Plotting colors
 colors = mpl_colors.TABLEAU_COLORS
 names = list(colors)
 clr_map = [colors[name] for name in names]
+clr_map[0], clr_map[1] = clr_map[1], clr_map[0]  # For Bratislav
 n_cols: int = len(clr_map)  #: Number of colors in colormap.
 
 # Plotting styles
@@ -611,7 +616,8 @@ def plot_env_evaluation(actions: np.ndarray,
                         save_path: str = None,
                         extra_actions: np.ndarray = None,
                         series_mask: np.ndarray = None,
-                        title_ext: str = None) -> None:
+                        title_ext: str = None,
+                        show_rewards: bool = True) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     Only for one specific initial condition.
@@ -630,7 +636,7 @@ def plot_env_evaluation(actions: np.ndarray,
     if series_mask is not None:
         n_feats = len(series_mask)
     n_actions = actions.shape[-1]
-    tot_n_plots = n_actions + n_feats + 1 + plot_extra * n_actions
+    tot_n_plots = n_actions + n_feats + show_rewards + plot_extra * n_actions
 
     # We'll use a separate GridSpecs for controls, states and rewards
     fig = plt.figure()
@@ -661,7 +667,8 @@ def plot_env_evaluation(actions: np.ndarray,
         states = states[:, :, series_mask]
 
     # Set titles
-    rew_ax.set_title("Rewards")
+    if show_rewards:
+        rew_ax.set_title("Rewards")
     for k in range(n_actions):
         _setup_axis(con_axs[k], "Original Control Inputs", control_descs[k])
         if plot_extra:
@@ -685,19 +692,22 @@ def plot_env_evaluation(actions: np.ndarray,
                          label=agent_names[k], ax=state_axs[i])
 
         # Plot reward
-        _plot_helper(x, rewards[k, :], m_col=clr_map[k],
-                     label=agent_names[k], ax=rew_ax)
+        if show_rewards:
+            _plot_helper(x, rewards[k, :], m_col=clr_map[k],
+                         label=agent_names[k], ax=rew_ax)
 
     # Set time
     last_c_ax = con_fb_axs[-1] if plot_extra else con_axs[-1]
     last_c_ax.set_xlabel(f"Timestep [{ds.dt}min]")
     state_axs[-1].set_xlabel(f"Timestep [{ds.dt}min]")
-    rew_ax.set_xlabel(f"Timestep [{ds.dt}min]")
 
     # Add legends
     con_axs[0].legend()
     state_axs[0].legend()
-    rew_ax.legend()
+
+    if show_rewards:
+        rew_ax.set_xlabel(f"Timestep [{ds.dt}min]")
+        rew_ax.legend()
 
     # Super title
     sup_t = 'Visual Analysis. '
@@ -955,7 +965,6 @@ def plot_performance_graph(model_list: List, parts: List[str],
                            remove_units: bool = True,
                            series_mask=None,
                            scale_back: bool = False) -> None:
-
     metric_names = [m.name for m in metric_list]
 
     # Prepare the labels

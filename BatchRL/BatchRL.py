@@ -261,7 +261,8 @@ def run_room_models(verbose: int = 1) -> None:
             mask = np.array([0, 1, 4])
             for s in [0, None]:
                 env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
-                                            plot_constrain_actions=False)
+                                            plot_constrain_actions=False,
+                                            show_rewards=True)
 
             # env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
 
