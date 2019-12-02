@@ -536,7 +536,7 @@ def main() -> None:
     # Fit and analyze all models
     if args.mod_eval:
         run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=True,
-                                       visual_analyze=True,
+                                       visual_analyze=False,
                                        include_composite=True)
 
     if args.battery:

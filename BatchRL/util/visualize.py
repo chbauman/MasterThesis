@@ -979,7 +979,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
             ax1 = plt.subplot(subplot_ind, sharex=ax1, sharey=ax1 if share_y else None)
 
             # Set ticks
-            tick_label = [mins_to_str(dt * int(i)) + f", {int(i)} Steps" for i in inds]
+            tick_label = [mins_to_str(dt * int(i)) + f"\n{int(i)} Steps" for i in inds]
             plt.xticks(inds, tick_label)
             plt.ylabel(m.name)
 
@@ -1003,8 +1003,9 @@ def plot_performance_graph(model_list: List, parts: List[str],
                              c=clr_map[series_id], label=lab)
 
             # Add title, legend and x-label
-            if ct_m == 0:
-                plt.title(mod_names[model_ind])
+            if ct_m == 0 or scale_back:
+                if ct_m == 0:
+                    plt.title(mod_names[model_ind])
                 plt.legend()
             # if ct_m == len(metric_names) - 1:
             #     plt.xlabel(f"Steps [{mins_to_str(dt)}]")
