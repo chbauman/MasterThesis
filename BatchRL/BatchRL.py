@@ -167,7 +167,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
     """
     # Data for performance analysis
     n_steps = (1, 4, 12, 24, 48)
-    metrics: Tuple[ErrMetric] = (MSE, MAE, MaxAbsEer)
+    metrics: Tuple[ErrMetric] = (MSE, MAE, MaxAbsEer)  # What is this shit warning?
 
     # Get data and constraints
     ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
@@ -182,18 +182,22 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
 
     # Fit or load all initialized models
     for name, m_to_use in all_mods.items():
-        # Virtual analysis
+        if verbose:
+            print(f"Model: {name}")
+        # Visual analysis
         if visual_analyze:
-            m_to_use.analyze_visually(overwrite=False)
+            with ProgWrap(f"Analyzing model visually...", verbose > 0):
+                m_to_use.analyze_visually(overwrite=False, verbose=False)
 
         # Do the performance analysis
         if perf_analyze:
             if verbose:
-                print(f"Model: {name}")
+                pass
                 # print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
-            m_to_use.analyze_performance(n_steps, verbose=verbose,
-                                         overwrite=False,
-                                         metrics=metrics)
+            with ProgWrap(f"Analyzing model performance...", verbose > 0):
+                m_to_use.analyze_performance(n_steps, verbose=False,
+                                             overwrite=False,
+                                             metrics=metrics)
 
         # m_to_use.analyze_disturbed("Valid", 'val', 10)
         # m_to_use.analyze_disturbed("Train", 'train', 10)
@@ -216,6 +220,9 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
                                short_mod_names=full_models_short_names,
                                series_mask=orig_mask)
         plot_name = "EvalPlot"
+        plot_performance_graph(full_mods, parts, metrics, plot_name + "_RTempOnly",
+                               short_mod_names=full_models_short_names,
+                               series_mask=np.array([5]), scale_back=True, remove_units=False)
         plot_performance_graph(full_mods, parts, metrics, plot_name,
                                short_mod_names=full_models_short_names,
                                series_mask=orig_mask)

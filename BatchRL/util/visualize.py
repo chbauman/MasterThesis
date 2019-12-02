@@ -977,7 +977,10 @@ def plot_performance_graph(model_list: List, parts: List[str],
         for ct_m, m in enumerate(metric_list):
             subplot_ind = 311 + ct_m
             ax1 = plt.subplot(subplot_ind, sharex=ax1, sharey=ax1 if share_y else None)
-            plt.xticks(inds)
+
+            # Set ticks
+            tick_label = [mins_to_str(dt * int(i)) + f", {int(i)} Steps" for i in inds]
+            plt.xticks(inds, tick_label)
             plt.ylabel(m.name)
 
             # Plot all series
@@ -1003,8 +1006,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
             if ct_m == 0:
                 plt.title(mod_names[model_ind])
                 plt.legend()
-            if ct_m == len(metric_names) - 1:
-                plt.xlabel(f"Steps [{mins_to_str(dt)}]")
+            # if ct_m == len(metric_names) - 1:
+            #     plt.xlabel(f"Steps [{mins_to_str(dt)}]")
 
         # Construct the path of the plot
         plot_path = os.path.join(EVAL_MODEL_PLOT_DIR, f"{name}_{m_name}")
