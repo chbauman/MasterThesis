@@ -27,7 +27,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
-from util.numerics import max_abs_err, mae, mse
+from util.numerics import max_abs_err, mae, mse, MSE, MAE, MaxAbsEer
 from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap
 
 # Define the models by name
@@ -167,7 +167,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
     """
     # Data for performance analysis
     n_steps = (1, 4, 12, 24, 48)
-    metrics = (mse, mae, max_abs_err)
+    metrics = (MSE, MAE, MaxAbsEer)
 
     # Get data and constraints
     ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
@@ -206,12 +206,13 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
         full_mods = [all_mods[n] for n in full_models]
         parts = ["Val", "Train"]
         metric_list = ["MSE", "MAE", "Max. Err."]
+        metric_names = [m.name for m in metrics]
         name = "EvalTable"
 
         if use_bat_data:
             name += "WithBat"
 
-        plot_performance_table(full_mods, parts, metric_list, name,
+        plot_performance_table(full_mods, parts, metric_names, name,
                                short_mod_names=full_models_short_names,
                                series_mask=orig_mask)
         plot_name = "EvalPlot"

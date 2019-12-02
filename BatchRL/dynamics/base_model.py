@@ -10,7 +10,7 @@ from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
 from tests.test_data import construct_test_ds
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, mse, \
-    save_performance_extended, get_metrics_eval_save_name_list
+    save_performance_extended, get_metrics_eval_save_name_list, ErrMetric, MSE
 from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf
 
@@ -577,7 +577,7 @@ class BaseDynamicsModel(KerasBase, ABC):
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
                             verbose: int = 0,
                             overwrite: bool = False,
-                            metrics: Sequence = (mse, ),
+                            metrics: Sequence[ErrMetric] = (MSE, ),
                             n_days: int = 14) -> None:
         """Analyzes the multistep prediction performance of the model.
 
@@ -642,7 +642,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
                     # Compute performance metrics
                     for m_id, m in enumerate(metrics):
-                        perf = m(gt, pred)
+                        perf = m.err_fun(gt, pred)
                         perf_values[part_ind, series_ind, m_id, step_ct] = perf
 
         # Save performances
