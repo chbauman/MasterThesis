@@ -12,11 +12,12 @@ from tests.test_data import SYNTH_DATA_NAME
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
-    get_metrics_eval_save_name_list, load_performance
+    get_metrics_eval_save_name_list, load_performance, MSE
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
     dynamic_model_dir
-from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table
+from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
+    _trf_desc_units
 
 # Define and create directory for test files.
 TEST_DIR = os.path.join(PLOT_DIR, "Test")  #: Directory for test output.
@@ -263,6 +264,7 @@ class TestNumerics(TestCase):
             d = n_series
             n_c = 0
             c_inds = np.array([], dtype=np.int32)
+            scaling = 2 * np.ones((n_series, 2))
 
         # Test plotting
         class Mod:
@@ -453,6 +455,11 @@ class TestPlot(TestCase):
         self.make_bar_plot(6, 2, 10)
         self.make_bar_plot(1, 8, 3)
 
+    def test_trf_unit_desc(self):
+        init_d = "Test [5]"
+        exp = "Test [(5)^2]"
+        out = _trf_desc_units(init_d, MSE)
+        self.assertEqual(exp, out)
     pass
 
 

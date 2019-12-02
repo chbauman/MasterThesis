@@ -7,7 +7,7 @@ modules / packages.
 import argparse
 import time
 from functools import reduce
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 
@@ -27,7 +27,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
-from util.numerics import max_abs_err, mae, mse, MSE, MAE, MaxAbsEer
+from util.numerics import max_abs_err, mae, mse, MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap
 
 # Define the models by name
@@ -167,7 +167,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
     """
     # Data for performance analysis
     n_steps = (1, 4, 12, 24, 48)
-    metrics = (MSE, MAE, MaxAbsEer)
+    metrics: Tuple[ErrMetric] = (MSE, MAE, MaxAbsEer)
 
     # Get data and constraints
     ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
@@ -216,7 +216,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
                                short_mod_names=full_models_short_names,
                                series_mask=orig_mask)
         plot_name = "EvalPlot"
-        plot_performance_graph(full_mods, parts, metric_list, plot_name,
+        plot_performance_graph(full_mods, parts, metrics, plot_name,
                                short_mod_names=full_models_short_names,
                                series_mask=orig_mask)
 

@@ -7,7 +7,7 @@ import numpy as np
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from util.numerics import fit_linear_1d, load_performance, check_shape
+from util.numerics import fit_linear_1d, load_performance, check_shape, ErrMetric
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
     create_dir, Num, yeet, tot_size, mins_to_str
 
@@ -849,8 +849,10 @@ def _get_descs(model_list: List, remove_units: bool = True,
     all_desc[d.c_inds] = False
     if series_mask is None:
         series_descs = d.descriptions[all_desc]
+        rel_scaling = d.scaling[all_desc]
     else:
         series_descs = d.descriptions[series_mask]
+        rel_scaling = d.scaling[series_mask]
     if remove_units:
         series_descs = [sd.split("[")[0] for sd in series_descs]
 
@@ -860,7 +862,7 @@ def _get_descs(model_list: List, remove_units: bool = True,
         assert len(short_mod_names) == len(mod_names), "Incorrect number of model names!"
         mod_names = short_mod_names
 
-    return series_descs, mod_names
+    return series_descs, mod_names, rel_scaling
 
 
 def plot_performance_table(model_list: List, parts: List[str], metric_list: List[str],
@@ -871,7 +873,7 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     order = (0, 1, 4, 2, 3)
 
     # Prepare the labels
-    series_descs, mod_names = _get_descs(model_list, remove_units, series_mask, short_mod_names)
+    series_descs, mod_names, _ = _get_descs(model_list, remove_units, series_mask, short_mod_names)
 
     # Construct the path of the plot
     plot_path = os.path.join(EVAL_MODEL_PLOT_DIR, name)
@@ -937,15 +939,30 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     save_figure(plot_path)
 
 
-def plot_performance_graph(model_list: List, parts: List[str], metric_list: List[str],
-                           name: str = "Test", short_mod_names: List = None,
+def _trf_desc_units(curr_desc: str, m: ErrMetric) -> str:
+    split_d = curr_desc.split("[")
+    assert len(split_d) == 2, "Invalid description!"
+    base, rest = split_d
+    unit = rest.split("]")[0]
+    trf_unit = m.unit_trf(unit)
+    return f"{base}[{trf_unit}]"
+
+
+def plot_performance_graph(model_list: List, parts: List[str],
+                           metric_list: Sequence[ErrMetric],
+                           name: str = "Test",
+                           short_mod_names: List = None,
                            remove_units: bool = True,
-                           series_mask=None) -> None:
+                           series_mask=None,
+                           scale_back: bool = False) -> None:
+
+    metric_names = [m.name for m in metric_list]
+
     # Prepare the labels
-    series_descs, mod_names = _get_descs(model_list, remove_units, series_mask, short_mod_names)
+    series_descs, mod_names, scaling = _get_descs(model_list, remove_units, series_mask, short_mod_names)
 
     # Load data
-    data_array, inds = _load_all_model_data(model_list, parts, metric_list, series_mask)
+    data_array, inds = _load_all_model_data(model_list, parts, metric_names, series_mask)
     n_models, n_parts, n_series, n_metrics, n_steps = data_array.shape
 
     for model_ind, m_name in enumerate(mod_names):
@@ -957,17 +974,28 @@ def plot_performance_graph(model_list: List, parts: List[str], metric_list: List
             warnings.warn("Duplicate plot styles!")
 
         ax1 = None
-        for ct_m, m_str in enumerate(metric_list):
+        for ct_m, m in enumerate(metric_list):
             subplot_ind = 311 + ct_m
             ax1 = plt.subplot(subplot_ind, sharex=ax1, sharey=ax1 if share_y else None)
             plt.xticks(inds)
-            plt.ylabel(m_str)
+            plt.ylabel(m.name)
 
             # Plot all series
             for set_id in range(n_parts):
                 for series_id in range(n_series):
-                    lab = parts[set_id] + ": " + series_descs[series_id]
+                    # Get labels and errors
+                    s_desc = series_descs[series_id]
+                    if scale_back:
+                        s_desc = _trf_desc_units(s_desc, m)
+                    lab = parts[set_id] + ": " + s_desc
                     si = data_array[model_ind, set_id, series_id, ct_m]
+
+                    # Scale the errors
+                    m_and_sd = scaling[series_id]
+                    if scale_back:
+                        si = m.scaling_fun(si, m_and_sd[1])
+
+                    # Plot
                     plt.plot(inds, si, joint_styles[set_id],
                              c=clr_map[series_id], label=lab)
 
@@ -975,7 +1003,7 @@ def plot_performance_graph(model_list: List, parts: List[str], metric_list: List
             if ct_m == 0:
                 plt.title(mod_names[model_ind])
                 plt.legend()
-            if ct_m == len(metric_list) - 1:
+            if ct_m == len(metric_names) - 1:
                 plt.xlabel(f"Steps [{mins_to_str(dt)}]")
 
         # Construct the path of the plot
