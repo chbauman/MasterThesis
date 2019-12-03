@@ -12,7 +12,7 @@ from tests.test_data import construct_test_ds
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, mse, \
     save_performance_extended, get_metrics_eval_save_name_list, ErrMetric, MSE
 from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt
-from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR
+from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one
 
 
 def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
@@ -514,13 +514,16 @@ class BaseDynamicsModel(KerasBase, ABC):
             n_ts_off: Time step offset of data used.
             overwrite: Whether to overwrite existing plot files.
         """
+        # Setup base name
+        if base is None:
+            base = "OneWeek"
+            if combine_plots:
+                base += "Combined"
+
         # Check if plot file already exists
         _, ex = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
         if not overwrite and ex:
             return
-
-        if base is None:
-            base = "OneWeek"
 
         # Get data
         d = self.data
@@ -554,7 +557,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                                  title_and_ylab=t,
                                  save_name=cn)
             else:
-                raise NotImplementedError("fuck")
+                tot_save_name, _ = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
+                plot_visual_all_in_one(all_plt_dat, tot_save_name)
 
         else:
             # Construct dataset and plot
@@ -577,7 +581,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                          overwrite: bool = False,
                          verbose: bool = True,
                          base_name: str = None,
-                         one_week_to_ol: bool = False) -> None:
+                         one_week_to_ol: bool = False,
+                         one_file: bool = False) -> None:
         """Analyzes the trained model.
 
         Makes some plots using the fitted model and the streak data.
@@ -590,6 +595,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             verbose: Whether to print info to console.
             base_name: The base name to give to the plots.
             one_week_to_ol: Whether to put the one week prediction plots to Overleaf.
+            one_file: Whether to plot all series in one file.
         """
         if verbose:
             print("Analyzing model {}".format(self.name))
@@ -625,7 +631,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                                     n_ts_off=n,
                                     overwrite=overwrite,
                                     base=base_name,
-                                    put_on_ol=one_week_to_ol)
+                                    put_on_ol=one_week_to_ol,
+                                    combine_plots=one_file)
 
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
                             verbose: int = 0,

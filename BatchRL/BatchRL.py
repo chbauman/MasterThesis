@@ -72,7 +72,7 @@ def test_cleanup():
     cleanup_test_data(verbose=1)
 
 
-def run_battery() -> None:
+def run_battery(do_rl: bool = True, overwrite: bool = False) -> None:
     """Runs all battery related stuff.
 
     Loads and prepares the battery data, fits the
@@ -88,9 +88,12 @@ def run_battery() -> None:
     # Initialize and fit battery model.
     bat_mod = BatteryModel(bat_ds)
     bat_mod.analyze_bat_model(put_on_ol=True)
-    bat_mod.analyze_visually(one_week_to_ol=True, base_name="Bat")
+    bat_mod.analyze_visually(one_week_to_ol=True, base_name="Bat", overwrite=overwrite)
     # bat_mod_naive = ConstModel(bat_ds)
     # bat_mod_naive.analyze_visually()
+
+    if not do_rl:
+        return
 
     # Get numbers of steps
     n_steps = get_rl_steps(True)
@@ -265,6 +268,26 @@ def run_room_models(verbose: int = 1) -> None:
                                             show_rewards=True)
 
             # env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
+
+
+def update_overleaf_plots(verbose: int = 1):
+    # Battery model plots
+    # with ProgWrap(f"Running battery...", verbose > 0):
+    #     run_battery(do_rl=False, overwrite=True)
+
+    # Get data and constraints
+    with ProgWrap(f"Loading data...", verbose > 0):
+        ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
+                                                        seq_len=20,
+                                                        add_battery_data=False)
+
+    # Weather model
+    w_mod_name = base_rnn_models[0]
+    w_mod = get_model(w_mod_name, ds, rnn_consts, from_hop=True, fit=True)
+    with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
+        w_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
+                               one_week_to_ol=True)
+    pass
 
 
 def get_model(name: str, ds: Dataset,
@@ -502,6 +525,8 @@ def def_parser() -> argparse.ArgumentParser:
         ("room", "Run the room model."),
         ("test", "Run tests."),
         ("cleanup", "Run test cleanup."),
+        ("plot", "Run overleaf plot creation."),
+
     ]
     for kw, h in arg_def_list:
         short_kw = "-" + kw[0]
@@ -547,6 +572,10 @@ def main() -> None:
     if args.room:
         # Room model
         run_room_models()
+
+    # Overleaf plots
+    if args.plot:
+        update_overleaf_plots(verbose)
 
     # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)

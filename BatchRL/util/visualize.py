@@ -181,6 +181,7 @@ def plot_ip_time_series(y, lab=None, m=None, show=True, init=None, mean_and_stds
     where x is assumed to be uniform.
     DEPRECATED: DO NOT USE!!!!!
     """
+    warnings.warn("This is fucking deprecated!!!!")
 
     # Define plot
     plt.subplots()
@@ -262,13 +263,14 @@ def plot_ip_ts(y,
                title_and_ylab=None,
                dt_mins=15,
                dt_init_str=None,
-               timestep_offset=0):
+               timestep_offset=0,
+               new_plot: bool = True):
     """
     Plots an interpolated time series
     where x is assumed to be uniform.
     """
 
-    if series_index == 0:
+    if series_index == 0 and new_plot:
         # Define new plot
         plt.subplots()
 
@@ -317,7 +319,8 @@ def plot_multiple_ip_ts(y_list,
                         dt_init_str_list=None,
                         show_last=True,
                         title_and_ylab=None,
-                        dt_mins=15):
+                        dt_mins=15,
+                        new_plot: bool = True):
     """
     Plotting function for multiple time series.
     """
@@ -339,7 +342,8 @@ def plot_multiple_ip_ts(y_list,
                    title_and_ylab=title_and_ylab,
                    dt_mins=dt_mins,
                    dt_init_str=dt_init_str,
-                   timestep_offset=ts_offset)
+                   timestep_offset=ts_offset,
+                   new_plot=new_plot)
 
 
 def plot_single(time_series, m, use_time=True, show=True, title_and_ylab=None, scale_back=True, save_name=None):
@@ -382,7 +386,8 @@ def plot_all(all_data, m, use_time=True, show=True, title_and_ylab=None, scale_b
     save_figure(save_name, show)
 
 
-def plot_dataset(dataset, show: bool = True, title_and_ylab=None, save_name: str = None) -> None:
+def plot_dataset(dataset, show: bool = True, title_and_ylab=None, save_name: str = None,
+                 new_plot: bool = True) -> None:
     """Plots the unscaled series in a dataset.
 
     Args:
@@ -390,6 +395,7 @@ def plot_dataset(dataset, show: bool = True, title_and_ylab=None, save_name: str
         show: Whether to show the plot.
         title_and_ylab: List with title and y-label.
         save_name: The file path for saving the plot.
+        new_plot: Whether to open a new figure.
     """
     all_data = dataset.get_unscaled_data()
     n_series = all_data.shape[1]
@@ -405,8 +411,10 @@ def plot_dataset(dataset, show: bool = True, title_and_ylab=None, save_name: str
                         dt_init_str_list=[t_init for _ in range(n_series)],
                         show_last=show,
                         title_and_ylab=title_and_ylab,
-                        dt_mins=dataset.dt)
-    save_figure(save_name, show)
+                        dt_mins=dataset.dt,
+                        new_plot=new_plot)
+    if save_name is not None:
+        save_figure(save_name, show)
 
 
 def scatter_plot(x, y, *,
@@ -1024,3 +1032,22 @@ def plot_performance_graph(model_list: List, parts: List[str],
         # Construct the path of the plot
         plot_path = os.path.join(EVAL_MODEL_PLOT_DIR, f"{name}_{m_name}")
         save_figure(plot_path)
+
+
+def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str):
+    n_series = len(all_plt_dat)
+    assert n_series > 0, "Fuck this!"
+
+    ax1 = None
+    for ct_m, tup in enumerate(all_plt_dat):
+        subplot_ind = 11 + ct_m + n_series * 100
+        ax1 = plt.subplot(subplot_ind, sharex=ax1)
+
+        # Plot all series
+        ds, t, cn = tup
+        plot_dataset(ds,
+                     show=False,
+                     title_and_ylab=t if ct_m == 0 else None,
+                     save_name=None,
+                     new_plot=False)
+    save_figure(save_name)
