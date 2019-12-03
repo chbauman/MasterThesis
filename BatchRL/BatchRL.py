@@ -72,7 +72,7 @@ def test_cleanup():
     cleanup_test_data(verbose=1)
 
 
-def run_battery(do_rl: bool = True, overwrite: bool = False) -> None:
+def run_battery(do_rl: bool = True, overwrite: bool = False, verbose: int = 0) -> None:
     """Runs all battery related stuff.
 
     Loads and prepares the battery data, fits the
@@ -271,10 +271,10 @@ def run_room_models(verbose: int = 1) -> None:
 
 
 def update_overleaf_plots(verbose: int = 1):
-    # Battery model plots
-    with ProgWrap(f"Running battery...", verbose > 0):
-        run_battery(do_rl=False, overwrite=True)
-
+    # # Battery model plots
+    # with ProgWrap(f"Running battery...", verbose > 0):
+    #     run_battery(do_rl=False, overwrite=True, verbose=0)
+    #
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
         ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
@@ -285,12 +285,17 @@ def update_overleaf_plots(verbose: int = 1):
                                                                 seq_len=20,
                                                                 add_battery_data=True)
 
-    # Weather model
-    w_mod_name = base_rnn_models[0]
-    w_mod = get_model(w_mod_name, ds, rnn_consts, from_hop=True, fit=True, verbose=False)
-    with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
-        w_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
-                               one_week_to_ol=True, base_name="Weather1W")
+    # # Weather model
+    # w_mod_name = base_rnn_models[0]
+    # w_mod = get_model(w_mod_name, ds, rnn_consts, from_hop=True, fit=True, verbose=False)
+    # with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
+    #     w_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
+    #                            one_week_to_ol=True, base_name="Weather1W")
+
+    # Heating water constant
+    print(ds)
+    ds_heat = ds[2:3]
+    ds_heat.split_data()
 
     # Room temperature model
     r_mod_name = base_rnn_models[2]
@@ -298,6 +303,8 @@ def update_overleaf_plots(verbose: int = 1):
         r_mod = get_model(r_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
         r_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
                                one_week_to_ol=True, base_name="Room1W")
+
+
     pass
 
 

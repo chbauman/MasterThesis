@@ -136,6 +136,10 @@ class TestDataset(TestCase):
         # Create MDV
         self.mdv = ModelDataView(self.ds_nan, "Test", 2, 7)
 
+    def test_slice_time(self):
+        ds_sliced = self.ds_nan.slice_time(4, 8)
+        self.assertTrue(np.all(np.logical_not(np.isnan(ds_sliced.data))))
+
     def test_full_test_ds(self):
         n_rows = 10
         ds = get_full_model_dataset(n_rows)

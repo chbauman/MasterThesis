@@ -356,6 +356,18 @@ class Dataset:
 
         return Dataset(data, self.dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
 
+    def slice_time(self, n1: int, n2: int) -> 'Dataset':
+
+        dt_dt = n_mins_to_np_dt(self.dt)
+        t_init_dt = str_to_np_dt(self.t_init)
+        t_init_dt_new = t_init_dt + dt_dt * n1
+        t_init_new = np_dt_to_str(t_init_dt_new)
+
+        ds_out = Dataset.copy(self)
+        ds_out.t_init = t_init_new
+        ds_out.data = self.data[n1:n2]
+        return ds_out
+
     def add_time(self, sine_cos: bool = True) -> 'Dataset':
         """Adds time to current dataset.
 

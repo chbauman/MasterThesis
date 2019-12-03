@@ -297,8 +297,11 @@ def plot_ip_ts(y,
 
     if last_series:
         if title_and_ylab is not None:
-            plt.title(title_and_ylab[0])
-            plt.ylabel(title_and_ylab[1])
+            tt, lab = title_and_ylab
+            if tt is not None:
+                plt.title(title_and_ylab[0])
+            if lab is not None:
+                plt.ylabel(title_and_ylab[1])
 
         x_lab = 'Time' if use_time else 'Time [' + str(dt_mins) + ' min.]'
         plt.xlabel(x_lab)
@@ -1045,9 +1048,11 @@ def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str):
 
         # Plot all series
         ds, t, cn = tup
+        if ct_m > 0:
+            t[0] = None
         plot_dataset(ds,
                      show=False,
-                     title_and_ylab=t if ct_m == 0 else None,
+                     title_and_ylab=t,
                      save_name=None,
                      new_plot=False)
     save_figure(save_name)

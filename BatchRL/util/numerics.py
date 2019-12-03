@@ -379,7 +379,6 @@ def align_ts(ts_1: np.ndarray, ts_2: np.ndarray, t_init1: str, t_init2: str, dt:
 
     return out, t_init_out
 
-
 def trf_mean_and_std(ts: Arr, mean_and_std: Sequence, remove: bool = True) -> Arr:
     """Adds or removes given  mean and std from time series.
 
