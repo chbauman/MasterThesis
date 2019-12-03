@@ -254,7 +254,8 @@ class DynEnv(ABC, gym.Env):
                                 state_mask: np.ndarray = None,
                                 plot_constrain_actions: bool = True,
                                 show_rewards: bool = True,
-                                title_ext: str = "") -> None:
+                                title_ext: str = "",
+                                put_on_ol: bool = False) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:
@@ -336,7 +337,7 @@ class DynEnv(ABC, gym.Env):
 
         # Plot all the things
         name_list = [a.get_short_name() for a in agents]
-        analysis_plot_path = self._construct_plot_name("AgentAnalysis", start_ind, agents)
+        analysis_plot_path = self._construct_plot_name("AgentAnalysis", start_ind, agents, put_on_ol)
         plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
                             name_list, analysis_plot_path, clipped_action_sequences,
                             state_mask, show_rewards=show_rewards, title_ext=title_ext)

@@ -725,8 +725,6 @@ def plot_env_evaluation(actions: np.ndarray,
     # Super title
     sup_t = 'Visual Analysis. '
     if title_ext is not None:
-        print("AASAdflkasfdlkasjfasl dkf")
-        print(title_ext)
         sup_t += title_ext
     con_axs[0].annotate(sup_t, (0.5, 0.975),
                         xycoords='figure fraction', ha='center',

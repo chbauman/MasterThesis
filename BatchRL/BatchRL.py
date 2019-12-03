@@ -353,7 +353,9 @@ def update_overleaf_plots(verbose: int = 1):
         mask = np.array([0, 1, 4])
         heat_inds = np.array([2, 3])
 
-        for s in [0, None]:
+        for s in [0, None, None, None]:
+
+            # Find the current heating water temperatures
             env.reset(s, use_noise=False)
             curr_s = env.get_curr_state()
             scaling = ds.scaling
@@ -361,18 +363,18 @@ def update_overleaf_plots(verbose: int = 1):
             for ct, k in enumerate(heat_inds):
                 h_in_and_out[ct] = trf_mean_and_std(curr_s[k], scaling[k], remove=False)
             h_in, h_out = h_in_and_out
-            h = h_in < h_out
-            title_ext = "In / Out temp: {:.2g} / {:.2g} C".format(h_in, h_out)
-            if h:
-                title_ext = "Heating: " + title_ext
-            else:
-                title_ext = "Cooling: " + title_ext
+            h = h_in > h_out
+            title_ext = "In / Out temp: {:.3g} / {:.3g} C".format(h_in, h_out)
+            suf = "Heating: " if h else "Cooling: "
+            title_ext = suf + title_ext
 
+            # Do the actual analysis
             env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
                                         use_noise=False,
                                         plot_constrain_actions=False,
                                         show_rewards=True,
-                                        title_ext=title_ext)
+                                        title_ext=title_ext,
+                                        put_on_ol=False)
 
         # env.detailed_eval_agents(agent_list, use_noise=False,
         #                          n_steps=n_eval_steps, put_on_ol=True)
