@@ -257,7 +257,8 @@ class DynEnv(ABC, gym.Env):
                                 plot_constrain_actions: bool = True,
                                 show_rewards: bool = True,
                                 title_ext: str = "",
-                                put_on_ol: bool = False) -> None:
+                                put_on_ol: bool = False,
+                                plot_rewards: bool = False) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:
@@ -347,10 +348,12 @@ class DynEnv(ABC, gym.Env):
         # Plot all the things
         name_list = [a.get_short_name() for a in agents]
         analysis_plot_path = self._construct_plot_name("AgentAnalysis", start_ind, agents, put_on_ol)
+        add_pth = self._construct_plot_name("AgentAnalysisReward", start_ind, agents, put_on_ol)
+        add_pth = add_pth if plot_rewards else None
         plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
                             name_list, analysis_plot_path, clipped_action_sequences,
                             state_mask, show_rewards=show_rewards, title_ext=title_ext,
-                            np_dt_init=np_st_init)
+                            np_dt_init=np_st_init, rew_save_path=add_pth)
 
     def _construct_plot_name(self, base_name: str, start_ind: int, agent_list: List,
                              put_on_ol: bool = False):

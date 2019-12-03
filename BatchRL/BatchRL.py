@@ -374,7 +374,8 @@ def update_overleaf_plots(verbose: int = 1):
                                         plot_constrain_actions=False,
                                         show_rewards=True,
                                         title_ext=title_ext,
-                                        put_on_ol=False)
+                                        put_on_ol=False,
+                                        plot_rewards=True)
 
         # env.detailed_eval_agents(agent_list, use_noise=False,
         #                          n_steps=n_eval_steps, put_on_ol=True)
