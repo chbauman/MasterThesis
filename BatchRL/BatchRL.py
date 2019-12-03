@@ -5,6 +5,7 @@ functions. The complicated stuff is hidden in the other
 modules / packages.
 """
 import argparse
+import os
 import time
 from functools import reduce
 from typing import List, Tuple
@@ -31,7 +32,7 @@ from util.numerics import max_abs_err, mae, mse, MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap
 
 # Define the models by name
-from util.visualize import plot_performance_table, plot_performance_graph
+from util.visualize import plot_performance_table, plot_performance_graph, plot_dataset, OVERLEAF_IMG_DIR
 
 base_rnn_models = [
     "WeatherFromWeatherTime_RNN",
@@ -47,7 +48,7 @@ full_models = [
     "FullState_Naive",
 ]
 full_models_short_names = [
-    "Weather, Constant Water, reduced Room Temp",
+    "Weather, Constant Water, Reduced Room Temp",
     "Weather, Constant Water, Room Temp.",
     "Weather, joint Room and Water",
     "Naive",
@@ -212,7 +213,6 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
 
         full_mods = [all_mods[n] for n in full_models]
         parts = ["Val", "Train"]
-        metric_list = ["MSE", "MAE", "Max. Err."]
         metric_names = [m.name for m in metrics]
         name = "EvalTable"
 
@@ -292,19 +292,37 @@ def update_overleaf_plots(verbose: int = 1):
     #     w_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
     #                            one_week_to_ol=True, base_name="Weather1W")
 
-    # Heating water constant
-    print(ds)
-    ds_heat = ds[2:3]
-    ds_heat.split_data()
+    # # Heating water constant
+    # with ProgWrap(f"Plotting heating water...", verbose > 0):
+    #     ds_heat = ds[2:4]
+    #     n_tot = ds_heat.data.shape[0]
+    #     ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.6), int(n_tot * 0.66))
+    #     plot_dataset(ds_heat_rel, show=False,
+    #                  title_and_ylab=["Heating Water Temperatures", "Temperature [°C]"],
+    #                  save_name=os.path.join(OVERLEAF_IMG_DIR, "WaterTemp"))
+    #
+    # # Room temperature model
+    # r_mod_name = base_rnn_models[2]
+    # with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
+    #     r_mod = get_model(r_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
+    #     r_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
+    #                            one_week_to_ol=True, base_name="Room1W")
 
-    # Room temperature model
-    r_mod_name = base_rnn_models[2]
-    with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
-        r_mod = get_model(r_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
-        r_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
-                               one_week_to_ol=True, base_name="Room1W")
+    # Combined model evaluation
+    with ProgWrap(f"Analyzing full model performance...", verbose > 0):
+        full_mod_name = full_models[0]
+        full_mod = get_model(full_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
 
+        metrics: Tuple[ErrMetric] = (MSE, MAE, MaxAbsEer)
 
+        full_mods = [full_mod]
+        parts = ["Val", "Train"]
+
+        plot_name = "EvalPlot"
+        plot_performance_graph(full_mods, parts, metrics, plot_name + "_RTempOnly",
+                               short_mod_names=full_models_short_names[0:1],
+                               series_mask=np.array([5]), scale_back=True, remove_units=False,
+                               put_on_ol=True)
     pass
 
 

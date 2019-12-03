@@ -977,7 +977,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
                            short_mod_names: List = None,
                            remove_units: bool = True,
                            series_mask=None,
-                           scale_back: bool = False) -> None:
+                           scale_back: bool = False,
+                           put_on_ol: bool = False) -> None:
     metric_names = [m.name for m in metric_list]
 
     # Prepare the labels
@@ -987,6 +988,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
     data_array, inds = _load_all_model_data(model_list, parts, metric_names, series_mask)
     n_models, n_parts, n_series, n_metrics, n_steps = data_array.shape
 
+    plot_folder = OVERLEAF_IMG_DIR if put_on_ol else EVAL_MODEL_PLOT_DIR
     for model_ind, m_name in enumerate(mod_names):
 
         share_y = False
@@ -997,11 +999,18 @@ def plot_performance_graph(model_list: List, parts: List[str],
 
         ax1 = None
         for ct_m, m in enumerate(metric_list):
+            last_met = ct_m == len(metric_list) - 1
             subplot_ind = 311 + ct_m
             ax1 = plt.subplot(subplot_ind, sharex=ax1, sharey=ax1 if share_y else None)
 
             # Set ticks
             tick_label = [mins_to_str(dt * int(i)) + f"\n{int(i)} Steps" for i in inds]
+            if ct_m != len(metric_list) - 1:
+                tick_label = ["" for _ in inds]
+            if not last_met:
+                plt.setp(ax1.get_xticklabels(), visible=False)
+            else:
+                plt.setp(ax1.get_xticklabels(), fontsize=12)
             plt.xticks(inds, tick_label)
             plt.ylabel(m.name)
 
@@ -1033,7 +1042,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
             #     plt.xlabel(f"Steps [{mins_to_str(dt)}]")
 
         # Construct the path of the plot
-        plot_path = os.path.join(EVAL_MODEL_PLOT_DIR, f"{name}_{m_name}")
+        plot_path = os.path.join(plot_folder, f"{name}_{m_name}")
         save_figure(plot_path)
 
 

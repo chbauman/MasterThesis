@@ -481,14 +481,18 @@ class BaseDynamicsModel(KerasBase, ABC):
 
         n_pred = len(self.out_inds)
 
-    def _get_one_week_plot_name(self, base: str, ext: str = None,
-                                ind: int = None, put_on_ol: bool = False):
-        ext = "_" if ext is None else "_" + ext
-        full_b_name = base + '_' + str(ind) + "_" + ext
+    def _get_plt_or_ol_path(self, full_b_name: str, put_on_ol: bool = False):
         if put_on_ol:
             curr_name = os.path.join(OVERLEAF_IMG_DIR, full_b_name)
         else:
             curr_name = self.get_plt_path(full_b_name)
+        return curr_name
+
+    def _get_one_week_plot_name(self, base: str, ext: str = None,
+                                ind: int = None, put_on_ol: bool = False):
+        ext = "_" if ext is None else "_" + ext
+        full_b_name = base + '_' + str(ind) + "_" + ext
+        curr_name = self._get_plt_or_ol_path(full_b_name, put_on_ol)
         exists = os.path.isfile(curr_name + ".pdf")
         return curr_name, exists
 
