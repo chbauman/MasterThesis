@@ -711,8 +711,6 @@ def plot_env_evaluation(actions: np.ndarray,
 
     # Set time
     last_c_ax = con_fb_axs[-1] if plot_extra else con_axs[-1]
-    last_c_ax.set_xlabel(f"Timestep [{ds.dt}min]")
-    state_axs[-1].set_xlabel(f"Timestep [{ds.dt}min]")
 
     # Add legends
     con_axs[0].legend()
@@ -721,12 +719,16 @@ def plot_env_evaluation(actions: np.ndarray,
     if show_rewards:
         rew_ax.set_xlabel(f"Timestep [{ds.dt}min]")
         rew_ax.legend()
+    else:
+        state_axs[-1].set_xlabel(f"Timestep [{ds.dt}min]")
 
     # Super title
     sup_t = 'Visual Analysis. '
     if title_ext is not None:
+        print("AASAdflkasfdlkasjfasl dkf")
+        print(title_ext)
         sup_t += title_ext
-    con_axs[0].annotate('Visual Analysis. ', (0.5, 0.975),
+    con_axs[0].annotate(sup_t, (0.5, 0.975),
                         xycoords='figure fraction', ha='center',
                         fontsize=24)
     # plt.suptitle('Main title')

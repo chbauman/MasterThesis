@@ -28,7 +28,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
-from util.numerics import max_abs_err, mae, mse, MSE, MAE, MaxAbsEer, ErrMetric
+from util.numerics import max_abs_err, mae, mse, MSE, MAE, MaxAbsEer, ErrMetric, trf_mean_and_std, npf32
 from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap
 
 # Define the models by name
@@ -351,13 +351,31 @@ def update_overleaf_plots(verbose: int = 1):
         n_eval_steps = 2000  # n_steps // 100
         agent_list = [open_agent, closed_agent, rule_based_agent, agent]
         mask = np.array([0, 1, 4])
-        # for s in [0, None]:
-        #     env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
-        #                                 plot_constrain_actions=False,
-        #                                 show_rewards=True)
+        heat_inds = np.array([2, 3])
 
-        env.detailed_eval_agents(agent_list, use_noise=False,
-                                 n_steps=n_eval_steps, put_on_ol=True)
+        for s in [0, None]:
+            env.reset(s, use_noise=False)
+            curr_s = env.get_curr_state()
+            scaling = ds.scaling
+            h_in_and_out = npf32((2,))
+            for ct, k in enumerate(heat_inds):
+                h_in_and_out[ct] = trf_mean_and_std(curr_s[k], scaling[k], remove=False)
+            h_in, h_out = h_in_and_out
+            h = h_in < h_out
+            title_ext = "In / Out temp: {:.2g} / {:.2g} C".format(h_in, h_out)
+            if h:
+                title_ext = "Heating: " + title_ext
+            else:
+                title_ext = "Cooling: " + title_ext
+
+            env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
+                                        use_noise=False,
+                                        plot_constrain_actions=False,
+                                        show_rewards=True,
+                                        title_ext=title_ext)
+
+        # env.detailed_eval_agents(agent_list, use_noise=False,
+        #                          n_steps=n_eval_steps, put_on_ol=True)
 
     pass
 
