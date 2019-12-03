@@ -276,6 +276,9 @@ class DynEnv(ABC, gym.Env):
         if max_steps is None:
             max_steps = 100000
 
+        if not show_rewards:
+            raise NotImplementedError("Do not do this!")
+
         # Define arrays to save trajectories
         n_non_c_states = self.state_dim - self.act_dim
         n_agents = len(agents)
@@ -420,7 +423,8 @@ class DynEnv(ABC, gym.Env):
         # Plot
         p_name = self._construct_plot_name("DetailAnalysis", n_steps, agent_list, put_on_ol)
         title_ext = self._get_detail_eval_title_ext()
-        plot_reward_details(agent_list, all_rewards, p_name,
+        names = [a.get_short_name() for a in agent_list]
+        plot_reward_details(names, all_rewards, p_name,
                             self.reward_descs, self.m.data.dt, n_steps,
                             title_ext=title_ext)
         return all_rewards

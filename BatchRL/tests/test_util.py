@@ -448,7 +448,8 @@ class TestPlot(TestCase):
         agents = [ConstActionAgent(Dummy(), 1.0 * i) for i in range(n_ag)]
         rewards = np.random.normal(2.0, 1.0, (n_ag, n_steps, n_rew))
         test_path = self.get_test_path(f"test_reward_bar_{n_ag}_{n_rew}_{n_steps}")
-        plot_reward_details(agents, rewards, test_path, descs)
+        lst = [a.get_short_name() for a in agents]
+        plot_reward_details(lst, rewards, test_path, descs)
 
     def test_reward_bar_plot(self):
         self.make_bar_plot(3, 4, 5)

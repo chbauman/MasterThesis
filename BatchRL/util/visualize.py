@@ -633,7 +633,8 @@ def plot_env_evaluation(actions: np.ndarray,
                         series_mask: np.ndarray = None,
                         title_ext: str = None,
                         show_rewards: bool = True,
-                        np_dt_init: Any = None) -> None:
+                        np_dt_init: Any = None,
+                        rew_save_path: str = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     Only for one specific initial condition.
@@ -691,17 +692,23 @@ def plot_env_evaluation(actions: np.ndarray,
         states = states[:, :, series_mask]
 
     # Set titles
+    # TODO: Refactor this shit
     if show_rewards:
         rew_ax.set_title("Rewards")
     for k in range(n_actions):
         _setup_axis(con_axs[k], "Original Control Inputs", control_descs[k])
+        con_axs[k].get_xaxis().set_visible(False)
+        con_axs[k].get_xaxis().set_ticklabels([])
         if plot_extra:
             _setup_axis(con_fb_axs[k], "Constrained Control Inputs", control_descs[k])
+            con_fb_axs[k].get_xaxis().set_visible(False)
+            con_fb_axs[k].get_xaxis().set_ticklabels([])
     for k in range(n_feats):
         _setup_axis(state_axs[k], "States", state_descs[k])
+        state_axs[k].get_xaxis().set_visible(False)
+        state_axs[k].get_xaxis().set_ticklabels([])
 
     ph_kwargs = {"dates": use_time}
-    plot_helper_kwargs = {"dates": use_time, "steps": True}
 
     # Plot all the things!
     for k in range(n_agents):
@@ -752,8 +759,14 @@ def plot_env_evaluation(actions: np.ndarray,
     if save_path is not None:
         save_figure(save_path, size=s)
 
+    # Make a plot of the rewards
+    if rew_save_path is not None:
+        n_rewards = rewards.shape[1]
+        r_res = rewards.reshape((n_agents, n_rewards, 1))
+        plot_reward_details(agent_names, r_res, rew_save_path, [], ds.dt, n_rewards)
 
-def plot_reward_details(a_list: List,
+
+def plot_reward_details(labels: Sequence[str],
                         rewards: np.ndarray,
                         path_name: str,
                         rew_descs: List[str],
@@ -764,7 +777,7 @@ def plot_reward_details(a_list: List,
     """Creates a bar plot with the different rewards of the different agents.
 
     Args:
-        a_list: List with agents.
+        labels: List with agent names.
         rewards: Array with all rewards for all agents.
         path_name: Path of the plot to save.
         rew_descs: Descriptions of the parts of the reward.
@@ -775,7 +788,6 @@ def plot_reward_details(a_list: List,
     """
     n_rewards = rewards.shape[-1]
     assert n_rewards == len(rew_descs) + 1, "No correct number of descriptions!"
-    labels = [a.get_short_name() for a in a_list]
     mean_rewards = np.mean(rewards, axis=1)
     all_descs = ["Total Reward"] + rew_descs
 
@@ -785,7 +797,7 @@ def plot_reward_details(a_list: List,
     fac = 60 / dt
     mean_rewards *= fac
 
-    if scale_tot_rew:
+    if scale_tot_rew and n_rewards > 1:
         # Scale the maximum reward to the same magnitude of any of the other parts
         max_tot = np.max(np.abs(mean_rewards[:, 0]))
         max_not_tot = np.max(np.abs(mean_rewards[:, 1:]))
