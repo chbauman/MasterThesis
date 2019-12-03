@@ -59,6 +59,8 @@ preprocess_plot_path = os.path.join(PLOT_DIR, "Preprocessing")  #: Data processi
 model_plot_path = os.path.join(PLOT_DIR, "Models")  #: Dynamics modeling plot folder.
 rl_plot_path = os.path.join(PLOT_DIR, "RL")
 EVAL_MODEL_PLOT_DIR = os.path.join(model_plot_path, "EvalTables")
+OVERLEAF_DIR = '../Overleaf'  #: Overleaf base folder.
+OVERLEAF_IMG_DIR = os.path.join(OVERLEAF_DIR, "Imgs")
 
 # Create folders if they do not exist
 create_dir(preprocess_plot_path)

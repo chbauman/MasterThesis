@@ -88,13 +88,13 @@ def run_battery() -> None:
     # Initialize and fit battery model.
     bat_mod = BatteryModel(bat_ds)
     bat_mod.analyze_bat_model()
-    bat_mod.analyze_visually()
+    bat_mod.analyze_visually(one_week_to_ol=True, base_name="Bat")
     # bat_mod_naive = ConstModel(bat_ds)
     # bat_mod_naive.analyze_visually()
 
     # Get numbers of steps
     n_steps = get_rl_steps(True)
-    n_eval_steps = 10000  # if EULER else 100
+    n_eval_steps = 10000 if EULER else 100
 
     # Define the environment
     bat_env = BatteryEnv(bat_mod,

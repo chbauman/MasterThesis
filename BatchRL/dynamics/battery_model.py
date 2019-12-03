@@ -1,10 +1,12 @@
+import os
+
 import numpy as np
 
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import fit_linear_1d, fit_linear_bf_1d
 from util.util import print_if_verb, yeet
-from util.visualize import scatter_plot
+from util.visualize import scatter_plot, OVERLEAF_IMG_DIR
 
 
 class BatteryModel(BaseDynamicsModel):
@@ -135,12 +137,15 @@ class BatteryModel(BaseDynamicsModel):
         y_pw_line = self._eval_at(x_pw_line)
 
         # Plot model
-        after_plt_path = self.get_plt_path("Cleaned")
-        scatter_plot(self.masked_p, self.masked_ds, lab_dict=labs,
-                     show=False,
-                     add_line=False,
-                     m_and_std_x=scale[1],
-                     m_and_std_y=scale[0],
-                     custom_line=[x_pw_line, y_pw_line],
-                     custom_label='PW Linear Fit',
-                     save_name=after_plt_path)
+        plt_name = "Cleaned"
+        after_plt_path = self.get_plt_path(plt_name)
+        plt_pth_ol = os.path.join(OVERLEAF_IMG_DIR, plt_name)
+        for p in [plt_pth_ol, after_plt_path]:
+            scatter_plot(self.masked_p, self.masked_ds, lab_dict=labs,
+                         show=False,
+                         add_line=False,
+                         m_and_std_x=scale[1],
+                         m_and_std_y=scale[0],
+                         custom_line=[x_pw_line, y_pw_line],
+                         custom_label='PW Linear Fit',
+                         save_name=p)

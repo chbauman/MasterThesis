@@ -12,7 +12,7 @@ from tests.test_data import construct_test_ds
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, mse, \
     save_performance_extended, get_metrics_eval_save_name_list, ErrMetric, MSE
 from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt
-from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf
+from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR
 
 
 def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
@@ -458,10 +458,47 @@ class BaseDynamicsModel(KerasBase, ABC):
                                  title_and_ylab=title_and_ylab,
                                  save_name=self.get_plt_path(time_str + 'Ahead_' + str(k) + "_" + ext))
 
+    def one_week_pred_plot_all(self, dat_test, ext: str = None,
+                           n_ts_off: int = 0,
+                           overwrite: bool = True):
+
+        # Check if plot file already exists
+        ext = "_" if ext is None else "_" + ext
+        name = 'OneWeek_All' + ext + ".pdf"
+        plot_path = self.get_plt_path(name)
+        if not overwrite and os.path.isfile(plot_path):
+            return
+
+        # Get data
+        d = self.data
+        in_dat_test, out_dat_test = dat_test
+        s = in_dat_test.shape
+
+        # Continuous prediction
+        full_pred = self.n_step_predict([in_dat_test, out_dat_test], s[0],
+                                        pred_ind=None,
+                                        return_all_predictions=True)
+
+        n_pred = len(self.out_inds)
+
+    def _get_one_week_plot_name(self, base: str, ext: str = None,
+                                ind: int = None, put_on_ol: bool = False):
+        ext = "_" if ext is None else "_" + ext
+        full_b_name = base + '_' + str(ind) + "_" + ext
+        if put_on_ol:
+            curr_name = os.path.join(OVERLEAF_IMG_DIR, full_b_name)
+        else:
+            curr_name = self.get_plt_path(full_b_name)
+        exists = os.path.isfile(curr_name + ".pdf")
+        return curr_name, exists
+
     def one_week_pred_plot(self, dat_test, ext: str = None,
                            predict_ind: int = None,
                            n_ts_off: int = 0,
-                           overwrite: bool = True) -> None:
+                           overwrite: bool = True,
+                           combine_plots: bool = False,
+                           base: str = None,
+                           put_on_ol: bool = False) -> None:
         """Makes a plot by continuously predicting with
         the fitted model and comparing it to the ground
         truth. If `predict_ind` is None, all series that can be
@@ -478,12 +515,12 @@ class BaseDynamicsModel(KerasBase, ABC):
             overwrite: Whether to overwrite existing plot files.
         """
         # Check if plot file already exists
-        ext = "_" if ext is None else "_" + ext
-        ext_0 = "0_" + ext if predict_ind is None else ext
-        name = 'OneWeek_' + ext_0 + ".pdf"
-        plot_path = self.get_plt_path(name)
-        if not overwrite and os.path.isfile(plot_path):
+        _, ex = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
+        if not overwrite and ex:
             return
+
+        if base is None:
+            base = "OneWeek"
 
         # Get data
         d = self.data
@@ -497,6 +534,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
         if predict_ind is None:
             n_pred = len(self.out_inds)
+            all_plt_dat = []
             for k in range(n_pred):
                 # Construct dataset and plot
                 k_orig = self.out_inds[k]
@@ -506,12 +544,21 @@ class BaseDynamicsModel(KerasBase, ABC):
                 new_ds.data[:, 0] = np.copy(full_pred[0, :, k])
                 desc = d.descriptions[k_orig]
                 title_and_ylab = ['1 Week Continuous Predictions', desc]
-                plot_dataset(new_ds,
-                             show=False,
-                             title_and_ylab=title_and_ylab,
-                             save_name=self.get_plt_path('OneWeek_' + str(k) + "_" + ext))
+                curr_name, _ = self._get_one_week_plot_name(base, ext, k, put_on_ol)
+                all_plt_dat += [(new_ds, title_and_ylab, curr_name)]
+
+            if not combine_plots:
+                for ds, t, cn in all_plt_dat:
+                    plot_dataset(ds,
+                                 show=False,
+                                 title_and_ylab=t,
+                                 save_name=cn)
+            else:
+                raise NotImplementedError("fuck")
+
         else:
             # Construct dataset and plot
+            warnings.warn("This is deprecated!")
             orig_p_ind = self.out_inds[predict_ind]
             analysis_ds = get_plot_ds(s, None, d, np.array([orig_p_ind]), n_ts_off)
             orig_p_ind = self.out_inds[predict_ind]
@@ -528,7 +575,9 @@ class BaseDynamicsModel(KerasBase, ABC):
     def analyze_visually(self, plot_acf: bool = True,
                          n_steps: Sequence = (1, 4, 20),
                          overwrite: bool = False,
-                         verbose: bool = True) -> None:
+                         verbose: bool = True,
+                         base_name: str = None,
+                         one_week_to_ol: bool = False) -> None:
         """Analyzes the trained model.
 
         Makes some plots using the fitted model and the streak data.
@@ -539,6 +588,8 @@ class BaseDynamicsModel(KerasBase, ABC):
             n_steps: The list with the number of steps for `const_nts_plot`.
             overwrite: Whether to overwrite existing plot files.
             verbose: Whether to print info to console.
+            base_name: The base name to give to the plots.
+            one_week_to_ol: Whether to put the one week prediction plots to Overleaf.
         """
         if verbose:
             print("Analyzing model {}".format(self.name))
@@ -572,7 +623,9 @@ class BaseDynamicsModel(KerasBase, ABC):
             # Plot for continuous predictions
             self.one_week_pred_plot(copy_arr_list(dat_copy), ext_list[ct],
                                     n_ts_off=n,
-                                    overwrite=overwrite)
+                                    overwrite=overwrite,
+                                    base=base_name,
+                                    put_on_ol=one_week_to_ol)
 
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
                             verbose: int = 0,
