@@ -81,6 +81,7 @@ class BatteryModel(BaseDynamicsModel):
         # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
         def feat_fun(x: float):
             return np.array([1.0, x, max(0.0, x)])
+
         params = fit_linear_bf_1d(self.masked_p, self.masked_ds, feat_fun)
         self.params = params
 
@@ -111,6 +112,13 @@ class BatteryModel(BaseDynamicsModel):
         a1, a2, a3 = self.params
         return a1 + a2 * p + a3 * np.maximum(0, p)
 
+    def _get_plot_name(self, base: str, put_on_ol: bool = False):
+        if put_on_ol:
+            p = os.path.join(OVERLEAF_IMG_DIR, base)
+        else:
+            p = self.get_plt_path(base)
+        return p
+
     def analyze_bat_model(self, put_on_ol: bool = False) -> None:
         """This is basically the fit method, but it also
         does some data analysis and makes some battery data specific plots.
@@ -124,7 +132,7 @@ class BatteryModel(BaseDynamicsModel):
 
         # Plot data
         labs = {'title': 'Battery Model', 'xlab': 'Active Power [kW]', 'ylab': r'$\Delta$ SoC [%]'}
-        before_plt_path = self.get_plt_path("WithOutliers")
+        before_plt_path = self._get_plot_name("WithOutliers", put_on_ol)
         scatter_plot(self.p, self.ds, lab_dict=labs,
                      show=False,
                      m_and_std_x=scale[1],
@@ -137,17 +145,13 @@ class BatteryModel(BaseDynamicsModel):
         y_pw_line = self._eval_at(x_pw_line)
 
         # Plot model
-        plt_name = "Cleaned"
-        after_plt_path = self.get_plt_path(plt_name)
-        all_paths = [after_plt_path]
-        if put_on_ol:
-            all_paths += [os.path.join(OVERLEAF_IMG_DIR, plt_name)]
-        for p in all_paths:
-            scatter_plot(self.masked_p, self.masked_ds, lab_dict=labs,
-                         show=False,
-                         add_line=False,
-                         m_and_std_x=scale[1],
-                         m_and_std_y=scale[0],
-                         custom_line=[x_pw_line, y_pw_line],
-                         custom_label='PW Linear Fit',
-                         save_name=p)
+        after_plt_path = self._get_plot_name("Cleaned", put_on_ol)
+
+        scatter_plot(self.masked_p, self.masked_ds, lab_dict=labs,
+                     show=False,
+                     add_line=False,
+                     m_and_std_x=scale[1],
+                     m_and_std_y=scale[0],
+                     custom_line=[x_pw_line, y_pw_line],
+                     custom_label='PW Linear Fit',
+                     save_name=after_plt_path)
