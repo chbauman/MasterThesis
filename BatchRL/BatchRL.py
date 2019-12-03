@@ -87,7 +87,7 @@ def run_battery() -> None:
 
     # Initialize and fit battery model.
     bat_mod = BatteryModel(bat_ds)
-    bat_mod.analyze_bat_model()
+    bat_mod.analyze_bat_model(put_on_ol=True)
     bat_mod.analyze_visually(one_week_to_ol=True, base_name="Bat")
     # bat_mod_naive = ConstModel(bat_ds)
     # bat_mod_naive.analyze_visually()

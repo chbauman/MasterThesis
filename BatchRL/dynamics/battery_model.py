@@ -111,7 +111,7 @@ class BatteryModel(BaseDynamicsModel):
         a1, a2, a3 = self.params
         return a1 + a2 * p + a3 * np.maximum(0, p)
 
-    def analyze_bat_model(self) -> None:
+    def analyze_bat_model(self, put_on_ol: bool = False) -> None:
         """This is basically the fit method, but it also
         does some data analysis and makes some battery data specific plots.
         """
@@ -139,8 +139,10 @@ class BatteryModel(BaseDynamicsModel):
         # Plot model
         plt_name = "Cleaned"
         after_plt_path = self.get_plt_path(plt_name)
-        plt_pth_ol = os.path.join(OVERLEAF_IMG_DIR, plt_name)
-        for p in [plt_pth_ol, after_plt_path]:
+        all_paths = [after_plt_path]
+        if put_on_ol:
+            all_paths += [os.path.join(OVERLEAF_IMG_DIR, plt_name)]
+        for p in all_paths:
             scatter_plot(self.masked_p, self.masked_ds, lab_dict=labs,
                          show=False,
                          add_line=False,
