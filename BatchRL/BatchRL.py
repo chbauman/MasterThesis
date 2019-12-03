@@ -350,8 +350,9 @@ def update_overleaf_plots(verbose: int = 1):
         # Evaluate
         n_eval_steps = 2000  # n_steps // 100
         agent_list = [open_agent, closed_agent, rule_based_agent, agent]
-        mask = np.array([0, 1, 4])
+        mask = np.array([0, 1, 4, 5])
         heat_inds = np.array([2, 3])
+        print(ds)
 
         for s in [0, None, None, None]:
 

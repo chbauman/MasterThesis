@@ -1,6 +1,6 @@
 import os
 import warnings
-from typing import Dict, Sequence, Tuple, List
+from typing import Dict, Sequence, Tuple, List, Any
 
 import matplotlib as mpl
 import numpy as np
@@ -120,6 +120,8 @@ def _plot_helper(x, y, m_col='blue', label: str = None,
     plot_method = ax.plot
     if dates:
         plot_method = ax.plot_date
+        if steps:
+            kwargs["drawstyle"] = "steps"
     elif steps:
         plot_method = ax.step
 
@@ -630,7 +632,8 @@ def plot_env_evaluation(actions: np.ndarray,
                         extra_actions: np.ndarray = None,
                         series_mask: np.ndarray = None,
                         title_ext: str = None,
-                        show_rewards: bool = True) -> None:
+                        show_rewards: bool = True,
+                        np_dt_init: Any = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     Only for one specific initial condition.
@@ -650,6 +653,14 @@ def plot_env_evaluation(actions: np.ndarray,
         n_feats = len(series_mask)
     n_actions = actions.shape[-1]
     tot_n_plots = n_actions + n_feats + show_rewards + plot_extra * n_actions
+
+    # Take care of the x-axis
+    use_time = np_dt_init is not None
+    if use_time:
+        interval = np.timedelta64(ds.dt, 'm')
+        x = [np_dt_init + i * interval for i in range(episode_len)]
+    else:
+        x = range(len(rewards[0]))
 
     # We'll use a separate GridSpecs for controls, states and rewards
     fig = plt.figure()
@@ -689,38 +700,42 @@ def plot_env_evaluation(actions: np.ndarray,
     for k in range(n_feats):
         _setup_axis(state_axs[k], "States", state_descs[k])
 
+    ph_kwargs = {"dates": use_time}
+    plot_helper_kwargs = {"dates": use_time, "steps": True}
+
     # Plot all the things!
-    x = range(len(rewards[0]))
     for k in range(n_agents):
         # Plot actions
         for i in range(n_actions):
             _plot_helper(x, actions[k, :, i], m_col=clr_map[k],
-                         label=agent_names[k], ax=con_axs[i], steps=True)
+                         label=agent_names[k], ax=con_axs[i], steps=True, **ph_kwargs)
             if plot_extra:
                 _plot_helper(x, extra_actions[k, :, i], m_col=clr_map[k],
-                             label=agent_names[k], ax=con_fb_axs[i], steps=True)
+                             label=agent_names[k], ax=con_fb_axs[i], steps=True, **ph_kwargs)
         # Plot states
         for i in range(n_feats):
             _plot_helper(x, states[k, :, i], m_col=clr_map[k],
-                         label=agent_names[k], ax=state_axs[i])
+                         label=agent_names[k], ax=state_axs[i], **ph_kwargs)
 
         # Plot reward
         if show_rewards:
             _plot_helper(x, rewards[k, :], m_col=clr_map[k],
-                         label=agent_names[k], ax=rew_ax)
+                         label=agent_names[k], ax=rew_ax, **ph_kwargs)
 
     # Set time
     last_c_ax = con_fb_axs[-1] if plot_extra else con_axs[-1]
 
     # Add legends
-    con_axs[0].legend()
-    state_axs[0].legend()
+    sz = 12
+    con_axs[0].legend(prop={'size': sz})
+    state_axs[0].legend(prop={'size': sz})
 
+    x_label = "Time" if use_time else f"Timestep [{ds.dt}min]"
     if show_rewards:
-        rew_ax.set_xlabel(f"Timestep [{ds.dt}min]")
-        rew_ax.legend()
+        rew_ax.set_xlabel(x_label)
+        rew_ax.legend(prop={'size': sz})
     else:
-        state_axs[-1].set_xlabel(f"Timestep [{ds.dt}min]")
+        state_axs[-1].set_xlabel()
 
     # Super title
     sup_t = 'Visual Analysis. '

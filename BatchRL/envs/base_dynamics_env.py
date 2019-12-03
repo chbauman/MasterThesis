@@ -13,7 +13,7 @@ import numpy as np
 from agents import base_agent
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import npf32
-from util.util import Arr, create_dir, make_param_ext
+from util.util import Arr, create_dir, make_param_ext, str_to_np_dt
 from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR
 
 Agents = Union[List, base_agent.AgentBase]
@@ -43,6 +43,7 @@ class DynEnv(ABC, gym.Env):
 
     # Info about the current episode.
     use_noise: bool = True  #: Whether to add noise when simulating.
+    curr_ind: int = None
 
     orig_actions: np.ndarray  #: Array with fallback actions
 
@@ -237,6 +238,7 @@ class DynEnv(ABC, gym.Env):
                 raise ValueError("start_ind is too fucking large!")
 
         self.hist = np.copy(self.train_data[start_ind])
+        self.curr_ind = self.train_indices[start_ind]
         return np.copy(self.hist[-1, :-self.act_dim])
 
     def render(self, mode='human'):
@@ -335,12 +337,17 @@ class DynEnv(ABC, gym.Env):
         if not plot_constrain_actions or np.allclose(clipped_action_sequences, action_sequences):
             clipped_action_sequences = None
 
+        # Time stuff
+        shifted_t_init = self.m.data.get_shifted_t_init(self.curr_ind + self.m.data.seq_len - 1)
+        np_st_init = str_to_np_dt(shifted_t_init)
+
         # Plot all the things
         name_list = [a.get_short_name() for a in agents]
         analysis_plot_path = self._construct_plot_name("AgentAnalysis", start_ind, agents, put_on_ol)
         plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
                             name_list, analysis_plot_path, clipped_action_sequences,
-                            state_mask, show_rewards=show_rewards, title_ext=title_ext)
+                            state_mask, show_rewards=show_rewards, title_ext=title_ext,
+                            np_dt_init=np_st_init)
 
     def _construct_plot_name(self, base_name: str, start_ind: int, agent_list: List,
                              put_on_ol: bool = False):
