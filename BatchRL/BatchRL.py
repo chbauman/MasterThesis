@@ -308,21 +308,57 @@ def update_overleaf_plots(verbose: int = 1):
     #     r_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
     #                            one_week_to_ol=True, base_name="Room1W")
 
-    # Combined model evaluation
-    with ProgWrap(f"Analyzing full model performance...", verbose > 0):
+    # # Combined model evaluation
+    # with ProgWrap(f"Analyzing full model performance...", verbose > 0):
+    #     full_mod_name = full_models[0]
+    #     full_mod = get_model(full_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
+    #
+    #     metrics: Tuple[ErrMetric] = (MSE, MAE, MaxAbsEer)
+    #
+    #     full_mods = [full_mod]
+    #     parts = ["Val", "Train"]
+    #
+    #     plot_name = "EvalPlot"
+    #     plot_performance_graph(full_mods, parts, metrics, plot_name + "_RTempOnly",
+    #                            short_mod_names=["TempPredCombModel"],
+    #                            series_mask=np.array([5]), scale_back=True, remove_units=False,
+    #                            put_on_ol=True)
+
+    # DDPG Performance Evaluation
+    with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
         full_mod_name = full_models[0]
-        full_mod = get_model(full_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
+        full_mod = get_model(full_mod_name, ds, rnn_consts, from_hop=True, fit=True, verbose=False)
 
-        metrics: Tuple[ErrMetric] = (MSE, MAE, MaxAbsEer)
+        # Define env
+        alpha = 10.0
+        env = FullRoomEnv(full_mod, cont_actions=True, n_cont_actions=1, disturb_fac=0.3, alpha=alpha)
 
-        full_mods = [full_mod]
-        parts = ["Val", "Train"]
+        # Define default agents and compare
+        open_agent = ConstActionAgent(env, 1.0)
+        closed_agent = ConstActionAgent(env, 0.0)
+        rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
 
-        plot_name = "EvalPlot"
-        plot_performance_graph(full_mods, parts, metrics, plot_name + "_RTempOnly",
-                               short_mod_names=full_models_short_names[0:1],
-                               series_mask=np.array([5]), scale_back=True, remove_units=False,
-                               put_on_ol=True)
+        # Choose agent and fit to env.
+        n_steps = get_rl_steps() * 30
+        agent = DDPGBaseAgent(env,
+                              action_range=env.action_range,
+                              n_steps=n_steps,
+                              gamma=0.99, lr=0.00001)
+        agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}"
+        agent.fit()
+
+        # Evaluate
+        n_eval_steps = 2000  # n_steps // 100
+        agent_list = [open_agent, closed_agent, rule_based_agent, agent]
+        mask = np.array([0, 1, 4])
+        # for s in [0, None]:
+        #     env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
+        #                                 plot_constrain_actions=False,
+        #                                 show_rewards=True)
+
+        env.detailed_eval_agents(agent_list, use_noise=False,
+                                 n_steps=n_eval_steps, put_on_ol=True)
+
     pass
 
 

@@ -357,7 +357,15 @@ class Dataset:
         return Dataset(data, self.dt, t_init, scaling, is_scaled, descs, c_inds, p_inds, name)
 
     def slice_time(self, n1: int, n2: int) -> 'Dataset':
+        """Slices the dataset along the time axis.
 
+        Args:
+            n1:
+            n2:
+
+        Returns:
+            New dataset.
+        """
         dt_dt = n_mins_to_np_dt(self.dt)
         t_init_dt = str_to_np_dt(self.t_init)
         t_init_dt_new = t_init_dt + dt_dt * n1

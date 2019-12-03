@@ -14,7 +14,7 @@ from agents import base_agent
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import npf32
 from util.util import Arr, create_dir, make_param_ext
-from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details
+from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR
 
 Agents = Union[List, base_agent.AgentBase]
 
@@ -340,10 +340,14 @@ class DynEnv(ABC, gym.Env):
                             name_list, analysis_plot_path, clipped_action_sequences,
                             state_mask, show_rewards=show_rewards)
 
-    def _construct_plot_name(self, base_name: str, start_ind: int, agent_list: List):
+    def _construct_plot_name(self, base_name: str, start_ind: int, agent_list: List,
+                             put_on_ol: bool = False):
         name_list = [a.get_short_name() for a in agent_list]
         agent_names = '_'.join(name_list)
-        return self.get_plt_path(base_name + "_" + str(start_ind) + "_" + agent_names)
+        base = base_name + "_" + str(start_ind) + "_" + agent_names
+        if put_on_ol:
+            return os.path.join(OVERLEAF_IMG_DIR, base)
+        return self.get_plt_path(base)
 
     def eval_agents(self, agent_list: Agents, n_steps: int = 100) -> np.ndarray:
 
@@ -369,7 +373,10 @@ class DynEnv(ABC, gym.Env):
         # This is so fucking ugly!
         return None
 
-    def detailed_eval_agents(self, agent_list: Agents, n_steps: int = 100, use_noise: bool = False) -> np.ndarray:
+    def detailed_eval_agents(self, agent_list: Agents,
+                             n_steps: int = 100,
+                             use_noise: bool = False,
+                             put_on_ol: bool = False) -> np.ndarray:
         """Evaluates the given agents for this environment.
 
         Plots the mean rewards and returns all rewards.
@@ -402,7 +409,7 @@ class DynEnv(ABC, gym.Env):
             all_rewards[a_id, :, 1:] = ex_rew
 
         # Plot
-        p_name = self._construct_plot_name("DetailAnalysis", n_steps, agent_list)
+        p_name = self._construct_plot_name("DetailAnalysis", n_steps, agent_list, put_on_ol)
         title_ext = self._get_detail_eval_title_ext()
         plot_reward_details(agent_list, all_rewards, p_name,
                             self.reward_descs, self.m.data.dt, n_steps,
