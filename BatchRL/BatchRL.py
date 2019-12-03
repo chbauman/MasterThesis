@@ -272,8 +272,8 @@ def run_room_models(verbose: int = 1) -> None:
 
 def update_overleaf_plots(verbose: int = 1):
     # Battery model plots
-    # with ProgWrap(f"Running battery...", verbose > 0):
-    #     run_battery(do_rl=False, overwrite=True)
+    with ProgWrap(f"Running battery...", verbose > 0):
+        run_battery(do_rl=False, overwrite=True)
 
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
@@ -281,19 +281,31 @@ def update_overleaf_plots(verbose: int = 1):
                                                         seq_len=20,
                                                         add_battery_data=False)
 
+        ds_bat, rnn_consts_bat = choose_dataset_and_constraints('Model_Room43',
+                                                                seq_len=20,
+                                                                add_battery_data=True)
+
     # Weather model
     w_mod_name = base_rnn_models[0]
-    w_mod = get_model(w_mod_name, ds, rnn_consts, from_hop=True, fit=True)
+    w_mod = get_model(w_mod_name, ds, rnn_consts, from_hop=True, fit=True, verbose=False)
     with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
         w_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
-                               one_week_to_ol=True)
+                               one_week_to_ol=True, base_name="Weather1W")
+
+    # Room temperature model
+    r_mod_name = base_rnn_models[2]
+    with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
+        r_mod = get_model(r_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
+        r_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
+                               one_week_to_ol=True, base_name="Room1W")
     pass
 
 
 def get_model(name: str, ds: Dataset,
               rnn_consts: DatasetConstraints = None,
               from_hop: bool = False,
-              fit: bool = False) -> BaseDynamicsModel:
+              fit: bool = False,
+              verbose: int = 1) -> BaseDynamicsModel:
     """Loads and optionally fits a model.
 
     Args:
@@ -302,6 +314,7 @@ def get_model(name: str, ds: Dataset,
         rnn_consts: The constraints for the recurrent models.
         from_hop: Whether to initialize the model from optimal hyperparameters.
         fit: Whether to fit the model before returning it.
+        verbose: Verbosity.
 
     Returns:
         The requested model.
@@ -313,7 +326,8 @@ def get_model(name: str, ds: Dataset,
     # Load battery model if required.
     battery_mod = None
     if battery_used:
-        print("Dataset contains battery data.")
+        if verbose > 0:
+            print("Dataset contains battery data.")
         battery_mod = BatteryModel(dataset=ds, base_ind=8)
 
     # Helper function to build composite models including the battery model.
