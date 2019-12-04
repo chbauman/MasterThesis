@@ -7,7 +7,7 @@ import numpy as np
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from util.numerics import fit_linear_1d, load_performance, check_shape, ErrMetric
+from util.numerics import fit_linear_1d, load_performance, check_shape, ErrMetric, MaxAbsEer, MAE
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
     create_dir, Num, yeet, tot_size, mins_to_str
 
@@ -1073,7 +1073,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
         save_figure(plot_path)
 
 
-def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str):
+def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str, add_errors: bool = False):
     n_series = len(all_plt_dat)
     assert n_series > 0, "Fuck this!"
 
@@ -1091,4 +1091,13 @@ def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str):
                      title_and_ylab=t,
                      save_name=None,
                      new_plot=False)
+        if add_errors:
+            metrics = [MAE, MaxAbsEer]
+            unscaled_dat = ds.get_unscaled_data()
+            s1, s2 = unscaled_dat[:, 0], unscaled_dat[:, 1]
+            e = [m.err_fun(s1, s2) for m in metrics]
+            text_str = f"{metrics[0].name}: {e[0]:.2f}\n{metrics[1].name}: {e[1]:.2f}"
+            props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+            ax1.text(0.05, 0.95, text_str, transform=ax1.transAxes, fontsize=14,
+                     verticalalignment='top', bbox=props)
     save_figure(save_name)

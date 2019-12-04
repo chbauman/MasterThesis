@@ -502,7 +502,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                            overwrite: bool = True,
                            combine_plots: bool = False,
                            base: str = None,
-                           put_on_ol: bool = False) -> None:
+                           put_on_ol: bool = False,
+                           add_errors: bool = False) -> None:
         """Makes a plot by continuously predicting with
         the fitted model and comparing it to the ground
         truth. If `predict_ind` is None, all series that can be
@@ -562,7 +563,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                                  save_name=cn)
             else:
                 tot_save_name, _ = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
-                plot_visual_all_in_one(all_plt_dat, tot_save_name)
+                plot_visual_all_in_one(all_plt_dat, tot_save_name, add_errors)
 
         else:
             # Construct dataset and plot
@@ -586,7 +587,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                          verbose: bool = True,
                          base_name: str = None,
                          one_week_to_ol: bool = False,
-                         one_file: bool = False) -> None:
+                         one_file: bool = False,
+                         add_errors: bool = False) -> None:
         """Analyzes the trained model.
 
         Makes some plots using the fitted model and the streak data.
@@ -600,6 +602,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             base_name: The base name to give to the plots.
             one_week_to_ol: Whether to put the one week prediction plots to Overleaf.
             one_file: Whether to plot all series in one file.
+            add_errors: Whether to add errors in a box. Do not do this!
         """
         if verbose:
             print("Analyzing model {}".format(self.name))
@@ -636,7 +639,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                                     overwrite=overwrite,
                                     base=base_name,
                                     put_on_ol=one_week_to_ol,
-                                    combine_plots=one_file)
+                                    combine_plots=one_file,
+                                    add_errors=add_errors)
 
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
                             verbose: int = 0,

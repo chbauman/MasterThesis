@@ -141,7 +141,7 @@ class MAE(ErrMetric):
 class MaxAbsEer(ErrMetric):
     name = "Max. Abs. Err."
     long_name = "Maximum Absolute Error"
-    err_fun = mae
+    err_fun = max_abs_err
 
 
 def get_metrics_eval_save_name_list(parts: List[str], dt: int) -> List[str]:
