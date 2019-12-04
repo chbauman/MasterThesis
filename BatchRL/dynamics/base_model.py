@@ -384,13 +384,16 @@ class BaseDynamicsModel(KerasBase, ABC):
 
     def const_nts_plot(self, predict_data, n_list: Sequence[int], ext: str = '', *,
                        predict_ind: int = None, n_ts_off: int = 0,
-                       overwrite: bool = True) -> None:
+                       overwrite: bool = True,
+                       put_on_ol: bool = False) -> None:
         """Creates a plot that shows the performance of the
         trained model when predicting a fixed number of timesteps into
         the future.
         If `predict_ind` is None, all series that can be
         predicted are predicted simultaneously and each predicted
         series is plotted individually.
+
+        TODO: Refactor this or remove unused part!
 
         Args:
             predict_data: The string specifying the data to predict.
@@ -399,6 +402,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             predict_ind: Which series to predict.
             n_ts_off: Number of time steps to shift the initial time for correct plotting.
             overwrite: Whether to overwrite existing plot files.
+            put_on_ol: Whether to store the plots in the overleaf folder.
         """
         # Get data
         d = self.data
@@ -430,10 +434,11 @@ class BaseDynamicsModel(KerasBase, ABC):
                 curr_ds.data[(n_ts - 1):, 0] = np.copy(one_h_pred[:, predict_ind])
                 curr_ds.data[:(n_ts - 1), 0] = np.nan
                 title_and_ylab = [time_str + ' Ahead Predictions', desc]
+                s = time_str + 'Ahead' + ext
                 plot_dataset(curr_ds,
                              show=False,
                              title_and_ylab=title_and_ylab,
-                             save_name=self.get_plt_path(time_str + 'Ahead' + ext))
+                             save_name=self._get_plt_or_ol_path(s, put_on_ol))
         else:
             n_pred = len(self.out_inds)
             for n_ts in n_list:
@@ -453,14 +458,17 @@ class BaseDynamicsModel(KerasBase, ABC):
                     new_ds.data[(n_ts - 1):, 0] = np.copy(full_pred[:, k])
                     new_ds.data[:(n_ts - 1), 0] = np.nan
                     title_and_ylab = [time_str + ' Ahead Predictions', desc]
+                    s = time_str + 'Ahead_' + str(k) + "_" + ext
                     plot_dataset(new_ds,
                                  show=False,
                                  title_and_ylab=title_and_ylab,
-                                 save_name=self.get_plt_path(time_str + 'Ahead_' + str(k) + "_" + ext))
+                                 save_name=self._get_plt_or_ol_path(s, put_on_ol))
 
     def one_week_pred_plot_all(self, dat_test, ext: str = None,
-                           n_ts_off: int = 0,
-                           overwrite: bool = True):
+                               n_ts_off: int = 0,
+                               overwrite: bool = True):
+
+        # TODO: Remove??
 
         # Check if plot file already exists
         ext = "_" if ext is None else "_" + ext
@@ -586,7 +594,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                          overwrite: bool = False,
                          verbose: bool = True,
                          base_name: str = None,
-                         one_week_to_ol: bool = False,
+                         save_to_ol: bool = False,
                          one_file: bool = False,
                          add_errors: bool = False) -> None:
         """Analyzes the trained model.
@@ -600,7 +608,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             overwrite: Whether to overwrite existing plot files.
             verbose: Whether to print info to console.
             base_name: The base name to give to the plots.
-            one_week_to_ol: Whether to put the one week prediction plots to Overleaf.
+            save_to_ol: Whether to save the prediction plots to Overleaf.
             one_file: Whether to plot all series in one file.
             add_errors: Whether to add errors in a box. Do not do this!
         """
@@ -631,21 +639,22 @@ class BaseDynamicsModel(KerasBase, ABC):
 
             # Plot for fixed number of time-steps
             self.const_nts_plot(dat_copy, n_steps, ext=ext_list[ct], n_ts_off=n,
-                                overwrite=overwrite)
+                                overwrite=overwrite,
+                                put_on_ol=save_to_ol)
 
             # Plot for continuous predictions
             self.one_week_pred_plot(copy_arr_list(dat_copy), ext_list[ct],
                                     n_ts_off=n,
                                     overwrite=overwrite,
                                     base=base_name,
-                                    put_on_ol=one_week_to_ol,
+                                    put_on_ol=save_to_ol,
                                     combine_plots=one_file,
                                     add_errors=add_errors)
 
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
                             verbose: int = 0,
                             overwrite: bool = False,
-                            metrics: Sequence[ErrMetric] = (MSE, ),
+                            metrics: Sequence[ErrMetric] = (MSE,),
                             n_days: int = 14) -> None:
         """Analyzes the multistep prediction performance of the model.
 

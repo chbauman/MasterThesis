@@ -89,7 +89,7 @@ def run_battery(do_rl: bool = True, overwrite: bool = False, verbose: int = 0) -
     # Initialize and fit battery model.
     bat_mod = BatteryModel(bat_ds)
     bat_mod.analyze_bat_model(put_on_ol=True)
-    bat_mod.analyze_visually(one_week_to_ol=True, base_name="Bat", overwrite=overwrite)
+    bat_mod.analyze_visually(save_to_ol=True, base_name="Bat", overwrite=overwrite)
     # bat_mod_naive = ConstModel(bat_ds)
     # bat_mod_naive.analyze_visually()
 
@@ -290,7 +290,7 @@ def update_overleaf_plots(verbose: int = 1):
     # w_mod = get_model(w_mod_name, ds, rnn_consts, from_hop=True, fit=True, verbose=False)
     # with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
     #     w_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
-    #                            one_week_to_ol=True, base_name="Weather1W")
+    #                            save_to_ol=True, base_name="Weather1W")
 
     # # Heating water constant
     # with ProgWrap(f"Plotting heating water...", verbose > 0):
@@ -305,12 +305,12 @@ def update_overleaf_plots(verbose: int = 1):
     r_mod_name = base_rnn_models[2]
     with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
         r_mod = get_model(r_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
-        r_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
-                               one_week_to_ol=True, base_name="Room1W",
+        r_mod.analyze_visually(n_steps=[24], overwrite=True, verbose=False, one_file=True,
+                               save_to_ol=True, base_name="Room1W_E",
                                add_errors=True)
-        # r_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
-        #                        one_week_to_ol=True, base_name="Room1W",
-        #                        add_errors=False)
+        r_mod.analyze_visually(n_steps=[24], overwrite=True, verbose=False, one_file=True,
+                               save_to_ol=True, base_name="Room1W",
+                               add_errors=False)
 
     # # Combined model evaluation
     # with ProgWrap(f"Analyzing full model performance...", verbose > 0):
