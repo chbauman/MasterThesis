@@ -353,7 +353,8 @@ def update_overleaf_plots(verbose: int = 1):
         mask = np.array([0, 1, 4])
         heat_inds = np.array([2, 3])
 
-        for s in [0, None, None, None]:
+        eval_list = [11889]
+        for s in [0] + eval_list:
 
             # Find the current heating water temperatures
             env.reset(s, use_noise=False)
