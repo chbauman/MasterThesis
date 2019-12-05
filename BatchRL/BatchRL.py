@@ -73,7 +73,7 @@ def test_cleanup():
     cleanup_test_data(verbose=1)
 
 
-def run_battery(do_rl: bool = True, overwrite: bool = False, verbose: int = 0) -> None:
+def run_battery(do_rl: bool = True, overwrite: bool = False, verbose: int = 0, steps: List = [24]) -> None:
     """Runs all battery related stuff.
 
     Loads and prepares the battery data, fits the
@@ -89,7 +89,7 @@ def run_battery(do_rl: bool = True, overwrite: bool = False, verbose: int = 0) -
     # Initialize and fit battery model.
     bat_mod = BatteryModel(bat_ds)
     bat_mod.analyze_bat_model(put_on_ol=True)
-    bat_mod.analyze_visually(save_to_ol=True, base_name="Bat", overwrite=overwrite)
+    bat_mod.analyze_visually(save_to_ol=True, base_name="Bat", overwrite=overwrite, n_steps=steps)
     # bat_mod_naive = ConstModel(bat_ds)
     # bat_mod_naive.analyze_visually()
 
@@ -581,8 +581,6 @@ def get_model(name: str, ds: Dataset,
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
-    run_battery()
-    return
     # try_opcua()
     # return
 
