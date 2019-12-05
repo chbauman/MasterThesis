@@ -434,11 +434,11 @@ class BaseDynamicsModel(KerasBase, ABC):
                 curr_ds.data[(n_ts - 1):, 0] = np.copy(one_h_pred[:, predict_ind])
                 curr_ds.data[:(n_ts - 1), 0] = np.nan
                 title_and_ylab = [time_str + ' Ahead Predictions', desc]
-                s = time_str + 'Ahead' + ext
+                s_ = time_str + 'Ahead' + ext
                 plot_dataset(curr_ds,
                              show=False,
                              title_and_ylab=title_and_ylab,
-                             save_name=self._get_plt_or_ol_path(s, put_on_ol))
+                             save_name=self._get_plt_or_ol_path(s_, put_on_ol))
         else:
             n_pred = len(self.out_inds)
             for n_ts in n_list:
@@ -458,11 +458,11 @@ class BaseDynamicsModel(KerasBase, ABC):
                     new_ds.data[(n_ts - 1):, 0] = np.copy(full_pred[:, k])
                     new_ds.data[:(n_ts - 1), 0] = np.nan
                     title_and_ylab = [time_str + ' Ahead Predictions', desc]
-                    s = time_str + 'Ahead_' + str(k) + "_" + ext
+                    s_ = time_str + 'Ahead_' + str(k) + "_" + ext
                     plot_dataset(new_ds,
                                  show=False,
                                  title_and_ylab=title_and_ylab,
-                                 save_name=self._get_plt_or_ol_path(s, put_on_ol))
+                                 save_name=self._get_plt_or_ol_path(s_, put_on_ol))
 
     def one_week_pred_plot_all(self, dat_test, ext: str = None,
                                n_ts_off: int = 0,

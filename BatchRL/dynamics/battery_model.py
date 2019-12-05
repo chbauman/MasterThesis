@@ -67,6 +67,11 @@ class BatteryModel(BaseDynamicsModel):
         p = np.copy(dat[1:, p_ind])
         ds = np.copy(dat[1:, s_ind] - dat[:-1, s_ind])
 
+        # Reduce data to exclude strange part
+        n = len(p) // 3
+        p = p[:n]
+        ds = ds[:n]
+
         # Remove nans
         not_nans = np.logical_not(np.logical_or(np.isnan(p), np.isnan(ds)))
         self.p = p[not_nans]

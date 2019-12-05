@@ -271,10 +271,10 @@ def run_room_models(verbose: int = 1) -> None:
 
 
 def update_overleaf_plots(verbose: int = 1):
-    # # Battery model plots
-    # with ProgWrap(f"Running battery...", verbose > 0):
-    #     run_battery(do_rl=False, overwrite=True, verbose=0)
-    #
+    # Battery model plots
+    with ProgWrap(f"Running battery...", verbose > 0):
+        run_battery(do_rl=False, overwrite=True, verbose=0)
+
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
         ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
@@ -581,6 +581,8 @@ def get_model(name: str, ds: Dataset,
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
+    run_battery()
+    return
     # try_opcua()
     # return
 
