@@ -4,6 +4,7 @@ from unittest import TestCase
 import numpy as np
 from hyperopt import hp
 from hyperopt.pyll import scope as ho_scope
+from sklearn.linear_model import LinearRegression
 
 from data_processing.dataset import Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel
@@ -301,21 +302,46 @@ class TestClassical(TestCase):
         self.ds_1.split_data()
 
     class DummyEst:
+        """Dummy estimator for testing.
+
+        More or less compliant with the sklearn API.
+        Predicts what it gets as input.
+        """
+        x_pred = None
         x_fit = None
         y_fit = None
+        n_out_feats: int = -1
 
         def fit(self, x, y):
             y_sh = y.shape
             x_sh = x.shape
+            self.n_out_feats = 1 if len(y_sh) == 1 else y_sh[-1]
             assert y_sh[0] == x_sh[0], "Incompatible shapes!"
             self.x_fit = x
             self.y_fit = y
 
-    def test_skl_mod(self):
+        def predict(self, x):
+            self.x_pred = x
+            return x[..., :self.n_out_feats]
+
+    def test_skl_dummy_mod(self):
         est = self.DummyEst()
-        skl_mod_res = SKLearnModel(self.ds_1, est)
+        in_inds = np.array([0, 3])
+        out_inds = np.array([3])
+        skl_mod_res = SKLearnModel(self.ds_1, est, in_indices=in_inds, out_indices=out_inds)
         skl_mod_res.fit()
-        pass
+        self.assertTrue(np.array_equal(skl_mod_res.p_out_in_indices, np.array([1])))
+
+        pred_ip = np.array([1, 2]).reshape((1, -1))
+        p = skl_mod_res.predict(pred_ip)
+        self.assertTrue(np.array_equal(p, np.array([[3]])))
+
+    def test_skl(self):
+        skl_mod = LinearRegression()
+        skl_mod_res = SKLearnModel(self.ds_1, skl_mod)
+        skl_mod_res.fit()
+        pred_ip = np.array([1, 2, 3]).reshape((1, -1))
+        skl_mod_res.predict(pred_ip)
     pass
 
 
