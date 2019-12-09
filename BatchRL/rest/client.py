@@ -58,7 +58,7 @@ def _get_data_folder(name: str, start_date: str, end_date: str) -> str:
         end_date: End of data collection.
 
     Returns:
-        Full path of data defined by params.
+        Full path of data defined by skl_mod.
     """
     ext = start_date + "__" + end_date + "__"
     data_dir = os.path.join(save_dir, ext + name)

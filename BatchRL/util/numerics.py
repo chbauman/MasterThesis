@@ -220,6 +220,24 @@ def load_performance(path_gen_func, parts: List[str], dt: int, n_metrics: int) -
     return eval_data, inds
 
 
+def find_inds(in_inds: np.ndarray, out_inds: np.ndarray):
+    """Finds the positions of the values in `out_inds` in `in_inds`.
+
+    Assuming no duplicate values in both arrays
+    and `out_inds` must be a subset of the values in `in_inds`!
+
+    Args:
+        in_inds: Input indices
+        out_inds: Output indices.
+
+    Returns:
+        The positions of the values from the output indices in the input indices.
+    """
+    orig_indices = in_inds.argsort()
+    ndx = orig_indices[np.searchsorted(in_inds[orig_indices], out_inds)]
+    return ndx
+
+
 def num_nans(arr: np.ndarray) -> int:
     """Computes the number of nans in an array."""
     return np.sum(np.isnan(arr)).item()
@@ -482,7 +500,7 @@ def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False,
     If offset is true, then a bias term is added.
     If non_neg is true, then the regression coefficients are
     constrained to be positive.
-    If ret_fit is true, then a tuple (params, fit_values)
+    If ret_fit is true, then a tuple (skl_mod, fit_values)
     is returned.
 
     Args:

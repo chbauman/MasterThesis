@@ -123,7 +123,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             mod.fit()
             curr_obj = mod.hyper_objective()
 
-            # Save if new params are better
+            # Save if new skl_mod are better
             if curr_obj < self.curr_val:
                 self.curr_val = curr_obj
                 save_path = self._get_opt_hp_f_name(self.base_name)

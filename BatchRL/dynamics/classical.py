@@ -1,11 +1,11 @@
 import numpy as np
+from sklearn.base import RegressorMixin
 
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
-from util.util import train_decorator
 
 
-class LinearModel(BaseDynamicsModel):
+class SKLearnModel(BaseDynamicsModel):
     """The naive model that predicts the last input seen.
 
     """
@@ -13,7 +13,7 @@ class LinearModel(BaseDynamicsModel):
     name: str = "Linear"  #: Base name of model.
     n_out: int  #: Number of series that are predicted.
 
-    def __init__(self, dataset: Dataset, residual: bool = True, **kwargs):
+    def __init__(self, dataset: Dataset, skl_model, residual: bool = True, **kwargs):
         """Initializes the constant model.
 
         All series specified by prep_inds are predicted by the last seen value.
@@ -31,8 +31,18 @@ class LinearModel(BaseDynamicsModel):
         self.nc = dataset.n_c
         self.residual_learning = residual
 
+        # Fitting model
+        self.is_fitted = False
+        self.skl_mod = skl_model
+
     def fit(self, verbose: int = 0) -> None:
         """Fit linear model."""
+
+        # Check if already fitted
+        if self.is_fitted:
+            if verbose:
+                print("Already fitted!")
+            return
 
         # Prepare the data
         input_data, output_data = self.get_fit_data('train', residual_output=self.residual_learning)
@@ -40,6 +50,9 @@ class LinearModel(BaseDynamicsModel):
         in_sh = input_data.shape
         first_sh, last_sh = in_sh[0], in_sh[-1]
         input_data_2d = input_data.reshape((first_sh, -1))
+        self.skl_mod.fit(input_data_2d, output_data)
+
+        self.is_fitted = True
 
         raise NotImplementedError("Implement this!!")
 
@@ -52,4 +65,10 @@ class LinearModel(BaseDynamicsModel):
         Returns:
             The predictions.
         """
-        return np.array(0)
+        # Predict
+        p = self.skl_mod.predict(in_data)
+
+        # Add previous state contribution
+        # TODO
+
+        return p

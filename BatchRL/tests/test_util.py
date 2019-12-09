@@ -12,7 +12,7 @@ from tests.test_data import SYNTH_DATA_NAME
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
-    get_metrics_eval_save_name_list, load_performance, MSE
+    get_metrics_eval_save_name_list, load_performance, MSE, find_inds
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
     dynamic_model_dir
@@ -64,6 +64,20 @@ class TestNumerics(TestCase):
              [4, 3, 4]],
         ])
         self.c_inds = np.array([1])
+
+    def test_find_inds(self):
+        # Define input
+        in_i = np.array([1, 2, 4, 5])
+        out_1 = np.array([2, 4, 5])
+        out_2 = np.array([1, 4])
+
+        # And output
+        exp_out_1 = np.array([1, 2, 3])
+        exp_out_2 = np.array([0, 2])
+        act_out_1 = find_inds(in_i, out_1)
+        act_out_2 = find_inds(in_i, out_2)
+        self.assertTrue(np.array_equal(act_out_1, exp_out_1))
+        self.assertTrue(np.array_equal(act_out_2, exp_out_2))
 
     def test_shape_check(self):
         self.assertEqual(check_shape(self.bool_vec, (-1,)), True)
