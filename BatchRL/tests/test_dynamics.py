@@ -342,8 +342,12 @@ class TestClassical(TestCase):
     def test_skl(self):
         skl_mod = LinearRegression()
         skl_mod_res = SKLearnModel(self.ds_1, skl_mod)
+        exp_inds = np.array([0, 2, 3])
+        msg = f"Indices: {skl_mod_res.p_out_in_indices} incorrect! (!= {exp_inds})"
+        self.assertTrue(np.array_equal(skl_mod_res.p_out_in_indices, exp_inds), msg)
         skl_mod_res.fit()
-        pred_ip = np.array([1, 2, 3]).reshape((1, -1))
+        s_len = self.ds_1.seq_len - 1
+        pred_ip = np.ones((1, s_len, 1)) * np.array([0, 1, 2, 3]).reshape((1, 1, -1))
         skl_mod_res.predict(pred_ip)
     pass
 

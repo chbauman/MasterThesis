@@ -65,11 +65,12 @@ class SKLearnModel(BaseDynamicsModel):
         Returns:
             The predictions.
         """
+        check_shape(in_data, (-1, -1, -1))
+
         # Add previous state contribution
         prev_state = self._extract_output(in_data)
 
         # Flatten
-        check_shape(in_data, (-1, -1, -1))
         sh = in_data.shape
         in_data_res = in_data.reshape((sh[0], -1))
         prev_state_res = prev_state.reshape((sh[0], -1))

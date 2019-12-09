@@ -136,6 +136,10 @@ class BaseDynamicsModel(KerasBase, ABC):
         return indices, p_indices
 
     def _extract_output(self, input_arr: np.ndarray) -> np.ndarray:
+        in_sh = input_arr.shape
+        assert len(in_sh) >= 2, f"Invalid shape {in_sh}"
+        assert np.max(self.p_out_in_indices) < in_sh[-1], \
+            f"Last shape too small: {in_sh}, indices: {self.p_out_in_indices}!"
         return input_arr[..., -1, self.p_out_in_indices]
 
     def _get_full_name(self, base_name: str):
