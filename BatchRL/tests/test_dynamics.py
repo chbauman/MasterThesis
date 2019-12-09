@@ -9,6 +9,7 @@ from data_processing.dataset import Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
+from dynamics.classical import SKLearnModel
 from dynamics.composite import CompositeModel
 from dynamics.const import NoDisturbanceModel, ConstModel
 from dynamics.sin_cos_time import SCTimeModel
@@ -286,6 +287,36 @@ class TestHop(TestCase):
         assert len(test_hop_mod_4.param_list) == self.n, "Parameter logging incorrect!"
         best_mod_4 = TestHopTable.from_best_hp(ds=self.ds, base_param=4)
         best_mod_4.optimize(self.n, verbose=0)
+
+
+class TestClassical(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Define datasets
+        self.n = 200
+        self.ds_1 = construct_test_ds(self.n, c_series=1)
+        self.ds_1.data = np.ones((self.n, 4)) * np.arange(4)
+        self.ds_1.split_data()
+
+    class DummyEst:
+        x_fit = None
+        y_fit = None
+
+        def fit(self, x, y):
+            y_sh = y.shape
+            x_sh = x.shape
+            assert y_sh[0] == x_sh[0], "Incompatible shapes!"
+            self.x_fit = x
+            self.y_fit = y
+
+    def test_skl_mod(self):
+        est = self.DummyEst()
+        skl_mod_res = SKLearnModel(self.ds_1, est)
+        skl_mod_res.fit()
+        pass
+    pass
 
 
 class TestComposite(TestCase):

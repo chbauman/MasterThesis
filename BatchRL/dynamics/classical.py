@@ -1,5 +1,4 @@
 import numpy as np
-from sklearn.base import RegressorMixin
 
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
