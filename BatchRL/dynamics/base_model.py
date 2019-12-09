@@ -10,7 +10,7 @@ from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
 from tests.test_data import construct_test_ds
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, mse, \
-    save_performance_extended, get_metrics_eval_save_name_list, ErrMetric, MSE
+    save_performance_extended, get_metrics_eval_save_name_list, ErrMetric, MSE, find_inds
 from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one
 
@@ -114,6 +114,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                 raise IndexError("You cannot predict control indices!")
         in_inds = self._get_inds(in_indices, ds, True)
         self.in_indices, self.p_in_indices = in_inds
+        self.p_out_in_indices = find_inds(self.p_in_indices, self.p_out_inds)
 
         # Set name
         self.name = self._get_full_name(name)
@@ -133,6 +134,9 @@ class BaseDynamicsModel(KerasBase, ABC):
         p_indices = ds.to_prepared(indices)
         ds.check_inds(indices, True)
         return indices, p_indices
+
+    def _extract_output(self, input_arr: np.ndarray) -> np.ndarray:
+        return input_arr[..., self.p_out_in_indices]
 
     def _get_full_name(self, base_name: str):
         return self._get_full_name_static(self.data, self.out_inds, self.in_indices, base_name)

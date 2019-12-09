@@ -220,19 +220,20 @@ def load_performance(path_gen_func, parts: List[str], dt: int, n_metrics: int) -
     return eval_data, inds
 
 
-def find_inds(in_inds: np.ndarray, out_inds: np.ndarray):
+def find_inds(in_inds: np.ndarray, out_inds: np.ndarray) -> np.ndarray:
     """Finds the positions of the values in `out_inds` in `in_inds`.
 
     Assuming no duplicate values in both arrays
     and `out_inds` must be a subset of the values in `in_inds`!
 
     Args:
-        in_inds: Input indices
-        out_inds: Output indices.
+        in_inds: Input indices (1d integer numpy array)
+        out_inds: Output indices (1d integer numpy array)
 
     Returns:
         The positions of the values from the output indices in the input indices.
     """
+    assert len(in_inds) >= len(out_inds), "Incompatible indices"
     orig_indices = in_inds.argsort()
     ndx = orig_indices[np.searchsorted(in_inds[orig_indices], out_inds)]
     return ndx

@@ -46,15 +46,13 @@ class SKLearnModel(BaseDynamicsModel):
 
         # Prepare the data
         input_data, output_data = self.get_fit_data('train', residual_output=self.residual_learning)
-
         in_sh = input_data.shape
         first_sh, last_sh = in_sh[0], in_sh[-1]
         input_data_2d = input_data.reshape((first_sh, -1))
+
+        # Fit
         self.skl_mod.fit(input_data_2d, output_data)
-
         self.is_fitted = True
-
-        raise NotImplementedError("Implement this!!")
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """Make predictions by applying the linear model.
@@ -69,6 +67,6 @@ class SKLearnModel(BaseDynamicsModel):
         p = self.skl_mod.predict(in_data)
 
         # Add previous state contribution
-        # TODO
+        prev_state = self._extract_output(in_data)
 
-        return p
+        return prev_state + p
