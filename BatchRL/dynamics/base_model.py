@@ -169,13 +169,15 @@ class BaseDynamicsModel(KerasBase, ABC):
         """
         pass
 
-    def get_fit_data(self, data_name: str = "train", *, seq_out: bool = False):
+    def get_fit_data(self, data_name: str = "train", *, seq_out: bool = False,
+                     residual_output: bool = False):
         """Returns the required data for fitting the model
         taking care of choosing the right series by indexing.
 
         Args:
             data_name: The string specifying which portion of the data to use.
             seq_out: Whether to return the full output sequences.
+            residual_output: Whether to subtract the previous state from the output.
 
         Returns:
             The input and output data for supervised learning.
@@ -183,6 +185,8 @@ class BaseDynamicsModel(KerasBase, ABC):
         in_dat, out_dat, n = self.data.get_split(data_name, seq_out)
         res_in_dat = in_dat[:, :, self.p_in_indices]
         res_out_dat_out = out_dat[..., self.p_out_inds]
+        if residual_output:
+            res_out_dat_out -= in_dat[:, -1, self.p_out_inds]
         return res_in_dat, res_out_dat_out
 
     def rescale_output(self, arr: np.ndarray,

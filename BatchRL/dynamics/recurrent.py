@@ -416,7 +416,7 @@ class RNNDynamicModel(HyperOptimizableModel):
             self._plot_model(self.m)
 
         # Prepare the data
-        input_data, output_data = self.get_fit_data('train_val')
+        input_data, output_data = self.get_fit_data('train')
 
         # Fit and save model
         h = self.m.fit(input_data, output_data,
