@@ -322,6 +322,8 @@ class TestClassical(TestCase):
 
         def predict(self, x):
             self.x_pred = x
+            x_sh, x_train_sh = x.shape, self.x_fit.shape
+            assert x_sh[1] == x_train_sh[1], f"Shape of x: {x_sh}, shape of train x: {x_train_sh}"
             return x[..., :self.n_out_feats]
 
     def test_skl_dummy_mod(self):
@@ -332,7 +334,8 @@ class TestClassical(TestCase):
         skl_mod_res.fit()
         self.assertTrue(np.array_equal(skl_mod_res.p_out_in_indices, np.array([1])))
 
-        pred_ip = np.array([1, 2]).reshape((1, -1))
+        s_len = self.ds_1.seq_len - 1
+        pred_ip = np.ones((1, s_len, 1)) * np.array([1, 2]).reshape((1, 1, -1))
         p = skl_mod_res.predict(pred_ip)
         self.assertTrue(np.array_equal(p, np.array([[3]])))
 

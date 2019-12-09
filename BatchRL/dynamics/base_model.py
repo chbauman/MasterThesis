@@ -136,7 +136,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         return indices, p_indices
 
     def _extract_output(self, input_arr: np.ndarray) -> np.ndarray:
-        return input_arr[..., self.p_out_in_indices]
+        return input_arr[..., -1, self.p_out_in_indices]
 
     def _get_full_name(self, base_name: str):
         return self._get_full_name_static(self.data, self.out_inds, self.in_indices, base_name)

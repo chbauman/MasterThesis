@@ -2,6 +2,7 @@ import numpy as np
 
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
+from util.numerics import check_shape
 
 
 class SKLearnModel(BaseDynamicsModel):
@@ -64,10 +65,15 @@ class SKLearnModel(BaseDynamicsModel):
         Returns:
             The predictions.
         """
-        # Predict
-        p = self.skl_mod.predict(in_data)
-
         # Add previous state contribution
         prev_state = self._extract_output(in_data)
 
-        return prev_state + p
+        # Flatten
+        check_shape(in_data, (-1, -1, -1))
+        sh = in_data.shape
+        in_data_res = in_data.reshape((sh[0], -1))
+        prev_state_res = prev_state.reshape((sh[0], -1))
+
+        # Predict
+        p = self.skl_mod.predict(in_data_res)
+        return prev_state_res + p
