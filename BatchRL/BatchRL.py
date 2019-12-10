@@ -5,13 +5,12 @@ functions. The complicated stuff is hidden in the other
 modules / packages.
 """
 import argparse
-import os
 import time
 from functools import reduce
-from typing import List, Tuple
+from typing import List, Tuple, Sequence
 
 import numpy as np
-from sklearn.linear_model import LassoCV
+from sklearn.linear_model import MultiTaskLassoCV
 
 from agents.agents_heuristic import ConstActionAgent, RuleBasedHeating
 from agents.keras_agents import DDPGBaseAgent
@@ -20,22 +19,20 @@ from data_processing.data import get_battery_data, get_data_test, \
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
 from dynamics.base_model import test_dyn_model, BaseDynamicsModel
-from dynamics.classical import SKLearnModel
-from opcua_empa.run_opcua import try_opcua
-from tests.test_util import cleanup_test_data
 from dynamics.battery_model import BatteryModel
+from dynamics.classical import SKLearnModel
 from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
-from util.numerics import max_abs_err, mae, mse, MSE, MAE, MaxAbsEer, ErrMetric, trf_mean_and_std, npf32
+from tests.test_util import cleanup_test_data
+from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap
+from util.visualize import plot_performance_table, plot_performance_graph
 
 # Define the models by name
-from util.visualize import plot_performance_table, plot_performance_graph, plot_dataset, OVERLEAF_IMG_DIR
-
 base_rnn_models = [
     "WeatherFromWeatherTime_RNN",
     "Apartment_RNN",
@@ -75,12 +72,14 @@ def test_cleanup():
     cleanup_test_data(verbose=1)
 
 
-def run_battery(do_rl: bool = True, overwrite: bool = False, verbose: int = 0, steps: List = [24]) -> None:
+def run_battery(do_rl: bool = True, overwrite: bool = False, verbose: int = 0, steps: Sequence = (24, )) -> None:
     """Runs all battery related stuff.
 
     Loads and prepares the battery data, fits the
     battery model and evaluates some agents.
     """
+    if verbose:
+        print("Running battery...")
     # Load and prepare battery data.
     bat_name = "Battery"
     get_battery_data()
@@ -96,6 +95,8 @@ def run_battery(do_rl: bool = True, overwrite: bool = False, verbose: int = 0, s
     # bat_mod_naive.analyze_visually()
 
     if not do_rl:
+        if verbose:
+            print("No RL this time.")
         return
 
     # Get numbers of steps
@@ -599,7 +600,7 @@ def curr_tests() -> None:
         'out_inds': np.array([0, 1], dtype=np.int32),
         'in_inds': np.array([0, 1, 6, 7], dtype=np.int32),
     }
-    skl_base_mod = LassoCV()
+    skl_base_mod = MultiTaskLassoCV(max_iter=1000, cv=5)
     skl_weather_mod = SKLearnModel(ds_full, skl_base_mod, **inds)
     skl_weather_mod.fit()
     skl_weather_mod.analyze_visually(plot_acf=False)
