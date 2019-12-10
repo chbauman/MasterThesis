@@ -108,7 +108,7 @@ class ConstSeriesTestModel(NoDisturbanceModel):
             ds: The dataset.
             pred_val_list: The list with the values that will be predicted.
             predict_input_check: If not None, the input series have to have these values.
-            **kwargs: Kwargs for the base class, e.g. `out_indices` or `in_indices`.
+            **kwargs: Kwargs for the base class, e.g. `out_inds` or `in_inds`.
         """
         name = f"ConstModel"
         super().__init__(ds, name, **kwargs)
@@ -349,7 +349,6 @@ class TestClassical(TestCase):
         s_len = self.ds_1.seq_len - 1
         pred_ip = np.ones((1, s_len, 1)) * np.array([0, 1, 2, 3]).reshape((1, 1, -1))
         skl_mod_res.predict(pred_ip)
-    pass
 
 
 class TestComposite(TestCase):

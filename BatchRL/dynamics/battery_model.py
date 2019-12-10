@@ -39,8 +39,8 @@ class BatteryModel(BaseDynamicsModel):
             in_inds = np.array([base_ind, base_ind + 1], dtype=np.int32)
             out_inds = np.array([base_ind], dtype=np.int32)
         super().__init__(dataset, dataset.name,
-                         out_indices=out_inds,
-                         in_indices=in_inds)
+                         out_inds=out_inds,
+                         in_inds=in_inds)
 
     def fit(self, verbose: int = 0) -> None:
         """Fits the battery model.

@@ -38,12 +38,12 @@ class ConstModel(BaseDynamicsModel):
         Args:
             dataset: Dataset containing the data.
             pred_inds: Indices of series to predict, all if None.
-            kwargs: Kwargs for base class, e.g. `in_indices`.
+            kwargs: Kwargs for base class, e.g. `in_inds`.
         """
-        # Set in_indices to pred_inds if not specified.
-        in_inds = kwargs.get('in_indices')
+        # Set in_inds to pred_inds if not specified.
+        in_inds = kwargs.get('in_inds')
         if in_inds is None:
-            kwargs['in_indices'] = pred_inds
+            kwargs['in_inds'] = pred_inds
         elif pred_inds is not None:
             if len(in_inds) < len(pred_inds):
                 raise ValueError("Need at least as many input series as output series!")

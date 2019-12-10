@@ -11,6 +11,7 @@ from functools import reduce
 from typing import List, Tuple
 
 import numpy as np
+from sklearn.linear_model import LassoCV
 
 from agents.agents_heuristic import ConstActionAgent, RuleBasedHeating
 from agents.keras_agents import DDPGBaseAgent
@@ -19,6 +20,7 @@ from data_processing.data import get_battery_data, get_data_test, \
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
 from dynamics.base_model import test_dyn_model, BaseDynamicsModel
+from dynamics.classical import SKLearnModel
 from opcua_empa.run_opcua import try_opcua
 from tests.test_util import cleanup_test_data
 from dynamics.battery_model import BatteryModel
@@ -434,7 +436,7 @@ def get_model(name: str, ds: Dataset,
                 comp_name += "_CON"
         return CompositeModel(ds, model_list, new_name=comp_name)
 
-    # Fit if required.
+    # Fit if required using one step recursion
     if fit:
         mod = get_model(name, ds, rnn_consts, from_hop, fit=False)
         mod.fit()
@@ -591,6 +593,17 @@ def curr_tests() -> None:
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
     mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
                     rnn_consts=rnn_consts_full, fit=True, from_hop=True)
+
+    # Build SKLearn Weather model
+    inds = {
+        'out_inds': np.array([0, 1], dtype=np.int32),
+        'in_inds': np.array([0, 1, 6, 7], dtype=np.int32),
+    }
+    skl_base_mod = LassoCV()
+    skl_weather_mod = SKLearnModel(ds_full, skl_base_mod, **inds)
+    skl_weather_mod.fit()
+    skl_weather_mod.analyze_visually(plot_acf=False)
+    return
 
     # Setup env
     assert isinstance(mod, CompositeModel), "Model not suited"

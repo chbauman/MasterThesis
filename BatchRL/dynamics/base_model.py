@@ -83,19 +83,19 @@ class BaseDynamicsModel(KerasBase, ABC):
     init_pred: np.ndarray = None
 
     def __init__(self, ds: Dataset, name: str,
-                 out_indices: np.ndarray = None,
-                 in_indices: np.ndarray = None,
+                 out_inds: np.ndarray = None,
+                 in_inds: np.ndarray = None,
                  verbose: int = None):
         """Constructor for the base of every dynamics model.
 
-        If out_indices is None, all series are predicted.
-        If in_indices is None, all series are used as input to the model.
+        If `out_inds` is None, all series are predicted.
+        If `in_inds` is None, all series are used as input to the model.
 
         Args:
             ds: Dataset containing all the data.
             name: Name of the model.
-            out_indices: Indices specifying the series in the data that the model predicts.
-            in_indices: Indices specifying the series in the data that the model takes as input.
+            out_inds: Indices specifying the series in the data that the model predicts.
+            in_inds: Indices specifying the series in the data that the model takes as input.
             verbose: The verbosity level.
         """
 
@@ -107,12 +107,12 @@ class BaseDynamicsModel(KerasBase, ABC):
             self.verbose = verbose
 
         # Set up indices
-        out_inds = self._get_inds(out_indices, ds, False)
+        out_inds = self._get_inds(out_inds, ds, False)
         self.out_inds, self.p_out_inds = out_inds
         for k in ds.c_inds:
             if k in self.out_inds:
                 raise IndexError("You cannot predict control indices!")
-        in_inds = self._get_inds(in_indices, ds, True)
+        in_inds = self._get_inds(in_inds, ds, True)
         self.in_indices, self.p_in_indices = in_inds
         self.p_out_in_indices = find_inds(self.p_in_indices, self.p_out_inds)
 
