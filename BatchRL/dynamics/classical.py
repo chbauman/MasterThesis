@@ -1,32 +1,10 @@
-import pickle
-
 import numpy as np
 
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
+from ml.sklearn_util import SKLoader, get_skl_model_name
 from util.numerics import check_shape
-from util.util import train_decorator, make_param_ext, param_dict_to_name
-
-
-class SKLoader:
-    """Wrapper class for sklearn models to be used as a Keras model
-    in terms of saving and loading parameters.
-
-    Enables the use of `train_decorator` with the fit() method.
-    """
-    def __init__(self, skl_mod, parent: 'SKLearnModel'):
-        self.skl_mod = skl_mod
-        self.p = parent
-
-    def load_weights(self, full_path: str):
-        with open(full_path, "rb") as f:
-            mod = pickle.load(f)
-        self.skl_mod = mod
-        self.p.skl_mod = mod
-
-    def save(self, path: str) -> None:
-        with open(path, "wb") as f:
-            pickle.dump(self.skl_mod, f)
+from util.util import train_decorator
 
 
 class SKLearnModel(BaseDynamicsModel):
@@ -47,9 +25,7 @@ class SKLearnModel(BaseDynamicsModel):
             kwargs: Kwargs for base class, e.g. `in_inds`.
         """
         # Construct meaningful name
-        params = skl_model.get_params()
-        ext = param_dict_to_name(params)
-        name = skl_model.__class__.__name__ + ext
+        name = get_skl_model_name(skl_model)
         if kwargs.get('name'):
             # I need the walrus!
             name = kwargs['name']

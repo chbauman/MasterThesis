@@ -6,9 +6,10 @@ from keras.layers import Dense, Dropout, BatchNormalization
 from keras.models import Sequential
 from keras.regularizers import l2
 
+from ml.sklearn_util import SKLoader
 from util.util import dynamic_model_dir
 
-KerasModel = Union[Sequential, Model]
+KerasModel = Union[Sequential, Model, SKLoader]
 
 
 def soft_update_params(model_to_update, other, lam: float = 1.0) -> None:

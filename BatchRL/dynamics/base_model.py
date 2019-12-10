@@ -9,7 +9,7 @@ from data_processing.dataset import Dataset
 from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
 from tests.test_data import construct_test_ds
-from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, mse, \
+from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, \
     save_performance_extended, get_metrics_eval_save_name_list, ErrMetric, MSE, find_inds
 from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one

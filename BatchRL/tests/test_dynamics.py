@@ -15,7 +15,7 @@ from dynamics.composite import CompositeModel
 from dynamics.const import NoDisturbanceModel, ConstModel
 from dynamics.sin_cos_time import SCTimeModel
 from tests.test_data import get_full_model_dataset, construct_test_ds
-from util.numerics import copy_arr_list, mse, mae, MSE, MAE
+from util.numerics import copy_arr_list, MSE, MAE
 from util.util import Num, tot_size
 
 
