@@ -1,6 +1,6 @@
 import os
 import warnings
-from typing import Dict, Sequence, Tuple, List, Any
+from typing import Dict, Sequence, Tuple, List, Any, Type
 
 import matplotlib as mpl
 import numpy as np
@@ -999,7 +999,7 @@ def _trf_desc_units(curr_desc: str, m: ErrMetric) -> str:
 
 
 def plot_performance_graph(model_list: List, parts: List[str],
-                           metric_list: Sequence[ErrMetric],
+                           metric_list: Sequence[Type[ErrMetric]],
                            name: str = "Test",
                            short_mod_names: List = None,
                            remove_units: bool = True,

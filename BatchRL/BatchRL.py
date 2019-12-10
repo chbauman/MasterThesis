@@ -7,7 +7,7 @@ modules / packages.
 import argparse
 import time
 from functools import reduce
-from typing import List, Tuple, Sequence
+from typing import List, Tuple, Sequence, Type
 
 import numpy as np
 from sklearn.linear_model import MultiTaskLassoCV
@@ -69,7 +69,7 @@ def run_integration_tests() -> None:
 
 def test_cleanup(verbose: int = 0):
     # Do some cleanup.
-    with ProgWrap("Cleanup...", verbose=verbose):
+    with ProgWrap("Cleanup...", verbose=verbose > 0):
         cleanup_test_data(verbose=0)
 
 
@@ -175,7 +175,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
     """
     # Data for performance analysis
     n_steps = (1, 4, 12, 24, 48)
-    metrics: Tuple[ErrMetric] = (MSE, MAE, MaxAbsEer)  # What is this shit warning?
+    metrics: Tuple[Type[ErrMetric]] = (MSE, MAE, MaxAbsEer)  # What is this shit warning?
 
     # Get data and constraints
     ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
