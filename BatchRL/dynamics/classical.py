@@ -5,23 +5,28 @@ import numpy as np
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import check_shape
+from util.util import train_decorator
 
 
 class SKLoader:
     """Wrapper class for sklearn models to be used as a Keras model
     in terms of saving and loading parameters.
 
+    Enables the use of `train_decorator` with the fit() method.
     """
-    def __init__(self, skl_mod):
+    def __init__(self, skl_mod, parent: 'SKLearnModel'):
         self.skl_mod = skl_mod
+        self.p = parent
 
     def load_weights(self, full_path: str):
-        params = pickle.load(open(full_path, "rb"))
-        self.skl_mod.set_params(**params)
+        with open(full_path, "rb") as f:
+            mod = pickle.load(f)
+        self.skl_mod = mod
+        self.p.skl_mod = mod
 
     def save(self, path: str) -> None:
-        params = self.skl_mod.get_params()
-        pickle.dump(params, open(path, "wb"))
+        with open(path, "wb") as f:
+            pickle.dump(self.skl_mod, f)
 
 
 class SKLearnModel(BaseDynamicsModel):
@@ -41,12 +46,13 @@ class SKLearnModel(BaseDynamicsModel):
             dataset: Dataset containing the data.
             kwargs: Kwargs for base class, e.g. `in_inds`.
         """
+        # TODO: Construct meaningful name
 
         # Init base class
         super().__init__(dataset, self.name, **kwargs)
 
         # Save model
-        self.m = SKLoader(skl_model)
+        self.m = SKLoader(skl_model, self)
 
         # Save data
         self.n_out = len(self.out_inds)
@@ -57,6 +63,7 @@ class SKLearnModel(BaseDynamicsModel):
         self.is_fitted = False
         self.skl_mod = skl_model
 
+    @train_decorator()
     def fit(self, verbose: int = 0) -> None:
         """Fit linear model."""
 

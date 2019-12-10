@@ -488,6 +488,7 @@ def cleanup_test_data(verbose: int = 0):
     rem_dirs(model_plot_path, SYNTH_DATA_NAME)
     rem_dirs(model_plot_path, RNN_TEST_DATA_NAME)
     rem_dirs(dynamic_model_dir, RNN_TEST_DATA_NAME)
+    rem_dirs(dynamic_model_dir, "Test")
     rem_dirs(hop_path, "TestHop", anywhere=True)
     rem_dirs(rl_plot_path, "TestEnv")
     rem_dirs(rl_plot_path, "BatteryTest", anywhere=True)

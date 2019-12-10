@@ -301,6 +301,8 @@ class TestClassical(TestCase):
         self.ds_1.data = np.ones((self.n, 4)) * np.arange(4)
         self.ds_1.split_data()
 
+        self.model_name = "TestClassical"
+
     class DummyEst:
         """Dummy estimator for testing.
 
@@ -311,6 +313,7 @@ class TestClassical(TestCase):
         x_fit = None
         y_fit = None
         n_out_feats: int = -1
+        params: Dict = {"par1": 10}
 
         def fit(self, x, y):
             y_sh = y.shape
@@ -357,6 +360,10 @@ class TestClassical(TestCase):
         test_name = "TestSKLearnModel"
         skl_mod_res.save_model(skl_mod_res.m, test_name)
         skl_mod_res.load_if_exists(skl_mod_res.m, test_name)
+
+    def test_loading(self):
+        self.test_skl()
+        self.test_skl_dummy_mod()
 
 
 class TestComposite(TestCase):
