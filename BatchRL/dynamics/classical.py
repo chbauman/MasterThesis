@@ -5,7 +5,7 @@ import numpy as np
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import check_shape
-from util.util import train_decorator
+from util.util import train_decorator, make_param_ext
 
 
 class SKLoader:
@@ -46,10 +46,17 @@ class SKLearnModel(BaseDynamicsModel):
             dataset: Dataset containing the data.
             kwargs: Kwargs for base class, e.g. `in_inds`.
         """
-        # TODO: Construct meaningful name
+        # Construct meaningful name
+        params = skl_model.get_params()
+        lst = [i for i in params.items()]
+        ext = make_param_ext(lst)
+        name = skl_model.__class__.__name__ + ext
+        if kwargs.get('name'):
+            # I need the walrus!
+            name = kwargs['name']
 
         # Init base class
-        super().__init__(dataset, self.name, **kwargs)
+        super().__init__(dataset, name, **kwargs)
 
         # Save model
         self.m = SKLoader(skl_model, self)

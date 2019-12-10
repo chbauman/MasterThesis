@@ -313,7 +313,7 @@ class TestClassical(TestCase):
         x_fit = None
         y_fit = None
         n_out_feats: int = -1
-        params: Dict = {"par1": 10}
+        params: Dict = {"par": 10}
 
         def fit(self, x, y):
             y_sh = y.shape
@@ -328,6 +328,9 @@ class TestClassical(TestCase):
             x_sh, x_train_sh = x.shape, self.x_fit.shape
             assert x_sh[1] == x_train_sh[1], f"Shape of x: {x_sh}, shape of train x: {x_train_sh}"
             return x[..., :self.n_out_feats]
+
+        def get_params(self):
+            return self.params
 
     def test_skl_dummy_mod(self):
         est = self.DummyEst()

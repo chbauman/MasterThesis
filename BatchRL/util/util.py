@@ -120,14 +120,14 @@ def make_param_ext(l: List[Tuple[str, Any]]) -> str:
         elif type(el) is bool:
             if el:
                 s += "_" + pre_str
-        elif type(el) is int:
+        elif type(el) in [int, str]:
             s += "_" + pre_str + str(el)
         elif type(el) is float:
             s += "_" + pre_str + "{:.4g}".format(el)
         elif type(el) is list or type(el) is tuple:
             s += "_" + pre_str + '-'.join(map(str, el))
         else:
-            raise ValueError("Type not supported!")
+            raise ValueError(f"Type: {type(el)} of {el} not supported!")
     return s
 
 
