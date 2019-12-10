@@ -11,7 +11,7 @@ import shutil
 import sys
 from datetime import datetime
 from functools import wraps
-from typing import Union, List, Tuple, Any, Sequence, TypeVar
+from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict
 
 import numpy as np
 
@@ -100,6 +100,12 @@ def to_list(lore: LOrEl) -> List:
     return lore
 
 
+def param_dict_to_name(d: Dict) -> str:
+    """Turns a dict of parameters to an extension string."""
+    i = [i for i in d.items()]
+    return make_param_ext(i)
+
+
 def make_param_ext(l: List[Tuple[str, Any]]) -> str:
     """Converts a list of parameters to a string.
 
@@ -124,7 +130,7 @@ def make_param_ext(l: List[Tuple[str, Any]]) -> str:
             s += "_" + pre_str + str(el)
         elif type(el) is float:
             s += "_" + pre_str + "{:.4g}".format(el)
-        elif type(el) is list or type(el) is tuple:
+        elif type(el) in [list, tuple]:
             s += "_" + pre_str + '-'.join(map(str, el))
         else:
             raise ValueError(f"Type: {type(el)} of {el} not supported!")

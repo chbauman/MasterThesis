@@ -15,7 +15,7 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
     get_metrics_eval_save_name_list, load_performance, MSE, find_inds
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
-    dynamic_model_dir
+    dynamic_model_dir, param_dict_to_name
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
     _trf_desc_units
 
@@ -365,6 +365,12 @@ class TestUtil(TestCase):
 
     def test_yeet(self):
         self.assertRaises(ValueError, yeet)
+
+    def test_dict_to_name(self):
+        test_d = {"hello": 2, "star": "s"}
+        exp = "_hello2_stars"
+        out = param_dict_to_name(test_d)
+        self.assertEqual(exp, out, f"Expected: {exp}, got: {out}")
 
     def test_to_list(self):
         self.assertEqual([1], to_list(1))
