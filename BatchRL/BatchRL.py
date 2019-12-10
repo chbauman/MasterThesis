@@ -67,9 +67,10 @@ def run_integration_tests() -> None:
     get_data_test()
 
 
-def test_cleanup():
+def test_cleanup(verbose: int = 0):
     # Do some cleanup.
-    cleanup_test_data(verbose=1)
+    with ProgWrap("Cleanup...", verbose=verbose):
+        cleanup_test_data(verbose=0)
 
 
 def run_battery(do_rl: bool = True, overwrite: bool = False, verbose: int = 0, steps: Sequence = (24, )) -> None:
@@ -670,7 +671,7 @@ def main() -> None:
     if args.test:
         run_integration_tests()
     if args.cleanup:
-        test_cleanup()
+        test_cleanup(verbose)
 
     # Run hyperparameter optimization
     if args.optimize:
