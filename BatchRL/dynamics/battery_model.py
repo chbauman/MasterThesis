@@ -67,26 +67,43 @@ class BatteryModel(BaseDynamicsModel):
         p = np.copy(dat[1:, p_ind])
         ds = np.copy(dat[1:, s_ind] - dat[:-1, s_ind])
 
-        # Reduce data to exclude strange part
-        n = len(p) // 3
-        p = p[:n]
-        ds = ds[:n]
-
         # Remove nans
         not_nans = np.logical_not(np.logical_or(np.isnan(p), np.isnan(ds)))
-        self.p = p[not_nans]
-        self.ds = ds[not_nans]
+        p = p[not_nans]
+        ds = ds[not_nans]
+        self.p, self.ds = p, ds
+
+        # Reduce data to exclude strange part
+        n_p = len(p)
+        n = n_p // 3
+        m = np.zeros((n_p,), dtype=np.bool)
+        m[:n] = True
+        m[-n:] = True
+        p = p[m]
+        ds = ds[m]
 
         # Fit linear Model and filter out outliers
-        fitted_ds = fit_linear_1d(self.p, self.ds, self.p)
-        mask = np.logical_or(self.ds > fitted_ds - 0.35, self.p < -1.0)
-        self.masked_p = self.p[mask]
-        self.masked_ds = self.ds[mask]
+        fitted_ds = fit_linear_1d(p, ds, p)
+        mask = np.logical_or(ds > fitted_ds - 0.35, p < -1.0)
+        mask = ds > -100.0
+        self.masked_p = p[mask]
+        self.masked_ds = ds[mask]
 
         # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
         def feat_fun(x: float):
             return np.array([1.0, x, max(0.0, x)])
 
+        params = fit_linear_bf_1d(self.masked_p, self.masked_ds, feat_fun)
+        self.params = params
+
+        # Remove outliers
+        fitted_ds = self._eval_at(self.masked_p)
+        errs = np.abs(fitted_ds - self.masked_ds)
+        thresh = np.max(errs) / 3
+        self.masked_p = self.masked_p[errs < thresh]
+        self.masked_ds = self.masked_ds[errs < thresh]
+
+        # Update params
         params = fit_linear_bf_1d(self.masked_p, self.masked_ds, feat_fun)
         self.params = params
 

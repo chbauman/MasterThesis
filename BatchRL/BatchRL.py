@@ -73,7 +73,9 @@ def test_cleanup(verbose: int = 0):
         cleanup_test_data(verbose=0)
 
 
-def run_battery(do_rl: bool = True, overwrite: bool = False, verbose: int = 0, steps: Sequence = (24, )) -> None:
+def run_battery(do_rl: bool = True, overwrite: bool = False,
+                verbose: int = 0, steps: Sequence = (24, ),
+                put_on_ol: bool = False) -> None:
     """Runs all battery related stuff.
 
     Loads and prepares the battery data, fits the
@@ -90,8 +92,8 @@ def run_battery(do_rl: bool = True, overwrite: bool = False, verbose: int = 0, s
 
     # Initialize and fit battery model.
     bat_mod = BatteryModel(bat_ds)
-    bat_mod.analyze_bat_model(put_on_ol=True)
-    bat_mod.analyze_visually(save_to_ol=True, base_name="Bat", overwrite=overwrite, n_steps=steps)
+    bat_mod.analyze_bat_model(put_on_ol=put_on_ol)
+    bat_mod.analyze_visually(save_to_ol=put_on_ol, base_name="Bat", overwrite=overwrite, n_steps=steps)
     # bat_mod_naive = ConstModel(bat_ds)
     # bat_mod_naive.analyze_visually()
 
@@ -277,7 +279,7 @@ def run_room_models(verbose: int = 1) -> None:
 def update_overleaf_plots(verbose: int = 1):
     # Battery model plots
     with ProgWrap(f"Running battery...", verbose > 0):
-        run_battery(do_rl=False, overwrite=True, verbose=0)
+        run_battery(do_rl=False, overwrite=True, verbose=0, put_on_ol=True)
 
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
@@ -685,7 +687,7 @@ def main() -> None:
 
     if args.battery:
         # Train and analyze the battery model
-        run_battery()
+        run_battery(overwrite=True)
 
     if args.room:
         # Room model
