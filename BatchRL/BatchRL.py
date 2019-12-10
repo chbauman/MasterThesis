@@ -471,7 +471,7 @@ def get_model(name: str, ds: Dataset,
     elif name == "FullState_Naive":
         # The naive model that predicts all series as the last seen input.
         inds = np.array([0, 1, 2, 3, 5, 6, 7, 8], dtype=np.int32)
-        return ConstModel(ds, in_indices=inds, pred_inds=inds)
+        return ConstModel(ds, in_inds=inds, pred_inds=inds)
     elif name == "Battery":
         # Battery model.
         assert battery_mod is not None, "I fucked up somewhere!"
@@ -602,8 +602,10 @@ def curr_tests() -> None:
     }
     skl_base_mod = MultiTaskLassoCV(max_iter=1000, cv=5)
     skl_weather_mod = SKLearnModel(ds_full, skl_base_mod, **inds)
-    skl_weather_mod.fit()
-    skl_weather_mod.analyze_visually(plot_acf=False)
+    with ProgWrap("Fitting Model..."):
+        skl_weather_mod.fit()
+    with ProgWrap("Analyzing Model..."):
+        skl_weather_mod.analyze_visually(plot_acf=False)
     return
 
     # Setup env

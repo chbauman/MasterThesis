@@ -38,7 +38,7 @@ def get_full_composite_model(standardized: bool = False) -> BaseDynamicsModel:
     # The room and heating model
     in_inds = np.array([2, 3, 4])
     out_inds = np.array([2, 3, 5])
-    varying_mod = ConstTestModelControlled(ds, in_indices=in_inds,
+    varying_mod = ConstTestModelControlled(ds, in_inds=in_inds,
                                            pred_inds=out_inds)
 
     # The exact time model
@@ -175,8 +175,8 @@ class TestBaseDynamics(TestCase):
         self.test_mod = TestModel(self.ds)
         self.test_model_2 = ConstSeriesTestModel(self.ds_1,
                                                  pred_val_list=[0.0, 2.0],
-                                                 out_indices=np.array([0, 2], dtype=np.int32),
-                                                 in_indices=np.array([1, 2, 3], dtype=np.int32))
+                                                 out_inds=np.array([0, 2], dtype=np.int32),
+                                                 in_inds=np.array([1, 2, 3], dtype=np.int32))
         self.test_model_3 = ConstModel(self.ds_1)
 
         # Compute sizes
@@ -200,7 +200,7 @@ class TestBaseDynamics(TestCase):
                         "Out indices incorrect!")
         self.assertTrue(np.array_equal(np.array([0, 1, 2]), self.test_model_3.p_out_inds),
                         "Prepared out indices incorrect!")
-        self.assertTrue(np.array_equal(np.array([0, 1, 2, 3]), self.test_model_3.in_indices),
+        self.assertTrue(np.array_equal(np.array([0, 1, 2, 3]), self.test_model_3.in_inds),
                         "In indices incorrect!")
         self.assertTrue(np.array_equal(np.array([0, 3, 1, 2]), self.test_model_3.p_in_indices),
                         "Prepared in indices incorrect!")
@@ -330,7 +330,7 @@ class TestClassical(TestCase):
         est = self.DummyEst()
         in_inds = np.array([0, 3])
         out_inds = np.array([3])
-        skl_mod_res = SKLearnModel(self.ds_1, est, in_indices=in_inds, out_indices=out_inds)
+        skl_mod_res = SKLearnModel(self.ds_1, est, in_inds=in_inds, out_inds=out_inds)
         skl_mod_res.fit()
         self.assertTrue(np.array_equal(skl_mod_res.p_out_in_indices, np.array([1])))
 
@@ -349,6 +349,14 @@ class TestClassical(TestCase):
         s_len = self.ds_1.seq_len - 1
         pred_ip = np.ones((1, s_len, 1)) * np.array([0, 1, 2, 3]).reshape((1, 1, -1))
         skl_mod_res.predict(pred_ip)
+
+    def test_skl_save_and_load(self):
+        # Test Keras model saving compatibility
+        skl_mod = LinearRegression()
+        skl_mod_res = SKLearnModel(self.ds_1, skl_mod)
+        test_name = "TestSKLearnModel"
+        skl_mod_res.save_model(skl_mod_res.m, test_name)
+        skl_mod_res.load_if_exists(skl_mod_res.m, test_name)
 
 
 class TestComposite(TestCase):
@@ -380,8 +388,8 @@ class TestComposite(TestCase):
 
     def test_first(self):
         m1 = ConstSeriesTestModel(self.dataset, pred_val_list=1.0,
-                                  out_indices=self.inds_02)
-        m2 = ConstSeriesTestModel(self.dataset, pred_val_list=2.0, out_indices=self.inds_1)
+                                  out_inds=self.inds_02)
+        m2 = ConstSeriesTestModel(self.dataset, pred_val_list=2.0, out_inds=self.inds_1)
         mc1 = CompositeModel(self.dataset, [m1, m2], new_name="CompositeTest1")
         exp_out_data = np.ones((2, 3), dtype=np.float32)
         exp_out_data[:, 1] = 2.0
@@ -390,12 +398,12 @@ class TestComposite(TestCase):
     def test_second(self):
         m3 = ConstSeriesTestModel(self.dataset,
                                   pred_val_list=[1.0],
-                                  out_indices=self.inds_1,
-                                  in_indices=self.inds_1)
+                                  out_inds=self.inds_1,
+                                  in_inds=self.inds_1)
         m4 = ConstSeriesTestModel(self.dataset,
                                   pred_val_list=[0.0, 2.0],
-                                  out_indices=self.inds_02,
-                                  in_indices=self.inds_123)
+                                  out_inds=self.inds_02,
+                                  in_inds=self.inds_123)
         mc2 = CompositeModel(self.dataset, [m3, m4], new_name="CompositeTest2")
 
         exp_out_2 = np.ones((2, 3), dtype=np.float32) * np.arange(3.0)
@@ -406,7 +414,7 @@ class TestComposite(TestCase):
         m5 = ConstTestModel(self.dataset, pred_inds=self.inds_1)
         m6 = ConstTestModel(self.dataset,
                             pred_inds=self.inds_02,
-                            in_indices=self.inds_123)
+                            in_inds=self.inds_123)
         mc3 = CompositeModel(self.dataset, [m5, m6], new_name="CompositeTest3")
 
         exp_out_3 = np.ones((2, 3), dtype=np.float32) * np.arange(3.0)
@@ -416,10 +424,10 @@ class TestComposite(TestCase):
     def test_fourth(self):
         m7 = ConstTestModel(self.ds_1,
                             pred_inds=self.inds_02,
-                            in_indices=np.array([1, 2], dtype=np.int32))
+                            in_inds=np.array([1, 2], dtype=np.int32))
         m8 = ConstTestModel(self.ds_1,
                             pred_inds=np.array([3], dtype=np.int32),
-                            in_indices=self.inds_1)
+                            in_inds=self.inds_1)
         mc4 = CompositeModel(self.ds_1, [m7, m8], new_name="CompositeTest4")
 
         exp_out_4 = np.ones(self.sh_out) * np.array([3, 1, 3])
@@ -431,13 +439,13 @@ class TestComposite(TestCase):
         m9 = ConstSeriesTestModel(self.ds_1,
                                   pred_val_list=[2.0],
                                   predict_input_check=self.inds_2,
-                                  out_indices=self.inds_2,
-                                  in_indices=self.inds_2)
+                                  out_inds=self.inds_2,
+                                  in_inds=self.inds_2)
         m10 = ConstSeriesTestModel(self.ds_1,
                                    pred_val_list=[0.0, 3.0],
                                    predict_input_check=self.inds_123,
-                                   out_indices=np.array([0, 3], dtype=np.int32),
-                                   in_indices=self.inds_123)
+                                   out_inds=np.array([0, 3], dtype=np.int32),
+                                   in_inds=self.inds_123)
         mc5 = CompositeModel(self.ds_1, [m9, m10], new_name="CompositeTest4")
         mc5.analyze_visually(plot_acf=False, verbose=False, n_steps=(2,))
 

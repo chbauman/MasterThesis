@@ -63,7 +63,7 @@ class BatteryModel(BaseDynamicsModel):
         dat = d.split_dict["train_val"].get_rel_data()
 
         # Extract data
-        s_ind, p_ind = self.in_indices
+        s_ind, p_ind = self.in_inds
         p = np.copy(dat[1:, p_ind])
         ds = np.copy(dat[1:, s_ind] - dat[:-1, s_ind])
 
@@ -132,7 +132,7 @@ class BatteryModel(BaseDynamicsModel):
 
         # Get scaling
         d = self.data
-        scale = np.copy(d.scaling[self.in_indices])
+        scale = np.copy(d.scaling[self.in_inds])
         scale[0, 0] = 0.0
 
         # Plot data

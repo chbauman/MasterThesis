@@ -1,8 +1,27 @@
+import pickle
+
 import numpy as np
 
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import check_shape
+
+
+class SKLoader:
+    """Wrapper class for sklearn models to be used as a Keras model
+    in terms of saving and loading parameters.
+
+    """
+    def __init__(self, skl_mod):
+        self.skl_mod = skl_mod
+
+    def load_weights(self, full_path: str):
+        params = pickle.load(open(full_path, "rb"))
+        self.skl_mod.set_params(**params)
+
+    def save(self, path: str) -> None:
+        params = self.skl_mod.get_params()
+        pickle.dump(params, open(path, "wb"))
 
 
 class SKLearnModel(BaseDynamicsModel):
@@ -25,6 +44,9 @@ class SKLearnModel(BaseDynamicsModel):
 
         # Init base class
         super().__init__(dataset, self.name, **kwargs)
+
+        # Save model
+        self.m = SKLoader(skl_model)
 
         # Save data
         self.n_out = len(self.out_inds)

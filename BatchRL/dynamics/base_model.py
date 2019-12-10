@@ -71,7 +71,7 @@ class BaseDynamicsModel(KerasBase, ABC):
     data: Dataset  #: Reference to the underlying dataset.
     out_inds: np.ndarray
     p_out_inds: np.ndarray
-    in_indices: np.ndarray
+    in_inds: np.ndarray
     p_in_indices: np.ndarray
     n_pred_full: int  #: Number of non-control variables in dataset.
     n_pred: int  #: Number of dimensions of the prediction
@@ -113,7 +113,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             if k in self.out_inds:
                 raise IndexError("You cannot predict control indices!")
         in_inds = self._get_inds(in_inds, ds, True)
-        self.in_indices, self.p_in_indices = in_inds
+        self.in_inds, self.p_in_indices = in_inds
         self.p_out_in_indices = find_inds(self.p_in_indices, self.p_out_inds)
 
         # Set name
@@ -143,7 +143,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         return input_arr[..., -1, self.p_out_in_indices]
 
     def _get_full_name(self, base_name: str):
-        return self._get_full_name_static(self.data, self.out_inds, self.in_indices, base_name)
+        return self._get_full_name_static(self.data, self.out_inds, self.in_inds, base_name)
 
     @staticmethod
     def _get_full_name_static(data: Dataset, out_inds: np.ndarray,
@@ -220,7 +220,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         """
         # Determine transform function and indices
         trf_fun = rem_mean_and_std if whiten else add_mean_and_std
-        inds = self.out_inds if out_put else self.in_indices
+        inds = self.out_inds if out_put else self.in_inds
 
         # Check dimension
         n_feat = len(inds)
@@ -944,8 +944,8 @@ def test_dyn_model() -> None:
     test_mod = TestModel(ds)
     test_model_2 = ConstSeriesTestModel(ds_1,
                                         pred_val_list=[0.0, 2.0],
-                                        out_indices=np.array([0, 2], dtype=np.int32),
-                                        in_indices=np.array([1, 2, 3], dtype=np.int32))
+                                        out_inds=np.array([0, 2], dtype=np.int32),
+                                        in_inds=np.array([1, 2, 3], dtype=np.int32))
 
     dat_in_train, dat_out_train, _ = ds.get_split("train")
 

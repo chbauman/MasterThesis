@@ -215,7 +215,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         """
         init_kwargs = _extract_kwargs(hp_sample)
         new_mod = RNNDynamicModel(self.data,
-                                  in_inds=self.in_indices,
+                                  in_inds=self.in_inds,
                                   out_inds=self.out_inds,
                                   constraint_list=self.constraint_list,
                                   verbose=0,
@@ -281,7 +281,7 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         # Store data
         self.train_seq_len = self.data.seq_len - 1
-        self.n_feats = len(self.in_indices)
+        self.n_feats = len(self.in_inds)
 
         # Store name for hyperopt
         all_kwargs = {

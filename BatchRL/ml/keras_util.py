@@ -125,15 +125,16 @@ class KerasBase:
             return True
         return False
 
-    def get_path(self, name: str) -> str:
+    def get_path(self, name: str, ext: str = ".h5") -> str:
         """
         Returns the path where the model parameters
-        are stored. Used for keras models only.
+        are stored.
 
         Args:
             name: Model name.
+            ext: Filename extension.
 
         Returns:
             Model parameter file path.
         """
-        return os.path.join(self.model_path, name + ".h5")
+        return os.path.join(self.model_path, name + ext)
