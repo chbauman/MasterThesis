@@ -14,6 +14,13 @@ from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get
 from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one
 
+# Plot title definition
+CONT_TITLE: str = "1 Week Continuous Predictions"
+
+
+def _get_title(n: int, dt: int = 15):
+    return CONT_TITLE if n == 0 else mins_to_str(dt * n) + " Ahead Predictions"
+
 
 def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
                 n_offs: int = 0) -> Dataset:
@@ -394,7 +401,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         create_dir(dir_name)
         return os.path.join(dir_name, name)
 
-    def get_predicted_plt_data(self, predict_data, name_list: List[str], title: str,
+    def get_predicted_plt_data(self, predict_data: Tuple, name_list: List[str], title: str,
                                const_steps: int = 0, n_ts_off: int = 0) -> List[Tuple]:
 
         # Whether to predict continuously for one week
@@ -466,9 +473,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         time_str = mins_to_str(dt * const_steps)
 
         # Define title
-        cont_title = '1 Week Continuous Predictions'
-        fix_step_title = time_str + ' Ahead Predictions'
-        title = cont_title if continuous_pred else fix_step_title
+        title = _get_title(const_steps, self.data.dt)
 
         # Setup base name
         if base is None:
@@ -481,7 +486,8 @@ class BaseDynamicsModel(KerasBase, ABC):
         if not overwrite and ex:
             return
 
-        name_list = [self._get_one_week_plot_name(base, ext, k, put_on_ol)[0] for k in range(len(self.out_inds))]
+        name_list = [self._get_one_week_plot_name(base, ext, k, put_on_ol)[0]
+                     for k in range(len(self.out_inds))]
         all_plt_dat = self.get_predicted_plt_data(predict_data, name_list,
                                                   const_steps=const_steps,
                                                   title=title, n_ts_off=n_ts_off)
@@ -554,8 +560,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
         # Define the string lists
         parts = ["train", "val"]
-        ext_list = ["Train", "Validation"]
-        ext_list = [e + "_All" for e in ext_list]
+        ext_list = [e.capitalize() for e in parts]
 
         # Do the same for train and validation set
         for ct, p_str in enumerate(parts):
@@ -574,7 +579,9 @@ class BaseDynamicsModel(KerasBase, ABC):
             }
             # Plot fixed number of step predictions
             for n_s in n_steps:
+                curr_b_name = None if base_name is None else base_name + str(n_s)
                 self.plot_one_week_analysis(dat_copy, n_s,
+                                            base=curr_b_name,
                                             **base_kwargs)
 
             # Plot for continuous predictions
@@ -656,33 +663,6 @@ class BaseDynamicsModel(KerasBase, ABC):
         # Save performances
         met_names = [m.__name__ for m in metrics]
         save_performance_extended(perf_values, n_steps, save_names, met_names)
-
-    def analyze_6_days(self) -> None:
-        """Analyzes this model using the 7 day streaks.
-
-        Deprecated!
-        """
-        d = self.data
-        n = 60 * 24 // d.dt
-
-        # Prepare the data
-        dat_train_in, dat_train_out, _ = d.get_streak('train')
-        dat_val_in, dat_val_out, _ = d.get_streak('val')
-        n_feat = dat_train_out.shape[-1]
-
-        # Extract first day
-        dat_train_init = dat_train_out[:n].reshape((1, -1, n_feat))
-        dat_val_init = dat_val_out[:n].reshape((1, -1, n_feat))
-
-        # Collect rest
-        dat_train_used = dat_train_in[n:], dat_train_out[n:]
-        dat_val_used = dat_val_in[n:], dat_val_out[n:]
-
-        # Plot for continuous predictions
-        self.init_1day(dat_train_init)
-        self.one_week_pred_plot(copy_arr_list(dat_train_used), "6d_Train_All")
-        self.init_1day(dat_val_init)
-        self.one_week_pred_plot(copy_arr_list(dat_val_used), "6d_Validation_All")
 
     def analyze_disturbed(self,
                           ext: str = None,
@@ -835,6 +815,70 @@ class BaseDynamicsModel(KerasBase, ABC):
         """
         if self.debug:
             print(*args)
+
+
+def compare_models(model_list: List[BaseDynamicsModel], part_spec: str = "val") -> None:
+    n_steps = (1, )
+
+    # Count models
+    n_models = len(model_list)
+    n_plot_series = n_models + 1
+    assert n_models > 0, "No models provided!"
+
+    # Get and check data
+    m_0 = model_list[0]
+    d, n_pred = m_0.data, len(m_0.out_inds)
+    for m in model_list:
+        assert m.data == d, "Model data is not compatible!"
+
+    # Extract data
+    dat_1, dat_2, n = d.get_streak(part_spec)
+    dat = (dat_1, dat_2)
+
+    # Plot fixed number of step predictions
+    title = ""
+    names = ["" for _ in range(n_pred)]
+
+    for n_s in n_steps:
+        # Get data
+        data_lst = []
+        m_names = ['Ground Truth']
+        for ct, m in enumerate(model_list):
+            m_names += [model_list[ct].name]
+            data_lst += [m.get_predicted_plt_data(dat, name_list=names,
+                                                  const_steps=n_s,
+                                                  title=title, n_ts_off=n)]
+
+        # Aggregate data from all models for same series
+        new_data_list = []
+        for k in range(n_pred):
+
+            # Prepare plot data
+            first_plot_ds = data_lst[0][k][0]
+            data_len = first_plot_ds.data.shape[0]
+            plot_data = np.empty((data_len, n_plot_series), dtype=np.float32)
+
+            # Set ground truth
+            plot_data[:, 0] = first_plot_ds.data[:, 1]
+
+            # Add predictions of all models
+            tal = None
+            for ct, p_data in enumerate(data_lst):
+                ds, tal, _ = p_data[k]
+                plot_data[:, 1 + ct] = ds.data[:, 0]
+
+            # Define dataset for plotting
+            scaling, is_scd = first_plot_ds.get_scaling_mul(0, n_plot_series)
+            actual_dt = d.get_shifted_t_init(n + d.seq_len - 1)
+            analysis_ds = Dataset(plot_data, d.dt,
+                                  actual_dt, scaling,
+                                  is_scd, m_names)
+
+            new_data_list += [(analysis_ds, tal, None)]
+
+        # Plot dataset
+        plot_visual_all_in_one(new_data_list, "Test")
+    pass
 
 
 ##########################################################################

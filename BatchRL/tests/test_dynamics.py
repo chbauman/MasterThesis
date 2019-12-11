@@ -8,7 +8,7 @@ from sklearn.linear_model import LinearRegression
 
 from data_processing.dataset import Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel
-from dynamics.base_model import BaseDynamicsModel
+from dynamics.base_model import BaseDynamicsModel, compare_models
 from dynamics.battery_model import BatteryModel
 from dynamics.classical import SKLearnModel
 from dynamics.composite import CompositeModel
@@ -187,6 +187,10 @@ class TestBaseDynamics(TestCase):
         self.n_streak_offset = self.n_train_seqs - self.n_streak
 
         self.dat_in_train, self.dat_out_train, _ = self.ds.get_split("train")
+
+    def test_compare_analysis(self):
+        test_model_4 = ConstSeriesTestModel(self.ds_1, pred_val_list=[0.0, 2.0, 3.0])
+        compare_models([test_model_4, self.test_model_3])
 
     def test_sizes(self):
         # Check sizes
