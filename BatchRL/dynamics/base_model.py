@@ -539,6 +539,9 @@ class BaseDynamicsModel(KerasBase, ABC):
             print("Analyzing model {}".format(self.name))
         d = self.data
 
+        # Check input
+        assert np.all(np.array(n_steps) >= 0), f"Negative timestep found in: {n_steps}"
+
         # Get residuals and plot autocorrelation
         if plot_acf:
             # Check if file already exist.
