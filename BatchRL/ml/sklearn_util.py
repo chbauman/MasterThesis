@@ -32,6 +32,7 @@ class SKLoader:
             mod = pickle.load(f)
         self.skl_mod = mod
         self.p.skl_mod = mod
+        self.p.is_fitted = True
 
     def save(self, path: str) -> None:
         with open(path, "wb") as f:

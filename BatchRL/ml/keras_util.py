@@ -120,11 +120,10 @@ class KerasBase:
              True if model could be loaded else False.
         """
         full_path = self.get_path(name)
-
-        if os.path.isfile(full_path):
+        found = os.path.isfile(full_path)
+        if found:
             m.load_weights(full_path)
-            return True
-        return False
+        return found
 
     def get_path(self, name: str, ext: str = ".h5") -> str:
         """

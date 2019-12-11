@@ -5,6 +5,8 @@ functions. The complicated stuff is hidden in the other
 modules / packages.
 """
 import argparse
+import os
+import warnings
 from functools import reduce
 from typing import List, Tuple, Sequence, Type
 
@@ -17,7 +19,7 @@ from data_processing.data import get_battery_data, get_data_test, \
     choose_dataset_and_constraints
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
-from dynamics.base_model import BaseDynamicsModel
+from dynamics.base_model import BaseDynamicsModel, compare_models
 from dynamics.battery_model import BatteryModel
 from dynamics.classical import SKLearnModel
 from dynamics.composite import CompositeModel
@@ -29,7 +31,7 @@ from rest.client import test_rest_client
 from tests.test_util import cleanup_test_data
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap
-from util.visualize import plot_performance_table, plot_performance_graph
+from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR
 
 # Define the models by name
 base_rnn_models = [
@@ -154,8 +156,8 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
             else:
                 print("Not optimizing!")
         else:
-            raise ValueError(f"Model {name} not hyperparameter-optimizable!")
-    pass
+            warnings.warn(f"Model {name} not hyperparameter-optimizable!")
+            # raise ValueError(f"Model {name} not hyperparameter-optimizable!")
 
 
 def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
@@ -302,11 +304,15 @@ def update_overleaf_plots(verbose: int = 1):
     w_mod = get_model(w_mod_name, ds, rnn_consts, from_hop=True, fit=True, verbose=False)
     w_mod_lin = get_model(w_mod_lin_name, ds, rnn_consts, from_hop=False, fit=True, verbose=False)
     with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
-        w_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
+        model_list = [w_mod, w_mod_lin]
+        w_mod.analyze_visually(overwrite=False, verbose=False, one_file=True,
                                save_to_ol=not debug, base_name="Weather1W")
-        w_mod_lin.analyze_visually(overwrite=True, verbose=False, one_file=True,
+        w_mod_lin.analyze_visually(overwrite=False, verbose=False, one_file=True,
                                    save_to_ol=not debug, base_name="WeatherLinear1W")
-        w_mod.analyze_performance()
+        ol_file_name = os.path.join(OVERLEAF_IMG_DIR, "WeatherComparison")
+        compare_models(model_list, ol_file_name,
+                       n_steps=(0, 24),
+                       model_names=["RNN", "Linear"])
 
     # # Heating water constant
     # with ProgWrap(f"Plotting heating water...", verbose > 0):

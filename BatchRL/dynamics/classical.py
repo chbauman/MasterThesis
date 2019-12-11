@@ -63,6 +63,8 @@ class SKLearnModel(BaseDynamicsModel):
         input_data_2d = input_data.reshape((first_sh, -1))
 
         # Fit
+        if verbose > 0:
+            print("Fitting sklearn model...")
         self.skl_mod.fit(input_data_2d, output_data)
         self.is_fitted = True
 
