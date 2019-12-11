@@ -95,10 +95,12 @@ def save_figure(save_name, show: bool = False,
 
 
 def _plot_helper(x, y, m_col='blue', label: str = None,
-                 dates: bool = False, steps: bool = False, ax=plt) -> None:
+                 dates: bool = False, steps: bool = False, ax=plt,
+                 grid: bool = True) -> None:
     """Defining basic plot style for all plots.
 
     TODO: Make x optional. (Except for `dates` == True case!)
+    TODO: Add grid!
 
     Args:
         x: X values
@@ -127,6 +129,9 @@ def _plot_helper(x, y, m_col='blue', label: str = None,
 
     # Finally plot
     plot_method(x, y, **kwargs)
+
+    if grid:
+        plt.grid()
 
 
 # Plotting raw data series

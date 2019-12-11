@@ -166,7 +166,7 @@ class TestBaseDynamics(TestCase):
         super().__init__(*args, **kwargs)
 
         # Define dataset
-        self.n = 151
+        self.n = 111
         self.ds = construct_test_ds(self.n)
         self.ds_1 = construct_test_ds(self.n, 1)
 

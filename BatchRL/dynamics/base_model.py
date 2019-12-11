@@ -395,7 +395,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         return os.path.join(dir_name, name)
 
     def get_predicted_plt_data(self, predict_data, name_list: List[str], title: str,
-                               const_steps: int = 0, n_ts_off: int = 0):
+                               const_steps: int = 0, n_ts_off: int = 0) -> List[Tuple]:
 
         # Whether to predict continuously for one week
         one_week = const_steps <= 0
@@ -483,6 +483,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
         name_list = [self._get_one_week_plot_name(base, ext, k, put_on_ol)[0] for k in range(len(self.out_inds))]
         all_plt_dat = self.get_predicted_plt_data(predict_data, name_list,
+                                                  const_steps=const_steps,
                                                   title=title, n_ts_off=n_ts_off)
 
         # Plot all the things

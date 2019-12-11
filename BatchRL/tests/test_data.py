@@ -40,7 +40,7 @@ def construct_test_ds(n: int = 201, c_series: int = 3, n_feats: int = 4) -> Data
     c_inds = np.array([c_series])
     ds = get_test_ds(dat, c_inds, dt=60 * 6, name=SYNTH_DATA_NAME)
     ds.seq_len = 8
-    ds.val_percent = 0.3
+    ds.val_percent = 0.33
     ds.split_data()
     return ds
 
