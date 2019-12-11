@@ -5,8 +5,8 @@ import numpy as np
 
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
-from util.numerics import fit_linear_1d, fit_linear_bf_1d, npf32
-from util.util import print_if_verb, yeet, Num
+from util.numerics import fit_linear_bf_1d, npf32
+from util.util import print_if_verb, yeet
 from util.visualize import scatter_plot, OVERLEAF_IMG_DIR
 
 
@@ -115,15 +115,14 @@ class BatteryModel(BaseDynamicsModel):
         m = np.zeros((n_p,), dtype=np.bool)
         m[:n] = True
         m[-n:] = True
-        p = p[m]
-        ds = ds[m]
+        self.masked_p = p[m]
+        self.masked_ds = ds[m]
 
         # Fit linear Model and filter out outliers
-        fitted_ds = fit_linear_1d(p, ds, p)
-        mask = np.logical_or(ds > fitted_ds - 0.35, p < -1.0)
-        mask = ds > -100.0
-        self.masked_p = p[mask]
-        self.masked_ds = ds[mask]
+        # fitted_ds = fit_linear_1d(p, ds, p)
+        # mask = np.logical_or(ds > fitted_ds - 0.35, p < -1.0)
+        # self.masked_p = p[mask]
+        # self.masked_ds = ds[mask]
 
         # Fit parameters
         params = fit_linear_bf_1d(self.masked_p, self.masked_ds, self.feat_fun)
