@@ -250,10 +250,37 @@ class TestBaseDynamics(TestCase):
         self.assertTrue(np.array_equal(exp_out, c_mod.predict(exp_out)),
                         "ConstSeriesTestModel implemented incorrectly!")
 
+    def test_scaling(self):
+        ds = self.ds
+        ds_scaled = construct_test_ds(self.n)
+        ds_scaled.standardize()
+        test_mod_scaled = TestModel(ds_scaled)
+        unscaled_out = test_mod_scaled.rescale_output(ds_scaled.data[:, :3], out_put=True,
+                                                      whiten=False)
+        unscaled_in = test_mod_scaled.rescale_output(ds_scaled.data, out_put=False,
+                                                     whiten=False)
+        scaled_out = test_mod_scaled.rescale_output(ds.data[:, :3], out_put=True,
+                                                    whiten=True)
+        assert np.allclose(unscaled_out, ds.data[:, :3]), "Rescaling not working!"
+        assert np.allclose(unscaled_in, ds.data), "Rescaling not working!"
+        assert np.allclose(scaled_out, ds_scaled.data[:, :3]), "Rescaling not working!"
+
+    def test_pred_and_residuals(self):
+        ds = construct_test_ds(self.n)
+        dat_in_train, dat_out_train, _ = ds.get_split("train")
+        test_mod = TestModel(ds)
+        sample_pred_inp = ds.data[:(ds.seq_len - 1)]
+        sample_pred_inp = sample_pred_inp.reshape((1, sample_pred_inp.shape[0], -1))
+        test_mod.predict(sample_pred_inp)
+        mod_out_test = test_mod.predict(dat_in_train)
+        res = test_mod.get_residuals("train")
+        if not np.allclose(mod_out_test - dat_out_train, res):
+            raise AssertionError("Residual computation wrong!!")
+
     def test_n_step_predict(self):
-        # TODO!
-        dat = 0
-        assert dat == 0
+        in_d, out_d, _ = self.ds.get_split('val')
+        self.test_model_2.n_step_predict((in_d, out_d), 4)
+        # TODO: Check output!
 
 
 class TestHopTable(HyperOptimizableModel):
