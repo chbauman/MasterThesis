@@ -10,6 +10,36 @@ from util.util import print_if_verb, yeet, Num
 from util.visualize import scatter_plot, OVERLEAF_IMG_DIR
 
 
+# Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
+def pw_lin_fun_factory(cont_at_zero: bool = True, through_zero: bool = False) -> Callable:
+
+    fun_list = [
+        lambda x: x,
+        lambda x: np.maximum(0.0, x),
+    ]
+
+    # Add more functions depending on arguments
+    if not cont_at_zero:
+        fun_list += [lambda x: np.where(x > 0, 1.0, 0.0)]
+    if not through_zero:
+        fun_list = [lambda x: 1.0] + fun_list
+
+    # Count the number of functions
+    n_fun = len(fun_list)
+
+    # Define and return feature function
+    def feat_fun(x: float):
+        if np.isscalar(x):
+            x = np.array([x])
+        n_x = len(x)
+        res = npf32((n_x, n_fun))
+        for ct, f in enumerate(fun_list):
+            res[:, ct] = f(x)
+        return res
+
+    return feat_fun
+
+
 class BatteryModel(BaseDynamicsModel):
     """Dynamics model of the battery.
 
@@ -46,17 +76,7 @@ class BatteryModel(BaseDynamicsModel):
                          in_inds=in_inds)
 
         # Define feature function
-        # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
-        def feat_fun(x: float):
-            if np.isscalar(x):
-                x = np.array([x])
-            n_x = len(x)
-            res = npf32((n_x, 3))
-            res[:, 0] = 1.0
-            res[:, 1] = x
-            res[:, 2] = np.maximum(0.0, x)
-            return res
-        self.feat_fun = feat_fun
+        self.feat_fun = pw_lin_fun_factory(cont_at_zero=True)
 
     def fit(self, verbose: int = 0) -> None:
         """Fits the battery model.
@@ -112,7 +132,7 @@ class BatteryModel(BaseDynamicsModel):
         # Remove outliers based on fit
         fitted_ds = self._eval_at(self.masked_p)
         errs = np.abs(fitted_ds - self.masked_ds)
-        thresh = np.max(errs) / 3
+        thresh = np.max(errs) / 3.4  # This is heuristic
         self.masked_p = self.masked_p[errs < thresh]
         self.masked_ds = self.masked_ds[errs < thresh]
 
@@ -179,7 +199,7 @@ class BatteryModel(BaseDynamicsModel):
                      save_name=before_plt_path)
 
         # Eval for pw linear line
-        x_pw_line = np.array([np.min(self.p), 0, np.max(self.p)], dtype=np.float32)
+        x_pw_line = np.array([np.min(self.p), -0.001, 0, 0.001, np.max(self.p)], dtype=np.float32)
         y_pw_line = self._eval_at(x_pw_line)
 
         # Plot model
