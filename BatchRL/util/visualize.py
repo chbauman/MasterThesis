@@ -994,7 +994,7 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     save_figure(plot_path)
 
 
-def _trf_desc_units(curr_desc: str, m: ErrMetric) -> str:
+def _trf_desc_units(curr_desc: str, m: Type[ErrMetric]) -> str:
     split_d = curr_desc.split("[")
     assert len(split_d) == 2, "Invalid description!"
     base, rest = split_d

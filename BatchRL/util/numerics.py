@@ -1,3 +1,4 @@
+from abc import abstractmethod, ABC
 from typing import Tuple, Sequence, Any, List, Callable
 
 import numpy as np
@@ -116,12 +117,16 @@ def unit_trf_pow(p: int = 2) -> UnitTrafo:
 
 
 # This is the interface for an error metric.
-class ErrMetric:
+class ErrMetric(ABC):
     name: str
     long_name: str = None
-    err_fun: Metric
     scaling_fun: ErrScaling = lin_scaling
     unit_trf: UnitTrafo = unit_trf_id
+
+    @property
+    @abstractmethod
+    def err_fun(self) -> Metric:
+        pass
 
 
 class MSE(ErrMetric):
