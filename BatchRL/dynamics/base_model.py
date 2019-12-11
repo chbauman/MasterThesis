@@ -818,10 +818,21 @@ class BaseDynamicsModel(KerasBase, ABC):
 
 def compare_models(model_list: List[BaseDynamicsModel],
                    save_name: str, *,
-                   n_steps: Tuple = (1, ),
+                   n_steps: Tuple[..., int] = (1, ),
                    part_spec: str = "val",
                    model_names: List[str] = None) -> None:
+    """Compares all the models in the list visually.
 
+    All steps in `n_steps` need to be positive, if 0,
+    continuous prediction over one week is evaluated.
+
+    Args:
+        model_list: List with all models.
+        save_name: Name of the plot file.
+        n_steps: The sequence with the numbers of prediction steps to evaluate.
+        part_spec: The string specifying the part of the data, e.g. "val" or "train".
+        model_names: The simplified model name showing up in the plot.
+    """
     # Count models
     n_models = len(model_list)
     n_plot_series = n_models + 1
