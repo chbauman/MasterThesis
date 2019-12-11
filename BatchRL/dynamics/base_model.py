@@ -1,7 +1,7 @@
 import os
 import warnings
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple, List
 
 import numpy as np
 
@@ -394,6 +394,46 @@ class BaseDynamicsModel(KerasBase, ABC):
         create_dir(dir_name)
         return os.path.join(dir_name, name)
 
+    def get_predicted_plt_data(self, predict_data, name_list: List[str], title: str,
+                               const_steps: int = 0, n_ts_off: int = 0):
+
+        # Whether to predict continuously for one week
+        one_week = const_steps <= 0
+
+        # Get data
+        d = self.data
+        in_d, out_d = predict_data
+        s = in_d.shape
+
+        # Continuous prediction
+        n_ts = s[0] if one_week else const_steps
+        full_pred = self.n_step_predict([in_d, out_d], n_ts,
+                                        pred_ind=None,
+                                        return_all_predictions=one_week)
+
+        n_pred = len(self.out_inds)
+        all_plt_dat = []
+        for k in range(n_pred):
+            # Construct dataset
+            k_orig = self.out_inds[k]
+            k_orig_arr = np.array([k_orig])
+            k_prep = self.data.to_prepared(k_orig_arr)[0]
+            new_ds = get_plot_ds(s, np.copy(out_d[:, k_prep]), d, k_orig_arr, n_ts_off)
+
+            # Set the predicted data
+            if one_week:
+                new_ds.data[:, 0] = np.copy(full_pred[0, :, k])
+            else:
+                new_ds.data[(n_ts - 1):, 0] = np.copy(full_pred[:, k])
+                new_ds.data[:(n_ts - 1), 0] = np.nan
+
+            # Find descriptions and add data
+            desc = d.descriptions[k_orig]
+            title_and_ylab = [title, desc]
+            all_plt_dat += [(new_ds, title_and_ylab, name_list[k])]
+
+        return all_plt_dat
+
     def const_nts_plot(self, predict_data, n_list: Sequence[int], ext: str = '', *,
                        predict_ind: int = None, n_ts_off: int = 0,
                        overwrite: bool = True,
@@ -405,7 +445,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         predicted are predicted simultaneously and each predicted
         series is plotted individually.
 
-        TODO: Refactor this or remove unused part!
+        TODO: Refactor this or remove unused part! Or both?
 
         Args:
             predict_data: The string specifying the data to predict.
@@ -430,6 +470,20 @@ class BaseDynamicsModel(KerasBase, ABC):
         if not overwrite and os.path.isfile(plot_path):
             return
 
+        # Refactored version
+        n_pred = len(self.out_inds)
+        s_ = time_str + 'Ahead' + ext
+        for n_ts in n_list:
+            s_names = [self._get_plt_or_ol_path(s_, put_on_ol) for k in range(n_pred)]
+            title = time_str + ' Ahead Predictions'
+            all_plt_dat = self.get_predicted_plt_data(predict_data, s_names, title, n_ts)
+            for ds, t, cn in all_plt_dat:
+                plot_dataset(ds,
+                             show=False,
+                             title_and_ylab=t,
+                             save_name=cn)
+        return
+
         # Plot for all n
         if predict_ind is not None:
             orig_p_ind = np.copy(self.out_inds[predict_ind])
@@ -451,6 +505,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                              show=False,
                              title_and_ylab=title_and_ylab,
                              save_name=self._get_plt_or_ol_path(s_, put_on_ol))
+            raise NotImplementedError("Do not use thiiis!!")
         else:
             n_pred = len(self.out_inds)
             for n_ts in n_list:
@@ -475,31 +530,6 @@ class BaseDynamicsModel(KerasBase, ABC):
                                  show=False,
                                  title_and_ylab=title_and_ylab,
                                  save_name=self._get_plt_or_ol_path(s_, put_on_ol))
-
-    def one_week_pred_plot_all(self, dat_test, ext: str = None,
-                               n_ts_off: int = 0,
-                               overwrite: bool = True):
-
-        # TODO: Remove??
-
-        # Check if plot file already exists
-        ext = "_" if ext is None else "_" + ext
-        name = 'OneWeek_All' + ext + ".pdf"
-        plot_path = self.get_plt_path(name)
-        if not overwrite and os.path.isfile(plot_path):
-            return
-
-        # Get data
-        d = self.data
-        in_dat_test, out_dat_test = dat_test
-        s = in_dat_test.shape
-
-        # Continuous prediction
-        full_pred = self.n_step_predict([in_dat_test, out_dat_test], s[0],
-                                        pred_ind=None,
-                                        return_all_predictions=True)
-
-        n_pred = len(self.out_inds)
 
     def _get_plt_or_ol_path(self, full_b_name: str, put_on_ol: bool = False):
         if put_on_ol:
@@ -538,6 +568,9 @@ class BaseDynamicsModel(KerasBase, ABC):
             ext: String extension for the filename.
             n_ts_off: Time step offset of data used.
             overwrite: Whether to overwrite existing plot files.
+            combine_plots: Whether to combine the plots of all series in one file.
+            base: The base name of the output file.
+            put_on_ol: Whether to save the plots on Overleaf instead.
         """
         # Setup base name
         if base is None:
@@ -550,56 +583,20 @@ class BaseDynamicsModel(KerasBase, ABC):
         if not overwrite and ex:
             return
 
-        # Get data
-        d = self.data
-        in_dat_test, out_dat_test = dat_test
-        s = in_dat_test.shape
+        # Refactored version
+        name_list = [self._get_one_week_plot_name(base, ext, k, put_on_ol)[0] for k in range(len(self.out_inds))]
+        all_plt_dat = self.get_predicted_plt_data(dat_test, name_list, title='1 Week Continuous Predictions')
 
-        # Continuous prediction
-        full_pred = self.n_step_predict([in_dat_test, out_dat_test], s[0],
-                                        pred_ind=predict_ind,
-                                        return_all_predictions=True)
-
-        if predict_ind is None:
-            n_pred = len(self.out_inds)
-            all_plt_dat = []
-            for k in range(n_pred):
-                # Construct dataset and plot
-                k_orig = self.out_inds[k]
-                k_orig_arr = np.array([k_orig])
-                k_prep = self.data.to_prepared(k_orig_arr)[0]
-                new_ds = get_plot_ds(s, np.copy(out_dat_test[:, k_prep]), d, k_orig_arr, n_ts_off)
-                new_ds.data[:, 0] = np.copy(full_pred[0, :, k])
-                desc = d.descriptions[k_orig]
-                title_and_ylab = ['1 Week Continuous Predictions', desc]
-                curr_name, _ = self._get_one_week_plot_name(base, ext, k, put_on_ol)
-                all_plt_dat += [(new_ds, title_and_ylab, curr_name)]
-
-            if not combine_plots:
-                for ds, t, cn in all_plt_dat:
-                    plot_dataset(ds,
-                                 show=False,
-                                 title_and_ylab=t,
-                                 save_name=cn)
-            else:
-                tot_save_name, _ = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
-                plot_visual_all_in_one(all_plt_dat, tot_save_name, add_errors)
-
+        # Plot all the things
+        if not combine_plots:
+            for ds, t, cn in all_plt_dat:
+                plot_dataset(ds,
+                             show=False,
+                             title_and_ylab=t,
+                             save_name=cn)
         else:
-            # Construct dataset and plot
-            warnings.warn("This is deprecated!")
-            orig_p_ind = self.out_inds[predict_ind]
-            analysis_ds = get_plot_ds(s, None, d, np.array([orig_p_ind]), n_ts_off)
-            orig_p_ind = self.out_inds[predict_ind]
-            p_ind = d.to_prepared(np.array([orig_p_ind]))[0]
-            desc = d.descriptions[orig_p_ind]
-            analysis_ds.data[:, 0] = np.copy(full_pred[0, :, predict_ind])
-            analysis_ds.data[:, 1] = np.copy(out_dat_test[:, p_ind])
-            title_and_ylab = ['1 Week Continuous Predictions', desc]
-            plot_dataset(analysis_ds,
-                         show=False,
-                         title_and_ylab=title_and_ylab,
-                         save_name=self.get_plt_path('OneWeek' + ext))
+            tot_save_name, _ = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
+            plot_visual_all_in_one(all_plt_dat, tot_save_name, add_errors)
 
     def analyze_visually(self, plot_acf: bool = True,
                          n_steps: Sequence = (1, 4, 20),
