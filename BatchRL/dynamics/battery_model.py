@@ -1,11 +1,12 @@
 import os
+from typing import Callable
 
 import numpy as np
 
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
-from util.numerics import fit_linear_1d, fit_linear_bf_1d
-from util.util import print_if_verb, yeet
+from util.numerics import fit_linear_1d, fit_linear_bf_1d, npf32
+from util.util import print_if_verb, yeet, Num
 from util.visualize import scatter_plot, OVERLEAF_IMG_DIR
 
 
@@ -19,6 +20,8 @@ class BatteryModel(BaseDynamicsModel):
     :math:`p_{t+1}`:
     average charging power from time t to t+1 (control input)
     """
+
+    feat_fun: Callable = None  #: The function specifying the features.
     params: np.ndarray = None  #: Parameters of the pw linear model.
 
     # The data to plot after fitting
@@ -41,6 +44,19 @@ class BatteryModel(BaseDynamicsModel):
         super().__init__(dataset, dataset.name,
                          out_inds=out_inds,
                          in_inds=in_inds)
+
+        # Define feature function
+        # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
+        def feat_fun(x: float):
+            if type(x) in [int, float]:
+                x = np.array([x])
+            n_x = len(x)
+            res = npf32((n_x, 3))
+            res[:, 0] = 1.0
+            res[:, 1] = x
+            res[:, 2] = np.maximum(0.0, x)
+            return res
+        self.feat_fun = feat_fun
 
     def fit(self, verbose: int = 0) -> None:
         """Fits the battery model.
@@ -89,14 +105,11 @@ class BatteryModel(BaseDynamicsModel):
         self.masked_p = p[mask]
         self.masked_ds = ds[mask]
 
-        # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
-        def feat_fun(x: float):
-            return np.array([1.0, x, max(0.0, x)])
-
+        # Fit parameters
         params = fit_linear_bf_1d(self.masked_p, self.masked_ds, feat_fun)
         self.params = params
 
-        # Remove outliers
+        # Remove outliers based on fit
         fitted_ds = self._eval_at(self.masked_p)
         errs = np.abs(fitted_ds - self.masked_ds)
         thresh = np.max(errs) / 3
@@ -131,8 +144,11 @@ class BatteryModel(BaseDynamicsModel):
         """Evaluates the model for a given active power `p`."""
         if self.params is None:
             yeet("Need to fit battery model first!")
-        a1, a2, a3 = self.params
-        return a1 + a2 * p + a3 * np.maximum(0, p)
+        res = 0
+        f_eval = self.feat_fun(p)
+        for ct, p in enumerate(self.params):
+            res += p * f_eval[:, ct]
+        return res
 
     def _get_plot_name(self, base: str, put_on_ol: bool = False):
         if put_on_ol:
