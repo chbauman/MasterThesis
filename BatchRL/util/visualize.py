@@ -1024,9 +1024,9 @@ def plot_performance_graph(model_list: List, parts: List[str],
         short_mod_names: The simplified model names to put in plot.
         remove_units: Whether to remove units in labels.
             (Use when 'scale_back' is False and data is still scaled)
-        series_mask:
-        scale_back:
-        put_on_ol:
+        series_mask: Mask specifying which series to use.
+        scale_back: Whether to scale the errors to original values.
+        put_on_ol: Whether to put the file into Overleaf folder.
         compare_models: Whether to compare different models instead of different
             parts.
     """
