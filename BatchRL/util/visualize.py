@@ -1113,6 +1113,6 @@ def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str,
             e = [m.err_fun(s1, s2) for m in metrics]
             text_str = f"{metrics[0].name}: {e[0]:.2f}\n{metrics[1].name}: {e[1]:.2f}"
             props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-            ax1.text(0.05, 0.95, text_str, transform=ax1.transAxes, fontsize=14,
+            plt.text(0.05, 0.95, text_str, transform=ax1.transAxes, fontsize=14,
                      verticalalignment='top', bbox=props)
     save_figure(save_name)

@@ -58,7 +58,7 @@ def mse(arr1: np.ndarray, arr2: np.ndarray) -> float:
         MSE between `arr1` and `arr2`.
     """
     check_shape(arr1, arr2.shape)
-    return ((arr1 - arr2) ** 2).mean()
+    return np.nanmean((arr1 - arr2) ** 2).item()
 
 
 def mae(arr1: np.ndarray, arr2: np.ndarray) -> float:
@@ -72,7 +72,7 @@ def mae(arr1: np.ndarray, arr2: np.ndarray) -> float:
         MAE between `arr1` and `arr2`.
     """
     check_shape(arr1, arr2.shape)
-    return np.abs(arr1 - arr2).mean()
+    return np.nanmean(np.abs(arr1 - arr2)).item()
 
 
 def max_abs_err(arr1: np.ndarray, arr2: np.ndarray) -> float:
@@ -86,7 +86,7 @@ def max_abs_err(arr1: np.ndarray, arr2: np.ndarray) -> float:
         Max absolute error between `arr1` and `arr2`.
     """
     check_shape(arr1, arr2.shape)
-    return np.max(np.abs(arr1 - arr2))
+    return np.nanmax(np.abs(arr1 - arr2)).item()
 
 
 Metric = Callable[[np.ndarray, np.ndarray], float]

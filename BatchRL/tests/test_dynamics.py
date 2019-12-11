@@ -220,11 +220,12 @@ class TestBaseDynamics(TestCase):
                         "Prepared in indices incorrect!")
 
     def test_combined_plot(self):
-        self.test_model_2.analyze_visually(plot_acf=False, n_steps=(3,), verbose=False, one_file=True)
+        self.test_model_2.analyze_visually(plot_acf=False, n_steps=(3,), verbose=False,
+                                           base_name="Test3Steps")
 
     def test_plot_with_errors(self):
-        self.test_model_2.analyze_visually(plot_acf=False, n_steps=(3,), verbose=False, add_errors=True,
-                                           base_name="TestTestTest")
+        self.test_model_2.analyze_visually(plot_acf=False, n_steps=(3,), verbose=False, one_file=True, add_errors=True,
+                                           base_name="TestWithErrors")
 
     def test_analysis(self):
         # Test model analysis
