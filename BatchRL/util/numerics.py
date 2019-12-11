@@ -295,7 +295,7 @@ def fit_linear_1d(x: np.ndarray, y: np.ndarray, x_new: np.ndarray = None):
         return c * x_new + m
 
 
-def fit_linear_bf_1d(x: np.ndarray, y: np.ndarray, b_fun, offset: bool = False) -> np.ndarray:
+def fit_linear_bf_1d(x: np.ndarray, y: np.ndarray, b_fun: Callable, offset: bool = False) -> np.ndarray:
     """Fits a linear model y = alpha^T f(x).
 
     Args:
@@ -317,9 +317,10 @@ def fit_linear_bf_1d(x: np.ndarray, y: np.ndarray, b_fun, offset: bool = False) 
     n = x.shape[0]
 
     # Fill matrix
-    ls_mat = np.empty((n, d), dtype=np.float32)
-    for ct, x_el in enumerate(x):
-        ls_mat[ct, :] = b_fun(x_el)
+    # ls_mat = np.empty((n, d), dtype=np.float32)
+    # for ct, x_el in enumerate(x):
+    #     ls_mat[ct, :] = b_fun(x_el)
+    ls_mat = b_fun(x)
 
     # Solve and return
     coeffs = np.linalg.lstsq(ls_mat, y, rcond=None)[0]

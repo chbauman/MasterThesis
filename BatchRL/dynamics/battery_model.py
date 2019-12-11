@@ -117,7 +117,7 @@ class BatteryModel(BaseDynamicsModel):
         self.masked_ds = self.masked_ds[errs < thresh]
 
         # Update params
-        params = fit_linear_bf_1d(self.masked_p, self.masked_ds, feat_fun)
+        params = fit_linear_bf_1d(self.masked_p, self.masked_ds, self.feat_fun)
         self.params = params
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
