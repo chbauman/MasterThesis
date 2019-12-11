@@ -1,4 +1,4 @@
-from abc import abstractmethod, ABC
+from abc import ABC
 from typing import Tuple, Sequence, Any, List, Callable
 
 import numpy as np
@@ -313,9 +313,9 @@ def fit_linear_bf_1d(x: np.ndarray, y: np.ndarray, b_fun: Callable, offset: bool
         raise NotImplementedError("Not implemented with offset.")
 
     # Get shapes
-    dummy = b_fun(0.0)
-    d = dummy.shape[0]
-    n = x.shape[0]
+    # dummy = b_fun(0.0)
+    # d = dummy.shape[0]
+    # n = x.shape[0]
 
     # Fill matrix
     # ls_mat = np.empty((n, d), dtype=np.float32)
