@@ -1012,10 +1012,29 @@ def plot_performance_graph(model_list: List, parts: List[str],
                            scale_back: bool = False,
                            put_on_ol: bool = False,
                            compare_models: bool = False) -> None:
+    """Plots the evaluated performance for multiple models.
+
+    `series_mask` can be used to select subset of series.
+
+    Args:
+        model_list: List with all models
+        parts: The list of strings specifying the parts of the data.
+        metric_list: List with error metrics.
+        name: The plot file name.
+        short_mod_names: The simplified model names to put in plot.
+        remove_units: Whether to remove units in labels.
+            (Use when 'scale_back' is False and data is still scaled)
+        series_mask:
+        scale_back:
+        put_on_ol:
+        compare_models: Whether to compare different models instead of different
+            parts.
+    """
     metric_names = [m.name for m in metric_list]
 
     # Check if models are compatible
-    # check_model_compatibility(model_list)
+    from dynamics.base_model import check_model_compatibility
+    check_model_compatibility(model_list)
     if not np.any(model_list[0].data.is_scaled):
         scale_back = False
 
