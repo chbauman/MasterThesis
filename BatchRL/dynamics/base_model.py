@@ -1,17 +1,16 @@
 import os
 import warnings
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, Tuple, List
+from typing import Optional, Sequence, Tuple, List, Type
 
 import numpy as np
 
 from data_processing.dataset import Dataset
 from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
-from tests.test_data import construct_test_ds
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, \
     save_performance_extended, get_metrics_eval_save_name_list, ErrMetric, MSE, find_inds
-from util.util import create_dir, mins_to_str, Arr, tot_size, str_to_np_dt, n_mins_to_np_dt
+from util.util import create_dir, mins_to_str, Arr, tot_size
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one
 
 # Plot title definition
@@ -592,7 +591,7 @@ class BaseDynamicsModel(KerasBase, ABC):
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
                             verbose: int = 0,
                             overwrite: bool = False,
-                            metrics: Sequence[ErrMetric] = (MSE,),
+                            metrics: Sequence[Type[ErrMetric]] = (MSE,),
                             n_days: int = 14) -> None:
         """Analyzes the multistep prediction performance of the model.
 
@@ -634,7 +633,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         for part_ind, p_str in enumerate(parts):
 
             # Get relevant data
-            dat_1, dat_2, n = d.get_streak(p_str, use_max_len=True)
+            # dat_1, dat_2, n = d.get_streak(p_str, use_max_len=True)
             dat_1, dat_2, n = d.get_streak(p_str, n_days=n_days)
             in_d, out_d = np.copy(dat_1), np.copy(dat_2)
 

@@ -120,13 +120,9 @@ def unit_trf_pow(p: int = 2) -> UnitTrafo:
 class ErrMetric(ABC):
     name: str
     long_name: str = None
+    err_fun: Metric
     scaling_fun: ErrScaling = lin_scaling
     unit_trf: UnitTrafo = unit_trf_id
-
-    @property
-    @abstractmethod
-    def err_fun(self) -> Metric:
-        pass
 
 
 class MSE(ErrMetric):

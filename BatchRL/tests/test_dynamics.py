@@ -230,11 +230,14 @@ class TestBaseDynamics(TestCase):
         # Test model analysis
         base_data = np.copy(self.ds_1.data)
         streak = copy_arr_list(self.ds_1.get_streak("train"))
-        self.test_model_2.analyze_visually(plot_acf=False, n_steps=(2,), verbose=False)
+        self.test_model_2.analyze_visually(plot_acf=False, n_steps=(2,),
+                                           verbose=False, add_errors=True)
         streak_after = self.ds_1.get_streak("train")
-        self.assertTrue(np.array_equal(base_data, self.ds_1.data), "Data was changed during analysis!")
+        self.assertTrue(np.array_equal(base_data, self.ds_1.data),
+                        "Data was changed during analysis!")
         for k in range(3):
-            self.assertTrue(np.array_equal(streak_after[k], streak[k]), "Streak data was changed during analysis!")
+            self.assertTrue(np.array_equal(streak_after[k], streak[k]),
+                            "Streak data was changed during analysis!")
 
     def test_analyze_performance(self):
         self.test_model_2.analyze_performance(n_steps=(1, 3), overwrite=True, verbose=0, n_days=7)

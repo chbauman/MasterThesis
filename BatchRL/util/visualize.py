@@ -1078,7 +1078,15 @@ def plot_performance_graph(model_list: List, parts: List[str],
         save_figure(plot_path)
 
 
-def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str, add_errors: bool = False):
+def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str,
+                           add_errors: bool = False) -> None:
+    """Stacks multiple dataset plots on top of each other.
+
+    Args:
+        all_plt_dat: List with tuples (Dataset, title_and_ylab, Any)
+        save_name: The path name of the generated plot.
+        add_errors: Whether to add errors in a box.
+    """
     n_series = len(all_plt_dat)
     assert n_series > 0, "Fuck this!"
 
@@ -1096,6 +1104,8 @@ def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str, add_errors:
                      title_and_ylab=t,
                      save_name=None,
                      new_plot=False)
+
+        # Add a box with errors
         if add_errors:
             metrics = [MAE, MaxAbsEer]
             unscaled_dat = ds.get_unscaled_data()
