@@ -818,7 +818,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
 def compare_models(model_list: List[BaseDynamicsModel],
                    save_name: str, *,
-                   n_steps: Tuple[..., int] = (1, ),
+                   n_steps: Tuple[int, ...] = (1, ),
                    part_spec: str = "val",
                    model_names: List[str] = None) -> None:
     """Compares all the models in the list visually.

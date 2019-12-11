@@ -5,7 +5,6 @@ functions. The complicated stuff is hidden in the other
 modules / packages.
 """
 import argparse
-import time
 from functools import reduce
 from typing import List, Tuple, Sequence, Type
 
@@ -38,6 +37,7 @@ base_rnn_models = [
     "Apartment_RNN",
     "RoomTempFromReduced_RNN",
     "RoomTemp_RNN",
+    "WeatherFromWeatherTime_Linear",
     # "Full_RNN",
 ]
 full_models = [
@@ -73,7 +73,7 @@ def test_cleanup(verbose: int = 0):
 
 
 def run_battery(do_rl: bool = True, overwrite: bool = False,
-                verbose: int = 0, steps: Sequence = (24, ),
+                verbose: int = 0, steps: Sequence = (24,),
                 put_on_ol: bool = False) -> None:
     """Runs all battery related stuff.
 
@@ -276,9 +276,15 @@ def run_room_models(verbose: int = 1) -> None:
 
 
 def update_overleaf_plots(verbose: int = 1):
-    # Battery model plots
-    with ProgWrap(f"Running battery...", verbose > 0):
-        run_battery(do_rl=False, overwrite=True, verbose=0, put_on_ol=True)
+    # If debug is true, the plots are not saved to Overleaf.
+    debug: bool = True
+
+    # Metrics to use
+    metrics: Tuple[Type[ErrMetric], ...] = (MSE, MAE, MaxAbsEer)
+
+    # # Battery model plots
+    # with ProgWrap(f"Running battery...", verbose > 0):
+    #     run_battery(do_rl=False, overwrite=True, verbose=0, put_on_ol=not debug)
 
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
@@ -290,12 +296,17 @@ def update_overleaf_plots(verbose: int = 1):
                                                                 seq_len=20,
                                                                 add_battery_data=True)
 
-    # # Weather model
-    # w_mod_name = base_rnn_models[0]
-    # w_mod = get_model(w_mod_name, ds, rnn_consts, from_hop=True, fit=True, verbose=False)
-    # with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
-    #     w_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
-    #                            save_to_ol=True, base_name="Weather1W")
+    # Weather model
+    w_mod_name = base_rnn_models[0]
+    w_mod_lin_name = base_rnn_models[4]
+    w_mod = get_model(w_mod_name, ds, rnn_consts, from_hop=True, fit=True, verbose=False)
+    w_mod_lin = get_model(w_mod_lin_name, ds, rnn_consts, from_hop=False, fit=True, verbose=False)
+    with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
+        w_mod.analyze_visually(overwrite=True, verbose=False, one_file=True,
+                               save_to_ol=not debug, base_name="Weather1W")
+        w_mod_lin.analyze_visually(overwrite=True, verbose=False, one_file=True,
+                                   save_to_ol=not debug, base_name="WeatherLinear1W")
+        w_mod.analyze_performance()
 
     # # Heating water constant
     # with ProgWrap(f"Plotting heating water...", verbose > 0):
@@ -306,16 +317,16 @@ def update_overleaf_plots(verbose: int = 1):
     #                  title_and_ylab=["Heating Water Temperatures", "Temperature [°C]"],
     #                  save_name=os.path.join(OVERLEAF_IMG_DIR, "WaterTemp"))
     #
-    # Room temperature model
-    r_mod_name = base_rnn_models[2]
-    with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
-        r_mod = get_model(r_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
-        r_mod.analyze_visually(n_steps=[24], overwrite=True, verbose=False, one_file=True,
-                               save_to_ol=True, base_name="Room1W_E",
-                               add_errors=True)
-        r_mod.analyze_visually(n_steps=[24], overwrite=True, verbose=False, one_file=True,
-                               save_to_ol=True, base_name="Room1W",
-                               add_errors=False)
+    # # Room temperature model
+    # r_mod_name = base_rnn_models[2]
+    # with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
+    #     r_mod = get_model(r_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
+    #     r_mod.analyze_visually(n_steps=[24], overwrite=True, verbose=False, one_file=True,
+    #                            save_to_ol=not debug, base_name="Room1W_E",
+    #                            add_errors=True)
+    #     r_mod.analyze_visually(n_steps=[24], overwrite=True, verbose=False, one_file=True,
+    #                            save_to_ol=not debug, base_name="Room1W",
+    #                            add_errors=False)
 
     # # Combined model evaluation
     # with ProgWrap(f"Analyzing full model performance...", verbose > 0):
@@ -387,8 +398,8 @@ def update_overleaf_plots(verbose: int = 1):
     #                                     put_on_ol=False,
     #                                     plot_rewards=True)
 
-        # env.detailed_eval_agents(agent_list, use_noise=False,
-        #                          n_steps=n_eval_steps, put_on_ol=True)
+    # env.detailed_eval_agents(agent_list, use_noise=False,
+    #                          n_steps=n_eval_steps, put_on_ol=True)
 
     pass
 
@@ -453,13 +464,16 @@ def get_model(name: str, ds: Dataset,
         'lr': 0.01,
         'gru': False,
     }
-    fix_pars = {
+    nec_pars = {
         'name': name,
         'data': ds,
+    }
+    fix_pars = {
         'residual_learning': True,
         'constraint_list': rnn_consts,
         'weight_vec': None,
     }
+    fix_pars = dict(fix_pars, **nec_pars)
     all_out = {'out_inds': np.array([0, 1, 2, 3, 5], dtype=np.int32)}
     all_in = {'in_inds': np.array([0, 1, 2, 3, 4, 5, 6, 7], dtype=np.int32)}
     all_inds = dict(all_out, **all_in)
@@ -494,6 +508,15 @@ def get_model(name: str, ds: Dataset,
         if from_hop:
             return RNNDynamicModel.from_best_hp(**fix_pars, **inds)
         return RNNDynamicModel(**inds, **base_params_no_inds)
+    elif name == "WeatherFromWeatherTime_Linear":
+        # The weather model, predicting only the weather and the time, i.e. outside temperature and
+        # irradiance from the past values and the time variable using a linear model.
+        inds = {
+            'out_inds': np.array([0, 1], dtype=np.int32),
+            'in_inds': np.array([0, 1, 6, 7], dtype=np.int32),
+        }
+        skl_base_mod = MultiTaskLassoCV(max_iter=1000, cv=5)
+        return SKLearnModel(skl_model=skl_base_mod, **nec_pars, **inds)
     elif name == "Apartment_RNN":
         # The apartment model, predicting only the apartment variables, i.e. water
         # temperatures and room temperature based on all input variables including the weather.
@@ -589,26 +612,10 @@ def curr_tests() -> None:
     # try_opcua()
     # return
 
-    with ProgWrap("Testing..."):
-        time.sleep(5)
-
     # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
     mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
                     rnn_consts=rnn_consts_full, fit=True, from_hop=True)
-
-    # Build SKLearn Weather model
-    inds = {
-        'out_inds': np.array([0, 1], dtype=np.int32),
-        'in_inds': np.array([0, 1, 6, 7], dtype=np.int32),
-    }
-    skl_base_mod = MultiTaskLassoCV(max_iter=1000, cv=5)
-    skl_weather_mod = SKLearnModel(ds_full, skl_base_mod, **inds)
-    with ProgWrap("Fitting Model..."):
-        skl_weather_mod.fit()
-    with ProgWrap("Analyzing Model..."):
-        skl_weather_mod.analyze_visually(plot_acf=False)
-    return
 
     # Setup env
     assert isinstance(mod, CompositeModel), "Model not suited"
