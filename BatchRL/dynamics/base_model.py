@@ -434,102 +434,67 @@ class BaseDynamicsModel(KerasBase, ABC):
 
         return all_plt_dat
 
-    def const_nts_plot(self, predict_data, n_list: Sequence[int], ext: str = '', *,
-                       predict_ind: int = None, n_ts_off: int = 0,
-                       overwrite: bool = True,
-                       put_on_ol: bool = False) -> None:
-        """Creates a plot that shows the performance of the
-        trained model when predicting a fixed number of timesteps into
-        the future.
-        If `predict_ind` is None, all series that can be
-        predicted are predicted simultaneously and each predicted
-        series is plotted individually.
+    def plot_one_week_analysis(self, predict_data,
+                               const_steps: int = 0, *,
+                               ext: str = None,
+                               overwrite: bool = False,
+                               base: str = None,
+                               combine_plots: bool = False,
+                               put_on_ol: bool = False,
+                               add_errors: bool = False,
+                               n_ts_off: int = 0) -> None:
+        """Plots predictions of the model over one week.
 
-        TODO: Refactor this or remove unused part! Or both?
+        If `const_steps` = 0, the predictions are done in a continuous way,
+        else, a fixed number of steps, i.e. `const_steps`, is predicted.
 
         Args:
-            predict_data: The string specifying the data to predict.
-            n_list: The list of number of timesteps into the future.
-            ext: Extension for the name of the plot.
-            predict_ind: Which series to predict.
-            n_ts_off: Number of time steps to shift the initial time for correct plotting.
+            predict_data: Data to use for making plots.
+            const_steps: The number of steps to predict if fixed number,
+                continuous predictions if `const_steps` = 0.
+            ext: String extension for the filename.
+            n_ts_off: Time step offset of data used.
             overwrite: Whether to overwrite existing plot files.
-            put_on_ol: Whether to store the plots in the overleaf folder.
+            combine_plots: Whether to combine the plots of all series in one file.
+            base: The base name of the output file.
+            put_on_ol: Whether to save the plots on Overleaf instead.
+            add_errors: Whether to add errors as additional legends.
         """
-        # Get data
-        d = self.data
-        in_d, out_d = predict_data
-        s = in_d.shape
-        dt = d.dt
+        continuous_pred = const_steps <= 0
+
+        dt = self.data.dt
+        time_str = mins_to_str(dt * const_steps)
+
+        # Define title
+        cont_title = '1 Week Continuous Predictions'
+        fix_step_title = time_str + ' Ahead Predictions'
+        title = cont_title if continuous_pred else fix_step_title
+
+        # Setup base name
+        if base is None:
+            base = "OneWeek" if continuous_pred else time_str + 'Ahead'
+            if combine_plots:
+                base += "Combined"
 
         # Check if plot file already exists
-        time_str = mins_to_str(dt * n_list[0])
-        ext_0 = "0_" + ext if predict_ind is None else ext
-        name = time_str + 'Ahead' + ext_0 + '.pdf'
-        plot_path = self.get_plt_path(name)
-        if not overwrite and os.path.isfile(plot_path):
+        _, ex = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
+        if not overwrite and ex:
             return
 
-        # Refactored version
-        n_pred = len(self.out_inds)
-        s_ = time_str + 'Ahead' + ext
-        for n_ts in n_list:
-            s_names = [self._get_plt_or_ol_path(s_, put_on_ol) for k in range(n_pred)]
-            title = time_str + ' Ahead Predictions'
-            all_plt_dat = self.get_predicted_plt_data(predict_data, s_names, title, n_ts)
+        name_list = [self._get_one_week_plot_name(base, ext, k, put_on_ol)[0] for k in range(len(self.out_inds))]
+        all_plt_dat = self.get_predicted_plt_data(predict_data, name_list,
+                                                  title=title, n_ts_off=n_ts_off)
+
+        # Plot all the things
+        if not combine_plots:
             for ds, t, cn in all_plt_dat:
                 plot_dataset(ds,
                              show=False,
                              title_and_ylab=t,
                              save_name=cn)
-        return
-
-        # Plot for all n
-        if predict_ind is not None:
-            orig_p_ind = np.copy(self.out_inds[predict_ind])
-            p_ind = d.to_prepared(np.array([orig_p_ind]))[0]
-            tr = np.copy(out_d[:, p_ind])
-
-            analysis_ds = get_plot_ds(s, tr, d, orig_p_ind, n_ts_off)
-            desc = d.descriptions[orig_p_ind]
-            for n_ts in n_list:
-                curr_ds = Dataset.copy(analysis_ds)
-                time_str = mins_to_str(dt * n_ts)
-                one_h_pred = self.n_step_predict(copy_arr_list(predict_data), n_ts,
-                                                 pred_ind=predict_ind)
-                curr_ds.data[(n_ts - 1):, 0] = np.copy(one_h_pred[:, predict_ind])
-                curr_ds.data[:(n_ts - 1), 0] = np.nan
-                title_and_ylab = [time_str + ' Ahead Predictions', desc]
-                s_ = time_str + 'Ahead' + ext
-                plot_dataset(curr_ds,
-                             show=False,
-                             title_and_ylab=title_and_ylab,
-                             save_name=self._get_plt_or_ol_path(s_, put_on_ol))
-            raise NotImplementedError("Do not use thiiis!!")
         else:
-            n_pred = len(self.out_inds)
-            for n_ts in n_list:
-                # Predict
-                full_pred = self.n_step_predict([in_d, out_d], n_ts,
-                                                pred_ind=predict_ind)
-                time_str = mins_to_str(dt * n_ts)
-
-                # Plot all
-                for k in range(n_pred):
-                    # Construct dataset and plot
-                    k_orig = self.out_inds[k]
-                    k_prep = self.data.to_prepared(np.array([k_orig]))[0]
-                    k_orig_arr = np.array([k_orig])
-                    new_ds = get_plot_ds(s, np.copy(out_d[:, k_prep]), d, k_orig_arr, n_ts_off)
-                    desc = d.descriptions[k_orig]
-                    new_ds.data[(n_ts - 1):, 0] = np.copy(full_pred[:, k])
-                    new_ds.data[:(n_ts - 1), 0] = np.nan
-                    title_and_ylab = [time_str + ' Ahead Predictions', desc]
-                    s_ = time_str + 'Ahead_' + str(k) + "_" + ext
-                    plot_dataset(new_ds,
-                                 show=False,
-                                 title_and_ylab=title_and_ylab,
-                                 save_name=self._get_plt_or_ol_path(s_, put_on_ol))
+            tot_save_name, _ = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
+            plot_visual_all_in_one(all_plt_dat, tot_save_name, add_errors)
 
     def _get_plt_or_ol_path(self, full_b_name: str, put_on_ol: bool = False):
         if put_on_ol:
@@ -545,58 +510,6 @@ class BaseDynamicsModel(KerasBase, ABC):
         curr_name = self._get_plt_or_ol_path(full_b_name, put_on_ol)
         exists = os.path.isfile(curr_name + ".pdf")
         return curr_name, exists
-
-    def one_week_pred_plot(self, dat_test, ext: str = None,
-                           predict_ind: int = None,
-                           n_ts_off: int = 0,
-                           overwrite: bool = True,
-                           combine_plots: bool = False,
-                           base: str = None,
-                           put_on_ol: bool = False,
-                           add_errors: bool = False) -> None:
-        """Makes a plot by continuously predicting with
-        the fitted model and comparing it to the ground
-        truth. If `predict_ind` is None, all series that can be
-        predicted are predicted simultaneously and each predicted
-        series is plotted individually.
-
-        TODO: Refactor this, this is very ugly!
-
-        Args:
-            predict_ind: The index of the series to be plotted. If None, all series are plotted.
-            dat_test: Data to use for making plots.
-            ext: String extension for the filename.
-            n_ts_off: Time step offset of data used.
-            overwrite: Whether to overwrite existing plot files.
-            combine_plots: Whether to combine the plots of all series in one file.
-            base: The base name of the output file.
-            put_on_ol: Whether to save the plots on Overleaf instead.
-        """
-        # Setup base name
-        if base is None:
-            base = "OneWeek"
-            if combine_plots:
-                base += "Combined"
-
-        # Check if plot file already exists
-        _, ex = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
-        if not overwrite and ex:
-            return
-
-        # Refactored version
-        name_list = [self._get_one_week_plot_name(base, ext, k, put_on_ol)[0] for k in range(len(self.out_inds))]
-        all_plt_dat = self.get_predicted_plt_data(dat_test, name_list, title='1 Week Continuous Predictions')
-
-        # Plot all the things
-        if not combine_plots:
-            for ds, t, cn in all_plt_dat:
-                plot_dataset(ds,
-                             show=False,
-                             title_and_ylab=t,
-                             save_name=cn)
-        else:
-            tot_save_name, _ = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
-            plot_visual_all_in_one(all_plt_dat, tot_save_name, add_errors)
 
     def analyze_visually(self, plot_acf: bool = True,
                          n_steps: Sequence = (1, 4, 20),
@@ -647,18 +560,23 @@ class BaseDynamicsModel(KerasBase, ABC):
             dat_copy = copy_arr_list(dat)
 
             # Plot for fixed number of time-steps
-            self.const_nts_plot(dat_copy, n_steps, ext=ext_list[ct], n_ts_off=n,
-                                overwrite=overwrite,
-                                put_on_ol=save_to_ol)
+            base_kwargs = {
+                'overwrite': overwrite,
+                'put_on_ol': save_to_ol,
+                'combine_plots': one_file,
+                'add_errors': add_errors,
+                'n_ts_off': n,
+                'ext': ext_list[ct],
+            }
+            # Plot fixed number of step predictions
+            for n_s in n_steps:
+                self.plot_one_week_analysis(dat_copy, n_s,
+                                            **base_kwargs)
 
             # Plot for continuous predictions
-            self.one_week_pred_plot(copy_arr_list(dat_copy), ext_list[ct],
-                                    n_ts_off=n,
-                                    overwrite=overwrite,
-                                    base=base_name,
-                                    put_on_ol=save_to_ol,
-                                    combine_plots=one_file,
-                                    add_errors=add_errors)
+            self.plot_one_week_analysis(copy_arr_list(dat_copy), 0,
+                                        base=base_name,
+                                        **base_kwargs)
 
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
                             verbose: int = 0,

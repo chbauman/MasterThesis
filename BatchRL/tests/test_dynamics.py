@@ -210,7 +210,7 @@ class TestBaseDynamics(TestCase):
         base_data = np.copy(self.ds_1.data)
         streak = copy_arr_list(self.ds_1.get_streak("train"))
         self.test_model_2.analyze_visually(plot_acf=False, n_steps=(2,), verbose=False)
-        self.test_model_2.analyze_visually(plot_acf=False, n_steps=(2,), verbose=False, one_file=True)
+        self.test_model_2.analyze_visually(plot_acf=False, n_steps=(3,), verbose=False, one_file=True)
         streak_after = self.ds_1.get_streak("train")
         self.assertTrue(np.array_equal(base_data, self.ds_1.data), "Data was changed during analysis!")
         for k in range(3):
