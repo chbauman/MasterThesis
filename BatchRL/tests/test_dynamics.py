@@ -1,3 +1,4 @@
+import os
 from typing import Dict, Union, List
 from unittest import TestCase
 
@@ -15,6 +16,7 @@ from dynamics.composite import CompositeModel
 from dynamics.const import NoDisturbanceModel, ConstModel
 from dynamics.sin_cos_time import SCTimeModel
 from tests.test_data import get_full_model_dataset, construct_test_ds
+from tests.test_util import TEST_DIR
 from util.numerics import copy_arr_list, MSE, MAE
 from util.util import Num, tot_size
 
@@ -190,7 +192,15 @@ class TestBaseDynamics(TestCase):
 
     def test_compare_analysis(self):
         test_model_4 = ConstSeriesTestModel(self.ds_1, pred_val_list=[0.0, 2.0, 3.0])
-        compare_models([test_model_4, self.test_model_3])
+        save_name = os.path.join(TEST_DIR, "Test_Compare_Analysis")
+        compare_models([test_model_4, self.test_model_3], n_steps=(2,),
+                       model_names=["test_1", "test_2"], save_name=save_name)
+
+    def test_compare_analysis_continuous(self):
+        test_model_4 = ConstSeriesTestModel(self.ds_1, pred_val_list=[0.0, 2.0, 3.0])
+        save_name = os.path.join(TEST_DIR, "Test_Compare_Analysis_Continuous")
+        compare_models([test_model_4, self.test_model_3], n_steps=(0,),
+                       model_names=["test_1", "test_2"], save_name=save_name)
 
     def test_sizes(self):
         # Check sizes

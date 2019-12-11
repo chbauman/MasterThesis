@@ -817,13 +817,18 @@ class BaseDynamicsModel(KerasBase, ABC):
             print(*args)
 
 
-def compare_models(model_list: List[BaseDynamicsModel], part_spec: str = "val") -> None:
-    n_steps = (1, )
+def compare_models(model_list: List[BaseDynamicsModel],
+                   save_name: str, *,
+                   n_steps: Tuple = (1, ),
+                   part_spec: str = "val",
+                   model_names: List[str] = None) -> None:
 
     # Count models
     n_models = len(model_list)
     n_plot_series = n_models + 1
     assert n_models > 0, "No models provided!"
+    if model_names is not None:
+        assert len(model_names) == n_models, "Incorrect number of model names!"
 
     # Get and check data
     m_0 = model_list[0]
@@ -844,7 +849,7 @@ def compare_models(model_list: List[BaseDynamicsModel], part_spec: str = "val") 
         data_lst = []
         m_names = ['Ground Truth']
         for ct, m in enumerate(model_list):
-            m_names += [model_list[ct].name]
+            m_names += [model_list[ct].name if model_names is None else model_names[ct]]
             data_lst += [m.get_predicted_plt_data(dat, name_list=names,
                                                   const_steps=n_s,
                                                   title=title, n_ts_off=n)]
@@ -877,8 +882,10 @@ def compare_models(model_list: List[BaseDynamicsModel], part_spec: str = "val") 
             new_data_list += [(analysis_ds, tal, None)]
 
         # Plot dataset
-        plot_visual_all_in_one(new_data_list, "Test")
-    pass
+        curr_save_name = save_name + "_" + part_spec.capitalize()
+        if n_s > 0:
+            curr_save_name += f"_{n_s}"
+        plot_visual_all_in_one(new_data_list, curr_save_name)
 
 
 ##########################################################################
