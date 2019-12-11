@@ -18,7 +18,7 @@ from data_processing.data import get_battery_data, get_data_test, \
     choose_dataset_and_constraints
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
-from dynamics.base_model import test_dyn_model, BaseDynamicsModel
+from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
 from dynamics.classical import SKLearnModel
 from dynamics.composite import CompositeModel
@@ -62,7 +62,6 @@ def run_integration_tests() -> None:
     """
     # Do all the tests.
     test_rnn_models()
-    test_dyn_model()
     test_rest_client()
     get_data_test()
 
