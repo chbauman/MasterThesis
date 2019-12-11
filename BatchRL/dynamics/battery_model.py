@@ -48,7 +48,7 @@ class BatteryModel(BaseDynamicsModel):
         # Define feature function
         # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
         def feat_fun(x: float):
-            if type(x) in [int, float]:
+            if np.isscalar(x):
                 x = np.array([x])
             n_x = len(x)
             res = npf32((n_x, 3))
@@ -106,7 +106,7 @@ class BatteryModel(BaseDynamicsModel):
         self.masked_ds = ds[mask]
 
         # Fit parameters
-        params = fit_linear_bf_1d(self.masked_p, self.masked_ds, feat_fun)
+        params = fit_linear_bf_1d(self.masked_p, self.masked_ds, self.feat_fun)
         self.params = params
 
         # Remove outliers based on fit
