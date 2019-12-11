@@ -19,10 +19,10 @@ from tests.test_data import get_full_model_dataset, construct_test_ds
 from tests.test_util import TEST_DIR
 from util.numerics import copy_arr_list, MSE, MAE
 from util.util import Num, tot_size
+from util.visualize import plot_performance_graph
 
 
 def get_full_composite_model(standardized: bool = False) -> BaseDynamicsModel:
-
     # Get full dataset
     n = 100
     ds = get_full_model_dataset(n)
@@ -241,9 +241,33 @@ class TestBaseDynamics(TestCase):
                             "Streak data was changed during analysis!")
 
     def test_analyze_performance(self):
-        self.test_model_2.analyze_performance(n_steps=(1, 3), overwrite=True, verbose=0, n_days=7)
         met_list = (MSE, MAE)
-        self.test_model_2.analyze_performance(n_steps=(1, 3), overwrite=True, verbose=0, metrics=met_list, n_days=7)
+        self.test_model_2.analyze_performance(n_steps=(1, 3), overwrite=True,
+                                              verbose=0, metrics=met_list, n_days=7)
+
+    def test_performance_plot(self):
+        met_list = (MSE, MAE)
+        parts = ["Val", "Train"]
+        self.test_mod.analyze_performance(n_steps=(1, 3), overwrite=True,
+                                          verbose=0, metrics=met_list, n_days=7)
+        test_model_4 = ConstSeriesTestModel(self.ds, pred_val_list=[0.0, 2.0, 3.0])
+        test_model_4.analyze_performance(n_steps=(1, 3), overwrite=True,
+                                         verbose=0, metrics=met_list, n_days=7)
+        plot_name = "TestEvalPlot"
+        mods = [test_model_4, self.test_mod]
+        plot_performance_graph(mods, parts, met_list, plot_name,
+                               short_mod_names=["Test4", "Test2"],
+                               series_mask=np.array([0]),
+                               scale_back=True,
+                               remove_units=False,
+                               put_on_ol=False)
+        plot_performance_graph(mods, parts, met_list, plot_name,
+                               short_mod_names=["Test4", "Test2"],
+                               series_mask=np.array([0]),
+                               scale_back=True,
+                               remove_units=False,
+                               put_on_ol=False,
+                               compare_models=True)
 
     def test_const_series_test_model(self):
         # Test the test model

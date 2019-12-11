@@ -15,7 +15,7 @@ class SKLearnModel(BaseDynamicsModel):
     name: str = "Linear"  #: Base name of model.
     n_out: int  #: Number of series that are predicted.
 
-    def __init__(self, dataset: Dataset, skl_model, residual: bool = True, **kwargs):
+    def __init__(self, data: Dataset, skl_model, residual: bool = True, **kwargs):
         """Initializes the constant model.
 
         All series specified by prep_inds are predicted by the last seen value.
@@ -29,16 +29,17 @@ class SKLearnModel(BaseDynamicsModel):
         if kwargs.get('name'):
             # I need the walrus!
             name = kwargs['name']
+        kwargs['name'] = name
 
         # Init base class
-        super().__init__(dataset, name, **kwargs)
+        super().__init__(data, **kwargs)
 
         # Save model
         self.m = SKLoader(skl_model, self)
 
         # Save data
         self.n_out = len(self.out_inds)
-        self.nc = dataset.n_c
+        self.nc = data.n_c
         self.residual_learning = residual
 
         # Fitting model

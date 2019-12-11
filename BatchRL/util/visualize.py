@@ -879,7 +879,7 @@ def _load_all_model_data(model_list: List,
         if ct == 0:
             inds = inds_curr
         else:
-            assert np.array_equal(inds, inds_curr)
+            assert np.array_equal(inds, inds_curr), f"Wrong indices: {inds_curr} != {inds}"
             check_shape(data_list[0], data.shape)
         data_list += [data]
 
@@ -1010,15 +1010,26 @@ def plot_performance_graph(model_list: List, parts: List[str],
                            remove_units: bool = True,
                            series_mask=None,
                            scale_back: bool = False,
-                           put_on_ol: bool = False) -> None:
+                           put_on_ol: bool = False,
+                           compare_models: bool = False) -> None:
     metric_names = [m.name for m in metric_list]
 
+    # Check if models are compatible
+    # check_model_compatibility(model_list)
+    if not np.any(model_list[0].data.is_scaled):
+        scale_back = False
+
     # Prepare the labels
-    series_descs, mod_names, scaling = _get_descs(model_list, remove_units, series_mask, short_mod_names)
+    series_descs, mod_names, scaling = _get_descs(model_list, remove_units,
+                                                  series_mask, short_mod_names)
 
     # Load data
     data_array, inds = _load_all_model_data(model_list, parts, metric_names, series_mask)
     n_models, n_parts, n_series, n_metrics, n_steps = data_array.shape
+
+    # Switch lists
+    if compare_models:
+        parts, mod_names = mod_names, parts
 
     plot_folder = OVERLEAF_IMG_DIR if put_on_ol else EVAL_MODEL_PLOT_DIR
     for model_ind, m_name in enumerate(mod_names):
@@ -1026,7 +1037,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
         share_y = False
         dt = model_list[0].data.dt
 
-        if n_parts > len(joint_styles):
+        if len(parts) > len(joint_styles):
             warnings.warn("Duplicate plot styles!")
 
         ax1 = None
@@ -1047,14 +1058,17 @@ def plot_performance_graph(model_list: List, parts: List[str],
             plt.ylabel(m.name)
 
             # Plot all series
-            for set_id in range(n_parts):
+            for set_id, set_name in enumerate(parts):
                 for series_id in range(n_series):
                     # Get labels and errors
                     s_desc = series_descs[series_id]
                     if scale_back:
                         s_desc = _trf_desc_units(s_desc, m)
-                    lab = parts[set_id] + ": " + s_desc
-                    si = data_array[model_ind, set_id, series_id, ct_m]
+                    lab = set_name + ": " + s_desc
+                    if compare_models:
+                        si = data_array[set_id, model_ind, series_id, ct_m]
+                    else:
+                        si = data_array[model_ind, set_id, series_id, ct_m]
 
                     # Scale the errors
                     m_and_sd = scaling[series_id]
@@ -1068,7 +1082,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
             # Add title, legend and x-label
             if ct_m == 0 or scale_back:
                 if ct_m == 0:
-                    plt.title(mod_names[model_ind])
+                    plt.title(m_name)
                 plt.legend()
             # if ct_m == len(metric_names) - 1:
             #     plt.xlabel(f"Steps [{mins_to_str(dt)}]")

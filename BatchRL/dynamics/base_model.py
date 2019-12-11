@@ -59,6 +59,36 @@ def _get_inds_str(indices: np.ndarray, pre: str = "In") -> str:
     return inds_str
 
 
+def check_model_compatibility(model_list: List['BaseDynamicsModel'], raise_error: bool = True) -> bool:
+    """Checks if models in list are compatible.
+
+    I.e. they need to predict the same series.
+
+    Args:
+        model_list: List with models.
+        raise_error: Whether to raise an error instead of returning a bool.
+
+    Returns:
+        Bool indicating whether models are compatible.
+
+    Raises:
+        ValueError: If models are not compatible and `raise_error` is True
+        AssertionError: If the `model_list` has length 0.
+    """
+    n_mods = len(model_list)
+    assert n_mods > 0, "No models provided!"
+    inds = model_list[0].out_inds
+    compat = True
+    for m in model_list:
+        curr_inds = m.out_inds
+        if not np.array_equal(inds, curr_inds):
+            compat = False
+            if raise_error:
+                raise ValueError(f"Indices {curr_inds} of model {m} not compatible "
+                                 f"with those of first model: {inds}")
+    return compat
+
+
 class BaseDynamicsModel(KerasBase, ABC):
     """This class describes the interface of a ML-based (partial) dynamics model.
     """
@@ -818,7 +848,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
 def compare_models(model_list: List[BaseDynamicsModel],
                    save_name: str, *,
-                   n_steps: Tuple[int, ...] = (1, ),
+                   n_steps: Tuple[int, ...] = (1,),
                    part_spec: str = "val",
                    model_names: List[str] = None) -> None:
     """Compares all the models in the list visually.
