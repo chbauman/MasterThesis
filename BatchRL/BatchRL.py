@@ -30,8 +30,8 @@ from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
-from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap
-from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR
+from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap, prog_verb
+from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset
 
 # Define the models by name
 base_rnn_models = [
@@ -74,9 +74,10 @@ def run_integration_tests() -> None:
 
 
 def test_cleanup(verbose: int = 0):
+    """Cleans the data that was generated for the tests."""
     # Do some cleanup.
     with ProgWrap("Cleanup...", verbose=verbose > 0):
-        cleanup_test_data(verbose=0)
+        cleanup_test_data(verbose=prog_verb(verbose))
 
 
 def run_battery(do_rl: bool = True, overwrite: bool = False,
@@ -89,19 +90,23 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
     """
     if verbose:
         print("Running battery...")
+
     # Load and prepare battery data.
-    bat_name = "Battery"
-    get_battery_data()
-    bat_ds = Dataset.loadDataset(bat_name)
-    bat_ds.standardize()
-    bat_ds.split_data()
+    with ProgWrap(f"Loading battery data...", verbose > 0):
+        bat_name = "Battery"
+        get_battery_data()
+        bat_ds = Dataset.loadDataset(bat_name)
+        bat_ds.standardize()
+        bat_ds.split_data()
 
     # Initialize and fit battery model.
-    bat_mod = BatteryModel(bat_ds)
-    bat_mod.analyze_bat_model(put_on_ol=put_on_ol)
-    bat_mod.analyze_visually(save_to_ol=put_on_ol, base_name="Bat", overwrite=overwrite, n_steps=steps)
-    # bat_mod_naive = ConstModel(bat_ds)
-    # bat_mod_naive.analyze_visually()
+    with ProgWrap(f"Fitting and analyzing battery...", verbose > 0):
+        bat_mod = BatteryModel(bat_ds)
+        bat_mod.analyze_bat_model(put_on_ol=put_on_ol)
+        bat_mod.analyze_visually(save_to_ol=put_on_ol, base_name="Bat",
+                                 overwrite=overwrite, n_steps=steps, verbose=verbose > 0)
+        # bat_mod_naive = ConstModel(bat_ds)
+        # bat_mod_naive.analyze_visually()
 
     if not do_rl:
         if verbose:
@@ -181,6 +186,8 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
         perf_analyze: Whether to do the performance analysis.
         include_composite: Whether to also do all the stuff for the composite models.
     """
+    next_verb = prog_verb(verbose)
+
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
         ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
@@ -192,7 +199,8 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
         lst = base_rnn_models[:]
         if include_composite:
             lst += full_models
-        all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True, fit=True) for nm in lst}
+        all_mods = {nm: get_model(nm, ds, rnn_consts,
+                                  from_hop=True, fit=True, verbose=next_verb) for nm in lst}
 
     # Fit or load all initialized models
     for name, m_to_use in all_mods.items():
@@ -201,12 +209,12 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
         # Visual analysis
         if visual_analyze:
             with ProgWrap(f"Analyzing model visually...", verbose > 0):
-                m_to_use.analyze_visually(overwrite=False, verbose=False)
+                m_to_use.analyze_visually(overwrite=False, verbose=next_verb)
 
         # Do the performance analysis
         if perf_analyze:
             with ProgWrap(f"Analyzing model performance...", verbose > 0):
-                m_to_use.analyze_performance(N_PERFORMANCE_STEPS, verbose=False,
+                m_to_use.analyze_performance(N_PERFORMANCE_STEPS, verbose=next_verb,
                                              overwrite=False,
                                              metrics=METRICS)
 
@@ -272,13 +280,15 @@ def run_room_models(verbose: int = 1) -> None:
             # env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
 
 
-def update_overleaf_plots(verbose: int = 1):
+def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
     # If debug is true, the plots are not saved to Overleaf.
-    debug: bool = True
+    debug: bool = False
+    if verbose > 0 and debug:
+        print("Running in debug mode!")
 
-    # # Battery model plots
-    # with ProgWrap(f"Running battery...", verbose > 0):
-    #     run_battery(do_rl=False, overwrite=True, verbose=0, put_on_ol=not debug)
+    # Battery model plots
+    with ProgWrap(f"Running battery...", verbose > 0):
+        run_battery(do_rl=False, overwrite=overwrite, verbose=prog_verb(verbose), put_on_ol=not debug)
 
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
@@ -294,51 +304,51 @@ def update_overleaf_plots(verbose: int = 1):
     with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
         # Define model indices and names
         mod_inds = [0, 4]
-        base_names = ["Weather1W", "WeatherLinear1W"]
         model_names = ["RNN", "Linear"]
 
         # Load weather models
         mod_list = [get_model(base_rnn_models[k], ds, rnn_consts,
-                              from_hop=True, fit=True, verbose=False) for k in mod_inds]
-
-        # Visual analysis
-        for m, b_name in zip(mod_list, base_names):
-            m.analyze_visually(overwrite=False, verbose=False, one_file=True,
-                               save_to_ol=not debug, base_name=b_name)
+                              from_hop=True, fit=True, verbose=prog_verb(verbose)) for k in mod_inds]
 
         # Compare the models for one week continuous and 6h predictions
         dir_to_use = OVERLEAF_IMG_DIR if not debug else TEST_DIR
         ol_file_name = os.path.join(dir_to_use, "WeatherComparison")
-        compare_models(mod_list, ol_file_name,
-                       n_steps=(0, 24),
-                       model_names=model_names)
+        if not os.path.isfile(ol_file_name + ".pdf") or overwrite:
+            compare_models(mod_list, ol_file_name,
+                           n_steps=(0, 24),
+                           model_names=model_names)
 
         # Plot prediction performance
         plot_performance_graph(mod_list, PARTS, METRICS, "WeatherPerformance",
                                short_mod_names=model_names,
                                series_mask=None, scale_back=True,
                                remove_units=False, put_on_ol=not debug,
-                               compare_models=True)
+                               compare_models=True, overwrite=overwrite)
 
-    # # Heating water constant
-    # with ProgWrap(f"Plotting heating water...", verbose > 0):
-    #     ds_heat = ds[2:4]
-    #     n_tot = ds_heat.data.shape[0]
-    #     ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.6), int(n_tot * 0.66))
-    #     plot_dataset(ds_heat_rel, show=False,
-    #                  title_and_ylab=["Heating Water Temperatures", "Temperature [°C]"],
-    #                  save_name=os.path.join(OVERLEAF_IMG_DIR, "WaterTemp"))
-    #
-    # # Room temperature model
-    # r_mod_name = base_rnn_models[2]
-    # with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
-    #     r_mod = get_model(r_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
-    #     r_mod.analyze_visually(n_steps=[24], overwrite=True, verbose=False, one_file=True,
-    #                            save_to_ol=not debug, base_name="Room1W_E",
-    #                            add_errors=True)
-    #     r_mod.analyze_visually(n_steps=[24], overwrite=True, verbose=False, one_file=True,
-    #                            save_to_ol=not debug, base_name="Room1W",
-    #                            add_errors=False)
+    # Heating water constant
+    with ProgWrap(f"Plotting heating water...", verbose > 0):
+        s_name = os.path.join(OVERLEAF_IMG_DIR, "WaterTemp")
+        if overwrite or not os.path.isfile(s_name + ".pdf"):
+            ds_heat = ds[2:4]
+            n_tot = ds_heat.data.shape[0]
+            ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.6), int(n_tot * 0.66))
+            plot_dataset(ds_heat_rel, show=False,
+                         title_and_ylab=["Heating Water Temperatures", "Temperature [°C]"],
+                         save_name=s_name)
+
+    # Room temperature model
+    with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
+        r_mod_name = base_rnn_models[2]
+        r_mod = get_model(r_mod_name, ds_bat, rnn_consts_bat, from_hop=True,
+                          fit=True, verbose=prog_verb(verbose))
+        r_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
+                               verbose=prog_verb(verbose) > 0, one_file=True,
+                               save_to_ol=not debug, base_name="Room1W_E",
+                               add_errors=True)
+        r_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
+                               verbose=prog_verb(verbose) > 0, one_file=True,
+                               save_to_ol=not debug, base_name="Room1W",
+                               add_errors=False)
 
     # # Combined model evaluation
     # with ProgWrap(f"Analyzing full model performance...", verbose > 0):
@@ -697,6 +707,7 @@ def main() -> None:
     verbose = args.verbose
     if verbose:
         print("Verbosity turned on.")
+        verbose = 5
 
     # Run integration tests and optionally the cleanup after.
     if args.test:
@@ -716,7 +727,7 @@ def main() -> None:
 
     if args.battery:
         # Train and analyze the battery model
-        run_battery(overwrite=True)
+        run_battery(overwrite=True, verbose=verbose)
 
     if args.room:
         # Room model

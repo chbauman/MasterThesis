@@ -1103,7 +1103,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
                            series_mask=None,
                            scale_back: bool = False,
                            put_on_ol: bool = False,
-                           compare_models: bool = False) -> None:
+                           compare_models: bool = False,
+                           overwrite: bool = True) -> None:
     """Plots the evaluated performance for multiple models.
 
     `series_mask` can be used to select subset of series.
@@ -1121,6 +1122,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
         put_on_ol: Whether to put the file into Overleaf folder.
         compare_models: Whether to compare different models instead of different
             parts.
+        overwrite: Whether to overwrite an existing file.
     """
     metric_names = [m.name for m in metric_list]
 
@@ -1144,6 +1146,11 @@ def plot_performance_graph(model_list: List, parts: List[str],
 
     plot_folder = OVERLEAF_IMG_DIR if put_on_ol else EVAL_MODEL_PLOT_DIR
     for model_ind, m_name in enumerate(mod_names):
+
+        # Skip loop if file exists
+        plot_path = os.path.join(plot_folder, f"{name}_{m_name}")
+        if os.path.isfile(plot_path + ".pfd") and not overwrite:
+            continue
 
         share_y = False
         dt = model_list[0].data.dt
@@ -1199,7 +1206,6 @@ def plot_performance_graph(model_list: List, parts: List[str],
             #     plt.xlabel(f"Steps [{mins_to_str(dt)}]")
 
         # Construct the path of the plot
-        plot_path = os.path.join(plot_folder, f"{name}_{m_name}")
         save_figure(plot_path)
 
 

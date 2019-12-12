@@ -176,7 +176,7 @@ class BatteryModel(BaseDynamicsModel):
             p = self.get_plt_path(base)
         return p
 
-    def analyze_bat_model(self, put_on_ol: bool = False) -> None:
+    def analyze_bat_model(self, put_on_ol: bool = False, overwrite: bool = False) -> None:
         """This is basically the fit method, but it also
         does some data analysis and makes some battery data specific plots.
         """
@@ -187,23 +187,30 @@ class BatteryModel(BaseDynamicsModel):
         scale = np.copy(d.scaling[self.in_inds])
         scale[0, 0] = 0.0
 
-        # Plot data
+        # Define plot labels
         labs = {'title': 'Battery Model', 'xlab': 'Active Power [kW]', 'ylab': r'$\Delta$ SoC [%]'}
+
+        # Check if file exists
         before_plt_path = self._get_plot_name("WithOutliers", put_on_ol)
-        scatter_plot(self.p, self.ds, lab_dict=labs,
-                     show=False,
-                     m_and_std_x=scale[1],
-                     m_and_std_y=scale[0],
-                     add_line=True,
-                     save_name=before_plt_path)
+        if not os.path.isfile(before_plt_path + ".pdf") or overwrite:
+            # Plot data
+            scatter_plot(self.p, self.ds, lab_dict=labs,
+                         show=False,
+                         m_and_std_x=scale[1],
+                         m_and_std_y=scale[0],
+                         add_line=True,
+                         save_name=before_plt_path)
+
+        # Check if plot already exists
+        after_plt_path = self._get_plot_name("Cleaned", put_on_ol)
+        if os.path.isfile(after_plt_path + ".pdf") and not overwrite:
+            return
 
         # Eval for pw linear line
         x_pw_line = np.array([np.min(self.p), -0.001, 0, 0.001, np.max(self.p)], dtype=np.float32)
         y_pw_line = self._eval_at(x_pw_line)
 
         # Plot model
-        after_plt_path = self._get_plot_name("Cleaned", put_on_ol)
-
         scatter_plot(self.masked_p, self.masked_ds, lab_dict=labs,
                      show=False,
                      add_line=False,
