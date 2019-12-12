@@ -628,6 +628,21 @@ def _setup_axis(ax, base_title: str, desc: str, title: bool = True):
         ax.set_title(base_title + ": " + t)
 
 
+def _full_setup_axis(ax_list: List, desc_list: List, title: str = None):
+
+    # Check input
+    assert len(ax_list) == len(desc_list), "Incompatible lists!"
+
+    # Set title if it is not None or an empty string.
+    set_title = title is not None and title != ""
+
+    # Set axes
+    for ct, ax in enumerate(ax_list):
+        _setup_axis(ax, title, desc_list[ct], title=set_title)
+        ax.get_xaxis().set_visible(False)
+        ax.get_xaxis().set_ticklabels([])
+
+
 def plot_env_evaluation(actions: np.ndarray,
                         states: np.ndarray,
                         rewards: np.ndarray,
@@ -641,6 +656,9 @@ def plot_env_evaluation(actions: np.ndarray,
                         np_dt_init: Any = None,
                         rew_save_path: str = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
+
+    TODO: Refactor this shit more!
+    TODO: Make it more customizable!
 
     Only for one specific initial condition.
     """
@@ -697,21 +715,14 @@ def plot_env_evaluation(actions: np.ndarray,
         states = states[:, :, series_mask]
 
     # Set titles
-    # TODO: Refactor this shit
     if show_rewards:
         rew_ax.set_title("Rewards")
-    for k in range(n_actions):
-        _setup_axis(con_axs[k], "Original Control Inputs", control_descs[k])
-        con_axs[k].get_xaxis().set_visible(False)
-        con_axs[k].get_xaxis().set_ticklabels([])
-        if plot_extra:
-            _setup_axis(con_fb_axs[k], "Constrained Control Inputs", control_descs[k])
-            con_fb_axs[k].get_xaxis().set_visible(False)
-            con_fb_axs[k].get_xaxis().set_ticklabels([])
-    for k in range(n_feats):
-        _setup_axis(state_axs[k], "States", state_descs[k])
-        state_axs[k].get_xaxis().set_visible(False)
-        state_axs[k].get_xaxis().set_ticklabels([])
+
+    # Setup axes
+    _full_setup_axis(con_axs, control_descs, "Original Control Inputs")
+    if plot_extra:
+        _full_setup_axis(con_fb_axs, control_descs, "Constrained Control Inputs")
+    _full_setup_axis(state_axs, state_descs, "States")
 
     ph_kwargs = {"dates": use_time}
 
@@ -750,9 +761,7 @@ def plot_env_evaluation(actions: np.ndarray,
         state_axs[-1].set_xlabel()
 
     # Super title
-    sup_t = 'Visual Analysis. '
-    if title_ext is not None:
-        sup_t += title_ext
+    sup_t = 'Visual Analysis' if title_ext is None else title_ext
     con_axs[0].annotate(sup_t, (0.5, 0.975),
                         xycoords='figure fraction', ha='center',
                         fontsize=24)
