@@ -28,7 +28,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
-from tests.test_util import cleanup_test_data
+from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR
@@ -298,7 +298,7 @@ def update_overleaf_plots(verbose: int = 1):
         model_names = ["RNN", "Linear"]
 
         # Load weather models
-        mod_list = [get_model(base_rnn_models[0], ds, rnn_consts,
+        mod_list = [get_model(base_rnn_models[k], ds, rnn_consts,
                               from_hop=True, fit=True, verbose=False) for k in mod_inds]
 
         # Visual analysis
@@ -307,7 +307,8 @@ def update_overleaf_plots(verbose: int = 1):
                                save_to_ol=not debug, base_name=b_name)
 
         # Compare the models for one week continuous and 6h predictions
-        ol_file_name = os.path.join(OVERLEAF_IMG_DIR, "WeatherComparison")
+        dir_to_use = OVERLEAF_IMG_DIR if not debug else TEST_DIR
+        ol_file_name = os.path.join(dir_to_use, "WeatherComparison")
         compare_models(mod_list, ol_file_name,
                        n_steps=(0, 24),
                        model_names=model_names)
@@ -437,6 +438,15 @@ def get_model(name: str, ds: Dataset,
     assert (ds.d == 8 and ds.n_c == 1) or (ds.d == 10 and ds.n_c == 2)
     battery_used = ds.d == 10
 
+    # Fit if required using one step recursion
+    if fit:
+        mod = get_model(name, ds, rnn_consts, from_hop, fit=False)
+        mod.fit()
+        return mod
+
+    if verbose and not fit:
+        print(f"Loading model {name}.")
+
     # Load battery model if required.
     battery_mod = None
     if battery_used:
@@ -460,12 +470,6 @@ def get_model(name: str, ds: Dataset,
             if rnn_consts is not None:
                 comp_name += "_CON"
         return CompositeModel(ds, model_list, new_name=comp_name)
-
-    # Fit if required using one step recursion
-    if fit:
-        mod = get_model(name, ds, rnn_consts, from_hop, fit=False)
-        mod.fit()
-        return mod
 
     # Basic parameter set
     hop_pars = {
@@ -497,7 +501,9 @@ def get_model(name: str, ds: Dataset,
         return SCTimeModel(ds, 6)
     elif name == "FullState_Naive":
         # The naive model that predicts all series as the last seen input.
-        inds = np.array([0, 1, 2, 3, 5, 6, 7, 8], dtype=np.int32)
+        bat_inds = np.array([0, 1, 2, 3, 5, 6, 7, 8], dtype=np.int32)
+        no_bat_inds = np.array([0, 1, 2, 3, 5, 6, 7], dtype=np.int32)
+        inds = bat_inds if battery_used else no_bat_inds
         return ConstModel(ds, in_inds=inds, pred_inds=inds)
     elif name == "Battery":
         # Battery model.
