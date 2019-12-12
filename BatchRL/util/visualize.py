@@ -830,14 +830,10 @@ def plot_env_evaluation(actions: np.ndarray,
             lower = [low for _ in range(episode_len)]
             state_axs[i].fill_between(x, lower, upper, facecolor='green', interpolate=True, alpha=0.3)
 
-    # Set time
-    last_c_ax = con_fb_axs[-1] if plot_extra else con_axs[-1]
-
     # Add legends
     sz = 12
     con_axs[0].legend(prop={'size': sz})
     state_axs[0].legend(prop={'size': sz})
-
     x_label = "Time" if use_time else f"Timestep [{ds.dt}min]"
     if show_rewards:
         rew_ax.set_xlabel(x_label)
