@@ -11,7 +11,8 @@ import shutil
 import sys
 from datetime import datetime
 from functools import wraps
-from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict
+from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable
+import builtins as __builtin__
 
 import numpy as np
 
@@ -62,7 +63,7 @@ LOrEl = Union[Sequence[T], T]
 #######################################################################################################
 # Python stuff
 
-class ProgWrap(object):
+class ProgWrapStdOut(object):
     """Context manager that wraps the body with output to the console.
 
     If `verbose` is False, this does absolutely nothing.
@@ -81,6 +82,72 @@ class ProgWrap(object):
         if self.v:
             sys.stdout.flush()
             sys.stdout.write(self.init_str + " Done.\n")
+
+
+def print_decorator(print_fun: Callable):
+    def print_fun_dec(*args, **kwargs):
+        print_fun("   ", *args, **kwargs)
+
+    return print_fun_dec
+
+
+def stdout_decorator(print_fun: Callable):
+    def print_fun_dec(text, *args, **kwargs):
+        print_fun("    " + text, *args, **kwargs)
+
+    return print_fun_dec
+
+
+class ProgWrap(object):
+    """Context manager that wraps the body with output to the console.
+
+    If `verbose` is False, this does absolutely nothing.
+    Allows for nesting, since it is not using the carriage return.
+    """
+
+    def __init__(self, init_str: str = "Starting...", verbose: bool = True):
+        self.init_str = init_str
+        self.v = verbose
+        self.orig_print = None
+        self.std_out = None
+
+    def __enter__(self):
+        if self.v:
+            print(self.init_str)
+            self.orig_print = sys.stdout.write
+            sys.stdout.write = stdout_decorator(sys.stdout.write)
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        if self.v:
+            sys.stdout.write = self.orig_print
+            print(self.init_str + " Done.")
+
+
+class ProgWrapV2(object):
+    """Context manager that wraps the body with output to the console.
+
+    If `verbose` is False, this does absolutely nothing.
+    Allows for nesting, since it is not using the carriage return.
+    """
+
+    def __init__(self, init_str: str = "Starting...", verbose: bool = True):
+        self.init_str = init_str
+        self.v = verbose
+        self.orig_print = None
+        self.std_out = None
+
+    def __enter__(self):
+        if self.v:
+            print(self.init_str)
+            self.orig_print = __builtin__.print
+            __builtin__.print = print_decorator(print)
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        if self.v:
+            __builtin__.print = self.orig_print
+            print(self.init_str + " Done.")
 
 
 def print_if_verb(verb: Union[bool, int] = True, *args, **kwargs):

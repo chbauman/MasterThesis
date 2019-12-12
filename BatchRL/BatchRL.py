@@ -620,8 +620,14 @@ def get_model(name: str, ds: Dataset,
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
+    print("Printing before")
+    with ProgWrap("Test Outer..."):
+        print("Printing first level")
+        with ProgWrap("Test Inner..."):
+            print("Printing second level")
+
     # try_opcua()
-    # return
+    return
 
     # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)

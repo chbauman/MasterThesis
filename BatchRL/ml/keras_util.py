@@ -121,6 +121,7 @@ class KerasBase:
         """
         full_path = self.get_path(name)
         found = os.path.isfile(full_path)
+        # print(f"Model: {full_path}, found? {found}")
         if found:
             m.load_weights(full_path)
         return found
