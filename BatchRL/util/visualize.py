@@ -4,6 +4,7 @@ from typing import Dict, Sequence, Tuple, List, Any, Type
 
 import matplotlib as mpl
 import numpy as np
+from matplotlib.dates import DateFormatter
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
@@ -650,15 +651,21 @@ def plot_env_evaluation(actions: np.ndarray,
                         agent_names: Sequence[str],
                         save_path: str = None,
                         extra_actions: np.ndarray = None,
-                        series_mask: np.ndarray = None,
+                        series_mask: np.ndarray = None, *,
                         title_ext: str = None,
                         show_rewards: bool = True,
                         np_dt_init: Any = None,
-                        rew_save_path: str = None) -> None:
+                        rew_save_path: str = None,
+                        series_merging_mask: List = None,
+                        bounds: List) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Refactor this shit more!
     TODO: Make it more customizable!
+    TODO: Add temperature bounds...
+    TODO: Allow merging of series (assuming same for all agents?!)
+    TODO: Solve Super title Problems!
+    TODO: Add ticks without labels for intermediate series!
 
     Only for one specific initial condition.
     """
@@ -726,24 +733,22 @@ def plot_env_evaluation(actions: np.ndarray,
 
     ph_kwargs = {"dates": use_time}
 
-    # Plot all the things!
-    for k in range(n_agents):
-        # Plot actions
-        for i in range(n_actions):
-            _plot_helper(x, actions[k, :, i], m_col=clr_map[k],
-                         label=agent_names[k], ax=con_axs[i], steps=True, **ph_kwargs)
-            if plot_extra:
-                _plot_helper(x, extra_actions[k, :, i], m_col=clr_map[k],
-                             label=agent_names[k], ax=con_fb_axs[i], steps=True, **ph_kwargs)
-        # Plot states
-        for i in range(n_feats):
-            _plot_helper(x, states[k, :, i], m_col=clr_map[k],
-                         label=agent_names[k], ax=state_axs[i], **ph_kwargs)
+    def _plot_helper_helper(data: np.ndarray, axis_list: List, ag_names: Sequence[str], steps: bool = False):
 
-        # Plot reward
-        if show_rewards:
-            _plot_helper(x, rewards[k, :], m_col=clr_map[k],
-                         label=agent_names[k], ax=rew_ax, **ph_kwargs)
+        formatter = DateFormatter("%m/%d, %H:%M")
+        for j in range(n_agents):
+            for i, ax in enumerate(axis_list):
+                _plot_helper(x, data[j, :, i], m_col=clr_map[j],
+                             label=ag_names[j], ax=ax, steps=steps, **ph_kwargs)
+                ax.xaxis.set_major_formatter(formatter)
+                ax.xaxis.set_tick_params(rotation=30)
+
+    # Plot all the series
+    _plot_helper_helper(actions, con_axs, agent_names, steps=True)
+    if plot_extra:
+        _plot_helper_helper(extra_actions, con_fb_axs, agent_names, steps=True)
+    _plot_helper_helper(states, state_axs, agent_names, steps=False)
+    _plot_helper_helper(np.expand_dims(rewards, axis=-1), [rew_ax], agent_names, steps=False)
 
     # Set time
     last_c_ax = con_fb_axs[-1] if plot_extra else con_axs[-1]

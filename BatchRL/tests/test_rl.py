@@ -293,6 +293,9 @@ class TestFullEnv(TestCase):
         ag1 = agents_heuristic.ConstActionAgent(self.full_env, 10.0)
         self.full_env.analyze_agents_visually([ag1, test_agent], start_ind=0,
                                               use_noise=False, fitted=True)
+        self.full_env.analyze_agents_visually([ag1, test_agent], start_ind=0,
+                                              use_noise=False, fitted=True, plot_rewards=True,
+                                              title_ext="NewSupTitle")
 
     def test_agents_eval(self):
         ag1 = agents_heuristic.ConstActionAgent(self.full_env, 10.0)
