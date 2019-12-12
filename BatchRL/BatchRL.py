@@ -55,6 +55,11 @@ full_models_short_names = [
     "Naive",
 ]
 
+# Model performance evaluation
+N_PERFORMANCE_STEPS = (1, 4, 12, 24, 48)
+METRICS: Tuple[Type[ErrMetric], ...] = (MSE, MAE, MaxAbsEer)
+PARTS = ["Val", "Train"]
+
 
 def run_integration_tests() -> None:
     """Runs a few rather time consuming tests.
@@ -160,7 +165,7 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
             # raise ValueError(f"Model {name} not hyperparameter-optimizable!")
 
 
-def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
+def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                    verbose: int = 1,
                                    visual_analyze: bool = True,
                                    perf_analyze: bool = False,
@@ -176,20 +181,18 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
         perf_analyze: Whether to do the performance analysis.
         include_composite: Whether to also do all the stuff for the composite models.
     """
-    # Data for performance analysis
-    n_steps = (1, 4, 12, 24, 48)
-    metrics: Tuple[Type[ErrMetric], ...] = (MSE, MAE, MaxAbsEer)  # What is this shit warning?
-
     # Get data and constraints
-    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
-                                                    seq_len=20,
-                                                    add_battery_data=use_bat_data)
+    with ProgWrap(f"Loading data...", verbose > 0):
+        ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
+                                                        seq_len=20,
+                                                        add_battery_data=use_bat_data)
 
     # Load and fit all models
-    lst = base_rnn_models[:]
-    if include_composite:
-        lst += full_models
-    all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True, fit=True) for nm in lst}
+    with ProgWrap(f"Loading models...", verbose > 0):
+        lst = base_rnn_models[:]
+        if include_composite:
+            lst += full_models
+        all_mods = {nm: get_model(nm, ds, rnn_consts, from_hop=True, fit=True) for nm in lst}
 
     # Fit or load all initialized models
     for name, m_to_use in all_mods.items():
@@ -202,38 +205,30 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = True,
 
         # Do the performance analysis
         if perf_analyze:
-            if verbose:
-                pass
-                # print(f"Model: {name}, performance: {m_to_use.hyper_obj()}")
             with ProgWrap(f"Analyzing model performance...", verbose > 0):
-                m_to_use.analyze_performance(n_steps, verbose=False,
+                m_to_use.analyze_performance(N_PERFORMANCE_STEPS, verbose=False,
                                              overwrite=False,
-                                             metrics=metrics)
-
-        # m_to_use.analyze_disturbed("Valid", 'val', 10)
-        # m_to_use.analyze_disturbed("Train", 'train', 10)
+                                             metrics=METRICS)
 
     # Create the performance table
     with ProgWrap("Creating performance table and plots...", verbose > 0):
 
         orig_mask = np.array([0, 1, 2, 3, 5])
-
         full_mods = [all_mods[n] for n in full_models]
-        parts = ["Val", "Train"]
-        metric_names = [m.name for m in metrics]
-        name = "EvalTable"
+        metric_names = [m.name for m in METRICS]
 
+        # Plot the performance
+        name = "EvalTable"
         if use_bat_data:
             name += "WithBat"
-
-        plot_performance_table(full_mods, parts, metric_names, name,
+        plot_performance_table(full_mods, PARTS, metric_names, name,
                                short_mod_names=full_models_short_names,
                                series_mask=orig_mask)
         plot_name = "EvalPlot"
-        plot_performance_graph(full_mods, parts, metrics, plot_name + "_RTempOnly",
+        plot_performance_graph(full_mods, PARTS, METRICS, plot_name + "_RTempOnly",
                                short_mod_names=full_models_short_names,
                                series_mask=np.array([5]), scale_back=True, remove_units=False)
-        plot_performance_graph(full_mods, parts, metrics, plot_name,
+        plot_performance_graph(full_mods, PARTS, METRICS, plot_name,
                                short_mod_names=full_models_short_names,
                                series_mask=orig_mask)
 
@@ -281,9 +276,6 @@ def update_overleaf_plots(verbose: int = 1):
     # If debug is true, the plots are not saved to Overleaf.
     debug: bool = True
 
-    # Metrics to use
-    metrics: Tuple[Type[ErrMetric], ...] = (MSE, MAE, MaxAbsEer)
-
     # # Battery model plots
     # with ProgWrap(f"Running battery...", verbose > 0):
     #     run_battery(do_rl=False, overwrite=True, verbose=0, put_on_ol=not debug)
@@ -299,20 +291,33 @@ def update_overleaf_plots(verbose: int = 1):
                                                                 add_battery_data=True)
 
     # Weather model
-    w_mod_name = base_rnn_models[0]
-    w_mod_lin_name = base_rnn_models[4]
-    w_mod = get_model(w_mod_name, ds, rnn_consts, from_hop=True, fit=True, verbose=False)
-    w_mod_lin = get_model(w_mod_lin_name, ds, rnn_consts, from_hop=False, fit=True, verbose=False)
     with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
-        model_list = [w_mod, w_mod_lin]
-        w_mod.analyze_visually(overwrite=False, verbose=False, one_file=True,
-                               save_to_ol=not debug, base_name="Weather1W")
-        w_mod_lin.analyze_visually(overwrite=False, verbose=False, one_file=True,
-                                   save_to_ol=not debug, base_name="WeatherLinear1W")
+        # Define model indices and names
+        mod_inds = [0, 4]
+        base_names = ["Weather1W", "WeatherLinear1W"]
+        model_names = ["RNN", "Linear"]
+
+        # Load weather models
+        mod_list = [get_model(base_rnn_models[0], ds, rnn_consts,
+                              from_hop=True, fit=True, verbose=False) for k in mod_inds]
+
+        # Visual analysis
+        for m, b_name in zip(mod_list, base_names):
+            m.analyze_visually(overwrite=False, verbose=False, one_file=True,
+                               save_to_ol=not debug, base_name=b_name)
+
+        # Compare the models for one week continuous and 6h predictions
         ol_file_name = os.path.join(OVERLEAF_IMG_DIR, "WeatherComparison")
-        compare_models(model_list, ol_file_name,
+        compare_models(mod_list, ol_file_name,
                        n_steps=(0, 24),
-                       model_names=["RNN", "Linear"])
+                       model_names=model_names)
+
+        # Plot prediction performance
+        plot_performance_graph(mod_list, PARTS, METRICS, "WeatherPerformance",
+                               short_mod_names=model_names,
+                               series_mask=None, scale_back=True,
+                               remove_units=False, put_on_ol=not debug,
+                               compare_models=True)
 
     # # Heating water constant
     # with ProgWrap(f"Plotting heating water...", verbose > 0):
@@ -342,7 +347,7 @@ def update_overleaf_plots(verbose: int = 1):
     #     metrics: Tuple[ErrMetric] = (MSE, MAE, MaxAbsEer)
     #
     #     full_mods = [full_mod]
-    #     parts = ["Val", "Train"]
+    #
     #
     #     plot_name = "EvalPlot"
     #     plot_performance_graph(full_mods, parts, metrics, plot_name + "_RTempOnly",
