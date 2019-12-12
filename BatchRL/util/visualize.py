@@ -115,7 +115,7 @@ def _plot_helper(x, y, m_col='blue', label: str = None,
     # Determine style
     ls = ':'
     marker = '^'
-    ms = 2
+    ms = 4
     kwargs = {'marker': marker, 'c': m_col, 'linestyle': ls, 'label': label, 'markersize': ms, 'mfc': m_col,
               'mec': m_col}
 
