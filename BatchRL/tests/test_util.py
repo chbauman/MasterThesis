@@ -17,7 +17,7 @@ from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, m
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
     dynamic_model_dir, param_dict_to_name
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
-    _trf_desc_units
+    _trf_desc_units, plot_env_evaluation
 
 # Define and create directory for test files.
 TEST_DIR = os.path.join(PLOT_DIR, "Test")  #: Directory for test output.
@@ -481,6 +481,36 @@ class TestPlot(TestCase):
         exp = "Test [(5)^2]"
         out = _trf_desc_units(init_d, MSE)
         self.assertEqual(exp, out)
+
+    def test_plot_env_evaluation(self):
+
+        n_tot_series = 7
+        n_agents = 5
+        ep_len = 11
+
+        n_c_series = 1
+        n_series = n_tot_series - n_c_series
+
+        class MockDataset:
+            dt = 30
+            d = n_tot_series
+            n_c = n_c_series
+            c_inds = range(n_c_series)
+            descriptions = [f"Series {k}" for k in range(n_tot_series)]
+
+        a_names = [f"Agent_{k}" for k in range(n_agents)]
+        save_path = os.path.join(TEST_DIR, "TestPlotEnvEval")
+
+        # Define random data
+        actions = np.random.rand(n_agents, ep_len, n_c_series)
+        extra_actions = np.random.rand(n_agents, ep_len, n_c_series)
+        states = np.random.rand(n_agents, ep_len, n_series)
+        rewards = np.random.rand(n_agents, ep_len)
+
+        # Plot
+        plot_env_evaluation(actions, states, rewards, MockDataset(), a_names, save_path,
+                            extra_actions=extra_actions)
+
     pass
 
 

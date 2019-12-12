@@ -632,7 +632,7 @@ def _setup_axis(ax, base_title: str, desc: str, title: bool = True):
 def _full_setup_axis(ax_list: List, desc_list: List, title: str = None):
 
     # Check input
-    assert len(ax_list) == len(desc_list), "Incompatible lists!"
+    assert len(ax_list) == len(desc_list), f"Incompatible lists: {ax_list} and {desc_list}!"
 
     # Set title if it is not None or an empty string.
     set_title = title is not None and title != ""
@@ -657,11 +657,10 @@ def plot_env_evaluation(actions: np.ndarray,
                         np_dt_init: Any = None,
                         rew_save_path: str = None,
                         series_merging_mask: List = None,
-                        bounds: List) -> None:
+                        bounds: List = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Refactor this shit more!
-    TODO: Make it more customizable!
     TODO: Add temperature bounds...
     TODO: Allow merging of series (assuming same for all agents?!)
     TODO: Solve Super title Problems!
@@ -695,7 +694,7 @@ def plot_env_evaluation(actions: np.ndarray,
 
     # We'll use a separate GridSpecs for controls, states and rewards
     fig = plt.figure()
-    h_s = 0.6
+    h_s = 0.4
     t = 0.95
     gs_con = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
     gs_state = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
@@ -740,8 +739,9 @@ def plot_env_evaluation(actions: np.ndarray,
             for i, ax in enumerate(axis_list):
                 _plot_helper(x, data[j, :, i], m_col=clr_map[j],
                              label=ag_names[j], ax=ax, steps=steps, **ph_kwargs)
-                ax.xaxis.set_major_formatter(formatter)
-                ax.xaxis.set_tick_params(rotation=30)
+                if use_time:
+                    ax.xaxis.set_major_formatter(formatter)
+                    ax.xaxis.set_tick_params(rotation=30)
 
     # Plot all the series
     _plot_helper_helper(actions, con_axs, agent_names, steps=True)
