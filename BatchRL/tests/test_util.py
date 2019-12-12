@@ -15,7 +15,7 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
     get_metrics_eval_save_name_list, load_performance, MSE, find_inds
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
-    dynamic_model_dir, param_dict_to_name
+    dynamic_model_dir, param_dict_to_name, prog_verb
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
     _trf_desc_units, plot_env_evaluation
 
@@ -362,6 +362,13 @@ class TestUtil(TestCase):
             raise e
         except Exception as e:
             raise AssertionError("Some error happened: {}".format(e))
+
+    def test_verbose_propagation(self):
+        for i in [-5, -1, 0, 1, 5]:
+            if i > 0:
+                self.assertEqual(i, prog_verb(i) + 1)
+            else:
+                self.assertEqual(0, prog_verb(i))
 
     def test_yeet(self):
         self.assertRaises(ValueError, yeet)

@@ -63,25 +63,19 @@ LOrEl = Union[Sequence[T], T]
 #######################################################################################################
 # Python stuff
 
-class ProgWrapStdOut(object):
-    """Context manager that wraps the body with output to the console.
+def prog_verb(verbose: int) -> int:
+    """Propagates verbosity.
 
-    If `verbose` is False, this does absolutely nothing.
+    Can be used if a function taking the `verbose` argument
+    calls another function using it.
+
+    Args:
+        verbose: The verbosity level.
+
+    Returns:
+        The verbosity level for next level function calls.
     """
-
-    def __init__(self, init_str: str = "Starting...", verbose: bool = True):
-        self.init_str = init_str
-        self.v = verbose
-
-    def __enter__(self):
-        if self.v:
-            sys.stdout.write(self.init_str + "\r")
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        if self.v:
-            sys.stdout.flush()
-            sys.stdout.write(self.init_str + " Done.\n")
+    return max(0, verbose - 1)
 
 
 def print_decorator(print_fun: Callable):
