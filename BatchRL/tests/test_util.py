@@ -484,32 +484,51 @@ class TestPlot(TestCase):
 
     def test_plot_env_evaluation(self):
 
+        # Variable parameters
         n_tot_series = 7
         n_agents = 5
         ep_len = 11
 
+        # Fixed parameters (or at least unsave to change)
         n_c_series = 1
+        n_weather = 2
         n_series = n_tot_series - n_c_series
+        w_inds = np.arange(n_weather)
+        s_mask = np.arange(n_series)
+        s_mask = s_mask[np.logical_or(s_mask % 2, s_mask < n_weather)]
+        n_reduced_series = len(s_mask)
+        bounds = [(n_reduced_series - 1, (0.3, 0.6))]
 
         class MockDataset:
             dt = 30
             d = n_tot_series
             n_c = n_c_series
-            c_inds = range(n_c_series)
+            c_inds = np.arange(n_c_series)
             descriptions = [f"Series {k}" for k in range(n_tot_series)]
 
         a_names = [f"Agent_{k}" for k in range(n_agents)]
         save_path = os.path.join(TEST_DIR, "TestPlotEnvEval")
+        np_dt_init = str_to_np_dt('2019-01-01 12:00:00')
 
         # Define random data
         actions = np.random.rand(n_agents, ep_len, n_c_series)
         extra_actions = np.random.rand(n_agents, ep_len, n_c_series)
         states = np.random.rand(n_agents, ep_len, n_series)
         rewards = np.random.rand(n_agents, ep_len)
+        for i in w_inds:
+            for a in range(n_agents):
+                states[a, :, i] = states[0, :, i]
 
         # Plot
         plot_env_evaluation(actions, states, rewards, MockDataset(), a_names, save_path,
-                            extra_actions=extra_actions)
+                            extra_actions=extra_actions, title_ext="New Super Title", np_dt_init=np_dt_init)
+        plot_env_evaluation(actions, states, rewards, MockDataset(), a_names, save_path + "_2",
+                            series_mask=s_mask, bounds=[(-1, (0.3, 0.6))], series_merging_list=[(w_inds, "Weather")])
+
+        with self.assertRaises(AssertionError):
+            plot_env_evaluation(actions, states, rewards, MockDataset(), a_names, save_path + "_2",
+                                series_mask=s_mask, bounds=bounds,
+                                series_merging_list=[(w_inds, "Weather"), ([s_mask[-1] - 1, 0], "Fail")])
 
     pass
 

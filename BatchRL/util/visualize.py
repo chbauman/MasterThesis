@@ -630,7 +630,6 @@ def _setup_axis(ax, base_title: str, desc: str, title: bool = True):
 
 
 def _full_setup_axis(ax_list: List, desc_list: List, title: str = None):
-
     # Check input
     assert len(ax_list) == len(desc_list), f"Incompatible lists: {ax_list} and {desc_list}!"
 
@@ -642,6 +641,48 @@ def _full_setup_axis(ax_list: List, desc_list: List, title: str = None):
         _setup_axis(ax, title, desc_list[ct], title=set_title)
         ax.get_xaxis().set_visible(False)
         ax.get_xaxis().set_ticklabels([])
+
+
+def _get_ds_descs(ds, series_mask=None):
+    """Extracts the descriptions for the control and the non-control series.
+
+    Args:
+        ds:
+
+    Returns:
+        The two list of descriptions.
+    """
+    n_tot_vars = ds.d
+    c_inds = ds.c_inds
+    control_descs = [ds.descriptions[c] for c in c_inds]
+    state_descs = [ds.descriptions[c] for c in range(n_tot_vars) if c not in c_inds]
+    if series_mask is not None:
+        state_descs = [state_descs[i] for i in series_mask]
+    return control_descs, state_descs
+
+
+def _handle_merging(n_feats_init, series_mask=None, series_merging_list=None) -> Tuple[int, Any]:
+    masking = series_mask is not None
+    merging = series_merging_list is not None
+    s_mask = series_mask if masking else np.arange(n_feats_init)
+    n_masked = len(s_mask)
+    if not merging:
+        return n_masked, s_mask
+
+    # Now merge!
+    inds = np.ones((n_masked,), dtype=np.bool)
+    for el, _ in series_merging_list:
+        for e in el:
+            # Find e in mask
+            w = np.argwhere(s_mask == e)
+            assert len(w) == 1, f"Series {e} cannot be combined!!"
+            pos = w[0][0]
+            assert inds[pos], f"Series {e} combined at least twice!!"
+            inds[pos] = False
+
+    # Extract final indices
+    new_inds = s_mask[inds]
+    return len(new_inds), new_inds
 
 
 def plot_env_evaluation(actions: np.ndarray,
@@ -656,12 +697,11 @@ def plot_env_evaluation(actions: np.ndarray,
                         show_rewards: bool = True,
                         np_dt_init: Any = None,
                         rew_save_path: str = None,
-                        series_merging_mask: List = None,
-                        bounds: List = None) -> None:
+                        series_merging_list: List = None,
+                        bounds: List[Tuple[int, Tuple[Num, Num]]] = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Refactor this shit more!
-    TODO: Add temperature bounds...
     TODO: Allow merging of series (assuming same for all agents?!)
     TODO: Solve Super title Problems!
     TODO: Add ticks without labels for intermediate series!
@@ -669,28 +709,24 @@ def plot_env_evaluation(actions: np.ndarray,
     Only for one specific initial condition.
     """
     assert len(agent_names) == actions.shape[0], "Incorrect number of names!"
-    assert rewards.shape[0] == actions.shape[0], "Incorrect shapes!"
     if series_mask is not None:
         check_shape(series_mask, (-1,))
         assert len(series_mask) < states.shape[2]
 
     # Check fallback actions
     plot_extra = extra_actions is not None
-
-    # Extract shapes
-    n_agents, episode_len, n_feats = states.shape
-    if series_mask is not None:
-        n_feats = len(series_mask)
-    n_actions = actions.shape[-1]
-    tot_n_plots = n_actions + n_feats + show_rewards + plot_extra * n_actions
-
-    # Take care of the x-axis
     use_time = np_dt_init is not None
-    if use_time:
-        interval = np.timedelta64(ds.dt, 'm')
-        x = [np_dt_init + i * interval for i in range(episode_len)]
-    else:
-        x = range(len(rewards[0]))
+
+    # Extract and check shapes
+    n_agents, episode_len, n_feats = states.shape
+    check_shape(actions, (n_agents, episode_len, -1))
+    check_shape(rewards, (n_agents, episode_len))
+    n_feats, series_mask = _handle_merging(n_feats, series_mask, series_merging_list)
+    if series_merging_list is None:
+        series_merging_list = []
+    n_merged_series = len(series_merging_list)
+    n_actions = actions.shape[-1]
+    tot_n_plots = n_actions + n_feats + n_merged_series + show_rewards + plot_extra * n_actions
 
     # We'll use a separate GridSpecs for controls, states and rewards
     fig = plt.figure()
@@ -698,6 +734,7 @@ def plot_env_evaluation(actions: np.ndarray,
     t = 0.95
     gs_con = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
     gs_state = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
+    gs_state_merged = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
     gs_rew = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
     gs_con_fb = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
 
@@ -705,19 +742,18 @@ def plot_env_evaluation(actions: np.ndarray,
     n_act_plots = n_actions * (1 + plot_extra)
     rew_ax = fig.add_subplot(gs_rew[-1, :])
     con_axs = [fig.add_subplot(gs_con[i, :], sharex=rew_ax) for i in range(n_actions)]
-    state_axs = [fig.add_subplot(gs_state[i, :], sharex=rew_ax) for i in range(n_act_plots, tot_n_plots - 1)]
+    state_axs = [fig.add_subplot(gs_state[i, :], sharex=rew_ax)
+                 for i in range(n_act_plots + n_merged_series, tot_n_plots - 1)]
+    state_mrg_axs = [fig.add_subplot(gs_state_merged[i, :], sharex=rew_ax)
+                     for i in range(n_act_plots, n_act_plots + n_merged_series)]
     con_fb_axs = [fig.add_subplot(gs_con_fb[i, :], sharex=rew_ax) for i in range(n_actions, n_act_plots)]
     assert plot_extra or con_fb_axs == [], "Something is wrong!"
 
     # Find legends
-    n_tot_vars = ds.d
-    c_inds = ds.c_inds
-    control_descs = [ds.descriptions[c] for c in c_inds]
-    state_descs = [ds.descriptions[c] for c in range(n_tot_vars) if c not in c_inds]
+    control_descs, state_descs = _get_ds_descs(ds, series_mask)
 
     # Reduce series
     if series_mask is not None:
-        state_descs = [state_descs[i] for i in series_mask]
         states = states[:, :, series_mask]
 
     # Set titles
@@ -732,8 +768,15 @@ def plot_env_evaluation(actions: np.ndarray,
 
     ph_kwargs = {"dates": use_time}
 
-    def _plot_helper_helper(data: np.ndarray, axis_list: List, ag_names: Sequence[str], steps: bool = False):
+    # Take care of the x-axis
+    if use_time:
+        interval = np.timedelta64(ds.dt, 'm')
+        x = [np_dt_init + i * interval for i in range(episode_len)]
+    else:
+        x = range(len(rewards[0]))
 
+    # Define helper function
+    def _plot_helper_helper(data: np.ndarray, axis_list: List, ag_names: Sequence[str], steps: bool = False):
         formatter = DateFormatter("%m/%d, %H:%M")
         for j in range(n_agents):
             for i, ax in enumerate(axis_list):
@@ -749,6 +792,14 @@ def plot_env_evaluation(actions: np.ndarray,
         _plot_helper_helper(extra_actions, con_fb_axs, agent_names, steps=True)
     _plot_helper_helper(states, state_axs, agent_names, steps=False)
     _plot_helper_helper(np.expand_dims(rewards, axis=-1), [rew_ax], agent_names, steps=False)
+
+    # Plot bounds
+    if bounds is not None:
+        for i, bd in bounds:
+            low, up = bd
+            upper = [up for _ in range(episode_len)]
+            lower = [low for _ in range(episode_len)]
+            state_axs[i].fill_between(x, lower, upper, facecolor='green', interpolate=True, alpha=0.3)
 
     # Set time
     last_c_ax = con_fb_axs[-1] if plot_extra else con_axs[-1]
