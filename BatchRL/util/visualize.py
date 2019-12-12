@@ -643,7 +643,7 @@ def _full_setup_axis(ax_list: List, desc_list: List, title: str = None):
         ax.get_xaxis().set_ticklabels([])
 
 
-def _get_ds_descs(ds, series_mask=None):
+def _get_ds_descs(ds, series_mask=None, series_merging_list=None):
     """Extracts the descriptions for the control and the non-control series.
 
     Args:
@@ -652,13 +652,28 @@ def _get_ds_descs(ds, series_mask=None):
     Returns:
         The two list of descriptions.
     """
+    # Get descriptions from dataset
     n_tot_vars = ds.d
     c_inds = ds.c_inds
     control_descs = [ds.descriptions[c] for c in c_inds]
     state_descs = [ds.descriptions[c] for c in range(n_tot_vars) if c not in c_inds]
+
+    # Extract descriptions for merged plots
+    if series_merging_list is not None:
+        lst = []
+        for inds, _ in series_merging_list:
+            inner_l = [state_descs[i] for i in inds]
+            lst += [inner_l]
+        merge_descs = lst
+    else:
+        merge_descs = None
+
+    # Apply mask to state descriptions
     if series_mask is not None:
         state_descs = [state_descs[i] for i in series_mask]
-    return control_descs, state_descs
+
+    # Return
+    return control_descs, state_descs, merge_descs
 
 
 def _handle_merging(n_feats_init, series_mask=None, series_merging_list=None) -> Tuple[int, Any]:
@@ -685,6 +700,17 @@ def _handle_merging(n_feats_init, series_mask=None, series_merging_list=None) ->
     return len(new_inds), new_inds
 
 
+def _extract_states(states, series_mask=None, series_merging_list=None):
+
+    masked_state = states if series_mask is None else states[:, :, series_mask]
+    merged_state_list = []
+    if series_merging_list is not None:
+        for inds, t in series_merging_list:
+            merged_state_list += [states[:, :, inds]]
+
+    return masked_state, merged_state_list
+
+
 def plot_env_evaluation(actions: np.ndarray,
                         states: np.ndarray,
                         rewards: np.ndarray,
@@ -702,7 +728,6 @@ def plot_env_evaluation(actions: np.ndarray,
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Refactor this shit more!
-    TODO: Allow merging of series (assuming same for all agents?!)
     TODO: Solve Super title Problems!
     TODO: Add ticks without labels for intermediate series!
 
@@ -750,23 +775,20 @@ def plot_env_evaluation(actions: np.ndarray,
     assert plot_extra or con_fb_axs == [], "Something is wrong!"
 
     # Find legends
-    control_descs, state_descs = _get_ds_descs(ds, series_mask)
+    control_descs, state_descs, merge_descs = _get_ds_descs(ds, series_mask, series_merging_list)
 
     # Reduce series
-    if series_mask is not None:
-        states = states[:, :, series_mask]
+    states, merged_states_list = _extract_states(states, series_mask, series_merging_list)
 
-    # Set titles
+    # Set titles and setup axes
     if show_rewards:
         rew_ax.set_title("Rewards")
-
-    # Setup axes
     _full_setup_axis(con_axs, control_descs, "Original Control Inputs")
     if plot_extra:
         _full_setup_axis(con_fb_axs, control_descs, "Constrained Control Inputs")
     _full_setup_axis(state_axs, state_descs, "States")
-
-    ph_kwargs = {"dates": use_time}
+    for ct, m in enumerate(series_merging_list):
+        _full_setup_axis([state_mrg_axs[ct]], [m[1]], "Exogenous States")
 
     # Take care of the x-axis
     if use_time:
@@ -776,12 +798,16 @@ def plot_env_evaluation(actions: np.ndarray,
         x = range(len(rewards[0]))
 
     # Define helper function
-    def _plot_helper_helper(data: np.ndarray, axis_list: List, ag_names: Sequence[str], steps: bool = False):
+    ph_kwargs = {"dates": use_time}
+
+    def _plot_helper_helper(data: np.ndarray, axis_list: List, ag_names: Sequence[str],
+                            steps: bool = False, merged: bool = False):
         formatter = DateFormatter("%m/%d, %H:%M")
-        for j in range(n_agents):
+        for j, a_name in enumerate(ag_names):
             for i, ax in enumerate(axis_list):
-                _plot_helper(x, data[j, :, i], m_col=clr_map[j],
-                             label=ag_names[j], ax=ax, steps=steps, **ph_kwargs)
+                curr_dat = data[i, :, j] if merged else data[j, :, i]
+                _plot_helper(x, curr_dat, m_col=clr_map[j],
+                             label=a_name, ax=ax, steps=steps, **ph_kwargs)
                 if use_time:
                     ax.xaxis.set_major_formatter(formatter)
                     ax.xaxis.set_tick_params(rotation=30)
@@ -792,6 +818,9 @@ def plot_env_evaluation(actions: np.ndarray,
         _plot_helper_helper(extra_actions, con_fb_axs, agent_names, steps=True)
     _plot_helper_helper(states, state_axs, agent_names, steps=False)
     _plot_helper_helper(np.expand_dims(rewards, axis=-1), [rew_ax], agent_names, steps=False)
+    for ct, m in enumerate(series_merging_list):
+        _plot_helper_helper(merged_states_list[ct], [state_mrg_axs[ct]], merge_descs[ct],
+                            steps=False, merged=True)
 
     # Plot bounds
     if bounds is not None:
@@ -815,6 +844,8 @@ def plot_env_evaluation(actions: np.ndarray,
         rew_ax.legend(prop={'size': sz})
     else:
         state_axs[-1].set_xlabel()
+    for axs in state_mrg_axs:
+        axs.legend(prop={'size': sz})
 
     # Super title
     sup_t = 'Visual Analysis' if title_ext is None else title_ext
