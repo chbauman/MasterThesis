@@ -243,7 +243,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
 
 def run_room_models(verbose: int = 1) -> None:
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
-    alpha = 10.0
+    alpha = 5.0  # 10.0
 
     # Get dataset and constraints
     with ProgWrap(f"Loading dataset...", verbose > 0):
@@ -251,6 +251,7 @@ def run_room_models(verbose: int = 1) -> None:
 
     # Load the model and init env
     with ProgWrap(f"Preparing environment...", verbose > 0):
+        # print(f"V: {verbose}, {prog_verb(verbose)}")
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True, verbose=prog_verb(verbose))
         # m.analyze_visually(overwrite=False, plot_acf=False, verbose=prog_verb(verbose) > 0)
         env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3, alpha=alpha)
@@ -262,7 +263,7 @@ def run_room_models(verbose: int = 1) -> None:
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
 
         # Choose agent and fit to env.
-        n_steps = get_rl_steps() * 30
+        n_steps = get_rl_steps()  # * 50
         n_eval_steps = 2000  # n_steps // 100
         agent = DDPGBaseAgent(env,
                               action_range=env.action_range,
@@ -445,7 +446,7 @@ def get_model(name: str, ds: Dataset,
               rnn_consts: DatasetConstraints = None,
               from_hop: bool = False,
               fit: bool = False,
-              verbose: int = 1) -> BaseDynamicsModel:
+              verbose: int = 0) -> BaseDynamicsModel:
     """Loads and optionally fits a model.
 
     Args:
@@ -465,7 +466,7 @@ def get_model(name: str, ds: Dataset,
 
     # Fit if required using one step recursion
     if fit:
-        mod = get_model(name, ds, rnn_consts, from_hop, fit=False)
+        mod = get_model(name, ds, rnn_consts, from_hop, fit=False, verbose=prog_verb(verbose))
         mod.fit(verbose=prog_verb(verbose))
         return mod
 
@@ -719,10 +720,9 @@ def main() -> None:
     # Parse arguments
     parser = def_parser()
     args = parser.parse_args()
-    verbose = args.verbose
-    if verbose:
+    verbose = 5 if args.verbose else 0
+    if args.verbose:
         print("Verbosity turned on.")
-        verbose = 5
 
     # Run integration tests and optionally the cleanup after.
     if args.test:
