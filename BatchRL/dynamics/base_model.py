@@ -850,7 +850,8 @@ def compare_models(model_list: List[BaseDynamicsModel],
                    save_name: str, *,
                    n_steps: Tuple[int, ...] = (1,),
                    part_spec: str = "val",
-                   model_names: List[str] = None) -> None:
+                   model_names: List[str] = None,
+                   overwrite: bool = False) -> None:
     """Compares all the models in the list visually.
 
     All steps in `n_steps` need to be positive, if 0,
@@ -885,6 +886,10 @@ def compare_models(model_list: List[BaseDynamicsModel],
     names = ["" for _ in range(n_pred)]
 
     for n_s in n_steps:
+        curr_save_name = save_name + "_" + part_spec.capitalize()
+        if os.path.isfile(curr_save_name + ".pdf") and not overwrite:
+            continue
+
         # Get data
         data_lst = []
         m_names = ['Ground Truth']
@@ -922,7 +927,6 @@ def compare_models(model_list: List[BaseDynamicsModel],
             new_data_list += [(analysis_ds, tal, None)]
 
         # Plot dataset
-        curr_save_name = save_name + "_" + part_spec.capitalize()
         if n_s > 0:
             curr_save_name += f"_{n_s}"
         plot_visual_all_in_one(new_data_list, curr_save_name)

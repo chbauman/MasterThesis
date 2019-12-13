@@ -1149,7 +1149,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
 
         # Skip loop if file exists
         plot_path = os.path.join(plot_folder, f"{name}_{m_name}")
-        if os.path.isfile(plot_path + ".pfd") and not overwrite:
+        if os.path.isfile(plot_path + ".pdf") and not overwrite:
             continue
 
         share_y = False

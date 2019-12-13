@@ -313,10 +313,11 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
         # Compare the models for one week continuous and 6h predictions
         dir_to_use = OVERLEAF_IMG_DIR if not debug else TEST_DIR
         ol_file_name = os.path.join(dir_to_use, "WeatherComparison")
-        if not os.path.isfile(ol_file_name + ".pdf") or overwrite:
-            compare_models(mod_list, ol_file_name,
-                           n_steps=(0, 24),
-                           model_names=model_names)
+
+        compare_models(mod_list, ol_file_name,
+                       n_steps=(0, 24),
+                       model_names=model_names,
+                       overwrite=overwrite)
 
         # Plot prediction performance
         plot_performance_graph(mod_list, PARTS, METRICS, "WeatherPerformance",
