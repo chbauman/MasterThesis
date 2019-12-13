@@ -30,7 +30,7 @@ from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
-from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str
+from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset
 
 # Define the models by name
@@ -648,6 +648,25 @@ def curr_tests() -> None:
     return
 
 
+arg_def_list = [
+    # The following arguments can be provided.
+    ("verbose", "Increase output verbosity."),
+    ("mod_eval", "Fit and evaluate the room models."),
+    ("optimize", "Execute the hyperparameter optimization."),
+    ("battery", "Run the battery model."),
+    ("room", "Run the room model."),
+    ("test", "Run tests."),
+    ("cleanup", "Run test cleanup."),
+    ("plot", "Run overleaf plot creation."),
+]
+opt_param_l = [
+    ("int", int, "Additional integer parameter"),
+    ("float", float, "Additional integer parameter"),
+    ("str", str, "Additional string parameter"),
+    ("bool", str2bool, "Additional boolean parameter"),
+]
+
+
 def def_parser() -> argparse.ArgumentParser:
     """The argument parser factory.
 
@@ -656,32 +675,16 @@ def def_parser() -> argparse.ArgumentParser:
     """
     # Define argument parser
     parser = argparse.ArgumentParser()
-    arg_def_list = [
-        # The following arguments can be provided.
-        ("verbose", "Increase output verbosity."),
-        ("mod_eval", "Fit and evaluate the room models."),
-        ("optimize", "Execute the hyperparameter optimization."),
-        ("battery", "Run the battery model."),
-        ("room", "Run the room model."),
-        ("test", "Run tests."),
-        ("cleanup", "Run test cleanup."),
-        ("plot", "Run overleaf plot creation."),
-    ]
+
+    # Add boolean args
     for kw, h in arg_def_list:
         short_kw = "-" + kw[0]
         parser.add_argument(short_kw, "--" + kw, action="store_true", help=h)
 
     # Add more optional parameters
-    opt_param_l = [
-        ("int", int, "Additional integer parameter"),
-        ("float", float, "Additional integer parameter"),
-        ("str", str, "Additional string parameter"),
-    ]
     for kw, t, h in opt_param_l:
-        for i in range(3):
-            i_str = str(i + 1)
-            short_kw = "-" + kw[0] + i_str
-            parser.add_argument(short_kw, "--" + kw + i_str, type=t, help=h + f" {i_str}.")
+        short_kw = "-" + kw[0:2]
+        parser.add_argument(short_kw, "--" + kw, nargs='+', type=t, help=h)
     return parser
 
 
@@ -700,6 +703,8 @@ def main() -> None:
     if args.verbose:
         print("Verbosity turned on.")
 
+    print(vars(args))
+
     # Run integration tests and optionally the cleanup after.
     if args.test:
         run_integration_tests()
@@ -708,7 +713,9 @@ def main() -> None:
 
     # Run hyperparameter optimization
     if args.optimize:
-        run_dynamic_model_hyperopt(use_bat_data=True)
+        use_bat_data = args.bool[0] if args.bool is not None else True
+        print(use_bat_data)
+        run_dynamic_model_hyperopt(use_bat_data=use_bat_data)
 
     # Fit and analyze all models
     if args.mod_eval:
@@ -730,7 +737,7 @@ def main() -> None:
 
     # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)
-    any_flag_set = reduce(lambda x, k: x or var_dict[k], var_dict, 0)
+    any_flag_set = reduce(lambda x, k: x or var_dict[k] is True, var_dict, 0)
     if not any_flag_set:
         print("No flags set")
         curr_tests()

@@ -5,6 +5,7 @@ a lot of numpy transformations and also some tools
 to handle the datetime of python and numpy. Also some
 tests of these functions are included.
 """
+import argparse
 import os
 import random
 import shutil
@@ -62,6 +63,17 @@ LOrEl = Union[Sequence[T], T]
 
 #######################################################################################################
 # Python stuff
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 
 def prog_verb(verbose: int) -> int:
     """Propagates verbosity.
