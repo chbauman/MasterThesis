@@ -757,7 +757,8 @@ def plot_env_evaluation(actions: np.ndarray,
     # We'll use a separate GridSpecs for controls, states and rewards
     fig = plt.figure()
     h_s = 0.4
-    t = 0.95
+    margin = 0.4 / tot_n_plots
+    t = 1 - margin  # 0.95
     gs_con = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
     gs_state = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
     gs_state_merged = plt.GridSpec(tot_n_plots, 1, hspace=h_s, top=t, bottom=0.0, figure=fig)
@@ -849,7 +850,7 @@ def plot_env_evaluation(actions: np.ndarray,
 
     # Super title
     sup_t = 'Visual Analysis' if title_ext is None else title_ext
-    con_axs[0].annotate(sup_t, (0.5, 0.975),
+    con_axs[0].annotate(sup_t, (0.5, 1 - margin / 3),
                         xycoords='figure fraction', ha='center',
                         fontsize=24)
     # plt.suptitle('Main title')
