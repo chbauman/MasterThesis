@@ -5,7 +5,7 @@ based on a model of class `BaseDynamicsModel`.
 """
 import os
 from abc import ABC, abstractmethod
-from typing import Dict, Union, List, Tuple
+from typing import Dict, Union, List, Tuple, Optional
 
 import gym
 import numpy as np
@@ -427,7 +427,8 @@ class DynEnv(ABC, gym.Env):
                              n_steps: int = 100,
                              use_noise: bool = False,
                              put_on_ol: bool = False,
-                             overwrite: bool = False) -> np.ndarray:
+                             overwrite: bool = False,
+                             verbose: int = 0) -> Optional[np.ndarray]:
         """Evaluates the given agents for this environment.
 
         Plots the mean rewards and returns all rewards.
@@ -436,12 +437,21 @@ class DynEnv(ABC, gym.Env):
         if not isinstance(agent_list, list):
             agent_list = [agent_list]
 
+        # Handle overwriting
+        p_name = self._construct_plot_name("DetailAnalysis", n_steps, agent_list, put_on_ol)
+        if os.path.isfile(p_name + ".pdf") and not overwrite:
+            if verbose > 0:
+                print("Agent evaluation plot already exists!")
+            return
+
         # Init scores.
         n_agents = len(agent_list)
         n_extra_rewards = len(self.reward_descs)
         n_tot_rewards = n_extra_rewards + 1
         all_rewards = npf32((n_agents, n_steps, n_tot_rewards))
 
+        if verbose > 0:
+            print("Evaluating agents...")
         for a_id, a in enumerate(agent_list):
 
             # Set agent
@@ -460,7 +470,8 @@ class DynEnv(ABC, gym.Env):
             all_rewards[a_id, :, 1:] = ex_rew
 
         # Plot
-        p_name = self._construct_plot_name("DetailAnalysis", n_steps, agent_list, put_on_ol)
+        if verbose > 0:
+            print("Plotting evaluation...")
         title_ext = self._get_detail_eval_title_ext()
         names = [a.get_short_name() for a in agent_list]
         plot_reward_details(names, all_rewards, p_name,
