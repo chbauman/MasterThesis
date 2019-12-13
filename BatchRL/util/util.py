@@ -540,6 +540,24 @@ def split_desc_units(desc: str) -> Tuple[str, str]:
     return p1, "[" + p2
 
 
+def w_temp_str(h_in_and_out) -> str:
+    """Constructs a string for title based on water temperatures.
+
+    Args:
+        h_in_and_out: Water temperatures in and out.
+
+    Returns:
+        String
+    """
+    assert len(h_in_and_out) == 2
+    h_in, h_out = h_in_and_out
+    h = h_in > h_out
+    title_ext = "In / Out temp: {:.3g} / {:.3g} C".format(h_in, h_out)
+    suf = "Heating: " if h else "Cooling: "
+    title_ext = suf + title_ext
+    return title_ext
+
+
 #######################################################################################################
 # Os functions
 

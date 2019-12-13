@@ -12,7 +12,7 @@ import numpy as np
 
 from agents import base_agent
 from dynamics.base_model import BaseDynamicsModel
-from util.numerics import npf32
+from util.numerics import npf32, trf_mean_and_std
 from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num
 from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR
 
@@ -240,6 +240,25 @@ class DynEnv(ABC, gym.Env):
         self.hist = np.copy(self.train_data[start_ind])
         self.curr_ind = self.train_indices[start_ind]
         return np.copy(self.hist[-1, :-self.act_dim])
+
+    def get_scaled_init_state(self, init_ind, heat_inds):
+        """Returns the initial states when reset with `init_ind`.
+
+        Args:
+            init_ind: The reset index.
+            heat_inds: The indices of the series to return.
+
+        Returns:
+            The scaled initial values of the series.
+        """
+        # Find the current heating water temperatures
+        self.reset(init_ind, use_noise=False)
+        curr_s = self.get_curr_state()
+        scaling = self.m.data.scaling
+        h_in_and_out = npf32((2,))
+        for ct, k in enumerate(heat_inds):
+            h_in_and_out[ct] = trf_mean_and_std(curr_s[k], scaling[k], remove=False)
+        return h_in_and_out
 
     def render(self, mode='human'):
         print("Rendering not implemented!")

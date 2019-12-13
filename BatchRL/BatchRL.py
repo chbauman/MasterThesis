@@ -29,8 +29,8 @@ from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
 from tests.test_util import cleanup_test_data, TEST_DIR
-from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
-from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap, prog_verb
+from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric, npf32, trf_mean_and_std
+from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap, prog_verb, w_temp_str
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset
 
 # Define the models by name
@@ -279,10 +279,17 @@ def run_room_models(verbose: int = 1) -> None:
         comb_inds = [[(0, 1), "Weather"]]
         bounds = [(-1, (22.0, 26.0))]
         for s in [0, None]:
+
+            # Find the current heating water temperatures
+            heat_inds = np.array([2, 3])
+            h_in_and_out = env.get_scaled_init_state(s, heat_inds)
+            title_ext = w_temp_str(h_in_and_out)
+
+            # Plot
             env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
                                         plot_constrain_actions=False,
                                         show_rewards=True, series_merging_list=comb_inds,
-                                        bounds=bounds)
+                                        bounds=bounds, title_ext=title_ext)
 
     # env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
 

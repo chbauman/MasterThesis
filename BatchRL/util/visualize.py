@@ -730,6 +730,7 @@ def plot_env_evaluation(actions: np.ndarray,
     TODO: Refactor this shit more!
     TODO: Solve Super title Problems!
     TODO: Add ticks without labels for intermediate series!
+    TODO: Scale combined series accordingly!
 
     Only for one specific initial condition.
     """
@@ -783,9 +784,10 @@ def plot_env_evaluation(actions: np.ndarray,
     # Set titles and setup axes
     if show_rewards:
         rew_ax.set_title("Rewards")
-    _full_setup_axis(con_axs, control_descs, "Original Control Inputs")
+    c_title = "Control Inputs"
+    _full_setup_axis(con_axs, control_descs, "Original " + c_title if plot_extra else c_title)
     if plot_extra:
-        _full_setup_axis(con_fb_axs, control_descs, "Constrained Control Inputs")
+        _full_setup_axis(con_fb_axs, control_descs, "Constrained " + c_title)
     _full_setup_axis(state_axs, state_descs, "States")
     for ct, m in enumerate(series_merging_list):
         _full_setup_axis([state_mrg_axs[ct]], [m[1]], "Exogenous States")
@@ -810,7 +812,7 @@ def plot_env_evaluation(actions: np.ndarray,
                              label=a_name, ax=ax, steps=steps, **ph_kwargs)
                 if use_time:
                     ax.xaxis.set_major_formatter(formatter)
-                    ax.xaxis.set_tick_params(rotation=30)
+                    # ax.xaxis.set_tick_params(rotation=30)
 
     # Plot all the series
     _plot_helper_helper(actions, con_axs, agent_names, steps=True)
@@ -828,20 +830,22 @@ def plot_env_evaluation(actions: np.ndarray,
             low, up = bd
             upper = [up for _ in range(episode_len)]
             lower = [low for _ in range(episode_len)]
-            state_axs[i].fill_between(x, lower, upper, facecolor='green', interpolate=True, alpha=0.3)
+            state_axs[i].fill_between(x, lower, upper, facecolor='green',
+                                      interpolate=True, alpha=0.2)
 
     # Add legends
     sz = 12
-    con_axs[0].legend(prop={'size': sz})
-    state_axs[0].legend(prop={'size': sz})
+    leg_kwargs = {'prop': {'size': sz}}
+    con_axs[0].legend(**leg_kwargs)
+    state_axs[0].legend(**leg_kwargs)
     x_label = "Time" if use_time else f"Timestep [{ds.dt}min]"
     if show_rewards:
         rew_ax.set_xlabel(x_label)
-        rew_ax.legend(prop={'size': sz})
+        rew_ax.legend(**leg_kwargs)
     else:
         state_axs[-1].set_xlabel()
     for axs in state_mrg_axs:
-        axs.legend(prop={'size': sz})
+        axs.legend(**leg_kwargs)
 
     # Super title
     sup_t = 'Visual Analysis' if title_ext is None else title_ext
