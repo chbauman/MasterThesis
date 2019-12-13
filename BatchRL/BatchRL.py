@@ -61,16 +61,17 @@ METRICS: Tuple[Type[ErrMetric], ...] = (MSE, MAE, MaxAbsEer)
 PARTS = ["Val", "Train"]
 
 
-def run_integration_tests() -> None:
+def run_integration_tests(verbose: int = 1) -> None:
     """Runs a few rather time consuming tests.
 
     Raises:
         AssertionError: If a test fails.
     """
     # Do all the tests.
-    test_rnn_models()
-    test_rest_client()
-    get_data_test()
+    with ProgWrap(f"Running a few tests...", verbose > 0):
+        test_rnn_models()
+        test_rest_client()
+        get_data_test()
 
 
 def test_cleanup(verbose: int = 0):
@@ -655,20 +656,20 @@ def curr_tests() -> None:
 
 arg_def_list = [
     # The following arguments can be provided.
-    ("verbose", "Increase output verbosity."),
-    ("mod_eval", "Fit and evaluate the room models."),
-    ("optimize", "Execute the hyperparameter optimization."),
-    ("battery", "Run the battery model."),
-    ("room", "Run the room model."),
-    ("test", "Run tests."),
-    ("cleanup", "Run test cleanup."),
-    ("plot", "Run overleaf plot creation."),
+    ("verbose", "output verbosity"),
+    ("mod_eval", "fit and evaluate the room models"),
+    ("optimize", "optimize hyperparameters of models"),
+    ("battery", "run the battery model."),
+    ("room", "run the room model"),
+    ("test", "run tests"),
+    ("cleanup", "cleanup test files"),
+    ("plot", "run overleaf plot creation"),
 ]
 opt_param_l = [
-    ("int", int, "Additional integer parameter"),
-    ("float", float, "Additional integer parameter"),
-    ("str", str, "Additional string parameter"),
-    ("bool", str2bool, "Additional boolean parameter"),
+    ("int", int, "additional integer parameter(s)"),
+    ("float", float, "additional floating point parameter(s)"),
+    ("str", str, "additional string parameter(s)"),
+    ("bool", str2bool, "additional boolean parameter(s)"),
 ]
 
 
@@ -710,7 +711,7 @@ def main() -> None:
 
     # Run integration tests and optionally the cleanup after.
     if args.test:
-        run_integration_tests()
+        run_integration_tests(verbose=verbose)
     if args.cleanup:
         test_cleanup(verbose=verbose)
 
