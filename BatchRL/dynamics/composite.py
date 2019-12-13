@@ -5,6 +5,7 @@ import numpy as np
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import has_duplicates
+from util.util import ProgWrap, prog_verb
 
 
 class CompositeModel(BaseDynamicsModel):
@@ -68,8 +69,9 @@ class CompositeModel(BaseDynamicsModel):
 
     def fit(self, verbose: int = 0) -> None:
         """Fits all the models."""
-        for m in self.model_list:
-            m.fit()
+        with ProgWrap(f"Fitting sub-models...", verbose > 0):
+            for m in self.model_list:
+                m.fit(verbose=prog_verb(verbose))
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """Aggregated prediction by predicting with all models.
