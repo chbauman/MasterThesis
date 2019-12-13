@@ -270,7 +270,7 @@ class DDPGBaseAgent(KerasBaseAgent):
         """
         # Fit and plot rewards
         hist = self.m.fit(self.env, nb_steps=self.n_steps,
-                          visualize=False, verbose=max(verbose, 1), nb_max_episode_steps=200)
+                          visualize=False, verbose=min(verbose, 1), nb_max_episode_steps=200)
         train_plot = self.env.get_plt_path(self.name + "_train_rewards")
         plot_rewards(hist, train_plot)
 
