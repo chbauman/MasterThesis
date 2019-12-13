@@ -649,6 +649,11 @@ def curr_tests() -> None:
 
 
 def def_parser() -> argparse.ArgumentParser:
+    """The argument parser factory.
+
+    Returns:
+        An argument parser.
+    """
     # Define argument parser
     parser = argparse.ArgumentParser()
     arg_def_list = [
@@ -661,11 +666,22 @@ def def_parser() -> argparse.ArgumentParser:
         ("test", "Run tests."),
         ("cleanup", "Run test cleanup."),
         ("plot", "Run overleaf plot creation."),
-
     ]
     for kw, h in arg_def_list:
         short_kw = "-" + kw[0]
         parser.add_argument(short_kw, "--" + kw, action="store_true", help=h)
+
+    # Add more optional parameters
+    opt_param_l = [
+        ("int", int, "Additional integer parameter"),
+        ("float", float, "Additional integer parameter"),
+        ("str", str, "Additional string parameter"),
+    ]
+    for kw, t, h in opt_param_l:
+        for i in range(3):
+            i_str = str(i + 1)
+            short_kw = "-" + kw[0] + i_str
+            parser.add_argument(short_kw, "--" + kw + i_str, type=t, help=h + f" {i_str}.")
     return parser
 
 
