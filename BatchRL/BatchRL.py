@@ -243,7 +243,8 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
 
 def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                     eval_list: List[int] = None, perf_eval: bool = False,
-                    alpha: float = 5.0, n_steps: int = None) -> None:
+                    alpha: float = 5.0, n_steps: int = None,
+                    overwrite: bool = False) -> None:
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
     if eval_list is None:
         eval_list = [0, None, None]
@@ -297,7 +298,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                                         plot_constrain_actions=False,
                                         show_rewards=True, series_merging_list=comb_inds,
                                         bounds=bounds, title_ext=title_ext,
-                                        put_on_ol=put_on_ol, plot_rewards=True)
+                                        put_on_ol=put_on_ol, plot_rewards=True,
+                                        overwrite=overwrite)
 
     # Do performance evaluation
     if perf_eval:
@@ -398,8 +400,9 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
 
     # DDPG Performance Evaluation
     with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
-        eval_list = [0, 11889]
-        run_room_models(verbose=prog_verb(verbose), put_on_ol=not debug, eval_list=eval_list)
+        eval_list = [11889]
+        run_room_models(verbose=prog_verb(verbose), put_on_ol=not debug,
+                        eval_list=eval_list)
     pass
 
 

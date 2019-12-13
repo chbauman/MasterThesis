@@ -308,7 +308,7 @@ class TestBaseDynamics(TestCase):
     def test_n_step_predict(self):
         in_d, out_d, _ = self.ds.get_split('val')
         self.test_model_2.n_step_predict((in_d, out_d), 4)
-        # TODO: Check output!
+        # TODO: Check return value!
 
 
 class TestHopTable(HyperOptimizableModel):

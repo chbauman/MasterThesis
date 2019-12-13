@@ -278,8 +278,9 @@ class DynEnv(ABC, gym.Env):
                                 title_ext: str = "",
                                 put_on_ol: bool = False,
                                 plot_rewards: bool = False,
-                                bounds:List[Tuple[int, Tuple[Num, Num]]]=None,
-                                series_merging_list:List=None) -> None:
+                                bounds: List[Tuple[int, Tuple[Num, Num]]] = None,
+                                series_merging_list: List = None,
+                                overwrite: bool = False) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:
@@ -290,6 +291,14 @@ class DynEnv(ABC, gym.Env):
             max_steps: The maximum number of steps of an episode.
             state_mask: Mask defining which series to plot.
             plot_constrain_actions: Whether to plot the actions constrained by the env.
+            show_rewards: Use default!
+            title_ext: The title to put in the plot.
+            put_on_ol: Whether to save in Overleaf plot dir.
+            plot_rewards: Whether to plot the reward bar plot for this scenario.
+            bounds: Optional state bounds to put in plot.
+            series_merging_list: Defines series that will be merged. Should be
+                independent of agent's actions.
+            overwrite: Whether to overwrite existing plot files.
         """
         # Make function compatible for single agent input
         if not isinstance(agents, list):
@@ -300,6 +309,17 @@ class DynEnv(ABC, gym.Env):
 
         if not show_rewards:
             raise NotImplementedError("Do not do this!")
+
+        # Choose same random start for all agents
+        if start_ind is None:
+            start_ind = np.random.randint(self.n_start_data)
+        elif start_ind >= self.n_start_data:
+            raise ValueError("start_ind is too large!")
+
+        # Check if file already exists
+        analysis_plot_path = self._construct_plot_name("AgentAnalysis", start_ind, agents, put_on_ol)
+        if os.path.isfile(analysis_plot_path + ".pdf") and not overwrite:
+            return
 
         # Define arrays to save trajectories
         n_non_c_states = self.state_dim - self.act_dim
@@ -312,12 +332,6 @@ class DynEnv(ABC, gym.Env):
         trajectories.fill(np.nan)
         rewards = np.empty((n_agents, self.n_ts_per_eps), dtype=np.float32)
         rewards.fill(np.nan)
-
-        # Choose same random start for all agents
-        if start_ind is None:
-            start_ind = np.random.randint(self.n_start_data)
-        elif start_ind >= self.n_start_data:
-            raise ValueError("start_ind is too large!")
 
         for a_id, a in enumerate(agents):
             # Check that agent references this environment
@@ -368,7 +382,6 @@ class DynEnv(ABC, gym.Env):
 
         # Plot all the things
         name_list = [a.get_short_name() for a in agents]
-        analysis_plot_path = self._construct_plot_name("AgentAnalysis", start_ind, agents, put_on_ol)
         add_pth = self._construct_plot_name("AgentAnalysisReward", start_ind, agents, put_on_ol)
         add_pth = add_pth if plot_rewards else None
         plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
