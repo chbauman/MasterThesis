@@ -242,18 +242,21 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
 
 
 def run_room_models(verbose: int = 1) -> None:
-    # Get dataset and constraints
-    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20)
+    m_name = "FullState_Comp_ReducedTempConstWaterWeather"
+    alpha = 10.0
 
-    # Test all models
-    for m_name in full_models[0:1]:
-        # Load the model and init env
-        m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True)
-        m.analyze_visually(overwrite=False, plot_acf=False, verbose=False)
-        alpha = 10.0
+    # Get dataset and constraints
+    with ProgWrap(f"Loading dataset...", verbose > 0):
+        ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20)
+
+    # Load the model and init env
+    with ProgWrap(f"Preparing environment...", verbose > 0):
+        m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True, verbose=prog_verb(verbose))
+        # m.analyze_visually(overwrite=False, plot_acf=False, verbose=prog_verb(verbose) > 0)
         env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3, alpha=alpha)
 
-        # Define default agents and compare
+    # Define default agents and compare
+    with ProgWrap(f"Initializing agents...", verbose > 0):
         open_agent = ConstActionAgent(env, 1.0)
         closed_agent = ConstActionAgent(env, 0.0)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
@@ -261,23 +264,24 @@ def run_room_models(verbose: int = 1) -> None:
         # Choose agent and fit to env.
         n_steps = get_rl_steps() * 30
         n_eval_steps = 2000  # n_steps // 100
-        if m_name == "FullState_Comp_ReducedTempConstWaterWeather":
-            agent = DDPGBaseAgent(env,
-                                  action_range=env.action_range,
-                                  n_steps=n_steps,
-                                  gamma=0.99, lr=0.00001)
-            agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}"
-            print_if_verb(verbose, "Fitting agent...")
-            agent.fit()
-            print_if_verb(verbose, "Analyzing agents...")
-            agent_list = [open_agent, closed_agent, rule_based_agent, agent]
-            mask = np.array([0, 1, 4])
-            for s in [0, None]:
-                env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
-                                            plot_constrain_actions=False,
-                                            show_rewards=True)
+        agent = DDPGBaseAgent(env,
+                              action_range=env.action_range,
+                              n_steps=n_steps,
+                              gamma=0.99, lr=0.00001)
+        agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}"
 
-            # env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
+    with ProgWrap(f"Fitting DDPG agent...", verbose > 0):
+        agent.fit(verbose=prog_verb(verbose))
+
+    with ProgWrap(f"Analyzing agents...", verbose > 0):
+        agent_list = [open_agent, closed_agent, rule_based_agent, agent]
+        mask = np.array([0, 1, 4])
+        for s in [0, None]:
+            env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
+                                        plot_constrain_actions=False,
+                                        show_rewards=True)
+
+    # env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
@@ -452,7 +456,7 @@ def get_model(name: str, ds: Dataset,
     # Fit if required using one step recursion
     if fit:
         mod = get_model(name, ds, rnn_consts, from_hop, fit=False)
-        mod.fit()
+        mod.fit(verbose=prog_verb(verbose))
         return mod
 
     if verbose and not fit:
@@ -732,7 +736,7 @@ def main() -> None:
 
     if args.room:
         # Room model
-        run_room_models()
+        run_room_models(verbose=verbose)
 
     # Overleaf plots
     if args.plot:

@@ -38,7 +38,6 @@ class Periodic1DayModel(BaseDynamicsModel):
         for predictions longer than one day.
 
         :param day_data: New history data to use.
-        :return: None
         """
         self.pred_t = 0
         self.tot_t = 0
@@ -50,11 +49,8 @@ class Periodic1DayModel(BaseDynamicsModel):
                 dat_copy[i, :, k] = make_periodic(dat_copy[i, :, k])
         self.hist = dat_copy
 
-    def fit(self) -> None:
-        """
-        No need to fit anything.
-
-        :return: None
+    def fit(self, verbose: int = 0) -> None:
+        """No need to fit anything.
         """
         pass
 

@@ -66,7 +66,7 @@ class CompositeModel(BaseDynamicsModel):
         for m in self.model_list:
             m.init_1day(day_data)
 
-    def fit(self) -> None:
+    def fit(self, verbose: int = 0) -> None:
         """Fits all the models."""
         for m in self.model_list:
             m.fit()
