@@ -242,9 +242,9 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
 
 
 def run_room_models(verbose: int = 1, put_on_ol: bool = False,
-                    eval_list: List[int] = None, perf_eval: bool = False) -> None:
+                    eval_list: List[int] = None, perf_eval: bool = False,
+                    alpha: float = 5.0, n_steps: int = None) -> None:
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
-    alpha = 5.0  # 10.0
     if eval_list is None:
         eval_list = [0, None, None]
 
@@ -266,7 +266,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
 
         # Choose agent and fit to env.
-        n_steps = get_rl_steps() * 50
+        if n_steps is None:
+            n_steps = get_rl_steps()
         agent = DDPGBaseAgent(env,
                               action_range=env.action_range,
                               n_steps=n_steps,
@@ -284,7 +285,7 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
         for s in eval_list:
             if s is None:
-                s = np.random.randint(0, 20000)
+                s = np.random.randint(0, env.n_start_data)
 
             # Find the current heating water temperatures
             heat_inds = np.array([2, 3])
@@ -703,8 +704,6 @@ def main() -> None:
     if args.verbose:
         print("Verbosity turned on.")
 
-    print(vars(args))
-
     # Run integration tests and optionally the cleanup after.
     if args.test:
         run_integration_tests()
@@ -714,7 +713,6 @@ def main() -> None:
     # Run hyperparameter optimization
     if args.optimize:
         use_bat_data = args.bool[0] if args.bool is not None else True
-        print(use_bat_data)
         run_dynamic_model_hyperopt(use_bat_data=use_bat_data)
 
     # Fit and analyze all models
@@ -725,11 +723,14 @@ def main() -> None:
 
     if args.battery:
         # Train and analyze the battery model
-        run_battery(verbose=verbose)
+        do_rl = args.bool[0] if args.bool is not None else True
+        run_battery(verbose=verbose, do_rl=do_rl)
 
     if args.room:
         # Room model
-        run_room_models(verbose=verbose)
+        alpha = args.float[0] if args.float is not None else None
+        n_steps = args.int[0] if args.int is not None else None
+        run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps)
 
     # Overleaf plots
     if args.plot:
