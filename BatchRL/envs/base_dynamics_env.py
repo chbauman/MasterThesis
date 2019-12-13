@@ -426,7 +426,8 @@ class DynEnv(ABC, gym.Env):
     def detailed_eval_agents(self, agent_list: Agents,
                              n_steps: int = 100,
                              use_noise: bool = False,
-                             put_on_ol: bool = False) -> np.ndarray:
+                             put_on_ol: bool = False,
+                             overwrite: bool = False) -> np.ndarray:
         """Evaluates the given agents for this environment.
 
         Plots the mean rewards and returns all rewards.

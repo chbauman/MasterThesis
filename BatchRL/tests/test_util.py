@@ -552,8 +552,10 @@ def cleanup_test_data(verbose: int = 0):
         print("Cleaning up some test files...")
 
     # Remove files
+    eval_tab_path = os.path.join(model_plot_path, "EvalTables")
     rem_dirs(model_plot_path, SYNTH_DATA_NAME)
     rem_dirs(model_plot_path, RNN_TEST_DATA_NAME)
+    rem_dirs(eval_tab_path, "Test")
     rem_dirs(dynamic_model_dir, RNN_TEST_DATA_NAME)
     rem_dirs(dynamic_model_dir, SYNTH_DATA_NAME)
     rem_dirs(dynamic_model_dir, "Test")
