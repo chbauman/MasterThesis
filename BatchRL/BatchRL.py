@@ -29,8 +29,8 @@ from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from rest.client import test_rest_client
 from tests.test_util import cleanup_test_data, TEST_DIR
-from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric, npf32, trf_mean_and_std
-from util.util import EULER, get_rl_steps, print_if_verb, ProgWrap, prog_verb, w_temp_str
+from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
+from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset
 
 # Define the models by name
@@ -241,9 +241,12 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                series_mask=orig_mask)
 
 
-def run_room_models(verbose: int = 1) -> None:
+def run_room_models(verbose: int = 1, put_on_ol: bool = False,
+                    eval_list: List[int] = None, perf_eval: bool = False) -> None:
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
     alpha = 5.0  # 10.0
+    if eval_list is None:
+        eval_list = [0, None, None]
 
     # Get dataset and constraints
     with ProgWrap(f"Loading dataset...", verbose > 0):
@@ -263,8 +266,7 @@ def run_room_models(verbose: int = 1) -> None:
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
 
         # Choose agent and fit to env.
-        n_steps = get_rl_steps()  # * 50
-        n_eval_steps = 2000  # n_steps // 100
+        n_steps = get_rl_steps() * 50
         agent = DDPGBaseAgent(env,
                               action_range=env.action_range,
                               n_steps=n_steps,
@@ -279,7 +281,10 @@ def run_room_models(verbose: int = 1) -> None:
         mask = np.array([0, 1, 4])
         comb_inds = [[(0, 1), "Weather"]]
         bounds = [(-1, (22.0, 26.0))]
-        for s in [0, None]:
+
+        for s in eval_list:
+            if s is None:
+                s = np.random.randint(0, 20000)
 
             # Find the current heating water temperatures
             heat_inds = np.array([2, 3])
@@ -290,9 +295,17 @@ def run_room_models(verbose: int = 1) -> None:
             env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
                                         plot_constrain_actions=False,
                                         show_rewards=True, series_merging_list=comb_inds,
-                                        bounds=bounds, title_ext=title_ext)
+                                        bounds=bounds, title_ext=title_ext,
+                                        put_on_ol=put_on_ol, plot_rewards=True)
 
-    # env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
+    # Do performance evaluation
+    if perf_eval:
+        with ProgWrap(f"Evaluating agents...", verbose > 0):
+            n_eval_steps = 2000  # n_steps // 100
+            env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps,
+                                     put_on_ol=put_on_ol)
+    elif verbose > 0:
+        print("No performance evaluation!")
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
@@ -382,63 +395,10 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
     #                            series_mask=np.array([5]), scale_back=True, remove_units=False,
     #                            put_on_ol=True)
 
-    # # DDPG Performance Evaluation
-    # with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
-    #     full_mod_name = full_models[0]
-    #     full_mod = get_model(full_mod_name, ds, rnn_consts, from_hop=True, fit=True, verbose=False)
-    #
-    #     # Define env
-    #     alpha = 10.0
-    #     env = FullRoomEnv(full_mod, cont_actions=True, n_cont_actions=1, disturb_fac=0.3, alpha=alpha)
-    #
-    #     # Define default agents and compare
-    #     open_agent = ConstActionAgent(env, 1.0)
-    #     closed_agent = ConstActionAgent(env, 0.0)
-    #     rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
-    #
-    #     # Choose agent and fit to env.
-    #     n_steps = get_rl_steps() * 30
-    #     agent = DDPGBaseAgent(env,
-    #                           action_range=env.action_range,
-    #                           n_steps=n_steps,
-    #                           gamma=0.99, lr=0.00001)
-    #     agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}"
-    #     agent.fit()
-    #
-    #     # Evaluate
-    #     n_eval_steps = 2000  # n_steps // 100
-    #     agent_list = [open_agent, closed_agent, rule_based_agent, agent]
-    #     mask = np.array([0, 1, 4])
-    #     heat_inds = np.array([2, 3])
-    #
-    #     eval_list = [11889]
-    #     for s in [0] + eval_list:
-    #
-    #         # Find the current heating water temperatures
-    #         env.reset(s, use_noise=False)
-    #         curr_s = env.get_curr_state()
-    #         scaling = ds.scaling
-    #         h_in_and_out = npf32((2,))
-    #         for ct, k in enumerate(heat_inds):
-    #             h_in_and_out[ct] = trf_mean_and_std(curr_s[k], scaling[k], remove=False)
-    #         h_in, h_out = h_in_and_out
-    #         h = h_in > h_out
-    #         title_ext = "In / Out temp: {:.3g} / {:.3g} C".format(h_in, h_out)
-    #         suf = "Heating: " if h else "Cooling: "
-    #         title_ext = suf + title_ext
-    #
-    #         # Do the actual analysis
-    #         env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
-    #                                     use_noise=False,
-    #                                     plot_constrain_actions=False,
-    #                                     show_rewards=True,
-    #                                     title_ext=title_ext,
-    #                                     put_on_ol=False,
-    #                                     plot_rewards=True)
-
-    # env.detailed_eval_agents(agent_list, use_noise=False,
-    #                          n_steps=n_eval_steps, put_on_ol=True)
-
+    # DDPG Performance Evaluation
+    with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
+        eval_list = [0, 11889]
+        run_room_models(verbose=prog_verb(verbose), put_on_ol=not debug, eval_list=eval_list)
     pass
 
 

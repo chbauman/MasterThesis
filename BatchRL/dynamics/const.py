@@ -57,7 +57,8 @@ class ConstModel(BaseDynamicsModel):
 
     def fit(self, verbose: int = 0) -> None:
         """No need to fit anything."""
-        print("Model const, no fitting needed!")
+        if verbose > 0:
+            print("Model const, no fitting needed!")
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """Make predictions by just returning the last input.

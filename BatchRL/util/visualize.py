@@ -731,6 +731,7 @@ def plot_env_evaluation(actions: np.ndarray,
     TODO: Solve Super title Problems!
     TODO: Add ticks without labels for intermediate series!
     TODO: Scale combined series accordingly!
+    TODO: No reward? (show_rewards=False)
 
     Only for one specific initial condition.
     """
@@ -738,6 +739,9 @@ def plot_env_evaluation(actions: np.ndarray,
     if series_mask is not None:
         check_shape(series_mask, (-1,))
         assert len(series_mask) < states.shape[2]
+
+    if not show_rewards:
+        warnings.warn("This does not yet work I guess...")
 
     # Check fallback actions
     plot_extra = extra_actions is not None
