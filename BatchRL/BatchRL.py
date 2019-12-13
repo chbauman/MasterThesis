@@ -276,10 +276,13 @@ def run_room_models(verbose: int = 1) -> None:
     with ProgWrap(f"Analyzing agents...", verbose > 0):
         agent_list = [open_agent, closed_agent, rule_based_agent, agent]
         mask = np.array([0, 1, 4])
+        comb_inds = [[(0, 1), "Weather"]]
+        bounds = [(-1, (22.0, 26.0))]
         for s in [0, None]:
             env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
                                         plot_constrain_actions=False,
-                                        show_rewards=True)
+                                        show_rewards=True, series_merging_list=comb_inds,
+                                        bounds=bounds)
 
     # env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps)
 
@@ -718,7 +721,7 @@ def main() -> None:
     if args.test:
         run_integration_tests()
     if args.cleanup:
-        test_cleanup(verbose)
+        test_cleanup(verbose=verbose)
 
     # Run hyperparameter optimization
     if args.optimize:
@@ -732,7 +735,7 @@ def main() -> None:
 
     if args.battery:
         # Train and analyze the battery model
-        run_battery(overwrite=True, verbose=verbose)
+        run_battery(verbose=verbose)
 
     if args.room:
         # Room model

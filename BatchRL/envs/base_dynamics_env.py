@@ -13,7 +13,7 @@ import numpy as np
 from agents import base_agent
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import npf32
-from util.util import Arr, create_dir, make_param_ext, str_to_np_dt
+from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num
 from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR
 
 Agents = Union[List, base_agent.AgentBase]
@@ -258,7 +258,9 @@ class DynEnv(ABC, gym.Env):
                                 show_rewards: bool = True,
                                 title_ext: str = "",
                                 put_on_ol: bool = False,
-                                plot_rewards: bool = False) -> None:
+                                plot_rewards: bool = False,
+                                bounds:List[Tuple[int, Tuple[Num, Num]]]=None,
+                                series_merging_list:List=None) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Args:
@@ -353,7 +355,8 @@ class DynEnv(ABC, gym.Env):
         plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
                             name_list, analysis_plot_path, clipped_action_sequences,
                             state_mask, show_rewards=show_rewards, title_ext=title_ext,
-                            np_dt_init=np_st_init, rew_save_path=add_pth)
+                            np_dt_init=np_st_init, rew_save_path=add_pth, bounds=bounds,
+                            series_merging_list=series_merging_list)
 
     def _construct_plot_name(self, base_name: str, start_ind: int, agent_list: List,
                              put_on_ol: bool = False):
