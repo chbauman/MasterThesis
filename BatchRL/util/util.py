@@ -10,6 +10,7 @@ import os
 import random
 import shutil
 import sys
+import warnings
 from datetime import datetime
 from functools import wraps
 from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable
@@ -63,6 +64,101 @@ LOrEl = Union[Sequence[T], T]
 
 #######################################################################################################
 # Python stuff
+
+def stdout_redirection_test():
+    """Some experiment with redirecting console output."""
+
+    import ctypes
+    import io
+    import tempfile
+
+    ##############################################################
+    if sys.version_info < (3, 5):
+        libc = ctypes.CDLL(ctypes.util.find_library('c'))
+    else:
+        if hasattr(sys, 'gettotalrefcount'):  # debug build
+            libc = ctypes.CDLL('ucrtbased')
+        else:
+            libc = ctypes.CDLL('api-ms-win-crt-stdio-l1-1-0')
+
+    ##############################################################
+
+    class StdoutRedirector(object):
+        """
+        """
+        s_str: str
+        p_count: int = 0
+
+        def __init__(self, stream, s_name: str = "stdout"):
+            self.s_str = s_name
+            self.stream = stream
+            self.s = getattr(sys, self.s_str)
+            self.original_stdout_fd = self.s.fileno()
+            self.saved_stdout_fd = os.dup(self.original_stdout_fd)
+
+        def _redirect_stdout(self, to_fd, original_fd):
+            """Redirect stdout to the given file descriptor."""
+            # Flush the C-level buffer stdout
+            libc.fflush(None)
+            # Flush and close sys.stdout - also closes the file descriptor (fd)
+            getattr(sys, self.s_str).close()
+            # Make original_stdout_fd point to the same file as to_fd
+            os.dup2(to_fd, original_fd)
+            # Create a new sys.stdout that points to the redirected fd
+            setattr(sys, self.s_str, io.TextIOWrapper(os.fdopen(original_fd, 'wb')))
+
+        def _enter_helper(self):
+            self.t_file = tempfile.TemporaryFile(mode='w+b', buffering=0)
+            self._redirect_stdout(self.t_file.fileno(), self.original_stdout_fd)
+
+        def __enter__(self):
+            self._enter_helper()
+
+            self.old_print = __builtin__.print
+
+            def new_print(*args, **kwargs):
+                self.old_print(*args, **kwargs)
+
+                # Exit
+                self.stream.write(b"Printed:\n")
+                self._exit_helper()
+                self.stream.write(b"End\n")
+
+                # Enter
+                self.saved_stdout_fd = os.dup(self.original_stdout_fd)
+                self._enter_helper()
+
+            __builtin__.print = new_print
+            return self
+
+        def _exit_helper(self):
+            self._redirect_stdout(self.saved_stdout_fd, self.original_stdout_fd)
+            # Copy contents of temporary file to the given stream
+            self.t_file.flush()
+            self.t_file.seek(0, io.SEEK_SET)
+            t_file_read = self.t_file.read()
+            self.stream.write(t_file_read)
+            self.t_file.close()
+            os.close(self.saved_stdout_fd)
+
+        def __exit__(self, exc_type, exc_value, exc_traceback):
+            self._exit_helper()
+            __builtin__.print = self.old_print
+
+    f = io.BytesIO()
+
+    with StdoutRedirector(f):
+
+        print('foobar')
+        print(12)
+        warnings.warn("this is a warning")
+        print("after warning")
+        libc.puts(b'this comes from C')
+        print("after puts")
+        os.system('echo and this is from echo')
+        print("after echo")
+    print('Got stdout: "{0}"'.format(f.getvalue().decode('utf-8')))
+
 
 def str2bool(v):
     if isinstance(v, bool):
