@@ -534,6 +534,17 @@ class RoomBatteryEnv(RLDynEnv):
     default_state_mask = np.array([0, 1, 4, 7])
     default_series_merging = [((0, 1), "Weather")]
 
+    @staticmethod
+    def returning_soc() -> Num:
+        """Defines the SoC of the EV when returning.
+
+        You may override this and make it stochastic.
+
+        Returns:
+            The SoC of the EV.
+        """
+        return 30.0
+
     def __init__(self, m: CompositeModel,
                  p: CProf = None, *,
                  max_eps: int = 48,
@@ -718,10 +729,6 @@ class RoomBatteryEnv(RLDynEnv):
                                                  self.scaled_soc_bound[1])
         return np.copy(self.hist[-1, :-self.act_dim])
 
-    @staticmethod
-    def returning_soc():
-        return 30.0
-
     def step(self, action: Arr) -> Tuple[np.ndarray, float, bool, Dict]:
         """Check if EV came back, if yes, set SoC as defined in `returning_soc()`.
 
@@ -741,4 +748,3 @@ class RoomBatteryEnv(RLDynEnv):
             curr_pred[bat_soc_ind_prep] = ret_soc
 
         return curr_pred, r, ep_over, d
-
