@@ -270,11 +270,24 @@ class TestFullEnv(TestCase):
         self.full_env2.connect_inds = (1, 3)
 
     def test_ev_connect(self):
-        self.assertEqual(self.full_env2.n_ts_per_day, 4, "ts_per_day incorrect!")
-        self.assertEqual(self.full_env.t_init_n, 2, "t_init_n incorrect!")
-        pass
+
+        self.full_env2.reset(0, use_noise=False)
+        d_ind = self.full_env2.get_curr_day_n()
+        self.assertEqual(d_ind, 1, "Starting index wrong!")
+
+        connect_n = self.full_env2.n_remain_connect()
+        self.assertEqual(connect_n, 0, "Connection time computed incorrectly!")
+        self.full_env2.step(np.array([0.0, 0.0]))
+        self.full_env2.step(np.array([0.0, 0.0]))
+        connect_n = self.full_env2.n_remain_connect()
+        self.assertEqual(connect_n, 2, "Connection time computed incorrectly!")
+
+        self.full_env2.step(np.array([0.0, 0.0]))
+        self.assertEqual(self.full_env2.get_curr_day_n(), 0, "Starting index wrong!")
 
     def test_n_ts(self):
+        self.assertEqual(self.full_env2.n_ts_per_day, 4, "ts_per_day incorrect!")
+        self.assertEqual(self.full_env2.t_init_n, 2, "t_init_n incorrect!")
         self.assertEqual(self.full_env.t_init_n, 1, "t_init_n incorrect!")
         self.assertEqual(self.full_env.n_ts_per_day, 2, "ts_per_day incorrect!")
 
