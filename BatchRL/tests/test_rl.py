@@ -265,6 +265,9 @@ class TestFullEnv(TestCase):
         p = PWProfile()
         self.full_env = RoomBatteryEnv(mod, p, max_eps=5)
 
+    def test_n_ts(self):
+        self.assertEqual(self.full_env.t_init_n, 1, "t_init_n incorrect!")
+
     def test_reset_and_step(self):
         init_state = self.full_env.reset()
         room_action = 1.0
