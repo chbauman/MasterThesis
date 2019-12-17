@@ -1098,13 +1098,14 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
     save_figure(plot_path)
 
 
-def _trf_desc_units(curr_desc: str, m: Type[ErrMetric]) -> str:
+def _trf_desc_units(curr_desc: str, m: Type[ErrMetric], add_fac: Num = None) -> str:
     split_d = curr_desc.split("[")
     assert len(split_d) == 2, "Invalid description!"
     base, rest = split_d
     unit = rest.split("]")[0]
     trf_unit = m.unit_trf(unit)
-    return f"{base}[{trf_unit}]"
+    f_add = f"{add_fac:.4f} " if add_fac is not None else ""
+    return f"{base}[{f_add}{trf_unit}]"
 
 
 def plot_performance_graph(model_list: List, parts: List[str],
@@ -1116,7 +1117,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
                            scale_back: bool = False,
                            put_on_ol: bool = False,
                            compare_models: bool = False,
-                           overwrite: bool = True) -> None:
+                           overwrite: bool = True,
+                           scale_over_series: bool = False) -> None:
     """Plots the evaluated performance for multiple models.
 
     `series_mask` can be used to select subset of series.
@@ -1156,6 +1158,18 @@ def plot_performance_graph(model_list: List, parts: List[str],
     if compare_models:
         parts, mod_names = mod_names, parts
 
+    scaling_fac_arr = None
+    if scale_over_series:
+        max_arr = np.amax(data_array, axis=(0, 1, 4))
+        min_arr = np.amin(max_arr, axis=0)
+        scaling_fac_arr = np.empty_like(max_arr)
+        check_shape(max_arr, (n_series, n_metrics))
+        for k in range(n_series):
+            for i in range(n_metrics):
+                inv_scaling_fac = max_arr[k, i] / min_arr[i]
+                scaling_fac_arr[k, i] = inv_scaling_fac
+                data_array[:, :, k, i, :] = data_array[:, :, k, i, :] / inv_scaling_fac
+
     plot_folder = OVERLEAF_IMG_DIR if put_on_ol else EVAL_MODEL_PLOT_DIR
     for model_ind, m_name in enumerate(mod_names):
 
@@ -1193,7 +1207,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
                     # Get labels and errors
                     s_desc = series_descs[series_id]
                     if scale_back:
-                        s_desc = _trf_desc_units(s_desc, m)
+                        fac = scaling_fac_arr[series_id, ct_m] if scale_over_series else None
+                        s_desc = _trf_desc_units(s_desc, m, fac)
                     lab = set_name + ": " + s_desc
                     if compare_models:
                         si = data_array[set_id, model_ind, series_id, ct_m]

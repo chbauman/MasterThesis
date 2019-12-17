@@ -315,7 +315,7 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
     # If debug is true, the plots are not saved to Overleaf.
-    debug: bool = False
+    debug: bool = True
     if verbose > 0 and debug:
         print("Running in debug mode!")
 
@@ -357,7 +357,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
                                short_mod_names=model_names,
                                series_mask=None, scale_back=True,
                                remove_units=False, put_on_ol=not debug,
-                               compare_models=True, overwrite=overwrite)
+                               compare_models=True, overwrite=overwrite,
+                               scale_over_series=True)
 
     # Heating water constant
     with ProgWrap(f"Plotting heating water...", verbose > 0):
