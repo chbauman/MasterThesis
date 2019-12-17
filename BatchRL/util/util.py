@@ -684,8 +684,8 @@ def create_dir(dirname: str) -> None:
         os.makedirs(dirname)
 
 
-def rem_dirs(base_dir: str, pat: str, anywhere: bool = False) -> None:
-    """Removes all files / folders in the directory `EVAL_MODEL_PLOT_DIR` based on `pat`.
+def rem_files_and_dirs(base_dir: str, pat: str, anywhere: bool = False) -> None:
+    """Removes all files / folders in the directory `base_dir` based on `pat`.
 
     If `anywhere` is True, then all files and directories that contain
     the `pat` anywhere are removed. Otherwise only if they contain
@@ -694,7 +694,8 @@ def rem_dirs(base_dir: str, pat: str, anywhere: bool = False) -> None:
     Args:
         base_dir: Base directory.
         pat: String specifying the pattern of stuff to delete.
-        anywhere: Whether the pattern can be contained anywhere in the name.
+        anywhere: Whether the pattern can be contained anywhere in the name
+            and not just at the start.
     """
     pat_len = len(pat)
 

@@ -14,7 +14,7 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
     num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
     get_metrics_eval_save_name_list, load_performance, MSE, find_inds
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
-    np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_dirs, split_desc_units, create_dir, yeet, \
+    np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, yeet, \
     dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
     _trf_desc_units, plot_env_evaluation
@@ -449,11 +449,11 @@ class TestUtil(TestCase):
         os.mkdir(d_name2)
 
         # Test removal
-        rem_dirs(".", pat=id_str)
+        rem_files_and_dirs(".", pat=id_str)
         self.assertFalse(os.path.isfile(f_name))
         self.assertFalse(os.path.isdir(d_name1))
         self.assertTrue(os.path.isdir(d_name2))
-        rem_dirs(".", pat=id_str, anywhere=True)
+        rem_files_and_dirs(".", pat=id_str, anywhere=True)
         self.assertFalse(os.path.isdir(d_name2))
 
     def test_desc_split(self):
@@ -557,15 +557,15 @@ def cleanup_test_data(verbose: int = 0):
 
     # Remove files
     eval_tab_path = os.path.join(model_plot_path, "EvalTables")
-    rem_dirs(model_plot_path, SYNTH_DATA_NAME)
-    rem_dirs(model_plot_path, RNN_TEST_DATA_NAME)
-    rem_dirs(eval_tab_path, "Test")
-    rem_dirs(dynamic_model_dir, RNN_TEST_DATA_NAME)
-    rem_dirs(dynamic_model_dir, SYNTH_DATA_NAME)
-    rem_dirs(dynamic_model_dir, "Test")
-    rem_dirs(hop_path, "TestHop", anywhere=True)
-    rem_dirs(rl_plot_path, "TestEnv")
-    rem_dirs(rl_plot_path, "BatteryTest", anywhere=True)
-    rem_dirs(rl_plot_path, "FullTest", anywhere=True)
-    rem_dirs(dataset_data_path, "Test", anywhere=True)
-    rem_dirs(TEST_DIR, "")
+    rem_files_and_dirs(model_plot_path, SYNTH_DATA_NAME)
+    rem_files_and_dirs(model_plot_path, RNN_TEST_DATA_NAME)
+    rem_files_and_dirs(eval_tab_path, "Test")
+    rem_files_and_dirs(dynamic_model_dir, RNN_TEST_DATA_NAME)
+    rem_files_and_dirs(dynamic_model_dir, SYNTH_DATA_NAME)
+    rem_files_and_dirs(dynamic_model_dir, "Test")
+    rem_files_and_dirs(hop_path, "TestHop", anywhere=True)
+    rem_files_and_dirs(rl_plot_path, "TestEnv")
+    rem_files_and_dirs(rl_plot_path, "BatteryTest", anywhere=True)
+    rem_files_and_dirs(rl_plot_path, "FullTest", anywhere=True)
+    rem_files_and_dirs(dataset_data_path, "Test", anywhere=True)
+    rem_files_and_dirs(TEST_DIR, "")
