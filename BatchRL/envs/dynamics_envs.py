@@ -191,7 +191,8 @@ class FullRoomEnv(RLDynEnv):
 
     def get_w_temp(self, curr_pred: np.ndarray) -> List[float]:
         w_inds = 2, 3
-        return [self._state_to_scale(curr_pred[i], orig_ind=i, remove_mean=False).item() for i in w_inds]
+        return [self._state_to_scale(curr_pred[i], orig_ind=i,
+                                     remove_mean=False).item() for i in w_inds]
 
     reward_descs = [ROOM_ENERGY, TEMP_BOUND_PEN]
 
@@ -486,20 +487,29 @@ class RoomBatteryEnv(RLDynEnv):
     inds: np.ndarray = np.array([2, 3, 5, 8], dtype=np.int32)  #: The indices of water temps, room temp and soc
     prep_inds: np.ndarray  #: The same indices but prepared.
 
-    def __init__(self, m: CompositeModel, p: CProf = None, **kwargs):
-        d = m.data
-
-        # Add max predictions length to kwargs if not there yet.
-        ep_key = 'max_eps'
-        kwargs[ep_key] = kwargs.get(ep_key, 24 * 60 // d.dt // 2)
+    def __init__(self, m: CompositeModel,
+                 p: CProf = None, *,
+                 max_eps: int = 48,
+                 temp_bounds: RangeT = None,
+                 alpha: float = 2.5,
+                 **kwargs):
 
         # Define name
-        name = "RoomBattery"
+        ext = make_param_ext([("NEP", max_eps), ("AL", alpha), ("TBD", temp_bounds)])
+        name = "RoomBattery" + ext
 
         # Init base class.
         act_ranges = [HEAT_ACTION_BOUNDS, BATTERY_ACTION_BOUNDS]
         super().__init__(m, name=name, action_range=act_ranges,
-                         n_cont_actions=2, **kwargs)
+                         n_cont_actions=2, max_eps=max_eps, **kwargs)
+
+        # Save parameters
+        self.alpha = alpha
+        d = m.data
+        if temp_bounds is not None:
+            self.temp_bounds = temp_bounds
+        if np.all(d.is_scaled):
+            self.scaling = d.scaling
 
         # Set cost profile
         if p is not None:
