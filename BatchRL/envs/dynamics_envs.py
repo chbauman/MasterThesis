@@ -111,9 +111,9 @@ class RLDynEnv(DynEnv, ABC):
     def scale_action_for_step(self, action: Arr):
         return self._to_scaled(action)
 
-    def _state_to_scale(self, original_state: np.ndarray,
+    def _state_to_scale(self, original_state: Arr,
                         orig_ind: int,
-                        remove_mean: bool = False) -> np.ndarray:
+                        remove_mean: bool = False) -> Arr:
         """Scales the state according to `orig_ind`."""
         if self.scaling is not None:
             return trf_mean_and_std(original_state, self.scaling[orig_ind], remove=remove_mean)
@@ -287,13 +287,29 @@ class PWProfile(CProf):
             return 1.0
 
 
+def _get_minimum_soc(n_remain_steps: int,
+                     bat_params,
+                     scaled_action_range,
+                     scaled_req_soc,
+                     scaled_soc_bound) -> Num:
+    s_min_scaled, s_max_scaled = scaled_soc_bound
+    min_soc = s_min_scaled
+    min_ac, max_ac = scaled_action_range
+    b, c_min, gam = bat_params
+    c_max = c_min + gam
+    max_ds = b + max_ac * c_max
+    min_soc_goal = scaled_req_soc - n_remain_steps * max_ds
+    min_soc = np.maximum(min_soc, min_soc_goal)
+    return min_soc
+
+
 def clip_battery_action(scaled_action,
                         curr_scaled_soc,
                         scaled_soc_bound,
                         scaled_action_range,
                         bat_params,
                         use_goal_state_fallback: bool = True,
-                        scaled_req_soc=None,
+                        scaled_req_soc: Num = None,
                         time_step: int = None,
                         max_steps: int = None,
                         ):
@@ -332,9 +348,11 @@ def clip_battery_action(scaled_action,
     if use_goal_state_fallback:
         # Satisfy goal SoC requirements
         n_remain_steps = max_steps - time_step
-        max_ds = b + max_ac * c_max
-        min_soc_goal = scaled_req_soc - (n_remain_steps - 1) * max_ds
-        min_soc = np.maximum(min_soc, min_soc_goal)
+        min_soc = _get_minimum_soc(n_remain_steps - 1,
+                                   bat_params,
+                                   scaled_action_range,
+                                   scaled_req_soc,
+                                   scaled_soc_bound)
     next_d_soc_min = min_soc - b - curr_scaled_soc
     if next_d_soc_min < 0:
         ac_min = np.maximum(next_d_soc_min / c_min, min_ac)
@@ -418,7 +436,7 @@ class BatteryEnv(RLDynEnv):
 
         self.reset()
 
-    def _get_scaled_soc(self, unscaled_soc, remove_mean: bool = False):
+    def _get_scaled_soc(self, unscaled_soc: Arr, remove_mean: bool = False) -> Arr:
         """Scales the state-of-charge."""
         return self._state_to_scale(unscaled_soc, orig_ind=0, remove_mean=remove_mean)
 
