@@ -326,9 +326,11 @@ class TestUtil(TestCase):
 
         # Define data
         self.dt1 = np.datetime64('2000-01-01T00:00', 'm')
+        self.dt2 = np.datetime64('2000-01-01T01:15', 'm')
         self.dt3 = np.datetime64('2000-01-01T22:45', 'm')
         self.n_mins = 15
         self.t_init_str = np_dt_to_str(self.dt3)
+        self.t_init_str_2 = np_dt_to_str(self.dt2)
 
     class Dummy:
         def __init__(self):
@@ -430,7 +432,9 @@ class TestUtil(TestCase):
     def test_day_offset_ts(self):
         # Test day_offset_ts
         n_ts = day_offset_ts(self.t_init_str, self.n_mins)
-        assert n_ts == 5, "Fuck you!!"
+        n_ts_passed = day_offset_ts(self.t_init_str_2, self.n_mins, remaining=False)
+        self.assertEqual(n_ts, 5, "Wrong number of remaining timesteps!")
+        self.assertEqual(n_ts_passed, 5, "Wrong number of passed timesteps!")
 
     def test_file_and_dir_removal(self):
         id_str = "Test_Test_test_2519632984160348"

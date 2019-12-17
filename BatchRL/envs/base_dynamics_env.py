@@ -13,7 +13,7 @@ import numpy as np
 from agents import base_agent
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import npf32, trf_mean_and_std
-from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num
+from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts
 from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR
 
 Agents = Union[List, base_agent.AgentBase]
@@ -80,6 +80,8 @@ class DynEnv(ABC, gym.Env):
         self.act_dim = m.data.n_c
         self.state_dim = m.data.d
         self.n_ts_per_eps = 100 if max_eps is None else max_eps
+        self.t_init_n = day_offset_ts(self.m.data.t_init, self.m.data.dt,
+                                      remaining=False)
 
         # Set data and initialize env.
         self._set_data("train")
@@ -232,7 +234,7 @@ class DynEnv(ABC, gym.Env):
                 raise ValueError("start_ind is too fucking large!")
 
         self.hist = np.copy(self.train_data[start_ind])
-        self.curr_ind = self.train_indices[start_ind]
+        self.curr_ind = self.train_indices[start_ind] + self.m.data.seq_len - 1
         return np.copy(self.hist[-1, :-self.act_dim])
 
     def get_scaled_init_state(self, init_ind, heat_inds):
@@ -371,7 +373,7 @@ class DynEnv(ABC, gym.Env):
             clipped_action_sequences = None
 
         # Time stuff
-        shifted_t_init = self.m.data.get_shifted_t_init(self.curr_ind + self.m.data.seq_len - 1)
+        shifted_t_init = self.m.data.get_shifted_t_init(self.curr_ind)
         np_st_init = str_to_np_dt(shifted_t_init)
 
         # Plot all the things
