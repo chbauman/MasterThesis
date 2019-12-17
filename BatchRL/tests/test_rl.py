@@ -309,7 +309,9 @@ class TestFullEnv(TestCase):
         ag1 = agents_heuristic.ConstActionAgent(self.full_env, 10.0)
         ag2 = agents_heuristic.ConstActionAgent(self.full_env, -10.0)
         self.full_env.analyze_agents_visually([ag1, ag2], start_ind=0,
-                                              use_noise=False, fitted=True)
+                                              use_noise=False, fitted=True,
+                                              title_ext="Test Title",
+                                              series_merging_list=[((0, 1), "Weather")])
 
     def test_visual_keras_agent_analysis(self):
         action_range = self.full_env.action_range

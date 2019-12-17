@@ -61,6 +61,9 @@ class DynEnv(ABC, gym.Env):
     do_scaling: bool = False
     a_scaling_pars: Tuple[np.ndarray, np.ndarray] = None
 
+    # Plotting default values
+    default_state_mask: np.ndarray = None
+
     def __init__(self, m: BaseDynamicsModel, name: str = None, max_eps: int = None,
                  disturb_fac: float = 1.0, init_res: bool = True):
         """Initialize the environment.
@@ -316,6 +319,10 @@ class DynEnv(ABC, gym.Env):
 
         if not show_rewards:
             raise NotImplementedError("Do not do this!")
+
+        # Use (possibly overridden) defaults
+        if state_mask is None:
+            state_mask = self.default_state_mask
 
         # Choose same random start for all agents
         if start_ind is None:

@@ -161,6 +161,8 @@ class FullRoomEnv(RLDynEnv):
     alpha: float  #: Weight factor for temperature penalty in reward.
     temp_bounds: RangeT = TEMP_BOUNDS  #: The requested temperature range.
 
+    default_state_mask = np.array([0, 1, 4])
+
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int = 48,
                  temp_bounds: RangeT = None,
@@ -506,6 +508,8 @@ class RoomBatteryEnv(RLDynEnv):
     # Indices specifying series
     inds: np.ndarray = np.array([2, 3, 5, 8], dtype=np.int32)  #: The indices of water temps, room temp and soc
     prep_inds: np.ndarray  #: The same indices but prepared.
+
+    default_state_mask = np.array([0, 1, 4, 7])
 
     def __init__(self, m: CompositeModel,
                  p: CProf = None, *,
