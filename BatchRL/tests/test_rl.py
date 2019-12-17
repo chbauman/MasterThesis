@@ -292,7 +292,7 @@ class TestFullEnv(TestCase):
         self.assertEqual(self.full_env.n_ts_per_day, 2, "ts_per_day incorrect!")
 
     def test_reset_and_step(self):
-        init_state = self.full_env.reset()
+        init_state = self.full_env.reset(0)
         room_action = 1.0
         battery_action = 2.0
         action = np.array([room_action, battery_action])

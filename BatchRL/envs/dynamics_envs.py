@@ -1,6 +1,6 @@
 import warnings
 from abc import ABC, abstractmethod
-from typing import Sequence, Tuple, List
+from typing import Sequence, Tuple, List, Dict
 
 import numpy as np
 
@@ -644,7 +644,7 @@ class RoomBatteryEnv(RLDynEnv):
         # Compute battery energy
         bat_eng = orig_actions[1]
 
-        # Check if the EV is connected
+        # Check if the EV is connected, if not, no energy is used.
         ev_connected = self.n_remain_connect() > 0
         if not ev_connected:
             bat_eng = 0
@@ -717,3 +717,28 @@ class RoomBatteryEnv(RLDynEnv):
                                                  min_soc_tot,
                                                  self.scaled_soc_bound[1])
         return np.copy(self.hist[-1, :-self.act_dim])
+
+    @staticmethod
+    def returning_soc():
+        return 30.0
+
+    def step(self, action: Arr) -> Tuple[np.ndarray, float, bool, Dict]:
+        """Check if EV came back, if yes, set SoC as defined in `returning_soc()`.
+
+        Calls the function of the base class for the actual stepping.
+
+        Returns:
+            See base method.
+        """
+        n_before = self.n_remain_connect()
+        curr_pred, r, ep_over, d = super().step(action)
+        n_after = self.n_remain_connect()
+        if n_after > n_before:
+            # EV came back, set SoC.
+            bat_soc_ind_prep = self.prep_inds[-1]
+            ret_soc = self.returning_soc()
+            self.hist[-1, bat_soc_ind_prep] = ret_soc
+            curr_pred[bat_soc_ind_prep] = ret_soc
+
+        return curr_pred, r, ep_over, d
+
