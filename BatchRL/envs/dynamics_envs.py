@@ -158,9 +158,8 @@ def room_energy_used(water_temps: Sequence, valve_action: Num, t_h: Num):
 
 class FullRoomEnv(RLDynEnv):
     """The environment modeling one room only."""
-    alpha: float = 1.0  #: Weight factor for temperature penalty in reward.
+    alpha: float  #: Weight factor for temperature penalty in reward.
     temp_bounds: RangeT = TEMP_BOUNDS  #: The requested temperature range.
-    bound_violation_penalty: float = 2.0  #: The penalty in the reward for temperatures out of bound.
 
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int = 48,
@@ -344,6 +343,34 @@ def clip_battery_action(scaled_action,
     return np.clip(scaled_action, ac_min, ac_max)
 
 
+def compute_bat_energy(rescaled_action,
+                       dt_h,
+                       n_ts: int = None,
+                       n_ts_per_eps: int = None,
+                       scaled_soc=None,
+                       soc_bound=None,
+                       req_soc: Num = None,
+                       action_range=None, *,
+                       fail_violations: bool = True,
+                       fail_actions: bool = True):
+    if fail_actions:
+        assert linear_oob_penalty(rescaled_action, action_range) <= 0.0001, "WTF"
+
+    # Compute energy used
+    energy_used = rescaled_action * dt_h
+
+    # Check constraint violation
+    if fail_violations:
+        assert linear_oob_penalty(scaled_soc, soc_bound) <= 0.001, "WTF2"
+
+        # Penalty for not having charged enough at the end of the episode.
+        if n_ts > n_ts_per_eps - 1 and scaled_soc < req_soc - 0.001:
+            assert linear_oob_penalty(scaled_soc, [req_soc, 100]) <= 0.0, "Model not working"
+
+    # Total reward is minus the energy used.
+    return np.array([energy_used])
+
+
 class BatteryEnv(RLDynEnv):
     """The environment for the battery model.
 
@@ -359,7 +386,6 @@ class BatteryEnv(RLDynEnv):
     p: CProf = None  #: The cost profile.
 
     def __init__(self, m: BatteryModel, p: CProf = None, **kwargs):
-
         d = m.data
 
         # Add max predictions length to kwargs if not there yet.
@@ -385,7 +411,7 @@ class BatteryEnv(RLDynEnv):
         # Check underlying dataset
         assert d.d == 2 and d.n_c == 1, "Not the correct number of series in dataset!"
         assert d.c_inds[0] == 1, "Second series needs to be controllable!"
-        
+
         self.reset()
 
     def _get_scaled_soc(self, unscaled_soc, remove_mean: bool = False):
@@ -398,26 +424,18 @@ class BatteryEnv(RLDynEnv):
         """Computes the energy used by dis- / charging the battery."""
 
         action_rescaled = self._to_scaled(action, True)[0]
-        assert linear_oob_penalty(action_rescaled, self.action_range[0]) <= 0.0001, "WTF"
-
-        # Compute energy used
-        energy_used = action_rescaled * self.dt_h
-
-        # Compute costs (Deprecated!)
-        if self.p is not None:
-            energy_used *= self.p(self.n_ts)
-            assert False, "No pricing for battery only!"
-
-        # Check constraint violation
         curr_pred = self._get_scaled_soc(curr_pred).item()
-        assert linear_oob_penalty(curr_pred, self.soc_bound) <= 0.001, "WTF2"
 
-        # Penalty for not having charged enough at the end of the episode.
-        if self.n_ts > self.n_ts_per_eps - 1 and curr_pred < self.req_soc - 0.001:
-            assert linear_oob_penalty(curr_pred, [self.req_soc, 100]) <= 0.0, "Model not working"
-
-        # Total reward is minus the energy used.
-        return np.array([energy_used])
+        return compute_bat_energy(action_rescaled,
+                                  self.dt_h,
+                                  self.n_ts,
+                                  self.n_ts_per_eps,
+                                  curr_pred,
+                                  self.soc_bound,
+                                  self.req_soc,
+                                  self.action_range[0],
+                                  fail_violations=True,
+                                  fail_actions=True)
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
         """Compute the reward for choosing action `action`.
@@ -439,7 +457,6 @@ class BatteryEnv(RLDynEnv):
         return False
 
     def scale_action_for_step(self, action: Arr):
-
         # Get scaled actions and bound
         scaled_ac = self._to_scaled(np.array(self.action_range, dtype=np.float32))
         assert len(scaled_ac) == 1 and len(scaled_ac[0]) == 2, "Shape mismatch!"
@@ -537,7 +554,9 @@ class RoomBatteryEnv(RLDynEnv):
         # Compute penalty for room temperature
         r_inds = self.prep_inds[-2], self.inds[-2]
         room_temp_scaled = curr_pred[r_inds[0]]
-        orig_room_temp = self._state_to_scale(room_temp_scaled, orig_ind=r_inds[1], remove_mean=False).item()
+        orig_room_temp = self._state_to_scale(room_temp_scaled,
+                                              orig_ind=r_inds[1],
+                                              remove_mean=False).item()
         temp_pen = temp_penalty(orig_room_temp, TEMP_BOUNDS, self.dt_h)
 
         # Compute room energy
@@ -565,7 +584,7 @@ class RoomBatteryEnv(RLDynEnv):
 
     def scale_action_for_step(self, action: Arr):
         # Clips the fucking actions!
-        assert len(action) == 2, "Invalid action"
+        assert len(action) == 2, f"Invalid action: {action}"
         scaled_action = self._to_scaled(action, extra_scaling=True)
         room_action, bat_action = scaled_action
 
