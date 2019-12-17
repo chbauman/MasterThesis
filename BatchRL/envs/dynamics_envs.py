@@ -522,6 +522,7 @@ class RoomBatteryEnv(RLDynEnv):
     connect_inds: Tuple[int, int] = (7 * 4, 17 * 4)  #: The timestep index for disconnection and connection of the EV.
     p: CProf = None  #: The cost profile.
     m: CompositeModel
+    bat_mod: BatteryModel
 
     reward_descs = list([TEMP_BOUND_PEN, ROOM_ENERGY, BAT_ENERGY])  #: Description of the detailed reward.
 
@@ -546,14 +547,17 @@ class RoomBatteryEnv(RLDynEnv):
         ext = make_param_ext([("NEP", max_eps), ("AL", alpha), ("TBD", temp_bounds)])
         name = "RoomBattery" + ext
 
+        # Set prepared indices
+        d = m.data
+        self.prep_inds = d.to_prepared(self.inds)
+
         # Init base class.
         act_ranges = [HEAT_ACTION_BOUNDS, BATTERY_ACTION_BOUNDS]
         super().__init__(m, name=name, action_range=act_ranges,
-                         n_cont_actions=2, max_eps=max_eps, **kwargs)
+                         n_cont_actions=2, max_eps=max_eps, **kwargs, init_res=False)
 
         # Save parameters
         self.alpha = alpha
-        d = m.data
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds
         if soc_bound is not None:
@@ -573,8 +577,24 @@ class RoomBatteryEnv(RLDynEnv):
             self.p = p
             self.reward_descs = list(self.reward_descs) + [ENG_COST]
 
-        # Set prepared indices
-        self.prep_inds = d.to_prepared(self.inds)
+        # Precompute scaled quantities
+        soc_bound_arr = np.array(self.soc_bound, copy=True)
+        bat_soc_ind = self.inds[-1]
+        self.bat_soc_ind_prep = self.prep_inds[-1]
+        self.scaled_soc_bound = self._state_to_scale(soc_bound_arr,
+                                                     orig_ind=bat_soc_ind,
+                                                     remove_mean=True)
+        self.min_goal_soc_scaled = self._state_to_scale(np.array(SOC_GOAL),
+                                                        orig_ind=bat_soc_ind,
+                                                        remove_mean=True)
+
+        # Set battery model
+        bat_mod = self.m.model_list[-1]
+        assert isinstance(bat_mod, BatteryModel), "Supposed to be a battery model!"
+        self.bat_mod = bat_mod
+
+        # Reset
+        self.reset()
 
     def n_remain_connect(self) -> int:
         """Computes the number of timesteps left until disconnection of the EV.
@@ -651,28 +671,18 @@ class RoomBatteryEnv(RLDynEnv):
         room_action_clipped = np.clip(room_action, *self.action_range_scaled[0])
 
         # Clip battery action
-        bat_mod = self.m.model_list[-1]
-        assert isinstance(bat_mod, BatteryModel), "Supposed to be a battery model!"
         scaled_ac = self.action_range_scaled[1]
         curr_state = self.get_curr_state()
-        soc_bound_arr = np.array(self.soc_bound, copy=True)
-        bat_soc_ind = self.inds[-1]
         bat_soc_ind_prep = self.prep_inds[-1]
-        scaled_soc_bound = self._state_to_scale(soc_bound_arr,
-                                                orig_ind=bat_soc_ind,
-                                                remove_mean=True)
-        min_goal_soc = self._state_to_scale(np.array(SOC_GOAL),
-                                            orig_ind=bat_soc_ind,
-                                            remove_mean=True)
 
         # Clip the actions.
         bat_action_clipped = clip_battery_action(bat_action,
                                                  curr_state[bat_soc_ind_prep],
-                                                 scaled_soc_bound,
+                                                 self.scaled_soc_bound,
                                                  scaled_ac,
-                                                 bat_mod.params,
+                                                 self.bat_mod.params,
                                                  True,
-                                                 min_goal_soc,
+                                                 self.min_goal_soc_scaled,
                                                  self.n_ts,
                                                  self.n_ts_per_eps)
 
@@ -681,3 +691,26 @@ class RoomBatteryEnv(RLDynEnv):
     def episode_over(self, curr_pred: np.ndarray) -> bool:
         # Let it diverge!
         return False
+
+    def reset(self, *args, **kwargs) -> np.ndarray:
+        super().reset(*args, **kwargs)
+
+        # Handle invalid battery states
+        n_remain = self.n_remain_connect()
+        min_soc = _get_minimum_soc(n_remain,
+                                   self.bat_mod.params,
+                                   self.action_range_scaled[1],
+                                   self.min_goal_soc_scaled,
+                                   self.scaled_soc_bound)
+        bat_soc_ind = self.inds[-1]
+        min_soc_orig = self._state_to_scale(min_soc,
+                                            orig_ind=bat_soc_ind,
+                                            remove_mean=True)
+
+        # Clip the values to the valid SoC range!
+        bat_soc_ind_prep = self.prep_inds[-1]
+        min_soc_tot = np.minimum(min_soc_orig, self.scaled_soc_bound[0])
+        self.hist[:, bat_soc_ind_prep] = np.clip(self.hist[:, bat_soc_ind_prep],
+                                                 min_soc_tot,
+                                                 self.scaled_soc_bound[1])
+        return np.copy(self.hist[-1, :-self.act_dim])
