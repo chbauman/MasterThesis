@@ -644,6 +644,11 @@ class RoomBatteryEnv(RLDynEnv):
         # Compute battery energy
         bat_eng = orig_actions[1]
 
+        # Check if the EV is connected
+        ev_connected = self.n_remain_connect() > 0
+        if not ev_connected:
+            bat_eng = 0
+
         # Return all parts
         all_rew = [temp_pen, room_eng, bat_eng]
         if self.p is not None:
@@ -674,8 +679,6 @@ class RoomBatteryEnv(RLDynEnv):
         scaled_ac = self.action_range_scaled[1]
         curr_state = self.get_curr_state()
         bat_soc_ind_prep = self.prep_inds[-1]
-
-        # Clip the actions.
         bat_action_clipped = clip_battery_action(bat_action,
                                                  curr_state[bat_soc_ind_prep],
                                                  self.scaled_soc_bound,
