@@ -17,6 +17,7 @@ from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable
 import builtins as __builtin__
 
 import numpy as np
+from nptyping import Array
 
 #######################################################################################################
 # Platform specific stuff
@@ -60,6 +61,10 @@ Arr = Union[Num, np.ndarray]
 # Type for list or single element of specified type.
 T = TypeVar('T')
 LOrEl = Union[Sequence[T], T]
+
+# Indices
+IndArr = Union[Array[np.int], Array[np.int32], Array[np.int64]]
+IndT = Union[Sequence[int], IndArr]
 
 
 #######################################################################################################

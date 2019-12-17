@@ -1,3 +1,4 @@
+nptyping
 scikit-learn
 requests
 opcua

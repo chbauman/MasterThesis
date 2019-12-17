@@ -10,7 +10,7 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 from util.numerics import fit_linear_1d, load_performance, check_shape, ErrMetric, MaxAbsEer, MAE
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
-    create_dir, Num, yeet, tot_size, mins_to_str
+    create_dir, Num, yeet, tot_size, mins_to_str, IndT
 
 if EULER:
     # Do not use GUI based backend.
@@ -711,7 +711,7 @@ def _extract_states(states, series_mask=None, series_merging_list=None):
 
 
 # Type for series merge lists
-MergeListT = List[Tuple[Tuple[int, ...], str]]
+MergeListT = List[Tuple[IndT, str]]
 
 
 def plot_env_evaluation(actions: np.ndarray,
