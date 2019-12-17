@@ -497,6 +497,7 @@ class RoomBatteryEnv(RLDynEnv):
     alpha: float  #: Reward scaling factor.
     temp_bounds: RangeT = TEMP_BOUNDS  #: Temperature comfort bounds.
     soc_bound: Sequence = SOC_BOUND  #: The requested state-of-charge range.
+    connect_inds: Tuple[int, int] = (7 * 4, 17 * 4)  #: The timestep index for disconnection and connection of the EV.
     p: CProf = None  #: The cost profile.
     m: CompositeModel
 
@@ -511,6 +512,7 @@ class RoomBatteryEnv(RLDynEnv):
                  max_eps: int = 48,
                  temp_bounds: RangeT = None,
                  soc_bound: Sequence = None,
+                 connect_hours: Tuple[int, int] = None,
                  alpha: float = 2.5,
                  **kwargs):
 
@@ -533,6 +535,13 @@ class RoomBatteryEnv(RLDynEnv):
         if np.all(d.is_scaled):
             self.scaling = d.scaling
 
+        # Battery (dis-) connection time
+        if connect_hours is not None:
+            n_ts_per_h = 60 // d.dt
+            assert len(connect_hours) == 2, f"Invalid connect hours: {connect_hours}!!"
+            c_d, c_c = connect_hours
+            self.connect_inds = n_ts_per_h * c_d, n_ts_per_h * c_c
+            
         # Set cost profile
         if p is not None:
             self.p = p
@@ -540,6 +549,23 @@ class RoomBatteryEnv(RLDynEnv):
 
         # Set prepared indices
         self.prep_inds = d.to_prepared(self.inds)
+
+    def n_remain_connect(self) -> int:
+        """Computes the number of timesteps left until disconnection of the EV.
+
+        If it is already disconnected, returns 0.
+
+        Returns:
+            Number of timesteps remaining until disconnection.
+        """
+        disc_ind, con_ind = self.connect_inds
+        curr_ind = self.get_curr_day_n()
+        if disc_ind <= curr_ind < con_ind:
+            return 0
+        elif curr_ind < disc_ind:
+            return disc_ind - curr_ind
+        else:
+            return disc_ind + self.n_ts_per_day - curr_ind
 
     def get_water_temp(self, ind_pos: int, curr_pred: np.ndarray):
         """Retrieves the scaled and the original water temperatures."""
