@@ -216,6 +216,9 @@ class DynEnv(ABC, gym.Env):
         """Returns the current state."""
         return self.hist[-1, :-self.act_dim]
 
+    def get_curr_day_n(self):
+        return (self.curr_n + self.n_ts) % self.n_ts_per_day
+
     def reset(self, start_ind: int = None, use_noise: bool = True) -> np.ndarray:
         """Resets the environment.
 
