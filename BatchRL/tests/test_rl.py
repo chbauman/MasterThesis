@@ -267,6 +267,7 @@ class TestFullEnv(TestCase):
 
     def test_n_ts(self):
         self.assertEqual(self.full_env.t_init_n, 1, "t_init_n incorrect!")
+        self.assertEqual(self.full_env.ts_per_day, 2, "ts_per_day incorrect!")
 
     def test_reset_and_step(self):
         init_state = self.full_env.reset()

@@ -494,7 +494,9 @@ class RoomBatteryEnv(RLDynEnv):
 
     """
 
-    alpha: float = 1.0  #: Reward scaling factor.
+    alpha: float  #: Reward scaling factor.
+    temp_bounds: RangeT = TEMP_BOUNDS  #: Temperature comfort bounds.
+    soc_bound: Sequence = SOC_BOUND  #: The requested state-of-charge range.
     p: CProf = None  #: The cost profile.
     m: CompositeModel
 
@@ -508,6 +510,7 @@ class RoomBatteryEnv(RLDynEnv):
                  p: CProf = None, *,
                  max_eps: int = 48,
                  temp_bounds: RangeT = None,
+                 soc_bound: Sequence = None,
                  alpha: float = 2.5,
                  **kwargs):
 
@@ -525,6 +528,8 @@ class RoomBatteryEnv(RLDynEnv):
         d = m.data
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds
+        if soc_bound is not None:
+            self.soc_bound = soc_bound
         if np.all(d.is_scaled):
             self.scaling = d.scaling
 
@@ -544,7 +549,8 @@ class RoomBatteryEnv(RLDynEnv):
         scaled_water = curr_pred[prep_inds]
         orig_water = np.copy(scaled_water)
         for ct, el in enumerate(orig_water):
-            orig_water[ct] = self._state_to_scale(el, orig_ind=inds[ct], remove_mean=False).item()
+            orig_water[ct] = self._state_to_scale(el, orig_ind=inds[ct],
+                                                  remove_mean=False).item()
         return scaled_water, orig_water
 
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
@@ -557,7 +563,7 @@ class RoomBatteryEnv(RLDynEnv):
         orig_room_temp = self._state_to_scale(room_temp_scaled,
                                               orig_ind=r_inds[1],
                                               remove_mean=False).item()
-        temp_pen = temp_penalty(orig_room_temp, TEMP_BOUNDS, self.dt_h)
+        temp_pen = temp_penalty(orig_room_temp, self.temp_bounds, self.dt_h)
 
         # Compute room energy
         scaled_water, orig_water = self.get_water_temp(0, curr_pred)
@@ -596,7 +602,7 @@ class RoomBatteryEnv(RLDynEnv):
         assert isinstance(bat_mod, BatteryModel), "Supposed to be a battery model!"
         scaled_ac = self.action_range_scaled[1]
         curr_state = self.get_curr_state()
-        soc_bound_arr = np.array(SOC_BOUND, copy=True)
+        soc_bound_arr = np.array(self.soc_bound, copy=True)
         bat_soc_ind = self.inds[-1]
         bat_soc_ind_prep = self.prep_inds[-1]
         scaled_soc_bound = self._state_to_scale(soc_bound_arr,

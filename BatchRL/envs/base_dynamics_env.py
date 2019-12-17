@@ -13,7 +13,7 @@ import numpy as np
 from agents import base_agent
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import npf32, trf_mean_and_std
-from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts
+from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts, ts_per_day
 from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR
 
 Agents = Union[List, base_agent.AgentBase]
@@ -79,9 +79,12 @@ class DynEnv(ABC, gym.Env):
         self.disturb_fac = disturb_fac
         self.act_dim = m.data.n_c
         self.state_dim = m.data.d
+
+        # Time indices
         self.n_ts_per_eps = 100 if max_eps is None else max_eps
         self.t_init_n = day_offset_ts(self.m.data.t_init, self.m.data.dt,
                                       remaining=False)
+        self.ts_per_day = ts_per_day(self.m.data.dt)
 
         # Set data and initialize env.
         self._set_data("train")
