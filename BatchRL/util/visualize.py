@@ -1104,7 +1104,8 @@ def _trf_desc_units(curr_desc: str, m: Type[ErrMetric], add_fac: Num = None) -> 
     base, rest = split_d
     unit = rest.split("]")[0]
     trf_unit = m.unit_trf(unit)
-    f_add = f"{add_fac:.4f} " if add_fac is not None else ""
+    use_fac = add_fac is not None and not np.allclose(add_fac, 1.0)
+    f_add = f"{add_fac:.4f} " if use_fac else ""
     return f"{base}[{f_add}{trf_unit}]"
 
 
@@ -1158,14 +1159,25 @@ def plot_performance_graph(model_list: List, parts: List[str],
     if compare_models:
         parts, mod_names = mod_names, parts
 
+    # Series scaling
+    if scale_back:
+        for k in range(n_series):
+            for i, m in enumerate(metric_list):
+                dat = data_array[:, :, k, i, :]
+                # Scale the errors
+                if scale_back:
+                    m_and_sd = scaling[k]
+                    data_array[:, :, k, i, :] = m.scaling_fun(dat, m_and_sd[1])
+
+    # Scale series to have same maximum
     scaling_fac_arr = None
-    if scale_over_series:
+    if scale_over_series and n_series > 1:
         max_arr = np.amax(data_array, axis=(0, 1, 4))
         min_arr = np.amin(max_arr, axis=0)
         scaling_fac_arr = np.empty_like(max_arr)
         check_shape(max_arr, (n_series, n_metrics))
         for k in range(n_series):
-            for i in range(n_metrics):
+            for i, m in enumerate(metric_list):
                 inv_scaling_fac = max_arr[k, i] / min_arr[i]
                 scaling_fac_arr[k, i] = inv_scaling_fac
                 data_array[:, :, k, i, :] = data_array[:, :, k, i, :] / inv_scaling_fac
@@ -1215,10 +1227,10 @@ def plot_performance_graph(model_list: List, parts: List[str],
                     else:
                         si = data_array[model_ind, set_id, series_id, ct_m]
 
-                    # Scale the errors
-                    m_and_sd = scaling[series_id]
-                    if scale_back:
-                        si = m.scaling_fun(si, m_and_sd[1])
+                    # # Scale the errors
+                    # m_and_sd = scaling[series_id]
+                    # if scale_back:
+                    #     si = m.scaling_fun(si, m_and_sd[1])
 
                     # Plot
                     plt.plot(inds, si, joint_styles[set_id],
