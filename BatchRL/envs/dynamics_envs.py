@@ -541,7 +541,7 @@ class RoomBatteryEnv(RLDynEnv):
             assert len(connect_hours) == 2, f"Invalid connect hours: {connect_hours}!!"
             c_d, c_c = connect_hours
             self.connect_inds = n_ts_per_h * c_d, n_ts_per_h * c_c
-            
+
         # Set cost profile
         if p is not None:
             self.p = p

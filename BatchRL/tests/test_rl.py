@@ -265,6 +265,15 @@ class TestFullEnv(TestCase):
         p = PWProfile()
         self.full_env = RoomBatteryEnv(mod, p, max_eps=5)
 
+        mod2 = get_full_composite_model(dt_h=6)
+        self.full_env2 = RoomBatteryEnv(mod2, p, max_eps=5)
+        self.full_env2.connect_inds = (1, 3)
+
+    def test_ev_connect(self):
+        self.assertEqual(self.full_env2.n_ts_per_day, 4, "ts_per_day incorrect!")
+        self.assertEqual(self.full_env.t_init_n, 2, "t_init_n incorrect!")
+        pass
+
     def test_n_ts(self):
         self.assertEqual(self.full_env.t_init_n, 1, "t_init_n incorrect!")
         self.assertEqual(self.full_env.n_ts_per_day, 2, "ts_per_day incorrect!")

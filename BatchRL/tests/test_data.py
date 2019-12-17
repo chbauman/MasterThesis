@@ -69,13 +69,14 @@ def get_test_ds(dat: np.ndarray, c_inds: np.ndarray,
     return ds
 
 
-def get_full_model_dataset(n: int = 150) -> Dataset:
+def get_full_model_dataset(n: int = 150, dt: int = 12 * 60) -> Dataset:
     """Creates a test dataset for the full model.
 
     Includes the room and the battery.
 
     Args:
         n: Number of rows in data.
+        dt: Number of minutes in a timestep
 
     Returns:
         Dataset with normal data.
@@ -83,7 +84,7 @@ def get_full_model_dataset(n: int = 150) -> Dataset:
     shape = (n, 10)
     data = np.random.normal(1.0, 1.0, shape)
     c_inds = np.array([4, 9])
-    ds = get_test_ds(data, c_inds)
+    ds = get_test_ds(data, c_inds, dt=dt)
 
     # Scale sin and cos time accordingly
     dat = np.copy(data[:, 6])

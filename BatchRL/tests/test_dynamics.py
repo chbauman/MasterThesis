@@ -22,10 +22,10 @@ from util.util import Num, tot_size
 from util.visualize import plot_performance_graph
 
 
-def get_full_composite_model(standardized: bool = False) -> BaseDynamicsModel:
+def get_full_composite_model(standardized: bool = False, dt_h: int = 12) -> CompositeModel:
     # Get full dataset
     n = 100
-    ds = get_full_model_dataset(n)
+    ds = get_full_model_dataset(n, dt=dt_h * 60)
     if standardized:
         ds.standardize()
     ds.split_data()
