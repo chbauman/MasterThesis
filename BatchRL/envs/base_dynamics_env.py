@@ -161,13 +161,6 @@ class DynEnv(ABC, gym.Env):
         """
         return False
 
-    def scale_actions(self, actions):
-        """Scales the actions to the correct range.
-
-        Deprecated!!
-        """
-        return actions
-
     def scale_action_for_step(self, action: Arr):
         return action
 
