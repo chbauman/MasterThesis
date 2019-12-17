@@ -370,7 +370,7 @@ class BatteryEnv(RLDynEnv):
         name = "Battery"
 
         # Init base class.
-        super().__init__(m, name=name, action_range=[(-100, 100)], **kwargs)
+        super().__init__(m, name=name, action_range=[(-100, 100)], **kwargs, init_res=False)
 
         self.p = p
         assert p is None, "Cost profile does not make sense here!"
@@ -385,6 +385,8 @@ class BatteryEnv(RLDynEnv):
         # Check underlying dataset
         assert d.d == 2 and d.n_c == 1, "Not the correct number of series in dataset!"
         assert d.c_inds[0] == 1, "Second series needs to be controllable!"
+        
+        self.reset()
 
     def _get_scaled_soc(self, unscaled_soc, remove_mean: bool = False):
         """Scales the state-of-charge."""
@@ -464,8 +466,6 @@ class BatteryEnv(RLDynEnv):
         super().reset(*args, **kwargs)
 
         # Clip the values to the valid SoC range!
-        if self.scaled_soc_bd is None:
-            self.scaled_soc_bd = rem_mean_and_std(np.array(self.soc_bound), self.m.data.scaling[0])
         self.hist[:, 0] = np.clip(self.hist[:, 0],
                                   self.scaled_soc_bd[0],
                                   self.scaled_soc_bd[1])

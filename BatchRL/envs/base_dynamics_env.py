@@ -59,7 +59,7 @@ class DynEnv(ABC, gym.Env):
     a_scaling_pars: Tuple[np.ndarray, np.ndarray] = None
 
     def __init__(self, m: BaseDynamicsModel, name: str = None, max_eps: int = None,
-                 disturb_fac: float = 1.0):
+                 disturb_fac: float = 1.0, init_res: bool = True):
         """Initialize the environment.
 
         Args:
@@ -83,7 +83,8 @@ class DynEnv(ABC, gym.Env):
 
         # Set data and initialize env.
         self._set_data("train")
-        self.reset()
+        if init_res:
+            self.reset()
 
     def set_agent(self, a: base_agent.AgentBase):
         self.info = a.get_info()
