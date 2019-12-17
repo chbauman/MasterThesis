@@ -31,6 +31,8 @@ class DynEnv(ABC, gym.Env):
     act_dim: int  #: The dimension of the action space.
     state_dim: int  #: The dimension of the state space.
     n_ts_per_eps: int  #: The maximum number of timesteps per episode.
+    n_ts_per_day: int  #: Number of time steps in a day.
+    t_init_n: int  #: The index of the initial timestep in the dataset.
 
     # State data, might change if `step` is called.
     n_ts: int = 0  #: The current number of timesteps.
@@ -44,16 +46,17 @@ class DynEnv(ABC, gym.Env):
     # Info about the current episode.
     use_noise: bool = True  #: Whether to add noise when simulating.
     curr_ind: int = None
+    curr_n: int = None
 
     orig_actions: np.ndarray  #: Array with fallback actions
 
     # The one day data
-    day_ind: int = 0  #: The index of the day in `train_days`.
     n_train_days: int  #: Number of training days
-    n_ts_per_day: int  #: Number of time steps in a day
     train_days: List  #: The data of all days, where all data is available.
     day_inds: np.ndarray  #: Index vector storing the timestep offsets to the days
+    day_ind: int = 0  #: The index of the day in `train_days`.
 
+    # Scaling info
     info: Dict = None  #: A dict with info about the current agent.
     do_scaling: bool = False
     a_scaling_pars: Tuple[np.ndarray, np.ndarray] = None
@@ -84,7 +87,7 @@ class DynEnv(ABC, gym.Env):
         self.n_ts_per_eps = 100 if max_eps is None else max_eps
         self.t_init_n = day_offset_ts(self.m.data.t_init, self.m.data.dt,
                                       remaining=False)
-        self.ts_per_day = ts_per_day(self.m.data.dt)
+        self.n_ts_per_day = ts_per_day(self.m.data.dt)
 
         # Set data and initialize env.
         self._set_data("train")
@@ -238,6 +241,7 @@ class DynEnv(ABC, gym.Env):
 
         self.hist = np.copy(self.train_data[start_ind])
         self.curr_ind = self.train_indices[start_ind] + self.m.data.seq_len - 1
+        self.curr_n = (self.t_init_n + self.curr_ind) % self.n_ts_per_day
         return np.copy(self.hist[-1, :-self.act_dim])
 
     def get_scaled_init_state(self, init_ind, heat_inds):
