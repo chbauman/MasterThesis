@@ -701,7 +701,6 @@ def _handle_merging(n_feats_init, series_mask=None, series_merging_list=None) ->
 
 
 def _extract_states(states, series_mask=None, series_merging_list=None):
-
     masked_state = states if series_mask is None else states[:, :, series_mask]
     merged_state_list = []
     if series_merging_list is not None:
@@ -709,6 +708,10 @@ def _extract_states(states, series_mask=None, series_merging_list=None):
             merged_state_list += [states[:, :, inds]]
 
     return masked_state, merged_state_list
+
+
+# Type for series merge lists
+MergeListT = List[Tuple[Tuple[int, ...], str]]
 
 
 def plot_env_evaluation(actions: np.ndarray,
@@ -723,7 +726,7 @@ def plot_env_evaluation(actions: np.ndarray,
                         show_rewards: bool = True,
                         np_dt_init: Any = None,
                         rew_save_path: str = None,
-                        series_merging_list: List = None,
+                        series_merging_list: MergeListT = None,
                         bounds: List[Tuple[int, Tuple[Num, Num]]] = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 

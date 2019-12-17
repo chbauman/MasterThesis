@@ -161,7 +161,9 @@ class FullRoomEnv(RLDynEnv):
     alpha: float  #: Weight factor for temperature penalty in reward.
     temp_bounds: RangeT = TEMP_BOUNDS  #: The requested temperature range.
 
+    # Plot defaults
     default_state_mask = np.array([0, 1, 4])
+    default_series_merging = [((0, 1), "Weather")]
 
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int = 48,
@@ -509,7 +511,9 @@ class RoomBatteryEnv(RLDynEnv):
     inds: np.ndarray = np.array([2, 3, 5, 8], dtype=np.int32)  #: The indices of water temps, room temp and soc
     prep_inds: np.ndarray  #: The same indices but prepared.
 
+    # Plot defaults
     default_state_mask = np.array([0, 1, 4, 7])
+    default_series_merging = [((0, 1), "Weather")]
 
     def __init__(self, m: CompositeModel,
                  p: CProf = None, *,

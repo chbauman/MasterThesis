@@ -14,7 +14,7 @@ from agents import base_agent
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import npf32, trf_mean_and_std
 from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts, ts_per_day
-from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR
+from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR, MergeListT
 
 Agents = Union[List, base_agent.AgentBase]
 
@@ -63,6 +63,7 @@ class DynEnv(ABC, gym.Env):
 
     # Plotting default values
     default_state_mask: np.ndarray = None
+    default_series_merging: MergeListT = None
 
     def __init__(self, m: BaseDynamicsModel, name: str = None, max_eps: int = None,
                  disturb_fac: float = 1.0, init_res: bool = True):
@@ -289,7 +290,7 @@ class DynEnv(ABC, gym.Env):
                                 put_on_ol: bool = False,
                                 plot_rewards: bool = False,
                                 bounds: List[Tuple[int, Tuple[Num, Num]]] = None,
-                                series_merging_list: List = None,
+                                series_merging_list: MergeListT = None,
                                 overwrite: bool = False) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
@@ -323,6 +324,8 @@ class DynEnv(ABC, gym.Env):
         # Use (possibly overridden) defaults
         if state_mask is None:
             state_mask = self.default_state_mask
+        if series_merging_list is None:
+            series_merging_list = self.default_series_merging
 
         # Choose same random start for all agents
         if start_ind is None:
