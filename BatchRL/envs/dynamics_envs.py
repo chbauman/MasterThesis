@@ -178,7 +178,7 @@ class FullRoomEnv(RLDynEnv):
         super(FullRoomEnv, self).__init__(m, max_eps, name=name, **kwargs)
 
         # Save parameters
-        self.alpha = alpha
+        self.alpha = alpha if alpha is not None else 2.5
         d = m.data
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds

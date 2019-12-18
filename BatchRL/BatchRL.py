@@ -90,7 +90,7 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
     battery model and evaluates some agents.
     """
     if verbose:
-        print("Running battery...")
+        print("Running battery modeling...")
 
     # Load and prepare battery data.
     with ProgWrap(f"Loading battery data...", verbose > 0):
@@ -103,6 +103,7 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
     # Initialize and fit battery model.
     with ProgWrap(f"Fitting and analyzing battery...", verbose > 0):
         bat_mod = BatteryModel(bat_ds)
+        bat_mod.fit(verbose=prog_verb(verbose))
         bat_mod.analyze_bat_model(put_on_ol=put_on_ol)
         bat_mod.analyze_visually(save_to_ol=put_on_ol, base_name="Bat",
                                  overwrite=overwrite, n_steps=steps, verbose=verbose > 0)
@@ -113,21 +114,22 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
         if verbose:
             print("No RL this time.")
         return
+    if verbose:
+        print("Running battery RL.")
 
-    # Get numbers of steps
-    n_steps = get_rl_steps(True)
-    n_eval_steps = 10000 if EULER else 100
+    with ProgWrap(f"Defining environment...", verbose > 0):
+        # Get numbers of steps
+        n_steps = get_rl_steps(True)
+        n_eval_steps = 10000 if EULER else 100
 
-    # Define the environment
-    bat_env = BatteryEnv(bat_mod,
-                         disturb_fac=0.3,
-                         cont_actions=True,
-                         n_cont_actions=1)
+        # Define the environment
+        bat_env = BatteryEnv(bat_mod,
+                             disturb_fac=0.3,
+                             cont_actions=True,
+                             n_cont_actions=1)
 
     # Define the agents
     const_ag_1, const_ag_2 = get_const_agents(bat_env)
-    # const_ag_1 = ConstActionAgent(bat_env, 6.0)  # Charge
-    # const_ag_2 = ConstActionAgent(bat_env, -3.0)  # Discharge
     dqn_agent = DDPGBaseAgent(bat_env,
                               action_range=bat_env.action_range,
                               n_steps=n_steps,
@@ -266,6 +268,7 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
     with ProgWrap(f"Initializing agents...", verbose > 0):
         open_agent = ConstActionAgent(env, 1.0)
         closed_agent = ConstActionAgent(env, 0.0)
+        closed_agent, open_agent = get_const_agents(env)
         rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
 
         # Choose agent and fit to env.
