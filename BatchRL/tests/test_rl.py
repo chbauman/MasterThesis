@@ -5,11 +5,10 @@ import numpy as np
 from agents import agents_heuristic
 from agents.agents_heuristic import get_const_agents, RuleBasedAgent
 from agents.keras_agents import DDPGBaseAgent, KerasBaseAgent
-from data_processing.data import choose_dataset
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.composite import CompositeModel
-from tests.test_data import construct_test_ds
 from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT, RoomBatteryEnv, PWProfile, FullRoomEnv
+from tests.test_data import construct_test_ds
 from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model, get_full_composite_model
 from util.numerics import rem_mean_and_std, add_mean_and_std
 from util.util import Arr
@@ -378,4 +377,5 @@ class TestFullEnv(TestCase):
                          msg=f"Incorrect action shape: {a.shape}, expected: {exp_shape}!")
         self.assertEqual(c_rate, a[1], f"Unexpected charging action: {a[1]}, expected: {c_rate}")
         self.assertEqual(0.0, a[0], f"Unexpected heating action: {a[0]}, expected: {0.0}")
+
     pass
