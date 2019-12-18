@@ -3,7 +3,7 @@ from unittest import TestCase
 import numpy as np
 
 from agents import agents_heuristic
-from agents.agents_heuristic import get_const_agents
+from agents.agents_heuristic import get_const_agents, RuleBasedAgent
 from agents.keras_agents import DDPGBaseAgent, KerasBaseAgent
 from data_processing.data import choose_dataset
 from dynamics.base_model import BaseDynamicsModel
@@ -188,10 +188,31 @@ class TestFullRoomEnv(TestCase):
         super().__init__(*args, **kwargs)
         mod = get_full_composite_model(add_battery=False)
         self.env = FullRoomEnv(mod, max_eps=5)
+        self.pred = np.arange(7)
 
-    def test_something(self):
+    def test_basics(self):
         self.env.reset()
         self.env.step(0.0)
+        self.env.step(np.array([0.0]))
+
+    def test_get_r_temp(self):
+        r_temp = self.env.get_r_temp(self.pred)
+        r_temp_2 = self.env.get_unscaled(self.pred, 5)
+        self.assertEqual(r_temp, r_temp_2, msg=f"Series scaling failed!")
+
+    def test_rule_based(self):
+        rba = RuleBasedAgent(self.env, rule=[0.0, 2.0])
+        a = rba.get_action(self.pred)
+        self.assertAlmostEqual(a, 1.0)
+
+    def test_strict_rule_based(self):
+        r = [0.0, 5.0]
+        rba_s = RuleBasedAgent(self.env, rule=r, strict=True)
+        rba = RuleBasedAgent(self.env, rule=r)
+        a = rba.get_action(self.pred)
+        a_s = rba_s.get_action(self.pred)
+        self.assertAlmostEqual(a_s, 1.0, msg="Rule based agent should be cooling!")
+        self.assertAlmostEqual(a, 0.0, msg="Rule based agent should not be cooling!")
 
 
 class KerasDDPGTest(DDPGBaseAgent):

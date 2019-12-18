@@ -89,8 +89,8 @@ class RuleBasedAgent(AgentBase):
             Next control action.
         """
         # Find water and room temperatures
-        w_in_temp, _ = self.env.get_w_temp(state)
-        r_temp = self.env.get_r_temp(state)
+        w_in_temp = self.env.get_unscaled(state, self.w_inds_orig[0])
+        r_temp = self.env.get_unscaled(state, self.r_temp_ind_orig)
 
         # Determine if you want to do heating / cooling or not
         heat_action = 0.0
