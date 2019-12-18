@@ -194,10 +194,20 @@ class FullRoomEnv(RLDynEnv):
         assert d.d == 8 and d.n_c == 1, "Not the correct number of series in dataset!"
 
     def get_r_temp(self, curr_pred: np.ndarray) -> float:
-        assert 4 == self.m.data.to_prepared(5)
-        return self._state_to_scale(curr_pred[4], orig_ind=5, remove_mean=False).item()
+        """Returns the originally scaled room temperature.
+
+        Deprecated: Use `get_unscaled()` directly!
+
+        Args:
+            curr_pred: Current state.
+
+        Returns:
+            Room Temperature
+        """
+        return self.get_unscaled(curr_pred, 5)
 
     def get_w_temp(self, curr_pred: np.ndarray) -> List[float]:
+        # Deprecated as `get_r_temp`
         w_inds = 2, 3
         return [self._state_to_scale(curr_pred[i], orig_ind=i,
                                      remove_mean=False).item() for i in w_inds]
