@@ -1105,7 +1105,7 @@ def _trf_desc_units(curr_desc: str, m: Type[ErrMetric], add_fac: Num = None) -> 
     unit = rest.split("]")[0]
     trf_unit = m.unit_trf(unit)
     use_fac = add_fac is not None and not np.allclose(add_fac, 1.0)
-    f_add = f"{add_fac:.4f} " if use_fac else ""
+    f_add = f"{add_fac:.3g} " if use_fac else ""
     return f"{base}[{f_add}{trf_unit}]"
 
 
