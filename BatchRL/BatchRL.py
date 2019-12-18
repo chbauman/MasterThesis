@@ -13,7 +13,7 @@ from typing import List, Tuple, Sequence, Type
 import numpy as np
 from sklearn.linear_model import MultiTaskLassoCV
 
-from agents.agents_heuristic import ConstActionAgent, RuleBasedHeating, get_const_agents
+from agents.agents_heuristic import ConstActionAgent, RuleBasedAgent, get_const_agents
 from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, get_data_test, \
     choose_dataset_and_constraints
@@ -266,10 +266,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
     # Define default agents and compare
     with ProgWrap(f"Initializing agents...", verbose > 0):
-        open_agent = ConstActionAgent(env, 1.0)
-        closed_agent = ConstActionAgent(env, 0.0)
         closed_agent, open_agent = get_const_agents(env)
-        rule_based_agent = RuleBasedHeating(env, env.temp_bounds)
+        rule_based_agent = RuleBasedAgent(env, env.temp_bounds)
 
         # Choose agent and fit to env.
         if n_steps is None:
