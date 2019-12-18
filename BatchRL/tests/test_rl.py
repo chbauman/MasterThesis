@@ -9,7 +9,7 @@ from data_processing.data import choose_dataset
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.composite import CompositeModel
 from tests.test_data import construct_test_ds
-from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT, RoomBatteryEnv, PWProfile
+from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT, RoomBatteryEnv, PWProfile, FullRoomEnv
 from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model, get_full_composite_model
 from util.numerics import rem_mean_and_std, add_mean_and_std
 from util.util import Arr
@@ -186,11 +186,12 @@ class TestFullRoomEnv(TestCase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.ds = choose_dataset('Model_Room43', seq_len=20)
+        mod = get_full_composite_model(add_battery=False)
+        self.env = FullRoomEnv(mod, max_eps=5)
 
     def test_something(self):
-        pass
+        self.env.reset()
+        self.env.step(0.0)
 
 
 class KerasDDPGTest(DDPGBaseAgent):

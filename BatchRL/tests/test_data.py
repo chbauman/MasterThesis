@@ -69,21 +69,23 @@ def get_test_ds(dat: np.ndarray, c_inds: np.ndarray,
     return ds
 
 
-def get_full_model_dataset(n: int = 150, dt: int = 12 * 60) -> Dataset:
+def get_full_model_dataset(n: int = 150, dt: int = 12 * 60, add_battery: bool = True) -> Dataset:
     """Creates a test dataset for the full model.
 
     Includes the room and the battery.
 
     Args:
         n: Number of rows in data.
-        dt: Number of minutes in a timestep
+        dt: Number of minutes in a timestep.
+        add_battery: Whether to include the battery.
 
     Returns:
         Dataset with normal data.
     """
-    shape = (n, 10)
+    n_series = 10 if add_battery else 8
+    shape = (n, n_series)
     data = np.random.normal(1.0, 1.0, shape)
-    c_inds = np.array([4, 9])
+    c_inds = np.array([4, 9]) if add_battery else np.array([4])
     ds = get_test_ds(data, c_inds, dt=dt)
 
     # Scale sin and cos time accordingly
@@ -91,9 +93,11 @@ def get_full_model_dataset(n: int = 150, dt: int = 12 * 60) -> Dataset:
     data[:, 6] = np.sin(dat)
     data[:, 7] = np.cos(dat)
 
-    # Assert SoC bounds
-    data[:, 8] += 50.0
+    if add_battery:
+        # Assert SoC bounds
+        data[:, 8] += 50.0
 
+    # Overwrite default values
     ds.seq_len = 8
     ds.val_percent = 0.3
 

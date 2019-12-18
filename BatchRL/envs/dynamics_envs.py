@@ -111,6 +111,10 @@ class RLDynEnv(DynEnv, ABC):
     def scale_action_for_step(self, action: Arr):
         return self._to_scaled(action)
 
+    def get_unscaled(self, curr_pred: np.ndarray, orig_ind: int) -> float:
+        prep_ind = self.m.data.to_prepared(orig_ind)
+        return self._state_to_scale(curr_pred[prep_ind], orig_ind=orig_ind, remove_mean=False).item()
+
     def _state_to_scale(self, original_state: Arr,
                         orig_ind: int,
                         remove_mean: bool = False) -> Arr:
@@ -190,6 +194,7 @@ class FullRoomEnv(RLDynEnv):
         assert d.d == 8 and d.n_c == 1, "Not the correct number of series in dataset!"
 
     def get_r_temp(self, curr_pred: np.ndarray) -> float:
+        assert 4 == self.m.data.to_prepared(5)
         return self._state_to_scale(curr_pred[4], orig_ind=5, remove_mean=False).item()
 
     def get_w_temp(self, curr_pred: np.ndarray) -> List[float]:

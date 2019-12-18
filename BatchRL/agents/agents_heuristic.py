@@ -44,6 +44,9 @@ class RuleBasedAgent(AgentBase):
     const_charge_rate: Num
     env: Union[FullRoomEnv, RoomBatteryEnv]
 
+    w_inds_orig = [2, 3]
+    r_temp_ind_orig = 5
+
     def __init__(self, env: Union[FullRoomEnv, RoomBatteryEnv],
                  rule: Sequence,
                  const_charge_rate: Num = None,

@@ -22,17 +22,15 @@ from util.util import Num, tot_size
 from util.visualize import plot_performance_graph
 
 
-def get_full_composite_model(standardized: bool = False, dt_h: int = 12) -> CompositeModel:
+def get_full_composite_model(standardized: bool = False,
+                             dt_h: int = 12,
+                             add_battery: bool = True) -> CompositeModel:
     # Get full dataset
     n = 100
-    ds = get_full_model_dataset(n, dt=dt_h * 60)
+    ds = get_full_model_dataset(n, dt=dt_h * 60, add_battery=add_battery)
     if standardized:
         ds.standardize()
     ds.split_data()
-
-    # Define and fit battery model
-    bat_mod = BatteryModel(ds, base_ind=8)
-    bat_mod.params = np.array([0, 1, 1])
 
     # The weather model predicting constant weather.
     weather_mod_const = ConstTestModel(ds, pred_inds=np.array([0, 1]))
@@ -47,9 +45,18 @@ def get_full_composite_model(standardized: bool = False, dt_h: int = 12) -> Comp
     time_mod = SCTimeModel(ds, time_ind=6)
 
     # Create full model and return
-    mod_list = [weather_mod_const, varying_mod, time_mod, bat_mod]
+    mod_list = [weather_mod_const, varying_mod, time_mod]
+
+    # Add battery model
+    if add_battery:
+        # Define and fit battery model
+        bat_mod = BatteryModel(ds, base_ind=8)
+        bat_mod.params = np.array([0, 1, 1])
+        mod_list += [bat_mod]
+
+    # Define full composite model
     full_mod = CompositeModel(ds, mod_list)
-    full_mod.name = "FullTestModel"
+    full_mod.name = "FullTestModel" + "" if add_battery else "NoBattery"
     return full_mod
 
 
