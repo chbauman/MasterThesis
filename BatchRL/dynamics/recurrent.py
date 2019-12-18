@@ -4,7 +4,7 @@ The models are derived from `HyperOptimizableModel` or at least
 from `BaseDynamicsModel`.
 """
 from functools import partial
-from typing import Dict, Optional, Sequence, Any
+from typing import Dict, Optional, Sequence, Any, List, Tuple
 
 import numpy as np
 from hyperopt import hp
@@ -142,6 +142,60 @@ def _extract_kwargs(hp_sample: Dict):
     init_kwargs = {key: hp_sample[key] for key in hp_sample if key not in ['n_layers', 'n_neurons']}
     init_kwargs['hidden_sizes'] = hidden_sizes
     return init_kwargs
+
+
+def construct_rnn(hidden_sizes: Sequence[int],
+                  use_gru: bool = False,
+                  debug: bool = False,
+                  input_shape_dict: Dict = None,
+                  model=None,
+                  input_tensor=None,
+                  n_pred: int = None,
+                  cl_and_oi: Tuple = None):
+    # Define layers
+    if input_shape_dict is None:
+        input_shape_dict = {}
+    n_lstm = len(hidden_sizes)
+    assert n_lstm > 0, "Retard!"
+
+    rnn = GRU if use_gru else LSTM
+    layer_list = []
+    for k in range(n_lstm):
+        ret_seq = k != n_lstm - 1
+        if debug:
+            lay = IdRecurrent(return_sequences=ret_seq)
+        else:
+            lay = rnn(int(hidden_sizes[k]),
+                      return_sequences=ret_seq,
+                      name="rnn_layer_{}".format(k),
+                      **input_shape_dict)
+        layer_list += [lay]
+        input_shape_dict = {}
+
+    # Add last dense layer
+    if n_pred is not None:
+        assert n_pred > 0, "No predictions is not possible!"
+        last_layer = IdDense(n=n_pred) if debug else Dense(n_pred,
+                                                           activation=None,
+                                                           name="dense_reduce")
+        layer_list += [last_layer]
+
+    # Output layer
+    if cl_and_oi is not None:
+        assert len(cl_and_oi) == 2, f"WTF is this shit: {cl_and_oi}?"
+        c_list, out_inds = cl_and_oi
+        out_constraints = [c_list[i] for i in out_inds]
+        out_const_layer = ConstrainedNoise(0, consts=out_constraints,
+                                           is_input=False,
+                                           name="constrain_output")
+        layer_list += [out_const_layer]
+
+    # Apply layers
+    for lay in layer_list:
+        if model is not None:
+            model.add(lay)
+        if input_tensor is not None:
+            input_tensor = lay(input_tensor)
 
 
 class RNNDynamicModel(HyperOptimizableModel):
@@ -461,6 +515,12 @@ class PhysicallyConsistentRNN(RNNDynamicModel):
         if self.input_noise_std is not None:
             first_layer = ConstrainedNoise(self.input_noise_std, consts=self.constraint_list,
                                            name="constrain_input")(seq_input)
+
+        # Extract weather, room temperature and time
+        weather_input = Lambda(lambda x: x[:, :, :2], name="extract_weather")(first_layer)
+        temp_time_input = Lambda(lambda x: x[:, :, 4:7], name="extract_time_r_temp")(first_layer)
+        used_input = Lambda(lambda x: K.concatenate(x, axis=-1),
+                            name="concat_relevant_input")([weather_input, temp_time_input])
 
         control_input = Lambda(lambda x: x[:, -1, -1], name="extract_control")(first_layer)
         prev_room_temp = Lambda(lambda x: x[:, -1, -2], name="extract_room_temp")(first_layer)
