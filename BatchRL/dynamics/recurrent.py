@@ -10,7 +10,7 @@ import numpy as np
 from hyperopt import hp
 from hyperopt.pyll import scope as ho_scope
 from keras import backend as K
-from keras.layers import GRU, LSTM, Dense, Input, Add, Concatenate, Reshape, TimeDistributed
+from keras.layers import GRU, LSTM, Dense, Input, Add, Concatenate, Reshape, TimeDistributed, Lambda
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 from keras.utils import plot_model
@@ -447,6 +447,39 @@ class RNNDynamicModel(HyperOptimizableModel):
         return predictions
 
 
+class PhysicallyConsistentRNN(RNNDynamicModel):
+
+    def _build_model(self, debug: bool = False) -> Any:
+        # Initialize
+        n_lstm = len(self.hidden_sizes)
+
+        seq_input = Input(shape=(self.train_seq_len, self.n_feats),
+                          name="input_sequences")
+        first_layer = seq_input
+
+        # Add noise layer
+        if self.input_noise_std is not None:
+            first_layer = ConstrainedNoise(self.input_noise_std, consts=self.constraint_list,
+                                           name="constrain_input")(seq_input)
+
+        control_input = Lambda(lambda x: x[:, -1, -1], name="extract_control")(first_layer)
+        prev_room_temp = Lambda(lambda x: x[:, -1, -2], name="extract_room_temp")(first_layer)
+        water_in_temp = Lambda(lambda x: x[:, -1, 2], name="extract_water_in")(first_layer)
+        dT = Lambda(lambda x: x[0] - x[1], name="subtract")([water_in_temp, prev_room_temp])
+        out = Lambda(lambda x: K.reshape(x[0] + x[1] * x[2], (-1, 1)))([prev_room_temp, control_input, dT])
+
+        model = Model(inputs=seq_input, outputs=out)
+        self.loss = 'mse'
+
+        return model
+
+    @staticmethod
+    def def_name() -> str:
+        return "PC_RNN"
+
+    pass
+
+
 class RNNDynamicOvershootModel(RNNDynamicModel):
     m: Any = None  #: The base model used for prediction.
     overshoot_model: Any = None  #: The overshoot model used for training.
@@ -585,7 +618,7 @@ def test_rnn_models():
     # Define model
     p_inds = np.array([0, 1, 3], dtype=np.int32)
     test_kwargs = {'hidden_sizes': (9,),
-                   'n_iter_max': 1,
+                   'n_iter_max': 2,
                    'input_noise_std': 0.001,
                    'lr': 0.01}
     fix_kwargs = {'data': ds,
@@ -599,11 +632,9 @@ def test_rnn_models():
                                                   debug=True,
                                                   **test_kwargs,
                                                   **fix_kwargs)
-    mod_test = RNNDynamicModel(name="TestRNN", **test_kwargs, **fix_kwargs)
     full_sam_seq_len = n_over + train_s_len
 
     # Try hyperopt
-    mod_test.optimize(1)
     mod_test_2 = RNNDynamicModel.from_best_hp(**fix_kwargs, name="TestRNN")
     mod_test_2.optimize(1)
 

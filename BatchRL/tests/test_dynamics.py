@@ -14,6 +14,7 @@ from dynamics.battery_model import BatteryModel
 from dynamics.classical import SKLearnModel
 from dynamics.composite import CompositeModel
 from dynamics.const import NoDisturbanceModel, ConstModel
+from dynamics.recurrent import RNNDynamicModel, PhysicallyConsistentRNN
 from dynamics.sin_cos_time import SCTimeModel
 from tests.test_data import get_full_model_dataset, construct_test_ds
 from tests.test_util import TEST_DIR
@@ -556,6 +557,55 @@ class TestComposite(TestCase):
         self.assertTrue(const_weather, "Weather part not constant")
         increase_room = np.allclose(out[0, 2:5], 1.0)
         self.assertTrue(increase_room, "Room part not correct!")
+
+
+test_kwargs = {'hidden_sizes': (9,),
+               'n_iter_max': 2,
+               'input_noise_std': 0.001,
+               'lr': 0.01}
+
+
+class TestRNN(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        n, n_feat = 200, 7
+        self.ds = get_full_model_dataset(n)
+        p_inds = np.array([0, 1, 3], dtype=np.int32)
+        self.fix_kwargs = {'data': self.ds,
+                           'residual_learning': True,
+                           'weight_vec': None,
+                           'out_inds': p_inds,
+                           'constraint_list': None}
+        self.mod_test = RNNDynamicModel(name="TestRNN", **test_kwargs, **self.fix_kwargs)
+
+    def test_fit(self):
+        self.mod_test.fit()
+
+    def test_hyperopt(self):
+        self.mod_test.optimize(1, verbose=0)
+    pass
+
+
+class TestPCRNN(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.ds = get_full_model_dataset()
+        p_inds = np.array([5], dtype=np.int32)
+        self.fix_kwargs = {'data': self.ds,
+                           'residual_learning': True,
+                           'weight_vec': None,
+                           'out_inds': p_inds,
+                           'constraint_list': None}
+        self.mod_test = PhysicallyConsistentRNN(name="TestPC_RNN", **test_kwargs, **self.fix_kwargs)
+
+    def test_init(self):
+        self.mod_test.fit()
+
+    pass
 
 
 def get_test_battery_model(n: int = 150,
