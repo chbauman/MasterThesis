@@ -246,10 +246,17 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
 
 
 def run_room_models(verbose: int = 1, put_on_ol: bool = False,
-                    eval_list: List[int] = None, perf_eval: bool = False,
+                    eval_list: List[int] = None,
+                    perf_eval: bool = False,
                     alpha: float = 5.0, n_steps: int = None,
                     overwrite: bool = False,
                     include_battery: bool = False) -> None:
+    # Print what the code does
+    if verbose:
+        print("Running RL agents on learned room model.")
+        if include_battery:
+            print("Model includes battery.")
+
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
     if eval_list is None:
         eval_list = [0, None, None]
@@ -295,9 +302,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
     with ProgWrap(f"Analyzing agents...", verbose > 0):
         agent_list = [open_agent, closed_agent, rule_based_agent, agent]
-        mask = np.array([0, 1, 4])
-        comb_inds = [((0, 1), "Weather")]
-        bounds = [(-1, (22.0, 26.0))]
+        b_ind = -2 if include_battery else -1
+        bounds = [(b_ind, (22.0, 26.0))]
 
         for s in eval_list:
             if s is None:
@@ -309,9 +315,9 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
             title_ext = w_temp_str(h_in_and_out)
 
             # Plot
-            env.analyze_agents_visually(agent_list, state_mask=mask, start_ind=s,
+            env.analyze_agents_visually(agent_list, state_mask=None, start_ind=s,
                                         plot_constrain_actions=False,
-                                        show_rewards=True, series_merging_list=comb_inds,
+                                        show_rewards=True, series_merging_list=None,
                                         bounds=bounds, title_ext=title_ext,
                                         put_on_ol=put_on_ol, plot_rewards=True,
                                         overwrite=overwrite)
