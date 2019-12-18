@@ -731,7 +731,7 @@ def plot_env_evaluation(actions: np.ndarray,
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Refactor this shit more!
-    TODO: Solve Super title Problems!
+    TODO: Solve Super title Problems!!
     TODO: Add ticks without labels for intermediate series!
     TODO: Scale combined series accordingly!
     TODO: No reward? (show_rewards=False)
@@ -807,9 +807,9 @@ def plot_env_evaluation(actions: np.ndarray,
     else:
         x = range(len(rewards[0]))
 
-    # Define helper function
     ph_kwargs = {"dates": use_time}
 
+    # Define helper function
     def _plot_helper_helper(data: np.ndarray, axis_list: List, ag_names: Sequence[str],
                             steps: bool = False, merged: bool = False):
         formatter = DateFormatter("%m/%d, %H:%M")
@@ -1138,6 +1138,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
         compare_models: Whether to compare different models instead of different
             parts.
         overwrite: Whether to overwrite an existing file.
+        scale_over_series: Scale the errors to have a similar maximum. Especially
+            useful if `scale_back` is True.
     """
     metric_names = [m.name for m in metric_list]
 
@@ -1169,7 +1171,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
                     m_and_sd = scaling[k]
                     data_array[:, :, k, i, :] = m.scaling_fun(dat, m_and_sd[1])
 
-    # Scale series to have same maximum
+    # Scale errors of each series to have same maximum
     scaling_fac_arr = None
     if scale_over_series and n_series > 1:
         max_arr = np.amax(data_array, axis=(0, 1, 4))
@@ -1226,11 +1228,6 @@ def plot_performance_graph(model_list: List, parts: List[str],
                         si = data_array[set_id, model_ind, series_id, ct_m]
                     else:
                         si = data_array[model_ind, set_id, series_id, ct_m]
-
-                    # # Scale the errors
-                    # m_and_sd = scaling[series_id]
-                    # if scale_back:
-                    #     si = m.scaling_fun(si, m_and_sd[1])
 
                     # Plot
                     plt.plot(inds, si, joint_styles[set_id],

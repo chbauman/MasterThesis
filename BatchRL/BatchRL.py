@@ -315,7 +315,7 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
     # If debug is true, the plots are not saved to Overleaf.
-    debug: bool = True
+    debug: bool = False
     if verbose > 0 and debug:
         print("Running in debug mode!")
 
@@ -338,6 +338,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
         # Define model indices and names
         mod_inds = [0, 4]
         model_names = ["RNN", "Linear"]
+        n_steps = (0, 24)
 
         # Load weather models
         mod_list = [get_model(base_rnn_models[k], ds, rnn_consts,
@@ -348,7 +349,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
         ol_file_name = os.path.join(dir_to_use, "WeatherComparison")
 
         compare_models(mod_list, ol_file_name,
-                       n_steps=(0, 24),
+                       n_steps=n_steps,
                        model_names=model_names,
                        overwrite=overwrite)
 
