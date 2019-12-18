@@ -731,9 +731,9 @@ def plot_env_evaluation(actions: np.ndarray,
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Refactor this shit more!
+    TODO: Add grid????
     TODO: Solve Super title Problems!!
     TODO: Add ticks without labels for intermediate series!
-    TODO: Scale combined series accordingly!
     TODO: No reward? (show_rewards=False)
 
     Only for one specific initial condition.
@@ -800,6 +800,10 @@ def plot_env_evaluation(actions: np.ndarray,
     for ct, m in enumerate(series_merging_list):
         _full_setup_axis([state_mrg_axs[ct]], [m[1]], "Exogenous States")
 
+    # Define legend fontsize
+    sz = 12
+    leg_kwargs = {'prop': {'size': sz}}
+
     # Take care of the x-axis
     if use_time:
         interval = np.timedelta64(ds.dt, 'm')
@@ -811,12 +815,12 @@ def plot_env_evaluation(actions: np.ndarray,
 
     # Define helper function
     def _plot_helper_helper(data: np.ndarray, axis_list: List, ag_names: Sequence[str],
-                            steps: bool = False, merged: bool = False):
+                            steps: bool = False, merged: bool = False, col_off: int = 0) -> None:
         formatter = DateFormatter("%m/%d, %H:%M")
         for j, a_name in enumerate(ag_names):
             for i, ax in enumerate(axis_list):
                 curr_dat = data[i, :, j] if merged else data[j, :, i]
-                _plot_helper(x, curr_dat, m_col=clr_map[j],
+                _plot_helper(x, curr_dat, m_col=clr_map[j + col_off],
                              label=a_name, ax=ax, steps=steps, **ph_kwargs)
                 if use_time:
                     ax.xaxis.set_major_formatter(formatter)
@@ -829,8 +833,21 @@ def plot_env_evaluation(actions: np.ndarray,
     _plot_helper_helper(states, state_axs, agent_names, steps=False)
     _plot_helper_helper(np.expand_dims(rewards, axis=-1), [rew_ax], agent_names, steps=False)
     for ct, m in enumerate(series_merging_list):
-        _plot_helper_helper(merged_states_list[ct], [state_mrg_axs[ct]], merge_descs[ct],
-                            steps=False, merged=True)
+        if len(m) == 2:
+            # Add left and right y-label
+            axs = state_mrg_axs[ct]
+            all_axs = [axs, axs.twinx()]
+            for ct_x, curr_ax in enumerate(all_axs):
+                curr_desc = merge_descs[ct][ct_x]
+                _, u = split_desc_units(curr_desc)
+                _plot_helper_helper(merged_states_list[ct][:, :, ct_x:(ct_x + 1)], [curr_ax], [curr_desc],
+                                    steps=False, merged=True, col_off=ct_x)
+                curr_ax.set_ylabel(u)
+                curr_ax.legend(**leg_kwargs, loc=2 - ct_x)
+        else:
+            # Series might be scaled badly!
+            _plot_helper_helper(merged_states_list[ct], [state_mrg_axs[ct]], merge_descs[ct],
+                                steps=False, merged=True)
 
     # Plot bounds
     if bounds is not None:
@@ -842,8 +859,6 @@ def plot_env_evaluation(actions: np.ndarray,
                                       interpolate=True, alpha=0.2)
 
     # Add legends
-    sz = 12
-    leg_kwargs = {'prop': {'size': sz}}
     con_axs[0].legend(**leg_kwargs)
     state_axs[0].legend(**leg_kwargs)
     x_label = "Time" if use_time else f"Timestep [{ds.dt}min]"
@@ -852,8 +867,6 @@ def plot_env_evaluation(actions: np.ndarray,
         rew_ax.legend(**leg_kwargs)
     else:
         state_axs[-1].set_xlabel()
-    for axs in state_mrg_axs:
-        axs.legend(**leg_kwargs)
 
     # Super title
     sup_t = 'Visual Analysis' if title_ext is None else title_ext
