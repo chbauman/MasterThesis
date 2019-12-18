@@ -367,4 +367,15 @@ class TestFullEnv(TestCase):
         c1, c2 = get_const_agents(self.full_env)
         self.assertTrue(np.allclose(c1.rule, np.array([0.0, 6.0])))
 
+    def test_rule_based_agent(self):
+        c_rate = 6.0
+        rba = RuleBasedAgent(self.full_env, rule=[0.0, 10.0],
+                             const_charge_rate=c_rate)
+        state = np.arange(8)
+        a = rba.get_action(state)
+        exp_shape = (2,)
+        self.assertEqual(a.shape, exp_shape,
+                         msg=f"Incorrect action shape: {a.shape}, expected: {exp_shape}!")
+        self.assertEqual(c_rate, a[1], f"Unexpected charging action: {a[1]}, expected: {c_rate}")
+        self.assertEqual(0.0, a[0], f"Unexpected heating action: {a[0]}, expected: {0.0}")
     pass
