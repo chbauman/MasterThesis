@@ -758,7 +758,10 @@ class RoomBatteryEnv(RLDynEnv):
         if n_after > n_before:
             # EV came back, set SoC.
             bat_soc_ind_prep = self.prep_inds[-1]
-            ret_soc = self.returning_soc()
+            bat_soc_ind = self.inds[-1]
+            ret_soc = self._state_to_scale(self.returning_soc(),
+                                           orig_ind=bat_soc_ind,
+                                           remove_mean=True)
             self.hist[-1, bat_soc_ind_prep] = ret_soc
             curr_pred[bat_soc_ind_prep] = ret_soc
 
