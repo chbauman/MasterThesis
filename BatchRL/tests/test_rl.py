@@ -176,7 +176,8 @@ class TestBatteryEnv(TestCase):
 
     def test_get_const_agent(self):
         c1, c2 = get_const_agents(self.env)
-        self.assertTrue(np.allclose(c2.rule, np.array([6.0])))
+        r, exp_r = c2.rule, np.array([-3.0])
+        self.assertTrue(np.allclose(r, exp_r), msg=f"Expected: {exp_r}, got: {r}")
 
 
 class TestFullRoomEnv(TestCase):
