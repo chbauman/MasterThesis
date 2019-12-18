@@ -13,7 +13,7 @@ from typing import List, Tuple, Sequence, Type
 import numpy as np
 from sklearn.linear_model import MultiTaskLassoCV
 
-from agents.agents_heuristic import ConstActionAgent, RuleBasedHeating
+from agents.agents_heuristic import ConstActionAgent, RuleBasedHeating, get_const_agents
 from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, get_data_test, \
     choose_dataset_and_constraints
@@ -125,8 +125,9 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
                          n_cont_actions=1)
 
     # Define the agents
-    const_ag_1 = ConstActionAgent(bat_env, 6.0)  # Charge
-    const_ag_2 = ConstActionAgent(bat_env, -3.0)  # Discharge
+    const_ag_1, const_ag_2 = get_const_agents(bat_env)
+    # const_ag_1 = ConstActionAgent(bat_env, 6.0)  # Charge
+    # const_ag_2 = ConstActionAgent(bat_env, -3.0)  # Discharge
     dqn_agent = DDPGBaseAgent(bat_env,
                               action_range=bat_env.action_range,
                               n_steps=n_steps,
@@ -282,7 +283,7 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
     with ProgWrap(f"Analyzing agents...", verbose > 0):
         agent_list = [open_agent, closed_agent, rule_based_agent, agent]
         mask = np.array([0, 1, 4])
-        comb_inds = [[(0, 1), "Weather"]]
+        comb_inds = [((0, 1), "Weather")]
         bounds = [(-1, (22.0, 26.0))]
 
         for s in eval_list:

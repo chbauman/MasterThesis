@@ -3,6 +3,7 @@ from unittest import TestCase
 import numpy as np
 
 from agents import agents_heuristic
+from agents.agents_heuristic import get_const_agents
 from agents.keras_agents import DDPGBaseAgent, KerasBaseAgent
 from data_processing.data import choose_dataset
 from dynamics.base_model import BaseDynamicsModel
@@ -173,6 +174,10 @@ class TestBatteryEnv(TestCase):
         var = 5.0
         self.assertNotEqual(var, self.env._to_scaled(var))
 
+    def test_get_const_agent(self):
+        c1, c2 = get_const_agents(self.env)
+        self.assertTrue(np.allclose(c2.rule, np.array([6.0])))
+
 
 class TestFullRoomEnv(TestCase):
     """Tests the room RL environment.
@@ -334,5 +339,9 @@ class TestFullEnv(TestCase):
     def test_ddpg_test_agent(self):
         ddpg_ag = get_keras_test_agent(self.full_env)
         ddpg_ag.fit(verbose=0)
+
+    def test_get_const_agent(self):
+        c1, c2 = get_const_agents(self.full_env)
+        self.assertTrue(np.allclose(c1.rule, np.array([0.0, 6.0])))
 
     pass
