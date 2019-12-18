@@ -248,26 +248,37 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
 def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                     eval_list: List[int] = None, perf_eval: bool = False,
                     alpha: float = 5.0, n_steps: int = None,
-                    overwrite: bool = False) -> None:
+                    overwrite: bool = False,
+                    include_battery: bool = False) -> None:
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
     if eval_list is None:
         eval_list = [0, None, None]
 
     # Get dataset and constraints
     with ProgWrap(f"Loading dataset...", verbose > 0):
-        ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20)
+        ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20,
+                                                        add_battery_data=include_battery)
 
     # Load the model and init env
     with ProgWrap(f"Preparing environment...", verbose > 0):
         # print(f"V: {verbose}, {prog_verb(verbose)}")
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True, verbose=prog_verb(verbose))
         # m.analyze_visually(overwrite=False, plot_acf=False, verbose=prog_verb(verbose) > 0)
-        env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1, disturb_fac=0.3, alpha=alpha)
+        if include_battery:
+            c_prof = None
+            assert isinstance(m, CompositeModel), f"Invalid model: {m}, needs to be composite!"
+            env = RoomBatteryEnv(m, p=c_prof,
+                                 cont_actions=True,
+                                 disturb_fac=0.3, alpha=alpha)
+        else:
+            env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1,
+                              disturb_fac=0.3, alpha=alpha)
 
     # Define default agents and compare
     with ProgWrap(f"Initializing agents...", verbose > 0):
         closed_agent, open_agent = get_const_agents(env)
-        rule_based_agent = RuleBasedAgent(env, env.temp_bounds)
+        ch_rate = 10.0 if include_battery else None
+        rule_based_agent = RuleBasedAgent(env, env.temp_bounds, const_charge_rate=ch_rate)
 
         # Choose agent and fit to env.
         if n_steps is None:
@@ -276,7 +287,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                               action_range=env.action_range,
                               n_steps=n_steps,
                               gamma=0.99, lr=0.00001)
-        agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}"
+        name_ext = "_BAT" if include_battery else ""
+        agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}_{name_ext}"
 
     with ProgWrap(f"Fitting DDPG agent...", verbose > 0):
         agent.fit(verbose=prog_verb(verbose))
@@ -739,7 +751,8 @@ def main() -> None:
         # Room model
         alpha = args.float[0] if args.float is not None else None
         n_steps = args.int[0] if args.int is not None else None
-        run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps)
+        add_bat = args.bool[0] if args.bool is not None else False
+        run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps, include_battery=add_bat)
 
     # Overleaf plots
     if args.plot:

@@ -583,7 +583,7 @@ class RoomBatteryEnv(RLDynEnv):
                          n_cont_actions=2, max_eps=max_eps, **kwargs, init_res=False)
 
         # Save parameters
-        self.alpha = alpha
+        self.alpha = 2.5 if alpha is None else alpha
         if temp_bounds is not None:
             self.temp_bounds = temp_bounds
         if soc_bound is not None:
