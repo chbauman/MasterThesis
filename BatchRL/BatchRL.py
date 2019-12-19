@@ -207,20 +207,21 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                   from_hop=True, fit=True, verbose=next_verb) for nm in lst}
 
     # Fit or load all initialized models
-    for name, m_to_use in all_mods.items():
-        if verbose:
-            print(f"Model: {name}")
-        # Visual analysis
-        if visual_analyze:
-            with ProgWrap(f"Analyzing model visually...", verbose > 0):
-                m_to_use.analyze_visually(overwrite=False, verbose=next_verb)
+    with ProgWrap(f"Analyzing models...", verbose > 0):
+        for name, m_to_use in all_mods.items():
+            if verbose:
+                print(f"Model: {name}")
+            # Visual analysis
+            if visual_analyze:
+                with ProgWrap(f"Analyzing model visually...", verbose > 0):
+                    m_to_use.analyze_visually(overwrite=False, verbose=next_verb)
 
-        # Do the performance analysis
-        if perf_analyze:
-            with ProgWrap(f"Analyzing model performance...", verbose > 0):
-                m_to_use.analyze_performance(N_PERFORMANCE_STEPS, verbose=next_verb,
-                                             overwrite=False,
-                                             metrics=METRICS)
+            # Do the performance analysis
+            if perf_analyze:
+                with ProgWrap(f"Analyzing model performance...", verbose > 0):
+                    m_to_use.analyze_performance(N_PERFORMANCE_STEPS, verbose=next_verb,
+                                                 overwrite=False,
+                                                 metrics=METRICS)
 
     # Create the performance table
     with ProgWrap("Creating performance table and plots...", verbose > 0):

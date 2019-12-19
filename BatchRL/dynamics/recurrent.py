@@ -388,6 +388,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                                        **input_shape_dict))
             input_shape_dict = {}
 
+        # Build the rnn part
         construct_rnn(hidden_sizes=self.hidden_sizes,
                       use_gru=self.gru,
                       debug=debug,
@@ -397,21 +398,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                       n_pred=self.n_pred,
                       cl_and_oi=None)
 
-        # # Add layers
-        # rnn = GRU if self.gru else LSTM
-        # for k in range(n_lstm):
-        #     ret_seq = k != n_lstm - 1 or self.train_seq
-        #     if debug:
-        #         model.add(IdRecurrent(return_sequences=ret_seq))
-        #     else:
-        #         model.add(rnn(int(self.hidden_sizes[k]),
-        #                       return_sequences=ret_seq,
-        #                       name="rnn_layer_{}".format(k),
-        #                       **input_shape_dict))
-        #     input_shape_dict = {}
-        #
-        # Output layer
-        # model.add(TimeDistributed(Dense(self.n_pred, activation=None)))
+        # Define the constraint layer
         if self.constraint_list is not None:
             out_constraints = [self.constraint_list[i] for i in self.out_inds]
         else:
@@ -419,15 +406,8 @@ class RNNDynamicModel(HyperOptimizableModel):
         out_const_layer = ConstrainedNoise(0, consts=out_constraints,
                                            is_input=False,
                                            name="constrain_output")
-        #
-        # # Add last dense layer
-        # last_layer = IdDense(n=self.n_pred) if debug else Dense(self.n_pred,
-        #                                                         activation=None,
-        #                                                         name="dense_reduce")
-        # if self.train_seq:
-        #     last_layer = TimeDistributed(last_layer)
-        # model.add(last_layer)
 
+        # Do residual learning
         if self.residual_learning:
             if self.train_seq:
                 return NotImplementedError("Cannot combine residual and sequence output learning!")
@@ -443,6 +423,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         else:
             model.add(out_const_layer)
 
+        # Define loss
         if self.weight_vec is not None:
             k_constants = K.constant(self.weight_vec)
             fixed_input = Input(tensor=k_constants)
