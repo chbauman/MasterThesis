@@ -1,9 +1,9 @@
 from typing import Dict, List, Tuple, Any
 
-# The dictionary mapping room numbers to thermostat strings
 from opcua_empa.opcuaclient_subscription import toggle
 from util.util import Num
 
+# The dictionary mapping room numbers to thermostat strings
 ROOM_DICT: Dict[int, str] = {
     # 472: "R2_B870",
     # 473: "R2_B871",
@@ -40,15 +40,41 @@ def comp_val(v) -> Num:
         raise NotImplementedError("Only numerical values allowed!")
 
 
-def get_nodes_and_values(control: List[Tuple[int, Any]]) -> Tuple[List, List]:
-    node_list, val_list = [], []
+ControlT = List[Tuple[int, Any]]
+
+
+def _get_values(control: ControlT) -> List:
+    val_list = []
     for c in control:
         r_nr, val_fun = c
-        n_str = th_string_to_node_name(ROOM_DICT[r_nr])
-        node_list += [n_str + "." + s for s in TH_SUFFIXES]
         val_list += [
             comp_val(val_fun),
             True,
             toggle(),
         ]
-    return node_list, val_list
+    return val_list
+
+
+def _get_nodes(control: ControlT) -> List:
+    node_list = []
+    for c in control:
+        r_nr, val_fun = c
+        n_str = th_string_to_node_name(ROOM_DICT[r_nr])
+        node_list += [n_str + "." + s for s in TH_SUFFIXES]
+    return node_list
+
+
+class NodeAndValues:
+    control: ControlT
+
+    nodes: List[str]
+
+    def __init__(self, control: ControlT):
+        self.control = control
+        self.nodes = _get_nodes(control)
+
+    def get_nodes(self) -> List[str]:
+        return self.nodes
+
+    def get_values(self) -> List:
+        return _get_values(self.control)

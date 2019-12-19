@@ -1,10 +1,10 @@
-import pandas as pd
 import logging
 import time
 
+import pandas as pd
+
+from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.opcuaclient_subscription import OpcuaClient
-from opcua_empa.opcuaclient_subscription import toggle
-from opcua_empa.opcua_util import write_node_names, get_nodes_and_values
 
 # Configure logging
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.WARNING)
@@ -73,13 +73,17 @@ def try_opcua():
         df_Read = pd.DataFrame({'node': read_node_names})
         opcua_client.subscribe(json_read=df_Read.to_json())
 
-        curr_control = [(575, 25)]
+        # Define room and control
+        curr_control = [(575, 19)]
+
+        # Define value and node generator
+        value_gen = NodeAndValues(curr_control)
+        w_nodes = value_gen.get_nodes()
 
         while True:
-            # Compute the current nodes and values
-            w_nodes, values = get_nodes_and_values(curr_control)
-            df_Write = pd.DataFrame({'node': w_nodes,
-                                     'value': values})
+            # Compute the current values
+            v = value_gen.get_values()
+            df_Write = pd.DataFrame({'node': w_nodes, 'value': v})
 
             opcua_client.publish(json_write=df_Write.to_json())
             time.sleep(1)
