@@ -9,33 +9,38 @@
 # Changed order to subscribe/ publish                   RK                              20190411
 # Moved the try statement inside the for loop           RK                              20190425
 # Changed from time to datetime to show milliseconds    RK                              20190508
-########################################################################################################################
 
+########################################################################################################################
+from typing import List
+
+from opcua import Client
+from opcua import ua
+from opcua.common import ua_utils
+import pandas as pd
 import datetime
 import logging
 import socket
 
-import pandas as pd
-from opcua import Client
-from opcua import ua
-from opcua.common import ua_utils
-
-"""initialize logger"""
+# Initialize logger
 logger = logging.getLogger('opc ua client')
 
 
-# toggle function
-def toggle(tonf=5000):
-    if tonf != 5000:
-        raise NotImplementedError("What is this supposed to do?")
+def toggle():
+    """Toggles every 5 seconds.
+
+    The watchdog has to toggle every 5 seconds
+    otherwise the connection will be refused$
+    """
     if datetime.datetime.now().second % 10 < 5:
-        is_toggled = False
+        toggle_state = False
     else:
-        is_toggled = True
-    return is_toggled
+        toggle_state = True
+    return toggle_state
 
 
-# Definition action if you receive read variable
+"""Definition action if you receive read variable"""
+
+
 class SubHandler(object):
     """
     Subscription Handler. To receive events from server for a subscription
@@ -49,12 +54,12 @@ class SubHandler(object):
         self.df_Read = pd.DataFrame(data={'node': [], 'value': []}).astype('object')
         self.json_Read = self.df_Read.to_json()
 
-    def data_change_notification(self, node, val, data):
+    def datachange_notification(self, node, val, _):
         try:
-            df_New = pd.DataFrame(data={'node': [], 'value': []}).astype('object')
-            df_New.at[0, 'node'] = str(node)
-            df_New.at[0, 'value'] = str(val)
-            self.df_Read = self.df_Read.merge(df_New, on=list(self.df_Read), how='outer')
+            df_new = pd.DataFrame(data={'node': [], 'value': []}).astype('object')
+            df_new.at[0, 'node'] = str(node)
+            df_new.at[0, 'value'] = str(val)
+            self.df_Read = self.df_Read.merge(df_new, on=list(self.df_Read), how='outer')
             self.df_Read.drop_duplicates(subset=['node'], inplace=True, keep='last')
             self.json_Read = self.df_Read.to_json()
             logger.info('read %s %s' % (node, val))
@@ -62,63 +67,59 @@ class SubHandler(object):
             logger.error(e)
 
     @staticmethod
-    def event_notification(self, event):
+    def event_notification(event):
         logger.info("Python: New event", event)
 
 
-# Definition of opcua_client client
+# Definition of opcua client
 class OpcuaClient(object):
-    """Initialized the opc ua client."""
+    """Wrapper class for Opcua Client."""
 
-    df_write = None
+    # Read and write data frames.
+    df_Read: pd.DataFrame = None
+    df_Write: pd.DataFrame = None
 
-    _node_objects = None
-    _data_types = None
-    _ua_values = None
+    # Private members
+    _node_objects: List
+    _data_types: List
+    _ua_values: List
 
     def __init__(self, url='opc.tcp://ehub.nestcollaboration.ch:49320',
                  application_uri='Researchclient',
                  product_uri='Researchclient',
-                 user='JustforTest',
-                 password='JustforTest'):
+                 user='JustForTest',
+                 password='JustForTest'):
+        """Initialize the opc ua client."""
 
-        # You have to enter the url of the opc ua server e.g "opc.tcp://ehub.nestcollaboration.ch:49320"
         self.client = Client(url=url, timeout=4)
-        self.client.set_user(user)  # You have to enter your User name*
-        self.client.set_password(password)  # You have to enter your password*
-        # You have to enter the uri according to the name or path of your certificate and key*
+        self.client.set_user(user)
+        self.client.set_password(password)
         self.client.application_uri = application_uri + ":" + socket.gethostname() + ":" + user
-        # You have to enter the uri according to the name or path of your certificate and key*
         self.client.product_uri = product_uri + ":" + socket.gethostname() + ":" + user
         self.handler = SubHandler()
         self.bInitPublish = False
 
     def connect(self):
+        """Connect the client to the server"""
         try:
             self.client.connect()
             self.client.load_type_definitions()  # load definition of server specific structures/extension objects
             print('%s OPC UA Connection to server established' % (datetime.datetime.now()))
             return True
         except Exception as e:
-            print(e)
+            print(f"Exception: {e} happened while connecting!")
             return False
 
     def disconnect(self):
+        """Disconnect the client"""
         self.client.disconnect()
         print('%sOPC UA Server disconnected' % (datetime.datetime.now()))
 
-    """All values you want to read"""
-
-    def subscribe(self, json_read="""{"node":{	"0":"ns=2;s=Gateway.PLC1.65LK-06420-D001.PLC1.Batan.strWrite_L.strBatterienanlage.bAnlageEin",
-                                    "1":"ns=2;s=Gateway.PLC1.65LK-06420-D001.PLC1.Batan.strWrite_L.strBatterienanlage.bQuittierung",
-                                    "2":"ns=2;s=Gateway.PLC1.65LK-06420-D001.PLC1.Batan.strWrite_L.strBatterienanlage.bReqResearch",
-                                    "3":"ns=2;s=Gateway.PLC1.65LK-06420-D001.PLC1.Batan.strWrite_L.strBatterienanlage.bWdResearch",
-                                    "4":"ns=2;s=Gateway.PLC1.65LK-06420-D001.PLC1.Batan.strWrite_L.strBatterienanlage.rSollWirkleistung"}}"""
-                  ):
-
-        df_read = pd.read_json(json_read)
+    def subscribe(self, json_read):
+        """Subscribe all values you want to read"""
+        self.df_Read = pd.read_json(json_read)
         nodelist_read = []
-        for index, row in df_read.iterrows():
+        for index, row in self.df_Read.iterrows():
             nodelist_read.append(self.client.get_node(row['node']))
 
         try:
@@ -127,39 +128,33 @@ class OpcuaClient(object):
             sub.subscribe_data_change(nodelist_read)
             print('%s OPC UA Subscription requested' % (datetime.datetime.now()))
         except Exception as e:
+            print(f"Exception: {e} happened while subscribing!")
             logging.warning(e)
 
-    """All values wou want to write"""
-
-    def publish(self, json_write="""{"node":{	"0":"ns=2;s=Gateway.PLC1.65LK-06420-D001.PLC1.Batan.strWrite_L.strBatterienanlage.bAnlageEin",
-                                                "1":"ns=2;s=Gateway.PLC1.65LK-06420-D001.PLC1.Batan.strWrite_L.strBatterienanlage.bQuittierung",
-                                                "2":"ns=2;s=Gateway.PLC1.65LK-06420-D001.PLC1.Batan.strWrite_L.strBatterienanlage.bReqResearch",
-                                                "3":"ns=2;s=Gateway.PLC1.65LK-06420-D001.PLC1.Batan.strWrite_L.strBatterienanlage.bWdResearch",
-                                                "4":"ns=2;s=Gateway.PLC1.65LK-06420-D001.PLC1.Batan.strWrite_L.strBatterienanlage.rSollWirkleistung"},
-                                        
-                                        "value":{	"0":true,
-                                                "1":false,
-                                                "2":true,
-                                                "3":false,
-                                                "4":2}}"""
-                ):
-
-        self.df_write = pd.read_json(json_write)
+    def publish(self, json_write):
+        self.df_Write = pd.read_json(json_write)
         if not self.bInitPublish:
-            self._node_objects = [self.client.get_node(node) for node in self.df_write['node'].tolist()]
+            self._node_objects = [self.client.get_node(node) for node in self.df_Write['node'].tolist()]
             try:
                 self._data_types = [nodeObject.get_data_type_as_variant_type() for nodeObject in self._node_objects]
                 self.bInitPublish = True
                 print('%s OPC UA Publishing initialized' % (datetime.datetime.now()))
             except Exception as e:
                 print(e)
+                print("Come here and catch a more specific exception!!!")
                 logging.warning('The node you want to write does not exist')
+                raise e
 
         try:
             self._ua_values = [ua.DataValue(ua.Variant(ua_utils.string_to_val(str(value), datatype), datatype)) for
-                               value, datatype in zip(self.df_write['value'].tolist(), self._data_types)]
-            self.client.set_values(nodes=self._node_objects, values=self._ua_values)
-            [logger.info('write %s %s' % (node_object, value)) for node_object, value in
+                               value, datatype in zip(self.df_Write['value'].tolist(), self._data_types)]
+
+            # self.client.set_values(nodes=self._node_objects, values=self._ua_values)
+            for n, val in zip(self._node_objects, self._ua_values):
+                n.set_value(val)
+
+            [logger.info('write %s %s' % (n, value)) for n, value in
              zip(self._node_objects, self._ua_values)]
         except Exception as e:
             logging.warning(e)
+            print(e)

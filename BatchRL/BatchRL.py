@@ -27,6 +27,7 @@ from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
+from opcua_empa.run_opcua import try_opcua
 from rest.client import test_rest_client
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
@@ -647,7 +648,7 @@ def curr_tests() -> None:
         with ProgWrap("Test Inner..."):
             print("Printing second level")
 
-    # try_opcua()
+    try_opcua()
     return
 
     # Load the dataset and setup the model
