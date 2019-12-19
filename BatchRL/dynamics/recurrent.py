@@ -4,21 +4,21 @@ The models are derived from `HyperOptimizableModel` or at least
 from `BaseDynamicsModel`.
 """
 from functools import partial
-from typing import Dict, Optional, Sequence, Any, List, Tuple
+from typing import Dict, Optional, Sequence, Any, Tuple
 
 import numpy as np
 from hyperopt import hp
 from hyperopt.pyll import scope as ho_scope
 from keras import backend as K
-from keras.layers import GRU, LSTM, Dense, Input, Add, Concatenate, Reshape, TimeDistributed, Lambda, Activation
+from keras.layers import GRU, LSTM, Dense, Input, Add, Concatenate, Reshape, Lambda, Activation
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 from keras.utils import plot_model
 
-from dynamics.base_hyperopt import HyperOptimizableModel
 from data_processing.dataset import SeriesConstraint, Dataset
-from tests.test_data import get_test_ds
+from dynamics.base_hyperopt import HyperOptimizableModel
 from ml.keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurrent, IdDense
+from tests.test_data import get_test_ds
 from tests.test_keras import get_multi_input_layer_output
 from util.util import EULER, create_dir, rem_first, train_decorator
 from util.visualize import plot_train_history
@@ -151,7 +151,8 @@ def construct_rnn(hidden_sizes: Sequence[int],
                   model=None,
                   input_tensor=None,
                   n_pred: int = None,
-                  cl_and_oi: Tuple = None) -> Optional[Any]:
+                  cl_and_oi: Tuple = None,
+                  name_ext: str = None) -> Optional[Any]:
     # Define layers
     if input_shape_dict is None:
         input_shape_dict = {}
@@ -167,7 +168,7 @@ def construct_rnn(hidden_sizes: Sequence[int],
         else:
             lay = rnn(int(hidden_sizes[k]),
                       return_sequences=ret_seq,
-                      name="rnn_layer_{}".format(k),
+                      name="rnn_layer_{}{}".format(k, name_ext),
                       **input_shape_dict)
         layer_list += [lay]
         input_shape_dict = {}
@@ -177,7 +178,7 @@ def construct_rnn(hidden_sizes: Sequence[int],
         assert n_pred > 0, "No predictions is not possible!"
         last_layer = IdDense(n=n_pred) if debug else Dense(n_pred,
                                                            activation=None,
-                                                           name="dense_reduce")
+                                                           name=f"dense_reduce{name_ext}")
         layer_list += [last_layer]
 
     # Output layer
@@ -188,7 +189,7 @@ def construct_rnn(hidden_sizes: Sequence[int],
             out_constraints = [c_list[i] for i in out_inds]
             out_const_layer = ConstrainedNoise(0, consts=out_constraints,
                                                is_input=False,
-                                               name="constrain_output")
+                                               name=f"constrain_output{name_ext}")
             layer_list += [out_const_layer]
 
     # Apply layers
@@ -379,7 +380,6 @@ class RNNDynamicModel(HyperOptimizableModel):
         """
 
         # Initialize
-        n_lstm = len(self.hidden_sizes)
         model = Sequential(name="rnn")
         input_shape_dict = {'input_shape': (self.train_seq_len, self.n_feats)}
 
@@ -497,6 +497,8 @@ class RNNDynamicModel(HyperOptimizableModel):
 class PhysicallyConsistentRNN(RNNDynamicModel):
 
     def _build_model(self, debug: bool = False) -> Any:
+        assert self.n_pred == 1, f"Invalid number of predictions: {self.n_pred}!"
+
         # Initialize
         seq_input = Input(shape=(self.train_seq_len, self.n_feats),
                           name="input_sequences")
@@ -509,31 +511,44 @@ class PhysicallyConsistentRNN(RNNDynamicModel):
 
         # Extract weather, room temperature and time
         weather_input = Lambda(lambda x: x[:, :, :2], name="extract_weather")(first_layer)
+        control_input = Lambda(lambda x: x[:, :, -1:], name="extract_control")(first_layer)
         temp_time_input = Lambda(lambda x: x[:, :, 4:7], name="extract_time_r_temp")(first_layer)
-        used_input = Lambda(lambda x: K.concatenate(x, axis=-1),
-                            name="concat_relevant_input")([weather_input, temp_time_input])
+        base_input = Lambda(lambda x: K.concatenate(x, axis=-1),
+                            name="concat_base_input")([weather_input, temp_time_input])
+        correction_input = Lambda(lambda x: K.concatenate(x, axis=-1),
+                                  name="concat_correction_input")([weather_input, control_input])
 
         # Construct base prediction (independent of control input)
         rnn_pred = construct_rnn(hidden_sizes=self.hidden_sizes,
                                  use_gru=self.gru,
                                  debug=debug,
                                  input_shape_dict=None,
-                                 input_tensor=used_input,
+                                 input_tensor=base_input,
                                  n_pred=self.n_pred,
                                  cl_and_oi=None)
-        prev_room_temp = Lambda(lambda x: x[:, -1, -2], name="extract_room_temp")(first_layer)
-        base_room_temp = Lambda(lambda x: x[0] + K.reshape(x[1], (-1,)),
+        prev_room_temp = Lambda(lambda x: x[:, -1, -2:-1], name="extract_room_temp")(first_layer)
+        base_room_temp = Lambda(lambda x: x[0] + x[1],
                                 name="base_room_temp")([prev_room_temp, rnn_pred])
 
         # Define the control dependent correction
-        control_input = Lambda(lambda x: x[:, -1, -1], name="extract_control")(first_layer)
-        water_in_temp = Lambda(lambda x: x[:, -1, 2], name="extract_water_in")(first_layer)
+        last_control_input = Lambda(lambda x: x[:, -1], name="extract_last_control")(control_input)
+        water_in_temp = Lambda(lambda x: x[:, -1, 2:3], name="extract_water_in")(first_layer)
         dT = Lambda(lambda x: x[0] - x[1], name="subtract")([water_in_temp, prev_room_temp])
-
-        act = Activation('relu')
+        update_pred = construct_rnn(hidden_sizes=self.hidden_sizes,
+                                    use_gru=self.gru,
+                                    debug=debug,
+                                    input_shape_dict=None,
+                                    input_tensor=correction_input,
+                                    n_pred=self.n_pred,
+                                    cl_and_oi=None,
+                                    name_ext="_corr")
+        act = Activation('relu')(update_pred)
+        tot_correction = Lambda(lambda x: x[0] * x[1] * x[2],
+                                name="compute_correction")([act, last_control_input, dT])
 
         # Compute the final output
-        out = Lambda(lambda x: K.reshape(x[0] + x[1] * x[2], (-1, 1)))([base_room_temp, control_input, dT])
+        out = Lambda(lambda x: x[0] + x[1],
+                     name="add_correction")([base_room_temp, tot_correction])
 
         model = Model(inputs=seq_input, outputs=out)
         self.loss = 'mse'

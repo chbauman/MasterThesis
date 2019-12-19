@@ -593,7 +593,7 @@ class TestPCRNN(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.ds = get_full_model_dataset()
+        self.ds = get_full_model_dataset(add_battery=False)
         p_inds = np.array([5], dtype=np.int32)
         self.fix_kwargs = {'data': self.ds,
                            'residual_learning': True,
