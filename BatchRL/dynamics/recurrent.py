@@ -10,7 +10,7 @@ import numpy as np
 from hyperopt import hp
 from hyperopt.pyll import scope as ho_scope
 from keras import backend as K
-from keras.layers import GRU, LSTM, Dense, Input, Add, Concatenate, Reshape, TimeDistributed, Lambda
+from keras.layers import GRU, LSTM, Dense, Input, Add, Concatenate, Reshape, TimeDistributed, Lambda, Activation
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 from keras.utils import plot_model
@@ -151,7 +151,7 @@ def construct_rnn(hidden_sizes: Sequence[int],
                   model=None,
                   input_tensor=None,
                   n_pred: int = None,
-                  cl_and_oi: Tuple = None) -> None:
+                  cl_and_oi: Tuple = None) -> Optional[Any]:
     # Define layers
     if input_shape_dict is None:
         input_shape_dict = {}
@@ -197,6 +197,8 @@ def construct_rnn(hidden_sizes: Sequence[int],
             model.add(lay)
         if input_tensor is not None:
             input_tensor = lay(input_tensor)
+    if input_tensor is not None:
+        return input_tensor
 
 
 class RNNDynamicModel(HyperOptimizableModel):
@@ -496,8 +498,6 @@ class PhysicallyConsistentRNN(RNNDynamicModel):
 
     def _build_model(self, debug: bool = False) -> Any:
         # Initialize
-        n_lstm = len(self.hidden_sizes)
-
         seq_input = Input(shape=(self.train_seq_len, self.n_feats),
                           name="input_sequences")
         first_layer = seq_input
@@ -513,11 +513,27 @@ class PhysicallyConsistentRNN(RNNDynamicModel):
         used_input = Lambda(lambda x: K.concatenate(x, axis=-1),
                             name="concat_relevant_input")([weather_input, temp_time_input])
 
-        control_input = Lambda(lambda x: x[:, -1, -1], name="extract_control")(first_layer)
+        # Construct base prediction (independent of control input)
+        rnn_pred = construct_rnn(hidden_sizes=self.hidden_sizes,
+                                 use_gru=self.gru,
+                                 debug=debug,
+                                 input_shape_dict=None,
+                                 input_tensor=used_input,
+                                 n_pred=self.n_pred,
+                                 cl_and_oi=None)
         prev_room_temp = Lambda(lambda x: x[:, -1, -2], name="extract_room_temp")(first_layer)
+        base_room_temp = Lambda(lambda x: x[0] + K.reshape(x[1], (-1,)),
+                                name="base_room_temp")([prev_room_temp, rnn_pred])
+
+        # Define the control dependent correction
+        control_input = Lambda(lambda x: x[:, -1, -1], name="extract_control")(first_layer)
         water_in_temp = Lambda(lambda x: x[:, -1, 2], name="extract_water_in")(first_layer)
         dT = Lambda(lambda x: x[0] - x[1], name="subtract")([water_in_temp, prev_room_temp])
-        out = Lambda(lambda x: K.reshape(x[0] + x[1] * x[2], (-1, 1)))([prev_room_temp, control_input, dT])
+
+        act = Activation('relu')
+
+        # Compute the final output
+        out = Lambda(lambda x: K.reshape(x[0] + x[1] * x[2], (-1, 1)))([base_room_temp, control_input, dT])
 
         model = Model(inputs=seq_input, outputs=out)
         self.loss = 'mse'

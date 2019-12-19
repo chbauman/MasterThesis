@@ -46,7 +46,7 @@ def construct_test_ds(n: int = 201, c_series: int = 3, n_feats: int = 4) -> Data
 
 
 def get_test_ds(dat: np.ndarray, c_inds: np.ndarray,
-                name: str = "SyntheticTest",
+                name: str = SYNTH_DATA_NAME,
                 dt: int = 60 * 12,
                 t_init: str = '2019-01-01 12:00:00') -> Dataset:
     """Constructs a test dataset.
