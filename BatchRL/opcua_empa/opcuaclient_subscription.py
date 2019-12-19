@@ -106,6 +106,7 @@ class OpcuaClient(object):
             return True
         except Exception as e:
             print(f"Exception: {e} happened while connecting!")
+            print(f"Check your internet connection!")
             return False
 
     def disconnect(self):
@@ -138,20 +139,20 @@ class OpcuaClient(object):
                 self.bInitPublish = True
                 print('%s OPC UA Publishing initialized' % (datetime.datetime.now()))
             except Exception as e:
-                print(e)
+                print(f"Exception: {e} happened while initializing publishing!")
                 print("Come here and catch a more specific exception!!!")
                 logging.warning('The node you want to write does not exist')
                 raise e
 
         try:
-            self._ua_values = [ua.DataValue(ua.Variant(ua_utils.string_to_val(str(value), datatype), datatype)) for
-                               value, datatype in zip(self.df_Write['value'].tolist(), self._data_types)]
+            self._ua_values = [ua.DataValue(ua.Variant(ua_utils.string_to_val(str(value), d_t), d_t)) for
+                               value, d_t in zip(self.df_Write['value'].tolist(), self._data_types)]
 
             # self.client.set_values(nodes=self._node_objects, values=self._ua_values)
             for n, val in zip(self._node_objects, self._ua_values):
                 n.set_value(val)
+                logger.info('write %s %s' % (n, val))
 
-            [logger.info('write %s %s' % (n, v)) for n, v in zip(self._node_objects, self._ua_values)]
         except Exception as e:
+            print(f"Exception: {e} happened while publishing!")
             logging.warning(e)
-            print(e)

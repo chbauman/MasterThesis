@@ -648,7 +648,7 @@ def curr_tests() -> None:
         with ProgWrap("Test Inner..."):
             print("Printing second level")
 
-    try_opcua()
+    try_opcua(verbose=5)
     return
 
     # Load the dataset and setup the model

@@ -7,11 +7,11 @@ from util.util import Num
 
 # The dictionary mapping room numbers to thermostat strings
 ROOM_DICT: Dict[int, str] = {
-    # 472: "R2_B870",
-    # 473: "R2_B871",
-    # 475: "R2_B872",
-    # 571: "R3_B870",
-    # 573: "R3_B871",
+    472: "R2_B870",
+    473: "R2_B871",
+    475: "R2_B872",
+    571: "R3_B870",
+    573: "R3_B871",
     575: "R3_B872",
 }
 
@@ -87,7 +87,6 @@ def _get_nodes(control: ControlT) -> List:
 
 class NodeAndValues:
     control: ControlT
-
     nodes: List[str]
 
     def __init__(self, control: ControlT):
