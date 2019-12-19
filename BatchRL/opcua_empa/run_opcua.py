@@ -1,14 +1,17 @@
-from .opcuaclient_subscription import OpcuaClient
-from .opcuaclient_subscription import toggle
 import pandas as pd
 import logging
 import time
+
+from opcua_empa.opcuaclient_subscription import OpcuaClient
+from opcua_empa.opcuaclient_subscription import toggle
+from opcua_empa.opcua_util import write_node_names, get_nodes_and_values
 
 # Configure logging
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.WARNING)
 logger = logging.getLogger('opc ua client')
 
 read_node_names = [
+    # Weather:
     'ns=2;s=Gateway.PLC1.65NT-03032-D001.PLC1.MET51.strMET51Read.strWetterstation.strStation1.lrLufttemperatur',
     'ns=2;s=Gateway.PLC1.65NT-06421-D001.PLC1.Units.str2T5.strRead.strSensoren.strW1.strB870.rValue5',
 
@@ -54,32 +57,7 @@ read_node_names = [
     'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strSensoren.strR3.strB872.rValue2',
     'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strAktoren.strZ3.strY701.bValue1',
     'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strAktoren.strZ3.strY702.bValue1',
-    'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strAktoren.strZ3.strY703.bValue1'
-
-]
-
-write_node_names = [
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR1.strB870.rValue1',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR1.strB870.bReqResearch',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR1.strB870.bWdResearch',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB870.rValue1',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB870.bReqResearch',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB870.bWdResearch',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB871.rValue1',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB871.bReqResearch',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB871.bWdResearch',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB872.rValue1',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB872.bReqResearch',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB872.bWdResearch',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR3.strB870.rValue1',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR3.strB870.bReqResearch',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR3.strB870.bWdResearch',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR3.strB871.rValue1',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR3.strB871.bReqResearch',
-    # 'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR3.strB871.bWdResearch',
-    'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR3.strB872.rValue1',
-    'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR3.strB872.bReqResearch',
-    'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR3.strB872.bWdResearch',
+    'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strAktoren.strZ3.strY703.bValue1',
 ]
 
 # Set pandas printing options
@@ -93,34 +71,15 @@ def try_opcua():
     opcua_client = OpcuaClient(user='ChristianBaumannETH2020', password='Christian4_ever')
     if opcua_client.connect():
         df_Read = pd.DataFrame({'node': read_node_names})
-
         opcua_client.subscribe(json_read=df_Read.to_json())
 
+        curr_control = [(575, 25)]
+
         while True:
-            df_Write = pd.DataFrame({'node': write_node_names,
-                                     'value': [
-                                         # 20,
-                                         # True,
-                                         # toggle(),
-                                         # 20,
-                                         # True,
-                                         # toggle(),
-                                         # 20,
-                                         # True,
-                                         # toggle(),
-                                         # 20,
-                                         # True,
-                                         # toggle(),
-                                         # 20,
-                                         # True,
-                                         # toggle(),
-                                         # 20,
-                                         # True,
-                                         # toggle(),
-                                         21,
-                                         True,
-                                         toggle(),
-                                     ]})
+            # Compute the current nodes and values
+            w_nodes, values = get_nodes_and_values(curr_control)
+            df_Write = pd.DataFrame({'node': w_nodes,
+                                     'value': values})
 
             opcua_client.publish(json_write=df_Write.to_json())
             time.sleep(1)

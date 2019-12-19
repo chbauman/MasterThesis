@@ -29,7 +29,7 @@ def toggle():
     """Toggles every 5 seconds.
 
     The watchdog has to toggle every 5 seconds
-    otherwise the connection will be refused$
+    otherwise the connection will be refused.
     """
     if datetime.datetime.now().second % 10 < 5:
         toggle_state = False
@@ -38,12 +38,10 @@ def toggle():
     return toggle_state
 
 
-"""Definition action if you receive read variable"""
-
-
 class SubHandler(object):
-    """
-    Subscription Handler. To receive events from server for a subscription
+    """Subscription Handler.
+
+    To receive events from server for a subscription
     data_change and event methods are called directly from receiving thread.
     Do not do expensive, slow or network operation there. Create another
     thread if you need to do such a thing. You have to define here
@@ -153,8 +151,7 @@ class OpcuaClient(object):
             for n, val in zip(self._node_objects, self._ua_values):
                 n.set_value(val)
 
-            [logger.info('write %s %s' % (n, value)) for n, value in
-             zip(self._node_objects, self._ua_values)]
+            [logger.info('write %s %s' % (n, v)) for n, v in zip(self._node_objects, self._ua_values)]
         except Exception as e:
             logging.warning(e)
             print(e)
