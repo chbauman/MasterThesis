@@ -18,16 +18,43 @@ ROOM_DICT: Dict[int, str] = {
 # The inverse dictionary of the above one
 INV_ROOM_DICT = {v: k for k, v in ROOM_DICT.items()}
 
+# Values: [write code,
+EXT_ROOM_VALVE_DICT: Dict[int, Any] = {
+    472: ["Y700", "Y701", "Y706"],
+    473: ["Y702"],
+    475: ["Y703", "Y704", "Y705"],
+    571: ["Y700", "Y705", "Y706"],
+    573: ["Y704"],
+    575: ["Y701", "Y702", "Y703"],
+}
+
+read_node_names = [
+    # Weather:
+    'ns=2;s=Gateway.PLC1.65NT-03032-D001.PLC1.MET51.strMET51Read.strWetterstation.strStation1.lrLufttemperatur',
+    'ns=2;s=Gateway.PLC1.65NT-06421-D001.PLC1.Units.str2T5.strRead.strSensoren.strW1.strB870.rValue5',
+]
+
+
 TH_SUFFIXES: List[str] = [
     "rValue1",
     "bReqResearch",
     "bWdResearch",
 ]
 
+READ_SUFFIXES: List[str] = [
+    "bAckResearch",
+    "rValue1",
+    "rValue2",
+    "bValue1",
+]
 
-def th_string_to_node_name(th_str: str, ext: str = "") -> str:
+base_s = f"ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3."
+
+
+def _th_string_to_node_name(th_str: str, ext: str = "", read: bool = False) -> str:
     n1, n2 = th_str.split("_")
-    pre = f"ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.str{n1}.str{n2}"
+    rw_part = "strRead" if read else "strWrite_L"
+    pre = base_s + rw_part + f".strSensoren.str{n1}.str{n2}"
     return pre + ext
 
 
@@ -80,21 +107,47 @@ def _get_nodes(control: ControlT) -> List:
     node_list = []
     for c in control:
         r_nr, val_fun = c
-        n_str = th_string_to_node_name(ROOM_DICT[r_nr])
+        n_str = _th_string_to_node_name(ROOM_DICT[r_nr])
         node_list += [n_str + "." + s for s in TH_SUFFIXES]
+    return node_list
+
+
+def _get_read_nodes(control: ControlT) -> List[str]:
+    node_list = []
+    for c in control:
+        r_nr, _ = c
+        valves = EXT_ROOM_VALVE_DICT[r_nr]
+        room_str = ROOM_DICT[r_nr]
+        s1, s2 = room_str.split("_")
+
+        # Add temperature feedback
+        b_s = _th_string_to_node_name(room_str, read=True)
+        for s in READ_SUFFIXES:
+            node_list += [b_s + "." + s]
+
+        # Add valves
+        for v in valves:
+            n = s1[1]
+            v_s = base_s + f"strRead.strAktoren.strZ{n}.str{v}.bValue1"
+            node_list += [v_s]
     return node_list
 
 
 class NodeAndValues:
     control: ControlT
     nodes: List[str]
+    read_nodes: List[str]
 
     def __init__(self, control: ControlT):
         self.control = control
         self.nodes = _get_nodes(control)
+        self.read_nodes = _get_read_nodes(control)
 
     def get_nodes(self) -> List[str]:
         return self.nodes
+
+    def get_read_nodes(self) -> List[str]:
+        return self.read_nodes + read_node_names
 
     def get_values(self) -> List:
         return _get_values(self.control)
