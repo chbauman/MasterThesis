@@ -1,4 +1,6 @@
-from typing import Dict, List, Tuple, Any
+import datetime
+import time
+from typing import Dict, List, Tuple, Any, Union, Callable
 
 from opcua_empa.opcuaclient_subscription import toggle
 from util.util import Num
@@ -29,13 +31,32 @@ def th_string_to_node_name(th_str: str, ext: str = "") -> str:
     return pre + ext
 
 
-write_node_names = [th_string_to_node_name(s, "." + ext)
-                    for _, s in ROOM_DICT.items() for ext in TH_SUFFIXES]
+def get_min_diff(t1, t2):
+    d1_ts = time.mktime(t1.timetuple())
+    d2_ts = time.mktime(t2.timetuple())
+    return (d2_ts - d1_ts) / 60
 
 
-def comp_val(v) -> Num:
+class ToggleController:
+
+    def __init__(self, val_low: Num = 20, val_high: Num = 22, n_mins: int = 2):
+        self.v_low = val_low
+        self.v_high = val_high
+        self.dt = n_mins
+        self.start_time = datetime.datetime.now()
+
+    def __call__(self):
+        time_now = datetime.datetime.now()
+        min_diff = get_min_diff(self.start_time, time_now)
+        is_low = int(min_diff) % (2 * self.dt) < self.dt
+        return self.v_low if is_low else self.v_high
+
+
+def comp_val(v: Union[Callable, Num]) -> Num:
     if type(v) in [float, int]:
         return v
+    elif callable(v):
+        return v()
     else:
         raise NotImplementedError("Only numerical values allowed!")
 

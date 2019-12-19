@@ -3,7 +3,7 @@ import time
 
 import pandas as pd
 
-from opcua_empa.opcua_util import NodeAndValues
+from opcua_empa.opcua_util import NodeAndValues, ToggleController
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 
 # Configure logging
@@ -74,7 +74,8 @@ def try_opcua():
         opcua_client.subscribe(json_read=df_Read.to_json())
 
         # Define room and control
-        curr_control = [(575, 19)]
+        # curr_control = [(575, 25)]
+        curr_control = [(575, ToggleController())]
 
         # Define value and node generator
         value_gen = NodeAndValues(curr_control)
