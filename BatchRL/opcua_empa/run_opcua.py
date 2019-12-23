@@ -1,9 +1,13 @@
 import time
 
 import pandas as pd
+import numpy as np
 
 from opcua_empa.opcua_util import NodeAndValues, ToggleController
 from opcua_empa.opcuaclient_subscription import OpcuaClient
+from util.numerics import check_in_range
+
+TEMP_MIN_MAX = (18.0, 26.0)
 
 # Set pandas printing options
 pd.set_option('display.width', 1000)
@@ -52,13 +56,22 @@ def try_opcua(verbose: int = 0):
         opcua_client.publish(json_write=df_Write.to_json())
         time.sleep(1)
         opcua_client.handler.df_Read.set_index('node', drop=True)
-
         read_values = opcua_client.handler.df_Read
-        if verbose > 0:
-            print(read_values)
-            print(f"Extracted : {value_gen.extract_values(read_values)}")
 
         # Check termination criterion
-        cont = not terminate(read_values)
+        ext_values = value_gen.extract_values(read_values)
+        res_ack_true = np.all(ext_values[0])
+        temps_in_bound = check_in_range(np.array(ext_values[1]), *TEMP_MIN_MAX)
+        terminate_now = terminate(read_values)
+        cont = res_ack_true and temps_in_bound and not terminate_now
+
+        if verbose > 0:
+            print(f"Extracted : {ext_values}")
+            if not temps_in_bound:
+                print("Temperature bounds reached, aborting experiment.")
+            if not res_ack_true:
+                print("Research mode confirmation lost :(")
+            if terminate_now:
+                print("Experiment time over!")
 
     opcua_client.disconnect()

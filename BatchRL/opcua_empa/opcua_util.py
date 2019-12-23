@@ -221,7 +221,7 @@ class NodeAndValues:
 
     def extract_values(self, read_df: pd.DataFrame) -> Tuple[List, List]:
         # Initialize empty
-        res, temps = [], []
+        res_ack, temps = [], []
 
         # Iterate over rooms
         for node_strs in self._extract_node_strs:
@@ -229,8 +229,7 @@ class NodeAndValues:
             for k, row in read_df.iterrows():
                 s, val = row["node"], row["value"]
                 if s == node_strs[0]:
-                    print(f"Found s: {s} at index {k}")
-                    res += [bool(val)]
+                    res_ack += [bool(val)]
                 elif s == node_strs[1]:
                     temps += [float(val)]
-        return res, temps
+        return res_ack, temps
