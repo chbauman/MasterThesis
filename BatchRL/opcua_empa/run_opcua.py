@@ -7,7 +7,7 @@ from opcua_empa.opcua_util import NodeAndValues, ToggleController, FixTimeConstC
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from util.numerics import check_in_range
 
-TEMP_MIN_MAX = (18.0, 26.0)
+TEMP_MIN_MAX = (18.0, 25.0)
 
 # Set pandas printing options
 pd.set_option('display.width', 1000)
@@ -37,7 +37,6 @@ def try_opcua(verbose: int = 0):
     read_nodes = value_gen.get_read_nodes()
     if verbose:
         print(read_nodes)
-    print(value_gen.room_inds)
 
     # Subscribe
     df_Read = pd.DataFrame({'node': read_nodes})
