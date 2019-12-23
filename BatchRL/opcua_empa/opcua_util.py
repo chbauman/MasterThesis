@@ -37,10 +37,13 @@ read_node_names = [
     'ns=2;s=Gateway.PLC1.65NT-03032-D001.PLC1.MET51.strMET51Read.strWetterstation.strStation1.lrLufttemperatur',
     'ns=2;s=Gateway.PLC1.65NT-06421-D001.PLC1.Units.str2T5.strRead.strSensoren.strW1.strB870.rValue5',
 ]
-read_node_descs = [
-    "Outside Temp.",
-    "Irradiance",
-]
+read_node_descs_and_types = ([
+                                 "Outside Temp.",
+                                 "Irradiance",
+                             ], [
+                                 float,
+                                 float,
+                             ])
 
 TH_SUFFIXES: List[str] = [
     "rValue1",
@@ -227,8 +230,9 @@ class NodeAndValues:
         self.control = control
         self.nodes = _get_nodes(control)
         n, d, i, t = _get_read_nodes(control)
-        self.read_nodes, self.read_desc = n, d
-        self.room_inds, self.read_types = i, t
+        add_read_nt = read_node_descs_and_types
+        self.read_nodes, self.read_desc = n + read_node_names, d + add_read_nt[0]
+        self.room_inds, self.read_types = i, t + add_read_nt[1]
 
         # Check for duplicate room numbers in control
         room_inds = np.array([c[0] for c in control])
@@ -251,10 +255,10 @@ class NodeAndValues:
         return self.nodes
 
     def get_read_nodes(self) -> List[str]:
-        return self.read_nodes + read_node_names
+        return self.read_nodes
 
     def get_read_node_descs(self) -> List[str]:
-        return self.read_desc + read_node_descs
+        return self.read_desc
 
     def _get_read_dict(self) -> Dict:
         """Creates a dict that maps node strings to indices."""
@@ -276,21 +280,7 @@ class NodeAndValues:
             val = str_to_dt(val, self.read_types[ind])
             self.read_df[self._curr_read_n][col_name] = val
 
-        # Initialize empty
-        res_ack, temps = [], []
-
-        # Iterate over rooms
-        for node_strs in self._extract_node_strs:
-            # Find research acknowledgement and room temperature values.
-            for k, row in read_df.iterrows():
-                s, val = row["node"], row["value"]
-                if s == node_strs[0]:
-                    res_ack += [str2bool(val)]
-                elif s == node_strs[1]:
-                    temps += [float(val)]
-
         inds = [0, 1]
-
         res_ack = [self.read_df[self._curr_read_n][i + inds[0]]
                    for i in self.room_inds]
         temps = [self.read_df[self._curr_read_n][i + inds[1]]

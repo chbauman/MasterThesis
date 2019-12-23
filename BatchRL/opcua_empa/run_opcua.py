@@ -29,14 +29,12 @@ def try_opcua(verbose: int = 0):
         (475, ToggleController(val_low=10, val_high=35, n_mins=60 * 4, start_low=False)),
         (571, ToggleController(val_low=10, val_high=35, n_mins=60 * 4, start_low=False)),
     ]
-    curr_control = [(575, FixTimeConstController(val=50, max_n_minutes=1))]
+    # curr_control = [(575, FixTimeConstController(val=50, max_n_minutes=1))]
 
     # Define value and node generator
     value_gen = NodeAndValues(curr_control)
     w_nodes = value_gen.get_nodes()
     read_nodes = value_gen.get_read_nodes()
-    if verbose:
-        print(read_nodes)
 
     # Subscribe
     df_Read = pd.DataFrame({'node': read_nodes})
