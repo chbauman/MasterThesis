@@ -5,7 +5,7 @@ a lot of numpy transformations and also some tools
 to handle the datetime of python and numpy. Also some
 tests of these functions are included.
 """
-import argparse
+import builtins as __builtin__
 import os
 import random
 import shutil
@@ -14,7 +14,6 @@ import warnings
 from datetime import datetime
 from functools import wraps
 from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable
-import builtins as __builtin__
 
 import numpy as np
 from nptyping import Array
@@ -173,7 +172,7 @@ def str2bool(v):
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
     else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+        raise ValueError(f"Boolean value expected, got {v}")
 
 
 def prog_verb(verbose: int) -> int:

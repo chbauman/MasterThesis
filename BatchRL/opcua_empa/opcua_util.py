@@ -7,7 +7,7 @@ import pandas as pd
 
 from opcua_empa.opcuaclient_subscription import toggle
 from util.numerics import has_duplicates
-from util.util import Num
+from util.util import Num, str2bool
 
 # The dictionary mapping room numbers to thermostat strings
 ROOM_DICT: Dict[int, str] = {
@@ -214,8 +214,9 @@ class NodeAndValues:
         assert not has_duplicates(room_inds), "Multiply controlled rooms!"
 
         # Strings used for value extraction
+        inds = [0, 1]
         self._extract_node_strs = [
-            [_trf_node(self.read_nodes[r_ind + i]) for i in range(2)]
+            [_trf_node(self.read_nodes[r_ind + i]) for i in inds]
             for r_ind in self.room_inds
         ]
 
@@ -241,7 +242,7 @@ class NodeAndValues:
             for k, row in read_df.iterrows():
                 s, val = row["node"], row["value"]
                 if s == node_strs[0]:
-                    res_ack += [bool(val)]
+                    res_ack += [str2bool(val)]
                 elif s == node_strs[1]:
                     temps += [float(val)]
         return res_ack, temps

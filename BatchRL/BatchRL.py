@@ -642,12 +642,6 @@ def get_model(name: str, ds: Dataset,
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
-    print("Printing before")
-    with ProgWrap("Test Outer..."):
-        print("Printing first level")
-        with ProgWrap("Test Inner..."):
-            print("Printing second level")
-
     try_opcua(verbose=5)
     return
 

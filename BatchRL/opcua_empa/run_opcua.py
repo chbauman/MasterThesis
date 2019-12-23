@@ -44,6 +44,7 @@ def try_opcua(verbose: int = 0):
     opcua_client.subscribe(json_read=df_Read.to_json())
 
     cont = True
+    iter_ind = 0
     while cont:
         # Compute the current values
         v = value_gen.get_values()
@@ -56,7 +57,9 @@ def try_opcua(verbose: int = 0):
 
         # Check termination criterion
         ext_values = value_gen.extract_values(read_values)
-        res_ack_true = np.all(ext_values[0])
+
+        # Wait for at least 20s before requiring to be true
+        res_ack_true = np.all(ext_values[0]) or iter_ind < 20
         temps_in_bound = check_in_range(np.array(ext_values[1]), *TEMP_MIN_MAX)
         terminate_now = curr_control[0][1].terminate()
         cont = res_ack_true and temps_in_bound and not terminate_now
@@ -70,4 +73,7 @@ def try_opcua(verbose: int = 0):
             if terminate_now:
                 print("Experiment time over!")
 
+        iter_ind += 1
+
+    # This terminates with an error... But at least it terminates.
     opcua_client.disconnect()
