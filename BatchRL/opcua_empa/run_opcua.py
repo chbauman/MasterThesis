@@ -37,17 +37,17 @@ def try_opcua(verbose: int = 0):
     read_nodes = value_gen.get_read_nodes()
 
     # Subscribe
-    df_Read = pd.DataFrame({'node': read_nodes})
-    opcua_client.subscribe(json_read=df_Read.to_json())
+    df_read = pd.DataFrame({'node': read_nodes})
+    opcua_client.subscribe(json_read=df_read.to_json())
 
     cont = True
     iter_ind = 0
     while cont:
         # Compute the current values
         v = value_gen.compute_current_values()
-        df_Write = pd.DataFrame({'node': w_nodes, 'value': v})
+        df_write = pd.DataFrame({'node': w_nodes, 'value': v})
 
-        opcua_client.publish(json_write=df_Write.to_json())
+        opcua_client.publish(json_write=df_write.to_json())
         time.sleep(1)
         opcua_client.handler.df_Read.set_index('node', drop=True)
         read_values = opcua_client.handler.df_Read
