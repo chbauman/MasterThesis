@@ -289,4 +289,9 @@ class NodeAndValues:
         print(self.read_desc)
         print(self.read_df[self._curr_read_n])
 
+        # Increment or reset counter
+        self._curr_read_n += 1
+        if self._curr_read_n == self.n_max:
+            self._curr_read_n = 0
+
         return res_ack, temps
