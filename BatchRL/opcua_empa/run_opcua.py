@@ -3,7 +3,7 @@ import time
 import pandas as pd
 import numpy as np
 
-from opcua_empa.opcua_util import NodeAndValues, ToggleController
+from opcua_empa.opcua_util import NodeAndValues, ToggleController, FixTimeConstController
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from util.numerics import check_in_range
 
@@ -13,10 +13,6 @@ TEMP_MIN_MAX = (18.0, 26.0)
 pd.set_option('display.width', 1000)
 pd.set_option('display.max_columns', 500)
 pd.options.display.max_colwidth = 200
-
-
-def terminate(_=None) -> bool:
-    return False
 
 
 def try_opcua(verbose: int = 0):
@@ -33,7 +29,7 @@ def try_opcua(verbose: int = 0):
         (475, ToggleController(val_low=10, val_high=35, n_mins=60 * 4, start_low=False)),
         (571, ToggleController(val_low=10, val_high=35, n_mins=60 * 4, start_low=False)),
     ]
-    curr_control = [(575, 25)]
+    curr_control = [(575, FixTimeConstController(val=30, max_n_minutes=1))]
 
     # Define value and node generator
     value_gen = NodeAndValues(curr_control)
@@ -62,7 +58,7 @@ def try_opcua(verbose: int = 0):
         ext_values = value_gen.extract_values(read_values)
         res_ack_true = np.all(ext_values[0])
         temps_in_bound = check_in_range(np.array(ext_values[1]), *TEMP_MIN_MAX)
-        terminate_now = terminate(read_values)
+        terminate_now = curr_control[0][1].terminate()
         cont = res_ack_true and temps_in_bound and not terminate_now
 
         if verbose > 0:

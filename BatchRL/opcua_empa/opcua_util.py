@@ -76,35 +76,15 @@ ControllerT = Union[Callable[[], Num], Num]
 ControlT = List[Tuple[int, ControllerT]]
 
 
-class ToggleController:
+class FixTimeConstController:
 
-    def __init__(self, val_low: Num = 20, val_high: Num = 22, n_mins: int = 2,
-                 start_low: bool = True, max_n_minutes: int = None):
-        """Controller that toggles every `n_mins` between two values.
-
-        If you need a constant controller, set `val_low` == `val_high`.
-
-        Args:
-            val_low: The lower value.
-            val_high: The higher value.
-            n_mins: The number of minutes in an interval.
-            start_low: Whether to start with `val_low`.
-            max_n_minutes: The maximum number of minutes the controller should run.
-        """
-        self.v_low = val_low
-        self.v_high = val_high
-        self.dt = n_mins
-        self.start_low = start_low
-        self.start_time = datetime.datetime.now()
+    def __init__(self, val: Num = 20, max_n_minutes: int = None):
+        self.val = val
         self.max_n_minutes = max_n_minutes
+        self.start_time = datetime.datetime.now()
 
     def __call__(self) -> Num:
-        """Computes the current value according to the current time."""
-        time_now = datetime.datetime.now()
-        min_diff = get_min_diff(self.start_time, time_now)
-        is_start_state = int(min_diff) % (2 * self.dt) < self.dt
-        is_low = is_start_state if self.start_low else not is_start_state
-        return self.v_low if is_low else self.v_high
+        return self.val
 
     def terminate(self) -> bool:
         """Checks if the maximum time is reached.
@@ -119,6 +99,38 @@ class ToggleController:
         return h_diff > self.max_n_minutes
 
 
+class ToggleController(FixTimeConstController):
+
+    def __init__(self, val_low: Num = 20, val_high: Num = 22, n_mins: int = 2,
+                 start_low: bool = True, max_n_minutes: int = None):
+        """Controller that toggles every `n_mins` between two values.
+
+        If you need a constant controller, set `val_low` == `val_high`.
+
+        Args:
+            val_low: The lower value.
+            val_high: The higher value.
+            n_mins: The number of minutes in an interval.
+            start_low: Whether to start with `val_low`.
+            max_n_minutes: The maximum number of minutes the controller should run.
+        """
+        super().__init__(val_low, max_n_minutes)
+        self.v_low = val_low
+        self.v_high = val_high
+        self.dt = n_mins
+        self.start_low = start_low
+        self.start_time = datetime.datetime.now()
+        # self.max_n_minutes = max_n_minutes
+
+    def __call__(self) -> Num:
+        """Computes the current value according to the current time."""
+        time_now = datetime.datetime.now()
+        min_diff = get_min_diff(self.start_time, time_now)
+        is_start_state = int(min_diff) % (2 * self.dt) < self.dt
+        is_low = is_start_state if self.start_low else not is_start_state
+        return self.v_low if is_low else self.v_high
+
+
 def comp_val(v: ControllerT) -> Num:
     if type(v) in [float, int]:
         return v
@@ -129,7 +141,7 @@ def comp_val(v: ControllerT) -> Num:
                                   "taking no arguments allowed!")
 
 
-def trf_node(node_str: str) -> str:
+def _trf_node(node_str: str) -> str:
     return f"Node(StringNodeId({node_str}))"
 
 
@@ -203,7 +215,7 @@ class NodeAndValues:
 
         # Strings used for value extraction
         self._extract_node_strs = [
-            [trf_node(self.read_nodes[r_ind + i]) for i in range(2)]
+            [_trf_node(self.read_nodes[r_ind + i]) for i in range(2)]
             for r_ind in self.room_inds
         ]
 

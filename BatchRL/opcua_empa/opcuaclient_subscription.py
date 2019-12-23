@@ -9,19 +9,20 @@
 # Changed order to subscribe/ publish                   RK                              20190411
 # Moved the try statement inside the for loop           RK                              20190425
 # Changed from time to datetime to show milliseconds    RK                              20190508
-
 ########################################################################################################################
+
+import datetime
+import logging
+import socket
+
 import warnings
 from typing import List
 
 import opcua
+import pandas as pd
 from opcua import Client
 from opcua import ua
 from opcua.common import ua_utils
-import pandas as pd
-import datetime
-import logging
-import socket
 
 # Initialize and configure logger
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.WARNING)
@@ -115,7 +116,7 @@ class OpcuaClient(object):
     def disconnect(self):
         """Disconnect the client"""
         self.client.disconnect()
-        print('%sOPC UA Server disconnected' % (datetime.datetime.now()))
+        print('%s OPC UA Server disconnected' % (datetime.datetime.now()))
 
     def subscribe(self, json_read: str):
         """Subscribe all values you want to read"""
