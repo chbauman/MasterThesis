@@ -29,7 +29,7 @@ def try_opcua(verbose: int = 0):
         (475, ToggleController(val_low=10, val_high=35, n_mins=60 * 4, start_low=False)),
         (571, ToggleController(val_low=10, val_high=35, n_mins=60 * 4, start_low=False)),
     ]
-    curr_control = [(575, FixTimeConstController(val=30, max_n_minutes=1))]
+    curr_control = [(575, FixTimeConstController(val=50, max_n_minutes=1))]
 
     # Define value and node generator
     value_gen = NodeAndValues(curr_control)
@@ -46,7 +46,7 @@ def try_opcua(verbose: int = 0):
     iter_ind = 0
     while cont:
         # Compute the current values
-        v = value_gen.get_values()
+        v = value_gen.compute_current_values()
         df_Write = pd.DataFrame({'node': w_nodes, 'value': v})
 
         opcua_client.publish(json_write=df_Write.to_json())
