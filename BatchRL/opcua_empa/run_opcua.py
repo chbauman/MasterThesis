@@ -53,10 +53,11 @@ def try_opcua(verbose: int = 0):
         time.sleep(1)
         opcua_client.handler.df_Read.set_index('node', drop=True)
 
+        read_values = opcua_client.handler.df_Read
         if verbose > 0:
-            print(opcua_client.handler.df_Read)
+            print(read_values)
 
         # Check termination criterion
-        cont = not terminate()
+        cont = not terminate(read_values)
 
     opcua_client.disconnect()

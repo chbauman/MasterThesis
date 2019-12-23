@@ -41,11 +41,11 @@ TH_SUFFIXES: List[str] = [
     "bWdResearch",
 ]
 
-READ_SUFFIXES: List[str] = [
-    "bAckResearch",
-    "rValue1",
-    "rValue2",
-    "bValue1",
+READ_SUFFIXES: List[Tuple[str, str]] = [
+    ("bAckResearch", "Research Acknowledged"),
+    ("rValue1", "Measured Temp."),
+    ("rValue2", ""),
+    ("bValue1", ""),
 ]
 
 base_s = f"ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3."
@@ -66,16 +66,29 @@ def get_min_diff(t1, t2):
 
 class ToggleController:
 
-    def __init__(self, val_low: Num = 20, val_high: Num = 22, n_mins: int = 2):
+    def __init__(self, val_low: Num = 20, val_high: Num = 22, n_mins: int = 2,
+                 start_low: bool = True):
+        """Controller that toggles every `n_mins` between two values.
+
+        If you need a constant controller, set `val_low` == `val_high`.
+
+        Args:
+            val_low: The lower value.
+            val_high: The higher value.
+            n_mins: The number of minutes in an interval.
+            start_low: Whether to start with `val_low`.
+        """
         self.v_low = val_low
         self.v_high = val_high
         self.dt = n_mins
+        self.start_low = start_low
         self.start_time = datetime.datetime.now()
 
     def __call__(self):
         time_now = datetime.datetime.now()
         min_diff = get_min_diff(self.start_time, time_now)
-        is_low = int(min_diff) % (2 * self.dt) < self.dt
+        is_start_state = int(min_diff) % (2 * self.dt) < self.dt
+        is_low = is_start_state if self.start_low else not is_start_state
         return self.v_low if is_low else self.v_high
 
 
@@ -112,8 +125,8 @@ def _get_nodes(control: ControlT) -> List:
     return node_list
 
 
-def _get_read_nodes(control: ControlT) -> List[str]:
-    node_list = []
+def _get_read_nodes(control: ControlT) -> Tuple[List[str], List[str]]:
+    node_list, node_descs = [], []
     for c in control:
         r_nr, _ = c
         valves = EXT_ROOM_VALVE_DICT[r_nr]
@@ -122,26 +135,29 @@ def _get_read_nodes(control: ControlT) -> List[str]:
 
         # Add temperature feedback
         b_s = _th_string_to_node_name(room_str, read=True)
-        for s in READ_SUFFIXES:
+        for s, d in READ_SUFFIXES:
             node_list += [b_s + "." + s]
+            node_descs += [d]
 
         # Add valves
         for v in valves:
             n = s1[1]
             v_s = base_s + f"strRead.strAktoren.strZ{n}.str{v}.bValue1"
             node_list += [v_s]
-    return node_list
+            node_descs += [f"Valve {v}"]
+    return node_list, node_descs
 
 
 class NodeAndValues:
     control: ControlT
     nodes: List[str]
     read_nodes: List[str]
+    read_desc: List[str]
 
     def __init__(self, control: ControlT):
         self.control = control
         self.nodes = _get_nodes(control)
-        self.read_nodes = _get_read_nodes(control)
+        self.read_nodes, self.read_desc = _get_read_nodes(control)
 
     def get_nodes(self) -> List[str]:
         return self.nodes
