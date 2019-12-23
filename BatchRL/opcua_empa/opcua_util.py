@@ -246,7 +246,7 @@ class NodeAndValues:
         ]
         self.read_dict = self._get_read_dict()
 
-        self.n_max = 3600
+        self.n_max = 3 #600
         dtypes = np.dtype([(s, t)
                            for s, t in zip(self.read_desc, self.read_types)])
         self.read_df = np.empty((self.n_max,), dtype=dtypes)

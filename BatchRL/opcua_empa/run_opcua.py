@@ -26,7 +26,7 @@ def try_opcua(verbose: int = 0):
 
     # Define room and control
     curr_control = [
-        (475, ToggleController(val_low=10, val_high=35, n_mins=60 * 4, start_low=False)),
+        (475, ToggleController(val_low=10, val_high=35, n_mins=60 * 4, start_low=False, max_n_minutes=1)),
         (571, ToggleController(val_low=10, val_high=35, n_mins=60 * 4, start_low=False)),
     ]
     # curr_control = [(575, FixTimeConstController(val=50, max_n_minutes=1))]
