@@ -102,7 +102,8 @@ def comp_val(v: Union[Callable, Num]) -> Num:
     elif callable(v):
         return v()
     else:
-        raise NotImplementedError("Only numerical values allowed!")
+        raise NotImplementedError("Only numerical values or functions "
+                                  "taking no arguments allowed!")
 
 
 def trf_node(node_str: str) -> str:

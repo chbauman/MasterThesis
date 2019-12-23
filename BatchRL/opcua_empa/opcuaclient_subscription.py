@@ -14,6 +14,7 @@
 import warnings
 from typing import List
 
+import opcua
 from opcua import Client
 from opcua import ua
 from opcua.common import ua_utils
@@ -103,7 +104,7 @@ class OpcuaClient(object):
         """Connect the client to the server"""
         try:
             self.client.connect()
-            self.client.load_type_definitions()  # load definition of server specific structures/extension objects
+            self.client.load_type_definitions()
             print('%s OPC UA Connection to server established' % (datetime.datetime.now()))
             return True
         except Exception as e:
@@ -116,16 +117,17 @@ class OpcuaClient(object):
         self.client.disconnect()
         print('%sOPC UA Server disconnected' % (datetime.datetime.now()))
 
-    def subscribe(self, json_read):
+    def subscribe(self, json_read: str):
         """Subscribe all values you want to read"""
         self.df_Read = pd.read_json(json_read)
         nodelist_read = [self.client.get_node(row['node'])
-                         for index, row in self.df_Read.iterrows()]
+                         for i, row in self.df_Read.iterrows()]
 
         try:
-            handler = self.handler
-            sub = self.client.create_subscription(period=0, handler=handler)
+            sub = self.client.create_subscription(period=0, handler=self.handler)
             sub_res = sub.subscribe_data_change(nodelist_read)
+
+            # Check if subscription was successful
             for ct, s in enumerate(sub_res):
                 if not type(s) is int:
                     print(s)
@@ -135,17 +137,18 @@ class OpcuaClient(object):
             print(f"Exception: {e} happened while subscribing!")
             logging.warning(e)
 
-    def publish(self, json_write):
+    def publish(self, json_write: str):
         self.df_Write = pd.read_json(json_write)
         if not self.bInitPublish:
-            self._node_objects = [self.client.get_node(node) for node in self.df_Write['node'].tolist()]
+            self._node_objects = [self.client.get_node(node)
+                                  for node in self.df_Write['node'].tolist()]
             try:
-                self._data_types = [nodeObject.get_data_type_as_variant_type() for nodeObject in self._node_objects]
+                self._data_types = [nodeObject.get_data_type_as_variant_type()
+                                    for nodeObject in self._node_objects]
                 self.bInitPublish = True
                 print('%s OPC UA Publishing initialized' % (datetime.datetime.now()))
-            except Exception as e:
+            except opcua.ua.uaerrors._auto.BadNodeIdUnknown as e:
                 print(f"Exception: {e} happened while initializing publishing!")
-                print("Come here and catch a more specific exception!!!")
                 logging.warning('The node you want to write does not exist')
                 raise e
 
@@ -153,7 +156,6 @@ class OpcuaClient(object):
             self._ua_values = [ua.DataValue(ua.Variant(ua_utils.string_to_val(str(value), d_t), d_t)) for
                                value, d_t in zip(self.df_Write['value'].tolist(), self._data_types)]
 
-            # self.client.set_values(nodes=self._node_objects, values=self._ua_values)
             for n, val in zip(self._node_objects, self._ua_values):
                 n.set_value(val)
                 logger.info('write %s %s' % (n, val))
