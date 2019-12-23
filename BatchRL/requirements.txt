@@ -2,7 +2,7 @@ nptyping
 scikit-learn
 requests
 opcua
-tensorflow==1.15.0
+tensorflow==1.13.2
 matplotlib
 pandas
 scipy
@@ -12,3 +12,5 @@ gym
 hyperopt
 statsmodels
 keras-rl
+cryptography
+pydot
