@@ -11,6 +11,7 @@
 # Changed from time to datetime to show milliseconds    RK                              20190508
 
 ########################################################################################################################
+import warnings
 from typing import List
 
 from opcua import Client
@@ -118,14 +119,17 @@ class OpcuaClient(object):
     def subscribe(self, json_read):
         """Subscribe all values you want to read"""
         self.df_Read = pd.read_json(json_read)
-        nodelist_read = []
-        for index, row in self.df_Read.iterrows():
-            nodelist_read.append(self.client.get_node(row['node']))
+        nodelist_read = [self.client.get_node(row['node'])
+                         for index, row in self.df_Read.iterrows()]
 
         try:
             handler = self.handler
             sub = self.client.create_subscription(period=0, handler=handler)
-            sub.subscribe_data_change(nodelist_read)
+            sub_res = sub.subscribe_data_change(nodelist_read)
+            for ct, s in enumerate(sub_res):
+                if not type(s) is int:
+                    print(s)
+                    warnings.warn(f"Node: {nodelist_read[ct]} not found!")
             print('%s OPC UA Subscription requested' % (datetime.datetime.now()))
         except Exception as e:
             print(f"Exception: {e} happened while subscribing!")

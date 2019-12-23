@@ -25,14 +25,18 @@ def try_opcua(verbose: int = 0):
         return
 
     # Define room and control
-    # curr_control = [(575, 25)]
-    curr_control = [(575, ToggleController(val_low=23, val_high=25, n_mins=1))]
+    curr_control = [
+        (475, ToggleController(val_low=10, val_high=35, n_mins=60 * 4, start_low=False)),
+        (571, ToggleController(val_low=10, val_high=35, n_mins=60 * 4, start_low=False)),
+    ]
+    curr_control = [(575, 25)]
 
     # Define value and node generator
     value_gen = NodeAndValues(curr_control)
     w_nodes = value_gen.get_nodes()
     read_nodes = value_gen.get_read_nodes()
-    print(read_nodes)
+    if verbose:
+        print(read_nodes)
 
     # Subscribe
     df_Read = pd.DataFrame({'node': read_nodes})

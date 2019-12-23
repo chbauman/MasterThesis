@@ -105,6 +105,10 @@ def comp_val(v: Union[Callable, Num]) -> Num:
         raise NotImplementedError("Only numerical values allowed!")
 
 
+def trf_node(node_str: str) -> str:
+    return f"Node(StringNodeId({node_str}))"
+
+
 ControlT = List[Tuple[int, Any]]
 
 
