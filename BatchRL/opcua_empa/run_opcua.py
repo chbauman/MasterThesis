@@ -1,14 +1,9 @@
-import logging
 import time
 
 import pandas as pd
 
 from opcua_empa.opcua_util import NodeAndValues, ToggleController
 from opcua_empa.opcuaclient_subscription import OpcuaClient
-
-# Configure logging
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.WARNING)
-logger = logging.getLogger('opc ua client')
 
 # Set pandas printing options
 pd.set_option('display.width', 1000)

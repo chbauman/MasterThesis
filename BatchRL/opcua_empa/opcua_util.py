@@ -33,6 +33,10 @@ read_node_names = [
     'ns=2;s=Gateway.PLC1.65NT-03032-D001.PLC1.MET51.strMET51Read.strWetterstation.strStation1.lrLufttemperatur',
     'ns=2;s=Gateway.PLC1.65NT-06421-D001.PLC1.Units.str2T5.strRead.strSensoren.strW1.strB870.rValue5',
 ]
+read_node_descs = [
+    "Outside Temp.",
+    "Irradiance",
+]
 
 
 TH_SUFFIXES: List[str] = [
@@ -45,7 +49,7 @@ READ_SUFFIXES: List[Tuple[str, str]] = [
     ("bAckResearch", "Research Acknowledged"),
     ("rValue1", "Measured Temp."),
     ("rValue2", ""),
-    ("bValue1", ""),
+    ("bValue1", "Temp. Set-point Feedback"),
 ]
 
 base_s = f"ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3."
@@ -137,14 +141,14 @@ def _get_read_nodes(control: ControlT) -> Tuple[List[str], List[str]]:
         b_s = _th_string_to_node_name(room_str, read=True)
         for s, d in READ_SUFFIXES:
             node_list += [b_s + "." + s]
-            node_descs += [d]
+            node_descs += [f"{r_nr}: {d}"]
 
         # Add valves
         for v in valves:
             n = s1[1]
             v_s = base_s + f"strRead.strAktoren.strZ{n}.str{v}.bValue1"
             node_list += [v_s]
-            node_descs += [f"Valve {v}"]
+            node_descs += [f"{r_nr}: Valve {v}"]
     return node_list, node_descs
 
 
@@ -164,6 +168,9 @@ class NodeAndValues:
 
     def get_read_nodes(self) -> List[str]:
         return self.read_nodes + read_node_names
+
+    def get_read_node_descs(self) -> List[str]:
+        return self.read_desc + read_node_descs
 
     def get_values(self) -> List:
         return _get_values(self.control)

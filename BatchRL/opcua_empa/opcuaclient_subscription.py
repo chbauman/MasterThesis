@@ -21,7 +21,8 @@ import datetime
 import logging
 import socket
 
-# Initialize logger
+# Initialize and configure logger
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.WARNING)
 logger = logging.getLogger('opc ua client')
 
 
