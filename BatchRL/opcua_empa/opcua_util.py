@@ -2,7 +2,11 @@ import datetime
 import time
 from typing import Dict, List, Tuple, Any, Union, Callable
 
+import numpy as np
+import pandas as pd
+
 from opcua_empa.opcuaclient_subscription import toggle
+from util.numerics import has_duplicates
 from util.util import Num
 
 # The dictionary mapping room numbers to thermostat strings
@@ -38,7 +42,6 @@ read_node_descs = [
     "Irradiance",
 ]
 
-
 TH_SUFFIXES: List[str] = [
     "rValue1",
     "bReqResearch",
@@ -68,10 +71,15 @@ def get_min_diff(t1, t2):
     return (d2_ts - d1_ts) / 60
 
 
+# Type definitions for control
+ControllerT = Union[Callable[[], Num], Num]
+ControlT = List[Tuple[int, ControllerT]]
+
+
 class ToggleController:
 
     def __init__(self, val_low: Num = 20, val_high: Num = 22, n_mins: int = 2,
-                 start_low: bool = True):
+                 start_low: bool = True, max_n_minutes: int = None):
         """Controller that toggles every `n_mins` between two values.
 
         If you need a constant controller, set `val_low` == `val_high`.
@@ -81,22 +89,37 @@ class ToggleController:
             val_high: The higher value.
             n_mins: The number of minutes in an interval.
             start_low: Whether to start with `val_low`.
+            max_n_minutes: The maximum number of minutes the controller should run.
         """
         self.v_low = val_low
         self.v_high = val_high
         self.dt = n_mins
         self.start_low = start_low
         self.start_time = datetime.datetime.now()
+        self.max_n_minutes = max_n_minutes
 
-    def __call__(self):
+    def __call__(self) -> Num:
+        """Computes the current value according to the current time."""
         time_now = datetime.datetime.now()
         min_diff = get_min_diff(self.start_time, time_now)
         is_start_state = int(min_diff) % (2 * self.dt) < self.dt
         is_low = is_start_state if self.start_low else not is_start_state
         return self.v_low if is_low else self.v_high
 
+    def terminate(self) -> bool:
+        """Checks if the maximum time is reached.
 
-def comp_val(v: Union[Callable, Num]) -> Num:
+        Returns:
+            True if the max. runtime is reached, else False.
+        """
+        if self.max_n_minutes is None:
+            return False
+        time_now = datetime.datetime.now()
+        h_diff = get_min_diff(self.start_time, time_now)
+        return h_diff > self.max_n_minutes
+
+
+def comp_val(v: ControllerT) -> Num:
     if type(v) in [float, int]:
         return v
     elif callable(v):
@@ -108,9 +131,6 @@ def comp_val(v: Union[Callable, Num]) -> Num:
 
 def trf_node(node_str: str) -> str:
     return f"Node(StringNodeId({node_str}))"
-
-
-ControlT = List[Tuple[int, Any]]
 
 
 def _get_values(control: ControlT) -> List:
@@ -134,8 +154,8 @@ def _get_nodes(control: ControlT) -> List:
     return node_list
 
 
-def _get_read_nodes(control: ControlT) -> Tuple[List[str], List[str]]:
-    node_list, node_descs = [], []
+def _get_read_nodes(control: ControlT) -> Tuple[List[str], List[str], List[int]]:
+    node_list, node_descs, room_inds = [], [], []
     for c in control:
         r_nr, _ = c
         valves = EXT_ROOM_VALVE_DICT[r_nr]
@@ -144,6 +164,7 @@ def _get_read_nodes(control: ControlT) -> Tuple[List[str], List[str]]:
 
         # Add temperature feedback
         b_s = _th_string_to_node_name(room_str, read=True)
+        room_inds += [len(node_descs)]
         for s, d in READ_SUFFIXES:
             node_list += [b_s + "." + s]
             node_descs += [f"{r_nr}: {d}"]
@@ -154,19 +175,37 @@ def _get_read_nodes(control: ControlT) -> Tuple[List[str], List[str]]:
             v_s = base_s + f"strRead.strAktoren.strZ{n}.str{v}.bValue1"
             node_list += [v_s]
             node_descs += [f"{r_nr}: Valve {v}"]
-    return node_list, node_descs
+    return node_list, node_descs, room_inds
 
 
 class NodeAndValues:
+    n_rooms: int
     control: ControlT
     nodes: List[str]
     read_nodes: List[str]
     read_desc: List[str]
+    room_inds: List[int]
+
+    _extract_node_strs: List[List]
 
     def __init__(self, control: ControlT):
+
+        self.n_rooms = len(control)
+        assert self.n_rooms > 0, "No rooms to be controlled!"
+
         self.control = control
         self.nodes = _get_nodes(control)
-        self.read_nodes, self.read_desc = _get_read_nodes(control)
+        self.read_nodes, self.read_desc, self.room_inds = _get_read_nodes(control)
+
+        # Check for duplicate room numbers in control
+        room_inds = np.array([c[0] for c in control])
+        assert not has_duplicates(room_inds), "Multiply controlled rooms!"
+
+        # Strings used for value extraction
+        self._extract_node_strs = [
+            [trf_node(self.read_nodes[r_ind + i]) for i in range(2)]
+            for r_ind in self.room_inds
+        ]
 
     def get_nodes(self) -> List[str]:
         return self.nodes
@@ -179,3 +218,19 @@ class NodeAndValues:
 
     def get_values(self) -> List:
         return _get_values(self.control)
+
+    def extract_values(self, read_df: pd.DataFrame) -> Tuple[List, List]:
+        # Initialize empty
+        res, temps = [], []
+
+        # Iterate over rooms
+        for node_strs in self._extract_node_strs:
+            # Find research acknowledgement and room temperature values.
+            for k, row in read_df.iterrows():
+                s, val = row["node"], row["value"]
+                if s == node_strs[0]:
+                    print(f"Found s: {s} at index {k}")
+                    res += [bool(val)]
+                elif s == node_strs[1]:
+                    temps += [float(val)]
+        return res, temps

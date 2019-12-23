@@ -37,6 +37,7 @@ def try_opcua(verbose: int = 0):
     read_nodes = value_gen.get_read_nodes()
     if verbose:
         print(read_nodes)
+    print(value_gen.room_inds)
 
     # Subscribe
     df_Read = pd.DataFrame({'node': read_nodes})
@@ -55,6 +56,7 @@ def try_opcua(verbose: int = 0):
         read_values = opcua_client.handler.df_Read
         if verbose > 0:
             print(read_values)
+            print(f"Extracted : {value_gen.extract_values(read_values)}")
 
         # Check termination criterion
         cont = not terminate(read_values)
