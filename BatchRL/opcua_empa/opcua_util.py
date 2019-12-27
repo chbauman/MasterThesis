@@ -1,6 +1,6 @@
 import datetime
 import time
-from typing import Dict, List, Tuple, Any, Union, Callable
+from typing import Dict, List, Tuple, Union, Callable
 
 import numpy as np
 import pandas as pd
@@ -22,8 +22,8 @@ ROOM_DICT: Dict[int, str] = {
 # The inverse dictionary of the above one
 INV_ROOM_DICT = {v: k for k, v in ROOM_DICT.items()}
 
-# Values: [write code,
-EXT_ROOM_VALVE_DICT: Dict[int, Any] = {
+# Valves of each room
+ROOM_VALVE_DICT: Dict[int, List[str]] = {
     371: ["Y700", "Y701", "Y702", "Y703", "Y704", "Y705", "Y706"],
     472: ["Y700", "Y701", "Y706"],
     473: ["Y702"],
@@ -33,6 +33,7 @@ EXT_ROOM_VALVE_DICT: Dict[int, Any] = {
     575: ["Y701", "Y702", "Y703"],
 }
 
+# Read nodes that are the same for each room
 read_node_names = [
     # Weather:
     'ns=2;s=Gateway.PLC1.65NT-03032-D001.PLC1.MET51.strMET51Read.strWetterstation.strStation1.lrLufttemperatur',
@@ -59,32 +60,37 @@ TH_SUFFIXES: List[str] = [
     "bWdResearch",
 ]
 
-READ_SUFFIXES: List[Tuple[str, str, type]] = [
+READ_SUF_NAME_TYPES: List[Tuple[str, str, type]] = [
     ("bAckResearch", "Research Acknowledged", bool),
     ("rValue1", "Measured Temp.", float),
     ("rValue2", "", float),
     ("bValue1", "Temp. Set-point Feedback", bool),
 ]
 
-base_s = f"ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3."
+BASE_NODE_STR = f"ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3."
 
 
 def _th_string_to_node_name(th_str: str, ext: str = "", read: bool = False) -> str:
+    """Turns a thermostat string into a node name string.
+
+    `th_str` should be contained as a value in `ROOM_DICT`.
+    """
     n1, n2 = th_str.split("_")
     rw_part = "strRead" if read else "strWrite_L"
-    pre = base_s + rw_part + f".strSensoren.str{n1}.str{n2}"
+    pre = BASE_NODE_STR + rw_part + f".strSensoren.str{n1}.str{n2}"
     return pre + ext
 
 
-def get_min_diff(t1, t2):
+def get_min_diff(t1: datetime.datetime, t2: datetime.datetime):
+    """Computes the time difference in minutes between two datetimes."""
     d1_ts = time.mktime(t1.timetuple())
     d2_ts = time.mktime(t2.timetuple())
     return (d2_ts - d1_ts) / 60
 
 
 # Type definitions for control
-ControllerT = Union[Callable[[], Num], Num]
-ControlT = List[Tuple[int, ControllerT]]
+ControllerT = Union[Callable[[], Num], Num]  #: Controller type
+ControlT = List[Tuple[int, ControllerT]]  #: Room number to controller map type
 
 
 class FixTimeConstController:
@@ -182,17 +188,20 @@ def _get_nodes(control: ControlT) -> List:
 
 
 def _get_read_nodes(control: ControlT) -> Tuple[List[str], List[str], List[int], List[type]]:
+    # Initialize lists
     node_list, node_descs, room_inds, types = [], [], [], []
+
+    # Iterate over all rooms to be controlled.
     for c in control:
         r_nr, _ = c
-        valves = EXT_ROOM_VALVE_DICT[r_nr]
+        valves = ROOM_VALVE_DICT[r_nr]
         room_str = ROOM_DICT[r_nr]
         s1, s2 = room_str.split("_")
 
         # Add temperature feedback
         b_s = _th_string_to_node_name(room_str, read=True)
         room_inds += [len(node_descs)]
-        for s, d, t in READ_SUFFIXES:
+        for s, d, t in READ_SUF_NAME_TYPES:
             node_list += [b_s + "." + s]
             node_descs += [f"{r_nr}: {d}"]
             types += [t]
@@ -200,7 +209,7 @@ def _get_read_nodes(control: ControlT) -> Tuple[List[str], List[str], List[int],
         # Add valves
         for v in valves:
             n = s1[1]
-            v_s = base_s + f"strRead.strAktoren.strZ{n}.str{v}.bValue1"
+            v_s = BASE_NODE_STR + f"strRead.strAktoren.strZ{n}.str{v}.bValue1"
             node_list += [v_s]
             node_descs += [f"{r_nr}: Valve {v}"]
             types += [bool]
@@ -208,6 +217,7 @@ def _get_read_nodes(control: ControlT) -> Tuple[List[str], List[str], List[int],
 
 
 def str_to_dt(s: str, dt: type):
+    """Converts a string to type `dt`."""
     if dt is bool:
         return str2bool(s)
     elif dt is int:
