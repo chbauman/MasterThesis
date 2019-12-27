@@ -37,11 +37,18 @@ read_node_names = [
     # Weather:
     'ns=2;s=Gateway.PLC1.65NT-03032-D001.PLC1.MET51.strMET51Read.strWetterstation.strStation1.lrLufttemperatur',
     'ns=2;s=Gateway.PLC1.65NT-06421-D001.PLC1.Units.str2T5.strRead.strSensoren.strW1.strB870.rValue5',
+    # Heating water temperatures
+    "ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strSensoren.strM1.strB810.rValue1",
+    "ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strSensoren.strM1.strB814.rValue1",
 ]
 read_node_descs_and_types = ([
                                  "Outside Temp.",
                                  "Irradiance",
+                                 "Water Temp. In",
+                                 "Water Temp. Out",
                              ], [
+                                 float,
+                                 float,
                                  float,
                                  float,
                              ])
