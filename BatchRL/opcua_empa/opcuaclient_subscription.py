@@ -18,7 +18,7 @@ import warnings
 from typing import List
 
 import pandas as pd
-from opcua import Client
+from opcua import Client, Subscription
 from opcua import ua
 from opcua.common import ua_utils
 from opcua.ua import UaStatusCodeError
@@ -85,14 +85,15 @@ class OpcuaClient(object):
     _data_types: List
     _ua_values: List
 
-    sub = None
+    # The subscription object
+    _sub: Subscription = None
 
     def __init__(self, url='opc.tcp://ehub.nestcollaboration.ch:49320',
                  application_uri='Researchclient',
                  product_uri='Researchclient',
                  user='JustForTest',
                  password='JustForTest'):
-        """Initialize the opc ua client."""
+        """Initialize the opcua client."""
 
         self.client = Client(url=url, timeout=4)
         self.client.set_user(user)
@@ -102,50 +103,79 @@ class OpcuaClient(object):
         self.handler = SubHandler()
         self.bInitPublish = False
 
-    def connect(self):
-        """Connect the client to the server"""
+    def connect(self) -> bool:
+        """Connect the client to the server.
+
+        If connection fails, prints a possible solution.
+
+        Returns:
+            True if connection successful, else False.
+        """
         try:
             self.client.connect()
             self.client.load_type_definitions()
-            print('%s OPC UA Connection to server established' % (datetime.datetime.now()))
+            logging.warning("OPC UA Connection to server established.")
             return True
+        except UaStatusCodeError as e:
+            logging.warning(f"Exception: {e} happened while connecting!")
+            print(f"Try waiting a bit more and rerun!")
+            return False
         except Exception as e:
-            print(f"Exception: {e} happened while connecting!")
-            print(f"Check your internet connection or try waiting a bit more and rerun!")
+            logging.warning(f"Exception: {e} happened while connecting!")
+            print(f"Check your internet connection!")
             return False
 
-    def disconnect(self):
-        """Disconnect the client"""
+    def disconnect(self) -> None:
+        """Disconnect the client.
+
+        Deletes the subscription first to avoid error.
+        """
         try:
-            self.sub.delete()
+            self._sub.delete()
             self.client.disconnect()
-            print(f"{datetime.datetime.now()} OPC UA Server disconnected.")
+            logging.warning("OPC UA Server disconnected.")
         except UaStatusCodeError as e:
             # This does not catch the error :(
-            print(f"{datetime.datetime.now()} OPC UA Server disconnected with error: {e}")
+            logging.warning(f"OPC UA Server disconnected with error: {e}")
 
-    def subscribe(self, json_read: str):
-        """Subscribe all values you want to read"""
+    def subscribe(self, json_read: str) -> None:
+        """Subscribe all values you want to read.
+
+        If it fails, a warning is printed and some values might
+        not be read correctly.
+        """
         self.df_Read = pd.read_json(json_read)
         nodelist_read = [self.client.get_node(row['node'])
                          for i, row in self.df_Read.iterrows()]
 
+        # Try subscribing to the nodes in the list.
         try:
-            self.sub = self.client.create_subscription(period=0, handler=self.handler)
-            sub_res = self.sub.subscribe_data_change(nodelist_read)
+            self._sub = self.client.create_subscription(period=0, handler=self.handler)
+            sub_res = self._sub.subscribe_data_change(nodelist_read)
 
             # Check if subscription was successful
             for ct, s in enumerate(sub_res):
                 if not type(s) is int:
-                    print(s)
                     warnings.warn(f"Node: {nodelist_read[ct]} not found!")
-            print('%s OPC UA Subscription requested' % (datetime.datetime.now()))
+            logging.warning("OPC UA Subscription requested")
         except Exception as e:
-            print(f"Exception: {e} happened while subscribing!")
-            logging.warning(e)
+            logging.warning(f"Exception: {e} happened while subscribing!")
 
-    def publish(self, json_write: str):
+    def publish(self, json_write: str) -> None:
+        """Publish (write) values to server.
+
+        Initializes publishing if called for first time. If the actual
+        publishing fails, a warning message is printed.
+
+        Args:
+            json_write: The string with the json to write.
+
+        Raises:
+            UaStatusCodeError: If initialization fails.
+        """
         self.df_Write = pd.read_json(json_write)
+
+        # Initialize publishing
         if not self.bInitPublish:
             self._node_objects = [self.client.get_node(node)
                                   for node in self.df_Write['node'].tolist()]
@@ -153,11 +183,12 @@ class OpcuaClient(object):
                 self._data_types = [nodeObject.get_data_type_as_variant_type()
                                     for nodeObject in self._node_objects]
                 self.bInitPublish = True
-                print('%s OPC UA Publishing initialized' % (datetime.datetime.now()))
+                logging.warning("OPC UA Publishing initialized")
             except UaStatusCodeError as e:
                 print(f"UaStatusCodeError while initializing publishing!: {e}")
                 raise e
 
+        # Publish values, failures to publish will not raise an exception.
         try:
             self._ua_values = [ua.DataValue(ua.Variant(ua_utils.string_to_val(str(value), d_t), d_t)) for
                                value, d_t in zip(self.df_Write['value'].tolist(), self._data_types)]
@@ -165,7 +196,5 @@ class OpcuaClient(object):
             for n, val in zip(self._node_objects, self._ua_values):
                 n.set_value(val)
                 logger.info('write %s %s' % (n, val))
-
         except UaStatusCodeError as e:
-            print(f"UaStatusCodeError: {e} happened while publishing!")
-            logging.warning(e)
+            logging.warning(f"UaStatusCodeError: {e} happened while publishing!")
