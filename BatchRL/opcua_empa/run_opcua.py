@@ -1,3 +1,4 @@
+import logging
 import time
 
 import pandas as pd
@@ -8,11 +9,6 @@ from opcua_empa.opcuaclient_subscription import OpcuaClient
 from util.numerics import check_in_range
 
 TEMP_MIN_MAX = (18.0, 25.0)
-
-# Set pandas printing options
-pd.set_option('display.width', 1000)
-pd.set_option('display.max_columns', 500)
-pd.options.display.max_colwidth = 200
 
 
 def try_opcua(verbose: int = 0):
@@ -31,9 +27,9 @@ def try_opcua(verbose: int = 0):
     curr_control = [(575, FixTimeConstController(val=50, max_n_minutes=1))]
 
     # Define value and node generator
-    value_gen = NodeAndValues(curr_control)
-    w_nodes = value_gen.get_nodes()
-    read_nodes = value_gen.get_read_nodes()
+    node_value_gen = NodeAndValues(curr_control)
+    write_nodes = node_value_gen.get_nodes()
+    read_nodes = node_value_gen.get_read_nodes()
 
     # Subscribe
     df_read = pd.DataFrame({'node': read_nodes})
@@ -43,16 +39,15 @@ def try_opcua(verbose: int = 0):
     iter_ind = 0
     while cont:
         # Compute the current values
-        v = value_gen.compute_current_values()
-        df_write = pd.DataFrame({'node': w_nodes, 'value': v})
+        curr_vals = node_value_gen.compute_current_values()
+        df_write = pd.DataFrame({'node': write_nodes, 'value': curr_vals})
 
         # Write (publish) values and wait
         opcua_client.publish(json_write=df_write.to_json())
-        time.sleep(1)
         opcua_client.handler.df_Read.set_index('node', drop=True)
 
         # Check termination criterion
-        ext_values = value_gen.extract_values(opcua_client.handler.df_Read)
+        ext_values = node_value_gen.extract_values(opcua_client.handler.df_Read)
 
         # Check that the research acknowledgement is true.
         # Wait for at least 20s before requiring to be true, takes some time.
@@ -67,16 +62,18 @@ def try_opcua(verbose: int = 0):
 
         # Print the reason of termination.
         if verbose > 0:
-            print(f"Extracted : {ext_values}")
+            print_fun = logging.warning  # Maybe use print instead of logging?
+            print_fun(f"Extracted : {ext_values}")
             if not temps_in_bound:
-                print("Temperature bounds reached, aborting experiment.")
+                print_fun("Temperature bounds reached, aborting experiment.")
             if not res_ack_true:
-                print("Research mode confirmation lost :(")
+                print_fun("Research mode confirmation lost :(")
             if terminate_now:
-                print("Experiment time over!")
+                print_fun("Experiment time over!")
 
+        # Increment counter and wait.
         iter_ind += 1
+        time.sleep(1)
 
-    # This terminates with an error... But at least it terminates.
-    time.sleep(1)
+    # Disconnect the client.
     opcua_client.disconnect()

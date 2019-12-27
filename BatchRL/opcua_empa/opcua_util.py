@@ -9,6 +9,12 @@ from opcua_empa.opcuaclient_subscription import toggle
 from util.numerics import has_duplicates
 from util.util import Num, str2bool
 
+
+# # Set pandas printing options
+# pd.set_option('display.width', 1000)
+# pd.set_option('display.max_columns', 500)
+# pd.options.display.max_colwidth = 200
+
 # The dictionary mapping room numbers to thermostat strings
 ROOM_DICT: Dict[int, str] = {
     472: "R2_B870",
@@ -220,24 +226,26 @@ def str_to_dt(s: str, dt: type):
     """Converts a string to type `dt`."""
     if dt is bool:
         return str2bool(s)
-    elif dt is int:
-        return int(s)
-    elif dt is float:
-        return float(s)
-    elif dt is str:
-        return s
+    elif dt in [int, float, str]:
+        return dt(s)
     else:
         raise NotImplementedError(f"Dtype: {dt} not supported!")
 
 
 class NodeAndValues:
-    n_rooms: int
-    control: ControlT
-    nodes: List[str]
-    read_nodes: List[str]
-    read_desc: List[str]
-    room_inds: List[int]
+    """Class that defines nodes and values to be used with the opcua client.
 
+    Designed for room temperature control at DFAB.
+    Number of rooms to be controlled can vary.
+    """
+    n_rooms: int  #: The number of rooms.
+    control: ControlT  #: The controller list.
+    nodes: List[str]  #: The nodes to be written.
+    read_nodes: List[str]  #: The nodes to be read.
+    read_desc: List[str]  #: The descriptions of the read nodes.
+    room_inds: List[int]  #: The indices of the rooms.
+
+    # Read and write dataframes
     read_df: np.ndarray = None
     write_df: pd.DataFrame = None
 
@@ -258,7 +266,7 @@ class NodeAndValues:
 
         # Check for duplicate room numbers in control
         room_inds = np.array([c[0] for c in control])
-        assert not has_duplicates(room_inds), "Multiply controlled rooms!"
+        assert not has_duplicates(room_inds), f"Multiply controlled rooms: {room_inds}!"
 
         # Strings used for value extraction
         inds = [0, 1]
@@ -288,6 +296,7 @@ class NodeAndValues:
         return {_trf_node(s): ind for s, ind in zip(self.read_nodes, inds)}
 
     def compute_current_values(self) -> List:
+        """Computes current control inputs."""
         return _get_values(self.control)
 
     def extract_values(self, read_df: pd.DataFrame) -> Tuple[List, List]:
@@ -308,8 +317,8 @@ class NodeAndValues:
         temps = [self.read_df[self._curr_read_n][i + inds[1]]
                  for i in self.room_inds]
 
-        print(self.read_desc)
-        print(self.read_df[self._curr_read_n])
+        # print(self.read_desc)
+        # print(self.read_df[self._curr_read_n])
 
         # Increment or reset counter
         self._curr_read_n += 1
