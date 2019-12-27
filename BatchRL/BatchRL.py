@@ -682,6 +682,7 @@ arg_def_list = [
     ("test", "run tests"),
     ("cleanup", "cleanup test files"),
     ("plot", "run overleaf plot creation"),
+    ("ua", "run opcua"),
 ]
 opt_param_l = [
     ("int", int, "additional integer parameter(s)"),
@@ -759,6 +760,10 @@ def main() -> None:
     # Overleaf plots
     if args.plot:
         update_overleaf_plots(verbose)
+
+    # Opcua
+    if args.ua:
+        try_opcua(verbose, room_list=args.int)
 
     # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)

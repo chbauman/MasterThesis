@@ -17,6 +17,7 @@ from util.util import Num, str2bool
 
 # The dictionary mapping room numbers to thermostat strings
 ROOM_DICT: Dict[int, str] = {
+    371: "R1_B870",
     472: "R2_B870",
     473: "R2_B871",
     475: "R2_B872",
@@ -24,6 +25,8 @@ ROOM_DICT: Dict[int, str] = {
     573: "R3_B871",
     575: "R3_B872",
 }
+
+ALL_ROOM_NRS = [k for k in ROOM_DICT]
 
 # The inverse dictionary of the above one
 INV_ROOM_DICT = {v: k for k, v in ROOM_DICT.items()}

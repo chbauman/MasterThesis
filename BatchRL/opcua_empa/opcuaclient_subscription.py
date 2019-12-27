@@ -157,7 +157,7 @@ class OpcuaClient(object):
             for ct, s in enumerate(sub_res):
                 if not type(s) is int:
                     warnings.warn(f"Node: {nodelist_read[ct]} not found!")
-            logging.warning("OPC UA Subscription requested")
+            logging.warning("OPC UA Subscription requested.")
         except Exception as e:
             logging.warning(f"Exception: {e} happened while subscribing!")
 
@@ -183,7 +183,7 @@ class OpcuaClient(object):
                 self._data_types = [nodeObject.get_data_type_as_variant_type()
                                     for nodeObject in self._node_objects]
                 self.bInitPublish = True
-                logging.warning("OPC UA Publishing initialized")
+                logging.warning("OPC UA Publishing initialized.")
             except UaStatusCodeError as e:
                 print(f"UaStatusCodeError while initializing publishing!: {e}")
                 raise e
@@ -194,7 +194,7 @@ class OpcuaClient(object):
                                value, d_t in zip(self.df_Write['value'].tolist(), self._data_types)]
 
             for n, val in zip(self._node_objects, self._ua_values):
-                n.set_value(val)
+                n.set_value(val)  # This is slow!
                 logger.info('write %s %s' % (n, val))
         except UaStatusCodeError as e:
             logging.warning(f"UaStatusCodeError: {e} happened while publishing!")
