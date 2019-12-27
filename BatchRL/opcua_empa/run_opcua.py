@@ -47,20 +47,26 @@ def try_opcua(verbose: int = 0):
         v = value_gen.compute_current_values()
         df_write = pd.DataFrame({'node': w_nodes, 'value': v})
 
+        # Write (publish) values and wait
         opcua_client.publish(json_write=df_write.to_json())
         time.sleep(1)
         opcua_client.handler.df_Read.set_index('node', drop=True)
-        read_values = opcua_client.handler.df_Read
 
         # Check termination criterion
-        ext_values = value_gen.extract_values(read_values)
+        ext_values = value_gen.extract_values(opcua_client.handler.df_Read)
 
-        # Wait for at least 20s before requiring to be true
+        # Check that the research acknowledgement is true.
+        # Wait for at least 20s before requiring to be true, takes some time.
         res_ack_true = np.all(ext_values[0]) or iter_ind < 20
+
+        # Check measured temperatures, stop if too low or high.
         temps_in_bound = check_in_range(np.array(ext_values[1]), *TEMP_MIN_MAX)
+
+        # Stop if (first) controller gives termination signal.
         terminate_now = curr_control[0][1].terminate()
         cont = res_ack_true and temps_in_bound and not terminate_now
 
+        # Print the reason of termination.
         if verbose > 0:
             print(f"Extracted : {ext_values}")
             if not temps_in_bound:

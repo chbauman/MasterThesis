@@ -25,6 +25,8 @@ from opcua import ua
 from opcua.common import ua_utils
 
 # Initialize and configure logger
+from opcua.ua import UaStatusCodeError
+
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.WARNING)
 logger = logging.getLogger('opc ua client')
 
@@ -148,9 +150,8 @@ class OpcuaClient(object):
                                     for nodeObject in self._node_objects]
                 self.bInitPublish = True
                 print('%s OPC UA Publishing initialized' % (datetime.datetime.now()))
-            except opcua.ua.uaerrors._auto.BadNodeIdUnknown as e:
-                print(f"Exception: {e} happened while initializing publishing!")
-                logging.warning('The node you want to write does not exist')
+            except UaStatusCodeError as e:
+                print(f"UaStatusCodeError while initializing publishing!: {e}")
                 raise e
 
         try:
@@ -161,6 +162,6 @@ class OpcuaClient(object):
                 n.set_value(val)
                 logger.info('write %s %s' % (n, val))
 
-        except Exception as e:
-            print(f"Exception: {e} happened while publishing!")
+        except UaStatusCodeError as e:
+            print(f"UaStatusCodeError: {e} happened while publishing!")
             logging.warning(e)
