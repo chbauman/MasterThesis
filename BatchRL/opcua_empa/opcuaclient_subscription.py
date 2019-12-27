@@ -14,6 +14,7 @@
 import datetime
 import logging
 import socket
+import time
 
 import warnings
 from typing import List
@@ -112,13 +113,17 @@ class OpcuaClient(object):
             return True
         except Exception as e:
             print(f"Exception: {e} happened while connecting!")
-            print(f"Check your internet connection!")
+            print(f"Check your internet connection or try waiting a bit more and rerun!")
             return False
 
     def disconnect(self):
         """Disconnect the client"""
-        self.client.disconnect()
-        print('%s OPC UA Server disconnected' % (datetime.datetime.now()))
+        try:
+            self.client.disconnect()
+            print(f"{datetime.datetime.now()} OPC UA Server disconnected.")
+        except UaStatusCodeError as e:
+            # This does not catch the error :(
+            print(f"{datetime.datetime.now()} OPC UA Server disconnected with error: {e}")
 
     def subscribe(self, json_read: str):
         """Subscribe all values you want to read"""
