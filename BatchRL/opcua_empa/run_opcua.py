@@ -1,3 +1,4 @@
+import datetime
 import logging
 import time
 from typing import List
@@ -54,8 +55,11 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = False
         df_write["value"] = node_value_gen.compute_current_values()
 
         # Write (publish) values and wait
+        t0 = datetime.datetime.now()
         opcua_client.publish(json_write=df_write.to_json())
-        time.sleep(1.0)
+        dt = datetime.datetime.now() - t0
+        print_fun(f"{dt}")
+        time.sleep(0.4)
 
         res_ack_true, temps_in_bound = True, True
         ext_values = None
