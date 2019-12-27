@@ -14,20 +14,16 @@
 import datetime
 import logging
 import socket
-import time
-
 import warnings
 from typing import List
 
-import opcua
 import pandas as pd
 from opcua import Client
 from opcua import ua
 from opcua.common import ua_utils
-
-# Initialize and configure logger
 from opcua.ua import UaStatusCodeError
 
+# Initialize and configure logger
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.WARNING)
 logger = logging.getLogger('opc ua client')
 
@@ -89,6 +85,8 @@ class OpcuaClient(object):
     _data_types: List
     _ua_values: List
 
+    sub = None
+
     def __init__(self, url='opc.tcp://ehub.nestcollaboration.ch:49320',
                  application_uri='Researchclient',
                  product_uri='Researchclient',
@@ -119,6 +117,7 @@ class OpcuaClient(object):
     def disconnect(self):
         """Disconnect the client"""
         try:
+            self.sub.delete()
             self.client.disconnect()
             print(f"{datetime.datetime.now()} OPC UA Server disconnected.")
         except UaStatusCodeError as e:
@@ -132,8 +131,8 @@ class OpcuaClient(object):
                          for i, row in self.df_Read.iterrows()]
 
         try:
-            sub = self.client.create_subscription(period=0, handler=self.handler)
-            sub_res = sub.subscribe_data_change(nodelist_read)
+            self.sub = self.client.create_subscription(period=0, handler=self.handler)
+            sub_res = self.sub.subscribe_data_change(nodelist_read)
 
             # Check if subscription was successful
             for ct, s in enumerate(sub_res):

@@ -20,8 +20,7 @@ def try_opcua(verbose: int = 0):
     opcua_client = OpcuaClient(user='ChristianBaumannETH2020', password='Christian4_ever')
 
     # Connect client
-    connect_success = opcua_client.connect()
-    if not connect_success:
+    if not opcua_client.connect():
         return
 
     # Define room and control
@@ -79,4 +78,5 @@ def try_opcua(verbose: int = 0):
         iter_ind += 1
 
     # This terminates with an error... But at least it terminates.
+    time.sleep(1)
     opcua_client.disconnect()
