@@ -24,6 +24,7 @@ INV_ROOM_DICT = {v: k for k, v in ROOM_DICT.items()}
 
 # Values: [write code,
 EXT_ROOM_VALVE_DICT: Dict[int, Any] = {
+    371: ["Y700", "Y701", "Y702", "Y703", "Y704", "Y705", "Y706"],
     472: ["Y700", "Y701", "Y706"],
     473: ["Y702"],
     475: ["Y703", "Y704", "Y705"],
