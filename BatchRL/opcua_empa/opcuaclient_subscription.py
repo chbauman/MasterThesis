@@ -125,6 +125,15 @@ class OpcuaClient(object):
             print(f"Check your internet connection!")
             return False
 
+    def read_values(self) -> pd.DataFrame:
+        try:
+            self.handler.df_Read.set_index('node', drop=True)
+            return self.handler.df_Read
+
+        except ValueError as e:
+            logging.warning(f"Exception: {e} while reading values")
+        return self.handler.df_Read
+
     def disconnect(self) -> None:
         """Disconnect the client.
 

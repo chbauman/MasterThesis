@@ -28,11 +28,11 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = False
         return
 
     # Define room and control
-    tc = ToggleController(val_low=10, val_high=35, n_mins=15, start_low=True, max_n_minutes=60 * 16)
+    tc = ToggleController(val_low=10, val_high=35, n_mins=60 * 100, start_low=True, max_n_minutes=60 * 16)
     room_list = [475, 571] if room_list is None else room_list
     used_control = [(i, tc) for i in room_list]
     if debug:
-        used_control = [(575, FixTimeConstController(val=50, max_n_minutes=1))]
+        used_control = [(575, FixTimeConstController(val=10, max_n_minutes=1))]
 
     # Define value and node generator
     node_value_gen = NodeAndValues(used_control)
@@ -64,10 +64,11 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = False
         res_ack_true, temps_in_bound = True, True
         ext_values = None
         if not publish_only:
-            opcua_client.handler.df_Read.set_index('node', drop=True)
+            # Read values
+            read_vals = opcua_client.read_values()
 
             # Check termination criterion
-            ext_values = node_value_gen.extract_values(opcua_client.handler.df_Read)
+            ext_values = node_value_gen.extract_values(read_vals)
 
             # Check that the research acknowledgement is true.
             # Wait for at least 20s before requiring to be true, takes some time.
