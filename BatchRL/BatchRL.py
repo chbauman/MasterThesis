@@ -24,7 +24,7 @@ from dynamics.battery_model import BatteryModel
 from dynamics.classical import SKLearnModel
 from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
-from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel
+from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel, PhysicallyConsistentRNN
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
 from opcua_empa.run_opcua import try_opcua
@@ -41,6 +41,7 @@ base_rnn_models = [
     "RoomTempFromReduced_RNN",
     "RoomTemp_RNN",
     "WeatherFromWeatherTime_Linear",
+    "PhysConsModel",
     # "Full_RNN",
 ]
 full_models = [
@@ -578,6 +579,15 @@ def get_model(name: str, ds: Dataset,
         if from_hop:
             return RNNDynamicModel.from_best_hp(**fix_pars, **inds)
         return RNNDynamicModel(**inds, **base_params_no_inds)
+    elif name == "PhysConsModel":
+        # The physically consistent temperature only model.
+        inds = {
+            'out_inds': np.array([5], dtype=np.int32),
+            'in_inds': np.array([0, 1, 2, 3, 4, 5, 6, 7], dtype=np.int32),
+        }
+        if from_hop:
+            return PhysicallyConsistentRNN.from_best_hp(**fix_pars, **inds)
+        return PhysicallyConsistentRNN(**inds, **base_params_no_inds)
     elif name == "WaterTemp_Const":
         # Constant model for water temperatures
         return ConstModel(ds, pred_inds=np.array([2, 3], dtype=np.int32))
