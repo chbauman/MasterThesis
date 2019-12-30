@@ -250,7 +250,8 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
 def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                     eval_list: List[int] = None,
                     perf_eval: bool = False,
-                    alpha: float = 5.0, n_steps: int = None,
+                    alpha: float = 5.0,
+                    n_steps: int = None,
                     overwrite: bool = False,
                     include_battery: bool = False) -> None:
     # Print what the code does
@@ -270,7 +271,6 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
     # Load the model and init env
     with ProgWrap(f"Preparing environment...", verbose > 0):
-        # print(f"V: {verbose}, {prog_verb(verbose)}")
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True, verbose=prog_verb(verbose))
         # m.analyze_visually(overwrite=False, plot_acf=False, verbose=prog_verb(verbose) > 0)
         if include_battery:
@@ -291,13 +291,13 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
         # Choose agent and fit to env.
         if n_steps is None:
-            n_steps = get_rl_steps()
+            n_steps = get_rl_steps(eul=True)
         agent = DDPGBaseAgent(env,
                               action_range=env.action_range,
                               n_steps=n_steps,
                               gamma=0.99, lr=0.00001)
         name_ext = "_BAT" if include_battery else ""
-        agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}_{name_ext}"
+        agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}{name_ext}"
 
     with ProgWrap(f"Fitting DDPG agent...", verbose > 0):
         agent.fit(verbose=prog_verb(verbose))
@@ -642,9 +642,6 @@ def get_model(name: str, ds: Dataset,
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
-    try_opcua(verbose=5)
-    return
-
     # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
     mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
@@ -755,7 +752,9 @@ def main() -> None:
         alpha = args.float[0] if args.float is not None else None
         n_steps = args.int[0] if args.int is not None else None
         add_bat = args.bool[0] if args.bool is not None else False
-        run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps, include_battery=add_bat)
+        perf_eval = args.bool[1] if args.bool is not None and len(args.bool) > 1 else False
+        run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps,
+                        include_battery=add_bat, perf_eval=perf_eval)
 
     # Overleaf plots
     if args.plot:
