@@ -652,6 +652,13 @@ def get_model(name: str, ds: Dataset,
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
+    name = "PhysConsModel"
+    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=False)
+    mod = get_model(name, ds, rnn_consts, from_hop=False, fit=False)
+    assert isinstance(mod, HyperOptimizableModel), "Model not hyperparameter-optimizable!"
+    optimize_model(mod, verbose=True)
+    return
+
     # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
     mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
