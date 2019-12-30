@@ -49,12 +49,14 @@ full_models = [
     "FullState_Comp_TempConstWaterWeather",
     "FullState_Comp_WeatherAptTime",
     "FullState_Naive",
+    "FullState_Comp_Phys",
 ]
 full_models_short_names = [
     "Weather, Constant Water, Reduced Room Temp",
     "Weather, Constant Water, Room Temp.",
     "Weather, joint Room and Water",
     "Naive",
+    "Weather, Constant Water, Consistent Room Temp",
 ]
 
 # Model performance evaluation
@@ -635,6 +637,17 @@ def get_model(name: str, ds: Dataset,
         mod_list = [model_weather, mod_wt, model_reduced_temp, model_time_exact]
         return _build_composite(mod_list, name)
 
+    elif name == "FullState_Comp_Phys":
+        # The full state model combining the weather, the constant water temperature,
+        # the physically consistent room temperature and the exact time model to predict all
+        # variables except for the control variable.
+        mod_wt = get_model("WaterTemp_Const", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        model_reduced_temp = get_model("PhysConsModel", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        model_time_exact = get_model("Time_Exact", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        model_weather = get_model("WeatherFromWeatherTime_RNN", ds, rnn_consts=rnn_consts, from_hop=from_hop)
+        mod_list = [model_weather, mod_wt, model_reduced_temp, model_time_exact]
+        return _build_composite(mod_list, name)
+
     elif name == "FullState_Comp_TempConstWaterWeather":
         # The full state model combining the weather, the constant water temperature,
         # the reduced room temperature and the exact time model to predict all
@@ -652,16 +665,11 @@ def get_model(name: str, ds: Dataset,
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
-    name = "PhysConsModel"
-    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=False)
-    mod = get_model(name, ds, rnn_consts, from_hop=False, fit=False)
-    assert isinstance(mod, HyperOptimizableModel), "Model not hyperparameter-optimizable!"
-    optimize_model(mod, verbose=True)
-    return
-
     # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
     mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
+                    rnn_consts=rnn_consts_full, fit=True, from_hop=True)
+    mod = get_model("FullState_Comp_Phys", ds_full,
                     rnn_consts=rnn_consts_full, fit=True, from_hop=True)
 
     # Setup env
