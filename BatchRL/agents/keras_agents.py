@@ -166,6 +166,12 @@ class DDPGBaseAgent(KerasBaseAgent):
                          ("L", layers),
                          ("REG", reg),
                          ("AR", action_range)]
+        # Set parameters
+        self.n_steps = n_steps
+        self.lr = lr
+        self.gamma = gamma
+
+        # Create name
         name = self.get_short_name() + "_" + env.name + make_param_ext(param_ex_list)
 
         # Initialize super class.
@@ -175,11 +181,6 @@ class DDPGBaseAgent(KerasBaseAgent):
         self.env = env
         self.nb_actions = env.nb_actions
         self.n_state_vars = env.m.n_pred
-
-        # Training parameters
-        self.n_steps = n_steps
-        self.lr = lr
-        self.gamma = gamma
 
         # Network parameters
         self.layers = layers
