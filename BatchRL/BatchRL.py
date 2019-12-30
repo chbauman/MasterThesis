@@ -256,14 +256,19 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                     alpha: float = 5.0,
                     n_steps: int = None,
                     overwrite: bool = False,
-                    include_battery: bool = False) -> None:
+                    include_battery: bool = False,
+                    physically_consistent: bool = False) -> None:
     # Print what the code does
     if verbose:
         print("Running RL agents on learned room model.")
         if include_battery:
             print("Model includes battery.")
 
+    # Select model
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
+    if physically_consistent:
+        m_name = "FullState_Comp_Phys"
+
     if eval_list is None:
         eval_list = [0, None, None]
 
