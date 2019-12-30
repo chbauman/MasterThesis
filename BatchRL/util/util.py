@@ -16,7 +16,6 @@ from functools import wraps
 from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable
 
 import numpy as np
-from nptyping import Array
 
 #######################################################################################################
 # Platform specific stuff
@@ -62,7 +61,7 @@ T = TypeVar('T')
 LOrEl = Union[Sequence[T], T]
 
 # Indices
-IndArr = Union[Array[np.int], Array[np.int32], Array[np.int64]]
+IndArr = np.ndarray
 IndT = Union[Sequence[int], IndArr]
 
 
