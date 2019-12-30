@@ -275,4 +275,4 @@ class DDPGBaseAgent(KerasBaseAgent):
         plot_rewards(hist, train_plot)
 
     def get_short_name(self):
-        return "DDPG"
+        return f"DDPG_{self.n_steps}"

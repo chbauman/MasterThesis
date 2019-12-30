@@ -13,7 +13,7 @@ from util.numerics import check_in_range
 TEMP_MIN_MAX = (18.0, 25.0)
 
 
-def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = False):
+def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True):
     """User credentials"""
     opcua_client = OpcuaClient(user='ChristianBaumannETH2020', password='Christian4_ever')
 
