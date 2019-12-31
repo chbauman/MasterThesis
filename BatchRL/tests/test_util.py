@@ -4,7 +4,7 @@ from unittest import TestCase
 
 import mock
 import numpy as np
-from mock import patch, call
+from mock import call
 
 from agents.agents_heuristic import ConstActionAgent
 from data_processing.dataset import dataset_data_path
@@ -131,7 +131,7 @@ class TestNumerics(TestCase):
 
         try:
             np.datetime64 = new_np_dt64
-            
+
             nan_avg = nan_avg_between(ts, vals, 7)
             exp_avf = np.array([3.0, 3.0])
             self.assertTrue(np.allclose(nan_avg, exp_avf))
