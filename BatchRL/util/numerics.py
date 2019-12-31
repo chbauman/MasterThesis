@@ -588,6 +588,26 @@ def check_dim(a: np.ndarray, n: int) -> bool:
     return len(a.shape) == n
 
 
+def nan_avg_between(t_stamps: np.ndarray, val_arr: np.ndarray, n_mins: int = 15) -> np.ndarray:
+    """Computes the average of all values in `val_arr` from previous `n_mins` minutes.
+
+    Args:
+        t_stamps: The timestamps corresponding to the values.
+        val_arr: The values to average.
+        n_mins: The number of minutes in an interval
+
+    Returns:
+        Averaged values.
+    """
+    assert t_stamps.shape[0] == val_arr.shape[0], \
+        f"Shape mismatch between {t_stamps} and {val_arr}"
+    now = np.datetime64('now')
+    prev = now - np.timedelta64(n_mins, 'm')
+    read_vals = val_arr[prev < t_stamps <= now]
+    mean_read_vals = np.nanmean(read_vals, axis=0)
+    return mean_read_vals
+
+
 def find_rows_with_nans(all_data: np.ndarray) -> np.ndarray:
     """Finds nans in the data.
 

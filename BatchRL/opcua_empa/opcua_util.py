@@ -314,6 +314,13 @@ class NodeAndValues:
         """Computes current control inputs."""
         return _get_values(self.control)
 
+    def get_avg_last_vals(self, n_mins: int = 15) -> np.ndarray:
+        now = np.datetime64('now')
+        prev = now - np.timedelta64(n_mins, 'm')
+        read_vals = self.read_values[prev < self.read_timestamps <= now]
+        mean_read_vals = np.nanmean(read_vals, axis=0)
+        return mean_read_vals
+
     def extract_values(self, read_df: pd.DataFrame) -> Tuple[List, List]:
 
         # Save current time and set values to nan

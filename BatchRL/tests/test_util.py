@@ -2,7 +2,9 @@ import os
 import random
 from unittest import TestCase
 
+import mock
 import numpy as np
+from mock import patch, call
 
 from agents.agents_heuristic import ConstActionAgent
 from data_processing.dataset import dataset_data_path
@@ -14,7 +16,8 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
     num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
     get_metrics_eval_save_name_list, load_performance, MSE, find_inds
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
-    np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, yeet, \
+    np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, \
+    yeet, \
     dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
     _trf_desc_units, plot_env_evaluation
@@ -64,6 +67,31 @@ class TestNumerics(TestCase):
              [4, 3, 4]],
         ])
         self.c_inds = np.array([1])
+
+    def test_mock_1(self):
+
+        ret_val, rv2 = 5.0, 11.0
+
+        def mp():
+            assert print('hello') == ret_val
+            return rv2
+
+        with mock.patch('builtins.print') as mock_print:
+            mock_print.return_value = ret_val
+            assert mp() == rv2
+            mock_print.assert_has_calls(
+                [
+                    call('hello')
+                ]
+            )
+
+    def test_nan_avg_bet(self):
+        t_s = np.array([
+            np.datetime64('2019-12-31T00:37:29'),
+            np.datetime64('2019-12-31T00:37:29'),
+            np.datetime64('2019-12-31T00:37:29'),
+        ])
+        pass
 
     def test_find_inds(self):
         # Define input
