@@ -85,13 +85,31 @@ class TestNumerics(TestCase):
                 ]
             )
 
+    def test_mock_2(self):
+
+        def my_side_effect(arg1):
+            if arg1 == "now":
+                return "fuck"
+            return "this"
+
+        with mock.patch('numpy.datetime64') as mock_print:
+            mock_print.side_effect = my_side_effect
+            assert np.datetime64('now') == "fuck"
+            assert np.datetime64('2019-12-31T00:37:29') == "this"
+
     def test_nan_avg_bet(self):
-        t_s = np.array([
-            np.datetime64('2019-12-31T00:37:29'),
-            np.datetime64('2019-12-31T00:37:29'),
-            np.datetime64('2019-12-31T00:37:29'),
-        ])
-        pass
+        orig_np_dt64 = np.datetime64
+
+        def new_np_dt64(*args, **kwargs):
+            if args[0] == "now":
+                return "test"
+            return orig_np_dt64(args, kwargs)
+
+        np.datetime64 = new_np_dt64
+
+        self.assertEqual(np.datetime64('now'), "test")
+
+        np.datetime64 = orig_np_dt64
 
     def test_find_inds(self):
         # Define input
