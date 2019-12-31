@@ -3,10 +3,10 @@ import logging
 import time
 from typing import List
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from opcua_empa.opcua_util import NodeAndValues, ToggleController, FixTimeConstController, ALL_ROOM_NRS
+from opcua_empa.opcua_util import NodeAndValues, ToggleController, FixTimeConstController
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from util.numerics import check_in_range
 
