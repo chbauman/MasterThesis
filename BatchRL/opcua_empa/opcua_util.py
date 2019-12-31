@@ -1,4 +1,5 @@
 import datetime
+import logging
 import time
 from typing import Dict, List, Tuple, Union, Callable
 
@@ -248,9 +249,14 @@ class NodeAndValues:
     read_desc: List[str]  #: The descriptions of the read nodes.
     room_inds: List[int]  #: The indices of the rooms.
 
-    # Read and write dataframes
+    # Read data arrays
+    read_timestamps: np.ndarray = None
+    read_values: np.ndarray = None
     read_df: np.ndarray = None
-    write_df: pd.DataFrame = None
+
+    # Write data arrays
+    write_timestamps: np.ndarray = None
+    write_values: np.ndarray = None
 
     _extract_node_strs: List[List]
     _curr_read_n: int = 0
@@ -279,10 +285,16 @@ class NodeAndValues:
         ]
         self.read_dict = self._get_read_dict()
 
+        # Initialize data arrays
         self.n_max = 3600
         dtypes = np.dtype([(s, t)
                            for s, t in zip(self.read_desc, self.read_types)])
+
         self.read_df = np.empty((self.n_max,), dtype=dtypes)
+        self.read_values = np.empty((self.n_max, len(self.read_desc)), dtype=np.float32)
+        self.read_timestamps = np.empty((self.n_max,), dtype='datetime64[s]')
+        self.write_values = np.empty((self.n_max, 3 * self.n_rooms), dtype=np.float32)
+        self.write_timestamps = np.empty((self.n_max,), dtype='datetime64[s]')
 
     def get_nodes(self) -> List[str]:
         return self.nodes
@@ -304,15 +316,22 @@ class NodeAndValues:
 
     def extract_values(self, read_df: pd.DataFrame) -> Tuple[List, List]:
 
+        # Save current time and set values to nan
+        self.read_timestamps[self._curr_read_n] = np.datetime64('now')
+        self.read_df[self._curr_read_n][:] = np.nan
+        self.read_values[self._curr_read_n] = np.nan
+
+        # Order may vary, so we iterate and find index
         for k, row in read_df.iterrows():
             s, val = row["node"], row["value"]
             ind = self.read_dict.get(s)
             if ind is None:
-                print(f"String: {s} not found!")
+                logging.warning(f"String: {s} not found!")
                 continue
             col_name = self.read_desc[ind]
             val = str_to_dt(val, self.read_types[ind])
             self.read_df[self._curr_read_n][col_name] = val
+            self.read_values[self._curr_read_n, col_name] = val
 
         inds = [0, 1]
         res_ack = [self.read_df[self._curr_read_n][i + inds[0]]
