@@ -14,7 +14,7 @@ from tests.test_data import SYNTH_DATA_NAME
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
-    get_metrics_eval_save_name_list, load_performance, MSE, find_inds
+    get_metrics_eval_save_name_list, load_performance, MSE, find_inds, nan_avg_between
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, \
     yeet, \
@@ -97,7 +97,7 @@ class TestNumerics(TestCase):
             assert np.datetime64('now') == "fuck"
             assert np.datetime64('2019-12-31T00:37:29') == "this"
 
-    def test_nan_avg_bet(self):
+    def test_mock_3(self):
         orig_np_dt64 = np.datetime64
 
         def new_np_dt64(*args, **kwargs):
@@ -110,6 +110,33 @@ class TestNumerics(TestCase):
         self.assertEqual(np.datetime64('now'), "test")
 
         np.datetime64 = orig_np_dt64
+
+    def test_nan_avg_bet(self):
+        orig_np_dt64 = np.datetime64
+
+        def new_np_dt64(*args, **kwargs):
+            if args[0] == "now":
+                return np.datetime64('2019-12-31T00:37:29')
+            return orig_np_dt64(*args, **kwargs)
+
+        ts = np.array([
+            np.datetime64('2019-12-31T00:27:29'),
+            np.datetime64('2019-12-31T00:29:29'),
+            np.datetime64('2019-12-31T00:33:29'),
+            np.datetime64('2019-12-31T00:35:29'),
+            np.datetime64('2019-12-31T00:36:29'),
+        ])
+        vals = np.ones((len(ts), 2), dtype=np.float32)
+        vals *= np.arange(len(ts)).reshape((len(ts), 1))
+
+        try:
+            np.datetime64 = new_np_dt64
+            
+            nan_avg = nan_avg_between(ts, vals, 7)
+            exp_avf = np.array([3.0, 3.0])
+            self.assertTrue(np.allclose(nan_avg, exp_avf))
+        finally:
+            np.datetime64 = orig_np_dt64
 
     def test_find_inds(self):
         # Define input

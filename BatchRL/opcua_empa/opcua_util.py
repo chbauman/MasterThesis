@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from opcua_empa.opcuaclient_subscription import toggle
-from util.numerics import has_duplicates
+from util.numerics import has_duplicates, nan_avg_between
 from util.util import Num, str2bool
 
 
@@ -315,11 +315,7 @@ class NodeAndValues:
         return _get_values(self.control)
 
     def get_avg_last_vals(self, n_mins: int = 15) -> np.ndarray:
-        now = np.datetime64('now')
-        prev = now - np.timedelta64(n_mins, 'm')
-        read_vals = self.read_values[prev < self.read_timestamps <= now]
-        mean_read_vals = np.nanmean(read_vals, axis=0)
-        return mean_read_vals
+        return nan_avg_between(self.read_timestamps, self.read_values, n_mins)
 
     def extract_values(self, read_df: pd.DataFrame) -> Tuple[List, List]:
 

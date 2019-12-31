@@ -603,7 +603,7 @@ def nan_avg_between(t_stamps: np.ndarray, val_arr: np.ndarray, n_mins: int = 15)
         f"Shape mismatch between {t_stamps} and {val_arr}"
     now = np.datetime64('now')
     prev = now - np.timedelta64(n_mins, 'm')
-    read_vals = val_arr[prev < t_stamps <= now]
+    read_vals = val_arr[np.logical_and(prev < t_stamps, t_stamps <= now)]
     mean_read_vals = np.nanmean(read_vals, axis=0)
     return mean_read_vals
 
