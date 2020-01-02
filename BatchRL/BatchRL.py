@@ -299,12 +299,13 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
         # Choose agent and fit to env.
         if n_steps is None:
-            n_steps = get_rl_steps(eul=True)
+            n_steps = get_rl_steps(eul=EULER)
         agent = DDPGBaseAgent(env,
                               action_range=env.action_range,
                               n_steps=n_steps,
                               gamma=0.99, lr=0.00001)
         name_ext = "_BAT" if include_battery else ""
+        name_ext += "_PHYS" if physically_consistent else ""
         agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}{name_ext}"
 
     with ProgWrap(f"Fitting DDPG agent...", verbose > 0):
@@ -783,8 +784,10 @@ def main() -> None:
         n_steps = args.int[0] if args.int is not None else None
         add_bat = args.bool[0] if args.bool is not None else False
         perf_eval = args.bool[1] if args.bool is not None and len(args.bool) > 1 else False
+        phys_cons = args.bool[2] if args.bool is not None and len(args.bool) > 2 else False
         run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps,
-                        include_battery=add_bat, perf_eval=perf_eval)
+                        include_battery=add_bat, perf_eval=perf_eval,
+                        physically_consistent=phys_cons)
 
     # Overleaf plots
     if args.plot:
