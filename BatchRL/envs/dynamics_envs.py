@@ -302,6 +302,28 @@ class PWProfile(CProf):
             return 1.0
 
 
+class LowHighProfile(CProf):
+    """Low- high price profile."""
+
+    name = "LH_Profile"
+
+    low_start_ind: int
+    high_start_ind: int
+
+    def __init__(self, dt: int = 15, high_start: int = 7,
+                 low_start: int = 20):
+
+        n_ts_per_h = int(60 / dt)
+        self.low_start_ind = low_start * n_ts_per_h
+        self.high_start_ind = high_start * n_ts_per_h
+
+    def __call__(self, t: int) -> float:
+        if self.high_start_ind < t < self.low_start_ind:
+            return 2.0
+        else:
+            return 1.0
+
+
 def _get_minimum_soc(n_remain_steps: int,
                      bat_params,
                      scaled_action_range,
