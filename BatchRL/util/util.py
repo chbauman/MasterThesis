@@ -295,6 +295,8 @@ def make_param_ext(l: List[Tuple[str, Any]]) -> str:
         pre_str, el = t
         if el is None:
             continue
+        elif hasattr(el, "name"):
+            s += "_" + el.name
         elif type(el) is bool:
             if el:
                 s += "_" + pre_str

@@ -26,7 +26,7 @@ from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel, PhysicallyConsistentRNN
 from dynamics.sin_cos_time import SCTimeModel
-from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv
+from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv, LowHighProfile
 from opcua_empa.run_opcua import try_opcua
 from rest.client import test_rest_client
 from tests.test_util import cleanup_test_data, TEST_DIR
@@ -282,7 +282,7 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
         m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True, verbose=prog_verb(verbose))
         # m.analyze_visually(overwrite=False, plot_acf=False, verbose=prog_verb(verbose) > 0)
         if include_battery:
-            c_prof = None
+            c_prof = LowHighProfile(ds.dt)
             assert isinstance(m, CompositeModel), f"Invalid model: {m}, needs to be composite!"
             env = RoomBatteryEnv(m, p=c_prof,
                                  cont_actions=True,

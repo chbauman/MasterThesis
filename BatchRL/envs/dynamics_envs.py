@@ -276,7 +276,7 @@ class ConstProfile(CProf):
 
     def __init__(self, p: float):
         self.p = p
-        self.name = f"PConst_{p}"
+        self.name = f"Const_{p}"
 
     def __call__(self, t: int) -> float:
         return self.p
@@ -285,7 +285,7 @@ class ConstProfile(CProf):
 class PWProfile(CProf):
     """Some example price profile."""
 
-    name = "PW_Profile"
+    name = "PieceWise"
 
     def __call__(self, t: int) -> float:
         if t < 5:
@@ -305,7 +305,7 @@ class PWProfile(CProf):
 class LowHighProfile(CProf):
     """Low- high price profile."""
 
-    name = "LH_Profile"
+    name = "LowHigh"
 
     low_start_ind: int
     high_start_ind: int
@@ -592,7 +592,7 @@ class RoomBatteryEnv(RLDynEnv):
                  **kwargs):
 
         # Define name
-        ext = make_param_ext([("NEP", max_eps), ("AL", alpha), ("TBD", temp_bounds)])
+        ext = make_param_ext([("NEP", max_eps), ("AL", alpha), ("TBD", temp_bounds), ("P", p)])
         name = "RoomBattery" + ext
 
         # Set prepared indices
