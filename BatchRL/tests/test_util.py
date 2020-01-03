@@ -493,8 +493,10 @@ class TestUtil(TestCase):
         # Test make_param_ext
         res1 = make_param_ext([("a", 4), ("b", [1, 2])])
         assert res1 == "_a4_b1-2", f"make_param_ext not implemented correctly: {res1}"
-        assert make_param_ext(
-            [("a", 4), ("b", None), ("c", False)]) == "_a4", "make_param_ext not implemented correctly!"
+        in2 = [("a", 4), ("b", None), ("c", False)]
+        out2 = make_param_ext(in2)
+        exp2 = "_a4"
+        self.assertEqual(out2, exp2, msg=f"make_param_ext not correct, exp: {exp2}, got: {out2}!")
         res3 = make_param_ext([("a", 4.1111111), ("b", True)])
         assert res3 == "_a4.111_b", f"make_param_ext not implemented correctly: {res3}"
 

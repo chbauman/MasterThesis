@@ -293,19 +293,20 @@ def make_param_ext(l: List[Tuple[str, Any]]) -> str:
     s = ""
     for t in l:
         pre_str, el = t
-        if el is None:
+        if (type(el) is bool and not el) or el is None:
+            pass
+        else:
+            s += "_" + pre_str
+        if type(el) is bool or el is None:
             continue
         elif hasattr(el, "name"):
-            s += "_" + el.name
-        elif type(el) is bool:
-            if el:
-                s += "_" + pre_str
+            s += el.name
         elif type(el) in [int, str]:
-            s += "_" + pre_str + str(el)
+            s += str(el)
         elif type(el) is float:
-            s += "_" + pre_str + "{:.4g}".format(el)
+            s += "{:.4g}".format(el)
         elif type(el) in [list, tuple]:
-            s += "_" + pre_str + '-'.join(map(str, el))
+            s += '-'.join(map(str, el))
         else:
             raise ValueError(f"Type: {type(el)} of {el} not supported!")
     return s
