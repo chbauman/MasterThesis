@@ -709,8 +709,11 @@ class RoomBatteryEnv(RLDynEnv):
 
         The reward takes into account the energy used.
         """
-        # Return minus the energy used minus the temperature penalty.
         det_rew = self.detailed_reward(curr_pred, action)
+        if self.p is not None:
+            return -det_rew[-1] * self.alpha - det_rew[0]
+
+        # Return minus the energy used minus the temperature penalty.
         energy = det_rew[1] + det_rew[2]
         return -energy * self.alpha - det_rew[0]
 
