@@ -203,7 +203,7 @@ class OpcuaClient(object):
                                value, d_t in zip(self.df_Write['value'].tolist(), self._data_types)]
 
             for n, val in zip(self._node_objects, self._ua_values):
-                n.set_value(val)  # This is slow!
+                n.set_value(val)  # This is slow!??
                 logger.info('write %s %s' % (n, val))
         except UaStatusCodeError as e:
             logging.warning(f"UaStatusCodeError: {e} happened while publishing!")

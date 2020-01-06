@@ -777,11 +777,14 @@ class RoomBatteryEnv(RLDynEnv):
         Returns:
             See base method.
         """
+
+        # Call base function and check if EV is connected
         n_before = self.n_remain_connect()
         curr_pred, r, ep_over, d = super().step(action)
         n_after = self.n_remain_connect()
+
+        # If EV came back set SoC.
         if n_after > n_before:
-            # EV came back, set SoC.
             bat_soc_ind_prep = self.prep_inds[-1]
             bat_soc_ind = self.inds[-1]
             ret_soc = self._state_to_scale(self.returning_soc(),
@@ -790,4 +793,5 @@ class RoomBatteryEnv(RLDynEnv):
             self.hist[-1, bat_soc_ind_prep] = ret_soc
             curr_pred[bat_soc_ind_prep] = ret_soc
 
+        # Return data
         return curr_pred, r, ep_over, d
