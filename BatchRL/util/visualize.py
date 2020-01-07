@@ -1298,9 +1298,10 @@ def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str,
     save_figure(save_name)
 
 
-def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: str):
+def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: str,
+                       t_timestamps: np.ndarray = None, t_setpoints: np.ndarray = None):
 
-    # Check and extract shape
+    # Check and extract shape of valves
     check_shape(valves, (-1, -1))
     n_data = len(timestamps)
     assert n_data == valves.shape[0], f"Incompatible shape: {valves} and {timestamps}"
@@ -1311,5 +1312,19 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
         _plot_helper(timestamps, valves[:, k], grid=True, dates=True,
                      m_col=clr_map[k], label=f"Valve {k + 1}")
 
+    # Plot temperature setpoint
+    if t_setpoints is not None:
+
+        # Check input
+        n_t_sp = len(t_setpoints)
+        if t_timestamps is None:
+            t_timestamps = timestamps
+        assert n_t_sp == t_timestamps.shape[0]
+
+        # Plot data
+        _plot_helper(t_timestamps, t_setpoints, grid=True, dates=True,
+                     m_col=clr_map[n_valves], label=f"Temperature Setpoints")
+
     # Save
+    plt.legend()
     save_figure(save_name)

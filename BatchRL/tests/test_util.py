@@ -546,20 +546,34 @@ class TestPlot(TestCase):
 
         self.test_plot_dir = os.path.join(PLOT_DIR, "Test")
 
-    def get_test_path(self, base_name: str):
-        create_dir(self.test_plot_dir)
-        return os.path.join(self.test_plot_dir, base_name)
-
-    def test_valve_open_plot(self):
         dates = [
             '2019-01-01 12:00:00',
             '2019-01-01 12:00:12',
             '2019-01-01 12:00:55',
         ]
-        ts = np.array([str_to_np_dt(d) for d in dates])
+        self.np_dt_vec = np.array([str_to_np_dt(d) for d in dates])
+
+    def get_test_path(self, base_name: str):
+        create_dir(self.test_plot_dir)
+        return os.path.join(self.test_plot_dir, base_name)
+
+    def test_valve_open_plot(self):
         valves = np.random.normal(0, 1, (3, 2))
         test_path = self.get_test_path(f"test_valve_plot")
-        plot_valve_opening(ts, valves, test_path)
+        plot_valve_opening(self.np_dt_vec, valves, test_path)
+
+    def test_valve_open_plot_with_ts(self):
+        dates_2 = [
+            '2019-01-01 12:00:05',
+            '2019-01-01 12:00:32',
+            '2019-01-01 12:01:15',
+        ]
+        ts_2 = np.array([str_to_np_dt(d) for d in dates_2])
+        temp_sp = np.random.normal(2, 1, (3,))
+        valves = np.random.normal(0, 1, (3, 2))
+        test_path = self.get_test_path(f"test_valve_plot_extended")
+        plot_valve_opening(self.np_dt_vec, valves, test_path,
+                           ts_2, temp_sp)
 
     def make_bar_plot(self, n_ag, n_rew, n_steps):
         descs = [f"Rew_{i}" for i in range(n_rew - 1)]

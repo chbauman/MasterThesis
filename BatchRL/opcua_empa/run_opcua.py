@@ -98,5 +98,9 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
         # Increment counter and wait.
         iter_ind += 1
 
+    all_valves = node_value_gen.get_valve_values(all_prev=True)
+    all_timesteps = node_value_gen.read_timestamps
+    plot_valve_opening(all_timesteps, all_valves)
+
     # Disconnect the client.
     opcua_client.disconnect()
