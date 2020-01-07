@@ -60,8 +60,8 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
         t0 = datetime.datetime.now()
         opcua_client.publish(json_write=df_write.to_json())
         dt = datetime.datetime.now() - t0
-        print_fun(f"{dt}")
-        time.sleep(0.4)
+        print_fun(f"Publishing took: {dt}")
+        time.sleep(1.0)
 
         res_ack_true, temps_in_bound = True, True
         ext_values = None
