@@ -1296,3 +1296,18 @@ def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str,
             plt.text(0.05, 0.95, text_str, transform=ax1.transAxes, fontsize=14,
                      verticalalignment='top', bbox=props)
     save_figure(save_name)
+
+
+def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: str):
+
+    # Check and extract shape
+    check_shape(valves, (-1, -1))
+    n_data = len(timestamps)
+    assert n_data == valves.shape[0], f"Incompatible shape: {valves} and {timestamps}"
+    n_valves = valves.shape[1]
+
+    for k in range(n_valves):
+        _plot_helper(timestamps, valves[:, k], grid=True, dates=True,
+                     m_col=colors[k], label=f"Valve {k + 1}")
+
+    save_figure(save_name)

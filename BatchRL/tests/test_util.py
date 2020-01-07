@@ -20,7 +20,7 @@ from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, m
     yeet, \
     dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
-    _trf_desc_units, plot_env_evaluation
+    _trf_desc_units, plot_env_evaluation, plot_valve_opening
 
 # Define and create directory for test files.
 TEST_DIR = os.path.join(PLOT_DIR, "Test")  #: Directory for test output.
@@ -549,6 +549,17 @@ class TestPlot(TestCase):
     def get_test_path(self, base_name: str):
         create_dir(self.test_plot_dir)
         return os.path.join(self.test_plot_dir, base_name)
+
+    def test_valve_open_plot(self):
+        dates = [
+            '2019-01-01 12:00:00',
+            '2019-01-01 12:00:12',
+            '2019-01-01 12:00:55',
+        ]
+        ts = np.array([str_to_np_dt(d) for d in dates])
+        valves = np.random.normal(0, 1, (3, 2))
+        test_path = self.get_test_path(f"test_valve_plot")
+        plot_valve_opening(ts, valves, test_path)
 
     def make_bar_plot(self, n_ag, n_rew, n_steps):
         descs = [f"Rew_{i}" for i in range(n_rew - 1)]
