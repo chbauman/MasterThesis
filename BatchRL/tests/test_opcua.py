@@ -1,8 +1,35 @@
 import datetime
 from unittest import TestCase
 
+import pandas as pd
+
 import opcua_empa.opcua_util
 from opcua_empa.opcua_util import FixTimeConstController, get_min_diff, NodeAndValues
+from opcua_empa.opcuaclient_subscription import OpcuaClient
+
+
+class OfflineClient(OpcuaClient):
+    """Test client that works offline and returns arbitrary values."""
+
+    connected: bool = False
+
+    def connect(self) -> bool:
+        self.connected = True
+        return True
+
+    def disconnect(self) -> None:
+        pass
+
+    def read_values(self) -> pd.DataFrame:
+        return pd.DataFrame({'node': ["test1", "test2"]})
+
+    def publish(self, json_write: str) -> None:
+        pass
+
+    def subscribe(self, json_read: str) -> None:
+        pass
+
+    pass
 
 
 class TestOpcua(TestCase):
