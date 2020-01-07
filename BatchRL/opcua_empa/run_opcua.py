@@ -21,7 +21,9 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
 
     print_fun = logging.warning  # Maybe use print instead of logging?
 
-    # TODO: Check room_list!
+    if room_list is not None:
+        pass
+        # TODO: Check room_list!
 
     # Connect client
     if not opcua_client.connect():
@@ -32,9 +34,11 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
     room_list = [475, 571] if room_list is None else room_list
     used_control = [(i, tc) for i in room_list]
     if debug:
-        room_list = [575]
-        room_list = ALL_ROOM_NRS
+        room_list = [475]
         used_control = [(r, FixTimeConstController(val=25, max_n_minutes=5)) for r in room_list]
+        used_control = [(r, ToggleController(val_low=10, val_high=35,
+                                             n_mins=2, start_low=True, max_n_minutes=20))
+                        for r in room_list]
 
     # Define value and node generator
     node_value_gen = NodeAndValues(used_control)
@@ -71,6 +75,8 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
 
             # Check termination criterion
             ext_values = node_value_gen.extract_values(read_vals)
+            print(ext_values)
+            print(node_value_gen.get_valve_values())
 
             # Check that the research acknowledgement is true.
             # Wait for at least 20s before requiring to be true, takes some time.

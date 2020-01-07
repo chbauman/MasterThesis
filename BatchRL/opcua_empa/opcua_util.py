@@ -45,7 +45,7 @@ ROOM_VALVE_DICT: Dict[int, List[str]] = {
 
 # Read nodes that are the same for each room
 read_node_names = [
-    # Weather:
+    # Weather
     'ns=2;s=Gateway.PLC1.65NT-03032-D001.PLC1.MET51.strMET51Read.strWetterstation.strStation1.lrLufttemperatur',
     'ns=2;s=Gateway.PLC1.65NT-06421-D001.PLC1.Units.str2T5.strRead.strSensoren.strW1.strB870.rValue5',
     # Heating water temperatures
@@ -295,6 +295,8 @@ class NodeAndValues:
         self.write_values = np.empty((self.n_max, 3 * self.n_rooms), dtype=np.float32)
         self.write_timestamps = np.empty((self.n_max,), dtype='datetime64[s]')
 
+        self.n_valve_list = [len(ROOM_VALVE_DICT[r]) for r, _ in control]
+
     def get_nodes(self) -> List[str]:
         return self.nodes
 
@@ -316,11 +318,23 @@ class NodeAndValues:
     def get_avg_last_vals(self, n_mins: int = 15) -> np.ndarray:
         return nan_avg_between(self.read_timestamps, self.read_values, n_mins)
 
+    def get_valve_values(self, all_prev: bool = False) -> List[np.ndarray]:
+        """Returns the state of the valves of all rooms.
+
+        Need to call `extract_values(...)` first.
+        If `all_prev` is true, returns also all previous values in memory.
+        """
+        last_n = max(self._curr_read_n - 1, 0)
+        ind = slice(None) if all_prev else last_n
+        val_vals = [self.read_values[ind,
+                                     self.room_inds[i] + 4: (self.room_inds[i] + self.n_valve_list[i] + 4)]
+                    for i in range(self.n_rooms)]
+        return val_vals
+
     def extract_values(self, read_df: pd.DataFrame) -> Tuple[List, List]:
 
         # Save current time and set values to nan
         self.read_timestamps[self._curr_read_n] = np.datetime64('now')
-        self.read_df[self._curr_read_n] = np.nan
         self.read_values[self._curr_read_n] = np.nan
 
         # Order may vary, so we iterate and find index
@@ -339,12 +353,10 @@ class NodeAndValues:
         temps = [self.read_values[self._curr_read_n, i + inds[1]]
                  for i in self.room_inds]
 
-        # print(self.read_desc)
-        # print(self.read_df[self._curr_read_n])
-
         # Increment or reset counter
         self._curr_read_n += 1
         if self._curr_read_n == self.n_max:
+            # TODO: Save to disk or do something with the data
             self._curr_read_n = 0
 
         return res_ack, temps
