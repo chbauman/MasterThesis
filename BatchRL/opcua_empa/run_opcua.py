@@ -16,8 +16,6 @@ TEMP_MIN_MAX = (18.0, 25.0)
 
 def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True):
     """User credentials"""
-    opcua_client = OpcuaClient(user='ChristianBaumannETH2020', password='Christian4_ever')
-
     print_fun = logging.warning  # Maybe use print instead of logging?
 
     # Check list with room numbers
@@ -25,10 +23,6 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         assert isinstance(room_list, list), f"Room list: {room_list} needs to be a list!"
         for k in room_list:
             assert k in ALL_ROOM_NRS, f"Invalid room number: {k}"
-
-    # Connect client
-    if not opcua_client.connect():
-        return
 
     # Define room and control
     tc = ToggleController(val_low=10, val_high=35, n_mins=60 * 100, start_low=True, max_n_minutes=60 * 16)
@@ -38,7 +32,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         room_list = [475]
         used_control = [(r, FixTimeConstController(val=25, max_n_minutes=5)) for r in room_list]
         used_control = [(r, ToggleController(val_low=10, val_high=35,
-                                             n_mins=5, start_low=False, max_n_minutes=20))
+                                             n_mins=5, start_low=False, max_n_minutes=1))
                         for r in room_list]
 
     # Define value and node generator
@@ -46,65 +40,65 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
     write_nodes = node_value_gen.get_nodes()
     read_nodes = node_value_gen.get_read_nodes()
 
-    # Subscribe
-    df_read = pd.DataFrame({'node': read_nodes})
-    opcua_client.subscribe(json_read=df_read.to_json())
-
     # Initialize data frame
     curr_vals = node_value_gen.compute_current_values()
     df_write = pd.DataFrame({'node': write_nodes, 'value': curr_vals})
+    df_read = pd.DataFrame({'node': read_nodes})
 
-    cont = True
-    iter_ind = 0
-    while cont:
-        # Compute the current values
-        df_write["value"] = node_value_gen.compute_current_values()
-        if verbose:
-            print_fun(f"Temperature setpoint: {df_write['value'][0]}")
+    with OpcuaClient(user='ChristianBaumannETH2020',
+                     password='Christian4_ever') as opcua_client:
 
-        # Write (publish) values and wait
-        t0 = datetime.datetime.now()
-        opcua_client.publish(json_write=df_write.to_json())
-        dt = datetime.datetime.now() - t0
-        print_fun(f"Publishing took: {dt}")
-        time.sleep(1.0)
+        # Subscribe
+        opcua_client.subscribe(json_read=df_read.to_json())
 
-        # Read values
-        read_vals = opcua_client.read_values()
+        cont = True
+        iter_ind = 0
+        while cont:
+            # Compute the current values
+            df_write["value"] = node_value_gen.compute_current_values()
+            if verbose:
+                print_fun(f"Temperature setpoint: {df_write['value'][0]}")
 
-        # Check termination criterion
-        ext_values = node_value_gen.extract_values(read_vals)
-        print(node_value_gen.get_valve_values())
+            # Write (publish) values and wait
+            t0 = datetime.datetime.now()
+            opcua_client.publish(json_write=df_write.to_json())
+            dt = datetime.datetime.now() - t0
+            print_fun(f"Publishing took: {dt}")
+            time.sleep(1.0)
 
-        # Check that the research acknowledgement is true.
-        # Wait for at least 20s before requiring to be true, takes some time.
-        res_ack_true = np.all(ext_values[0]) or iter_ind < 20
+            # Read values
+            read_vals = opcua_client.read_values()
 
-        # Check measured temperatures, stop if too low or high.
-        temps_in_bound = check_in_range(np.array(ext_values[1]), *TEMP_MIN_MAX)
+            # Check termination criterion
+            ext_values = node_value_gen.extract_values(read_vals)
+            print(node_value_gen.get_valve_values())
 
-        # Stop if (first) controller gives termination signal.
-        terminate_now = used_control[0][1].terminate()
-        cont = res_ack_true and temps_in_bound and not terminate_now
+            # Check that the research acknowledgement is true.
+            # Wait for at least 20s before requiring to be true, takes some time.
+            res_ack_true = np.all(ext_values[0]) or iter_ind < 20
 
-        # Print the reason of termination.
-        if verbose > 0:
-            print_fun(f"Extracted : {ext_values}")
-            if not temps_in_bound:
-                print_fun("Temperature bounds reached, aborting experiment.")
-            if not res_ack_true:
-                print_fun("Research mode confirmation lost :(")
-            if terminate_now:
-                print_fun("Experiment time over!")
+            # Check measured temperatures, stop if too low or high.
+            temps_in_bound = check_in_range(np.array(ext_values[1]), *TEMP_MIN_MAX)
 
-        # Increment counter and wait.
-        iter_ind += 1
+            # Stop if (first) controller gives termination signal.
+            terminate_now = used_control[0][1].terminate()
+            cont = res_ack_true and temps_in_bound and not terminate_now
 
-    all_valves = node_value_gen.get_valve_values(all_prev=True)[0]
-    all_timesteps = node_value_gen.read_timestamps
-    pub_ts = node_value_gen.write_timestamps
-    temp_sps = node_value_gen.write_values[:, ]
-    plot_valve_opening(all_timesteps, all_valves, "test", pub_ts, temp_sps)
+            # Print the reason of termination.
+            if verbose > 0:
+                print_fun(f"Extracted : {ext_values}")
+                if not temps_in_bound:
+                    print_fun("Temperature bounds reached, aborting experiment.")
+                if not res_ack_true:
+                    print_fun("Research mode confirmation lost :(")
+                if terminate_now:
+                    print_fun("Experiment time over!")
 
-    # Disconnect the client.
-    opcua_client.disconnect()
+            # Increment counter and wait.
+            iter_ind += 1
+
+        all_valves = node_value_gen.get_valve_values(all_prev=True)[0]
+        all_timesteps = node_value_gen.read_timestamps
+        pub_ts = node_value_gen.write_timestamps
+        temp_sps = node_value_gen.write_values[:, ]
+        plot_valve_opening(all_timesteps, all_valves, "test", pub_ts, temp_sps)

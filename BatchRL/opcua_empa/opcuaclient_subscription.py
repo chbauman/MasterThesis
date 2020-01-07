@@ -103,6 +103,16 @@ class OpcuaClient(object):
         self.handler = SubHandler()
         self.bInitPublish = False
 
+    def __enter__(self):
+        suc_connect = self.connect()
+        if suc_connect:
+            return self
+        self.disconnect()
+        raise UaStatusCodeError("Connection failed!")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.disconnect()
+
     def connect(self) -> bool:
         """Connect the client to the server.
 
