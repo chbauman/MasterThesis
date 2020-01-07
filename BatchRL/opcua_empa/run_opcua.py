@@ -17,13 +17,13 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
     """User credentials"""
     opcua_client = OpcuaClient(user='ChristianBaumannETH2020', password='Christian4_ever')
 
-    publish_only = False
-
     print_fun = logging.warning  # Maybe use print instead of logging?
 
+    # Check list with room numbers
     if room_list is not None:
-        pass
-        # TODO: Check room_list!
+        assert isinstance(room_list, list), f"Room list: {room_list} needs to be a list!"
+        for k in room_list:
+            assert k in ALL_ROOM_NRS, f"Invalid room number: {k}"
 
     # Connect client
     if not opcua_client.connect():
@@ -46,9 +46,8 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
     read_nodes = node_value_gen.get_read_nodes()
 
     # Subscribe
-    if not publish_only:
-        df_read = pd.DataFrame({'node': read_nodes})
-        opcua_client.subscribe(json_read=df_read.to_json())
+    df_read = pd.DataFrame({'node': read_nodes})
+    opcua_client.subscribe(json_read=df_read.to_json())
 
     # Initialize data frame
     curr_vals = node_value_gen.compute_current_values()
@@ -67,23 +66,20 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
         print_fun(f"Publishing took: {dt}")
         time.sleep(1.0)
 
-        res_ack_true, temps_in_bound = True, True
-        ext_values = None
-        if not publish_only:
-            # Read values
-            read_vals = opcua_client.read_values()
+        # Read values
+        read_vals = opcua_client.read_values()
 
-            # Check termination criterion
-            ext_values = node_value_gen.extract_values(read_vals)
-            print(ext_values)
-            print(node_value_gen.get_valve_values())
+        # Check termination criterion
+        ext_values = node_value_gen.extract_values(read_vals)
+        print(ext_values)
+        print(node_value_gen.get_valve_values())
 
-            # Check that the research acknowledgement is true.
-            # Wait for at least 20s before requiring to be true, takes some time.
-            res_ack_true = np.all(ext_values[0]) or iter_ind < 20
+        # Check that the research acknowledgement is true.
+        # Wait for at least 20s before requiring to be true, takes some time.
+        res_ack_true = np.all(ext_values[0]) or iter_ind < 20
 
-            # Check measured temperatures, stop if too low or high.
-            temps_in_bound = check_in_range(np.array(ext_values[1]), *TEMP_MIN_MAX)
+        # Check measured temperatures, stop if too low or high.
+        temps_in_bound = check_in_range(np.array(ext_values[1]), *TEMP_MIN_MAX)
 
         # Stop if (first) controller gives termination signal.
         terminate_now = used_control[0][1].terminate()
@@ -91,10 +87,7 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
 
         # Print the reason of termination.
         if verbose > 0:
-            if not publish_only:
-                print_fun(f"Extracted : {ext_values}")
-            else:
-                print_fun(f"Step: {iter_ind}")
+            print_fun(f"Extracted : {ext_values}")
             if not temps_in_bound:
                 print_fun("Temperature bounds reached, aborting experiment.")
             if not res_ack_true:
