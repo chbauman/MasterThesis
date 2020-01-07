@@ -18,16 +18,22 @@ class OfflineClient(OpcuaClient):
         return True
 
     def disconnect(self) -> None:
+        self.assert_connected()
         pass
 
     def read_values(self) -> pd.DataFrame:
+        self.assert_connected()
+        # TODO: Make this useful!
         return pd.DataFrame({'node': ["test1", "test2"]})
 
     def publish(self, json_write: str) -> None:
-        pass
+        self.assert_connected()
 
     def subscribe(self, json_read: str) -> None:
-        pass
+        self.assert_connected()
+
+    def assert_connected(self):
+        assert self.connected, "Not connected!"
 
     pass
 
