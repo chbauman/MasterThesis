@@ -6,7 +6,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from opcua_empa.opcua_util import NodeAndValues, ToggleController, FixTimeConstController
+from opcua_empa.opcua_util import NodeAndValues, ToggleController, FixTimeConstController, ALL_ROOM_NRS
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from util.numerics import check_in_range
 
@@ -32,7 +32,9 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
     room_list = [475, 571] if room_list is None else room_list
     used_control = [(i, tc) for i in room_list]
     if debug:
-        used_control = [(575, FixTimeConstController(val=10, max_n_minutes=1))]
+        room_list = [575]
+        room_list = ALL_ROOM_NRS
+        used_control = [(r, FixTimeConstController(val=25, max_n_minutes=5)) for r in room_list]
 
     # Define value and node generator
     node_value_gen = NodeAndValues(used_control)

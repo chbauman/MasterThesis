@@ -252,7 +252,6 @@ class NodeAndValues:
     # Read data arrays
     read_timestamps: np.ndarray = None
     read_values: np.ndarray = None
-    read_df: np.ndarray = None
 
     # Write data arrays
     write_timestamps: np.ndarray = None
@@ -321,7 +320,6 @@ class NodeAndValues:
 
         # Save current time and set values to nan
         self.read_timestamps[self._curr_read_n] = np.datetime64('now')
-        self.read_df[self._curr_read_n][:] = np.nan
         self.read_values[self._curr_read_n] = np.nan
 
         # Order may vary, so we iterate and find index
@@ -333,13 +331,12 @@ class NodeAndValues:
                 continue
             col_name = self.read_desc[ind]
             val = str_to_dt(val, self.read_types[ind])
-            self.read_df[self._curr_read_n][col_name] = val
             self.read_values[self._curr_read_n, col_name] = val
 
         inds = [0, 1]
-        res_ack = [self.read_df[self._curr_read_n][i + inds[0]]
+        res_ack = [self.read_values[self._curr_read_n, i + inds[0]]
                    for i in self.room_inds]
-        temps = [self.read_df[self._curr_read_n][i + inds[1]]
+        temps = [self.read_values[self._curr_read_n, i + inds[1]]
                  for i in self.room_inds]
 
         # print(self.read_desc)
