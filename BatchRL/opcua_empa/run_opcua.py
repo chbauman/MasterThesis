@@ -14,7 +14,7 @@ from util.visualize import plot_valve_opening
 TEMP_MIN_MAX = (18.0, 25.0)
 
 
-def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True):
+def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True):
     """User credentials"""
     opcua_client = OpcuaClient(user='ChristianBaumannETH2020', password='Christian4_ever')
 
@@ -72,7 +72,6 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
 
         # Check termination criterion
         ext_values = node_value_gen.extract_values(read_vals)
-        print(ext_values)
         print(node_value_gen.get_valve_values())
 
         # Check that the research acknowledgement is true.

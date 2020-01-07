@@ -259,6 +259,7 @@ class NodeAndValues:
 
     _extract_node_strs: List[List]
     _curr_read_n: int = 0
+    _curr_write_n: int = 0
 
     def __init__(self, control: ControlT):
 
@@ -295,7 +296,22 @@ class NodeAndValues:
         self.write_values = np.empty((self.n_max, 3 * self.n_rooms), dtype=np.float32)
         self.write_timestamps = np.empty((self.n_max,), dtype='datetime64[s]')
 
+        # Fill arrays with nans
+        self.read_values.fill(np.nan)
+        self.write_values.fill(np.nan)
+        self.read_timestamps.fill(np.nan)
+        self.write_timestamps.fill(np.nan)
+
         self.n_valve_list = [len(ROOM_VALVE_DICT[r]) for r, _ in control]
+
+    def _inc(self, att_str: str):
+        """Increments or resets counter."""
+        curr_ct = getattr(self, att_str)
+        curr_ct += 1
+        if curr_ct == self.n_max:
+            # TODO: Save to disk or do something with the data
+            curr_ct = 0
+        setattr(self, att_str, curr_ct)
 
     def get_nodes(self) -> List[str]:
         return self.nodes
@@ -313,13 +329,16 @@ class NodeAndValues:
 
     def compute_current_values(self) -> List:
         """Computes current control inputs."""
+        # Get values
         values = _get_values(self.control)
 
         # Save values in memory
-        self.write_timestamps[self._curr_read_n] = np.datetime64('now')
+        self.write_timestamps[self._curr_write_n] = np.datetime64('now')
         for ct, v in enumerate(values):
-            self.write_values[self._curr_read_n, ct * 3: (ct + 1) * 3] = v
+            self.write_values[self._curr_write_n, ct * 3: (ct + 1) * 3] = v
 
+        # Increment counter and return values
+        self._inc("_curr_write_n")
         return values
 
     def get_avg_last_vals(self, n_mins: int = 15) -> np.ndarray:
@@ -354,16 +373,13 @@ class NodeAndValues:
             val = str_to_dt(val, self.read_types[ind])
             self.read_values[self._curr_read_n, ind] = val
 
+        # Extract research acknowledgement and current room temp
         inds = [0, 1]
         res_ack = [self.read_values[self._curr_read_n, i + inds[0]]
                    for i in self.room_inds]
         temps = [self.read_values[self._curr_read_n, i + inds[1]]
                  for i in self.room_inds]
 
-        # Increment or reset counter
-        self._curr_read_n += 1
-        if self._curr_read_n == self.n_max:
-            # TODO: Save to disk or do something with the data
-            self._curr_read_n = 0
-
+        # Increment counter and return values
+        self._inc("_curr_read_n")
         return res_ack, temps
