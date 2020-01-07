@@ -1,57 +1,0 @@
-Sender: LSF System <lsfadmin@eu-ms-005-29>
-Subject: Job 108778864: <python BatchRL.py -o -v -bo false> in cluster <euler> Done
-
-Job <python BatchRL.py -o -v -bo false> was submitted from host <eu-login-33> by user <chbauman> in cluster <euler> at Mon Dec 30 15:14:21 2019
-Job was executed on host(s) <2*eu-ms-005-29>, in queue <normal.4h>, as user <chbauman> in cluster <euler> at Mon Dec 30 15:14:39 2019
-</cluster/home/chbauman> was used as the home directory.
-</cluster/home/chbauman/MT/MasterThesis/BatchRL> was used as the working directory.
-Started at Mon Dec 30 15:14:39 2019
-Terminated at Mon Dec 30 17:27:40 2019
-Results reported at Mon Dec 30 17:27:40 2019
-
-Your job looked like:
-
-------------------------------------------------------------
-# LSBATCH: User input
-python BatchRL.py -o -v -bo false
-------------------------------------------------------------
-
-Successfully completed.
-
-Resource usage summary:
-
-    CPU time :                                   7987.68 sec.
-    Max Memory :                                 2593 MB
-    Average Memory :                             1536.26 MB
-    Total Requested Memory :                     2048.00 MB
-    Delta Memory :                               -545.00 MB
-    Max Swap :                                   -
-    Max Processes :                              3
-    Max Threads :                                10
-    Run time :                                   8006 sec.
-    Turnaround time :                            7999 sec.
-
-The output (if any) follows:
-
-Verbosity turned on.
-Optimizing: PhysConsModel
-  0%|          | 0/40 [00:00<?, ?it/s, best loss: ?]2019-12-30 15:14:50.519367: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
-  2%|▎         | 1/40 [04:53<3:10:56, 293.76s/it, best loss: 2.7677198840725805]  5%|▌         | 2/40 [10:36<3:15:19, 308.41s/it, best loss: 0.060772258090058304]  8%|▊         | 3/40 [14:07<2:52:06, 279.09s/it, best loss: 0.060772258090058304] 10%|█         | 4/40 [15:23<2:11:04, 218.45s/it, best loss: 0.060772258090058304] 12%|█▎        | 5/40 [17:47<1:54:16, 195.90s/it, best loss: 0.060772258090058304] 15%|█▌        | 6/40 [18:32<1:25:26, 150.79s/it, best loss: 0.060772258090058304] 18%|█▊        | 7/40 [21:44<1:29:44, 163.16s/it, best loss: 0.060772258090058304] 20%|██        | 8/40 [24:16<1:25:13, 159.78s/it, best loss: 0.060772258090058304] 22%|██▎       | 9/40 [27:14<1:25:19, 165.14s/it, best loss: 0.060772258090058304] 25%|██▌       | 10/40 [40:31<2:57:21, 354.73s/it, best loss: 0.060772258090058304] 28%|██▊       | 11/40 [43:30<2:25:59, 302.04s/it, best loss: 0.060772258090058304] 30%|███       | 12/40 [48:49<2:23:15, 306.98s/it, best loss: 0.05560524232925907]  32%|███▎      | 13/40 [59:04<2:59:46, 399.51s/it, best loss: 0.05560524232925907] 35%|███▌      | 14/40 [1:01:58<2:23:51, 331.97s/it, best loss: 0.05560524232925907] 38%|███▊      | 15/40 [1:07:36<2:19:03, 333.72s/it, best loss: 0.05560524232925907] 40%|████      | 16/40 [1:10:53<1:57:03, 292.64s/it, best loss: 0.05560524232925907] 42%|████▎     | 17/40 [1:11:44<1:24:25, 220.25s/it, best loss: 0.05560524232925907] 45%|████▌     | 18/40 [1:22:40<2:08:38, 350.85s/it, best loss: 0.05560524232925907] 48%|████▊     | 19/40 [1:25:21<1:42:54, 294.03s/it, best loss: 0.05560524232925907] 50%|█████     | 20/40 [1:30:58<1:42:13, 306.69s/it, best loss: 0.05560524232925907] 52%|█████▎    | 21/40 [1:32:25<1:16:18, 240.97s/it, best loss: 0.05235963337506641] 55%|█████▌    | 22/40 [1:33:53<58:30, 195.01s/it, best loss: 0.046271010700681466]  57%|█████▊    | 23/40 [1:35:24<46:26, 163.90s/it, best loss: 0.046271010700681466] 60%|██████    | 24/40 [1:37:19<39:47, 149.23s/it, best loss: 0.046271010700681466] 62%|██████▎   | 25/40 [1:39:01<33:45, 135.04s/it, best loss: 0.046271010700681466] 65%|██████▌   | 26/40 [1:40:44<29:15, 125.39s/it, best loss: 0.046271010700681466] 68%|██████▊   | 27/40 [1:42:19<25:10, 116.20s/it, best loss: 0.046271010700681466] 70%|███████   | 28/40 [1:42:55<18:24, 92.08s/it, best loss: 0.046271010700681466]  72%|███████▎  | 29/40 [1:44:18<16:23, 89.45s/it, best loss: 0.046271010700681466] 75%|███████▌  | 30/40 [1:45:32<14:09, 84.91s/it, best loss: 0.046271010700681466] 78%|███████▊  | 31/40 [1:47:24<13:56, 92.89s/it, best loss: 0.046271010700681466] 80%|████████  | 32/40 [1:58:03<34:15, 256.88s/it, best loss: 0.046271010700681466] 82%|████████▎ | 33/40 [1:59:22<23:44, 203.52s/it, best loss: 0.04007536697720276]  85%|████████▌ | 34/40 [2:00:22<16:02, 160.44s/it, best loss: 0.04007536697720276] 88%|████████▊ | 35/40 [2:01:14<10:38, 127.70s/it, best loss: 0.04007536697720276] 90%|█████████ | 36/40 [2:02:18<07:14, 108.68s/it, best loss: 0.04007536697720276] 92%|█████████▎| 37/40 [2:03:22<04:46, 95.45s/it, best loss: 0.04007536697720276]  95%|█████████▌| 38/40 [2:04:28<02:53, 86.50s/it, best loss: 0.04007536697720276] 98%|█████████▊| 39/40 [2:11:49<03:12, 192.81s/it, best loss: 0.04007536697720276]100%|██████████| 40/40 [2:12:48<00:00, 152.63s/it, best loss: 0.04007536697720276]100%|██████████| 40/40 [2:12:48<00:00, 199.21s/it, best loss: 0.04007536697720276]/cluster/home/chbauman/.local/lib64/python3.6/site-packages/pandas/compat/__init__.py:84: UserWarning: Could not import the lzma module. Your installed Python is incomplete. Attempting to use lzma compression will result in a RuntimeError.
-  warnings.warn(msg)
-/cluster/home/chbauman/.local/lib64/python3.6/site-packages/pandas/compat/__init__.py:84: UserWarning: Could not import the lzma module. Your installed Python is incomplete. Attempting to use lzma compression will result in a RuntimeError.
-  warnings.warn(msg)
-Using TensorFlow backend.
-/cluster/home/chbauman/.local/lib64/python3.6/site-packages/tensorflow/python/framework/dtypes.py:523: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
-  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
-/cluster/home/chbauman/.local/lib64/python3.6/site-packages/tensorflow/python/framework/dtypes.py:524: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
-  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
-/cluster/home/chbauman/.local/lib64/python3.6/site-packages/tensorflow/python/framework/dtypes.py:525: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
-  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
-/cluster/home/chbauman/.local/lib64/python3.6/site-packages/tensorflow/python/framework/dtypes.py:526: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
-  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
-/cluster/home/chbauman/.local/lib64/python3.6/site-packages/tensorflow/python/framework/dtypes.py:527: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
-  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
-/cluster/home/chbauman/.local/lib64/python3.6/site-packages/tensorflow/python/framework/dtypes.py:532: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
-  np_resource = np.dtype([("resource", np.ubyte, 1)])
-
-Optimal parameters: {'gru': 0, 'input_noise_std': 0.00010875182348487063, 'lr': 0.0004102185052563654, 'n_iter_max': 25.0, 'n_layers': 1.0, 'n_neurons': 35.0}.

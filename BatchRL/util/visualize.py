@@ -1322,13 +1322,14 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
         n_t_sp = len(t_setpoints)
         if t_timestamps is None:
             t_timestamps = timestamps
-        assert n_t_sp == t_timestamps.shape[0]
+        assert n_t_sp == t_timestamps.shape[0], \
+            f"Incompatible shape: {t_timestamps} and {t_setpoints}"
 
         # Plot data
         ax_twin = ax.twinx()
-        _plot_helper(t_timestamps, t_setpoints, grid=True, dates=True,
-                     m_col=clr_map[n_valves], label=f"Temperature Setpoint", ax=ax_twin)
-        ax_twin.legend(loc=1)
+        p = _plot_helper(t_timestamps, t_setpoints, grid=True, dates=True,
+                         m_col=clr_map[n_valves], label=f"Temperature Setpoint", ax=ax_twin)
+        ax_twin.legend(p, f"Temperature Setpoint", loc=1)
 
     # Save
     save_figure(save_name)

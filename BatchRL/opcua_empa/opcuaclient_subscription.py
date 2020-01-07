@@ -104,6 +104,7 @@ class OpcuaClient(object):
         self.bInitPublish = False
 
     def __enter__(self):
+        """Enter method for use as context manager."""
         suc_connect = self.connect()
         if suc_connect:
             return self
@@ -111,6 +112,7 @@ class OpcuaClient(object):
         raise UaStatusCodeError("Connection failed!")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit method for use as context manager."""
         self.disconnect()
 
     def connect(self) -> bool:

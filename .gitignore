@@ -19,3 +19,6 @@ Plots/*
 EulerPlots/*
 
 venv
+
+BatchRL/lsf.*
+BatchRL/test.pdf
