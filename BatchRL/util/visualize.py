@@ -1329,7 +1329,7 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
         ax_twin = ax.twinx()
         p = _plot_helper(t_timestamps, t_setpoints, grid=True, dates=True,
                          m_col=clr_map[n_valves], label=f"Temperature Setpoint", ax=ax_twin)
-        ax_twin.legend(p, f"Temperature Setpoint", loc=1)
+        ax_twin.legend(p, [f"Temperature Setpoint"], loc=1)
 
     # Save
     save_figure(save_name)
