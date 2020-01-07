@@ -1,7 +1,9 @@
 import datetime
+from typing import List
 from unittest import TestCase
 
 import pandas as pd
+import numpy as np
 
 import opcua_empa.opcua_util
 from opcua_empa.opcua_util import FixTimeConstController, get_min_diff, NodeAndValues
@@ -9,10 +11,16 @@ from opcua_empa.opcuaclient_subscription import OpcuaClient
 
 
 class OfflineClient(OpcuaClient):
-    """Test client that works offline and returns arbitrary values."""
+    """Test client that works offline and returns arbitrary values.
+
+    One room only!
+    """
 
     connected: bool = False
     subscribed: bool = False
+
+    node_strs: List[str]
+    n_read_vals: int
 
     def connect(self) -> bool:
         self.connected = True
@@ -25,15 +33,19 @@ class OfflineClient(OpcuaClient):
     def read_values(self) -> pd.DataFrame:
         assert self.subscribed, "No subscription!"
         # TODO: Make this useful!
-        return pd.DataFrame({'node': ["test1", "test2"]})
+        vals = ["1" for _ in range(self.n_read_vals)]
+        return pd.DataFrame({'node': self.node_strs,
+                             'value': vals})
 
     def publish(self, json_write: str) -> None:
         self.assert_connected()
 
     def subscribe(self, json_read: str) -> None:
         self.assert_connected()
-        pd_sub_df = pd.read_json(json_read)
-        print(pd_sub_df)
+        self.subscribed = True
+        pd_sub_df: pd.DataFrame = pd.read_json(json_read).sort_index()
+        self.node_strs = [opcua_empa.opcua_util._trf_node(i) for i in pd_sub_df['node']]
+        self.n_read_vals = len(self.node_strs)
 
     def assert_connected(self):
         assert self.connected, "Not connected!"
@@ -77,3 +89,5 @@ class TestOpcua(TestCase):
         with OfflineClient() as client:
             client.subscribe(json_read=df_read.to_json())
             client.publish(df_read.to_json())
+            r_vals = client.read_values()
+            nav.extract_values(r_vals)
