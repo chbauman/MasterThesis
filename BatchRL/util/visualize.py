@@ -1306,8 +1306,10 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
     assert n_data == valves.shape[0], f"Incompatible shape: {valves} and {timestamps}"
     n_valves = valves.shape[1]
 
+    # Plot all valves
     for k in range(n_valves):
         _plot_helper(timestamps, valves[:, k], grid=True, dates=True,
-                     m_col=colors[k], label=f"Valve {k + 1}")
+                     m_col=clr_map[k], label=f"Valve {k + 1}")
 
+    # Save
     save_figure(save_name)
