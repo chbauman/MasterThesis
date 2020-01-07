@@ -38,7 +38,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         room_list = [475]
         used_control = [(r, FixTimeConstController(val=25, max_n_minutes=5)) for r in room_list]
         used_control = [(r, ToggleController(val_low=10, val_high=35,
-                                             n_mins=1, start_low=True, max_n_minutes=2))
+                                             n_mins=5, start_low=False, max_n_minutes=20))
                         for r in room_list]
 
     # Define value and node generator
@@ -59,6 +59,8 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
     while cont:
         # Compute the current values
         df_write["value"] = node_value_gen.compute_current_values()
+        if verbose:
+            print_fun(f"Temperature setpoint: {df_write['value'][0]}")
 
         # Write (publish) values and wait
         t0 = datetime.datetime.now()
@@ -102,7 +104,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
     all_timesteps = node_value_gen.read_timestamps
     pub_ts = node_value_gen.write_timestamps
     temp_sps = node_value_gen.write_values[:, ]
-    plot_valve_opening(all_timesteps, all_valves, "test")
+    plot_valve_opening(all_timesteps, all_valves, "test", pub_ts, temp_sps)
 
     # Disconnect the client.
     opcua_client.disconnect()

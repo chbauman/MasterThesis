@@ -97,7 +97,7 @@ def save_figure(save_name, show: bool = False,
 
 def _plot_helper(x, y, m_col='blue', label: str = None,
                  dates: bool = False, steps: bool = False, ax=plt,
-                 grid: bool = True) -> None:
+                 grid: bool = True):
     """Defining basic plot style for all plots.
 
     TODO: Make x optional. (Except for `dates` == True case!)
@@ -128,11 +128,11 @@ def _plot_helper(x, y, m_col='blue', label: str = None,
     elif steps:
         plot_method = ax.step
 
-    # Finally plot
-    plot_method(x, y, **kwargs)
-
     if grid:
         plt.grid()
+
+    # Finally plot and return
+    return plot_method(x, y, **kwargs)
 
 
 # Plotting raw data series
@@ -1300,17 +1300,20 @@ def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str,
 
 def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: str,
                        t_timestamps: np.ndarray = None, t_setpoints: np.ndarray = None):
-
     # Check and extract shape of valves
     check_shape(valves, (-1, -1))
     n_data = len(timestamps)
     assert n_data == valves.shape[0], f"Incompatible shape: {valves} and {timestamps}"
     n_valves = valves.shape[1]
 
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
     # Plot all valves
     for k in range(n_valves):
         _plot_helper(timestamps, valves[:, k], grid=True, dates=True,
-                     m_col=clr_map[k], label=f"Valve {k + 1}")
+                     m_col=clr_map[k], label=f"Valve {k + 1}", ax=ax)
+    ax.legend(loc=2)
 
     # Plot temperature setpoint
     if t_setpoints is not None:
@@ -1322,9 +1325,10 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
         assert n_t_sp == t_timestamps.shape[0]
 
         # Plot data
+        ax_twin = ax.twinx()
         _plot_helper(t_timestamps, t_setpoints, grid=True, dates=True,
-                     m_col=clr_map[n_valves], label=f"Temperature Setpoints")
+                     m_col=clr_map[n_valves], label=f"Temperature Setpoint", ax=ax_twin)
+        ax_twin.legend(loc=1)
 
     # Save
-    plt.legend()
     save_figure(save_name)
