@@ -313,7 +313,14 @@ class NodeAndValues:
 
     def compute_current_values(self) -> List:
         """Computes current control inputs."""
-        return _get_values(self.control)
+        values = _get_values(self.control)
+
+        # Save values in memory
+        self.write_timestamps[self._curr_read_n] = np.datetime64('now')
+        for ct, v in enumerate(values):
+            self.write_values[self._curr_read_n, ct * 3: (ct + 1) * 3] = v
+
+        return values
 
     def get_avg_last_vals(self, n_mins: int = 15) -> np.ndarray:
         return nan_avg_between(self.read_timestamps, self.read_values, n_mins)

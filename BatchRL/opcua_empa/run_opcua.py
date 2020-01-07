@@ -9,6 +9,7 @@ import pandas as pd
 from opcua_empa.opcua_util import NodeAndValues, ToggleController, FixTimeConstController, ALL_ROOM_NRS
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from util.numerics import check_in_range
+from util.visualize import plot_valve_opening
 
 TEMP_MIN_MAX = (18.0, 25.0)
 
@@ -37,7 +38,7 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
         room_list = [475]
         used_control = [(r, FixTimeConstController(val=25, max_n_minutes=5)) for r in room_list]
         used_control = [(r, ToggleController(val_low=10, val_high=35,
-                                             n_mins=2, start_low=True, max_n_minutes=20))
+                                             n_mins=1, start_low=True, max_n_minutes=2))
                         for r in room_list]
 
     # Define value and node generator
@@ -98,9 +99,11 @@ def try_opcua(verbose: int = 0, room_list: List[int] = None, debug: bool = True)
         # Increment counter and wait.
         iter_ind += 1
 
-    all_valves = node_value_gen.get_valve_values(all_prev=True)
+    all_valves = node_value_gen.get_valve_values(all_prev=True)[0]
     all_timesteps = node_value_gen.read_timestamps
-    plot_valve_opening(all_timesteps, all_valves)
+    pub_ts = node_value_gen.write_timestamps
+    temp_sps = node_value_gen.write_values[:, ]
+    plot_valve_opening(all_timesteps, all_valves, "test")
 
     # Disconnect the client.
     opcua_client.disconnect()
