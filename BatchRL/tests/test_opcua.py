@@ -12,6 +12,7 @@ class OfflineClient(OpcuaClient):
     """Test client that works offline and returns arbitrary values."""
 
     connected: bool = False
+    subscribed: bool = False
 
     def connect(self) -> bool:
         self.connected = True
@@ -22,7 +23,7 @@ class OfflineClient(OpcuaClient):
         pass
 
     def read_values(self) -> pd.DataFrame:
-        self.assert_connected()
+        assert self.subscribed, "No subscription!"
         # TODO: Make this useful!
         return pd.DataFrame({'node': ["test1", "test2"]})
 
@@ -30,8 +31,9 @@ class OfflineClient(OpcuaClient):
         self.assert_connected()
 
     def subscribe(self, json_read: str) -> None:
-        pd_sub_df = pd.read_json(json_read)
         self.assert_connected()
+        pd_sub_df = pd.read_json(json_read)
+        print(pd_sub_df)
 
     def assert_connected(self):
         assert self.connected, "Not connected!"
@@ -67,3 +69,11 @@ class TestOpcua(TestCase):
         vals = nav.compute_current_values()
         self.assertEqual(vals[0], self.c_val)
         self.assertEqual(vals[1], True)
+
+    def test_fake_client(self):
+        nav = NodeAndValues(self.cont)
+        read_nodes = nav.get_read_nodes()
+        df_read = pd.DataFrame({'node': read_nodes})
+        with OfflineClient() as client:
+            client.subscribe(json_read=df_read.to_json())
+            client.publish(df_read.to_json())

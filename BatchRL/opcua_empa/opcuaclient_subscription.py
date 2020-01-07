@@ -91,8 +91,8 @@ class OpcuaClient(object):
     def __init__(self, url='opc.tcp://ehub.nestcollaboration.ch:49320',
                  application_uri='Researchclient',
                  product_uri='Researchclient',
-                 user='JustForTest',
-                 password='JustForTest'):
+                 user='ChristianBaumannETH2020',
+                 password='Christian4_ever'):
         """Initialize the opcua client."""
 
         self.client = Client(url=url, timeout=4)
