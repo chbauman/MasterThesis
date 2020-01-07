@@ -158,6 +158,8 @@ class OpcuaClient(object):
         except UaStatusCodeError as e:
             # This does not catch the error :(
             logging.warning(f"OPC UA Server disconnected with error: {e}")
+        except AttributeError:
+            pass
 
     def subscribe(self, json_read: str) -> None:
         """Subscribe all values you want to read.

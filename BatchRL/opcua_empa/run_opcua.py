@@ -45,6 +45,8 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
     df_write = pd.DataFrame({'node': write_nodes, 'value': curr_vals})
     df_read = pd.DataFrame({'node': read_nodes})
 
+    print(df_read.to_json())
+
     with OpcuaClient(user='ChristianBaumannETH2020',
                      password='Christian4_ever') as opcua_client:
 

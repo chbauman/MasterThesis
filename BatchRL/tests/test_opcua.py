@@ -30,6 +30,7 @@ class OfflineClient(OpcuaClient):
         self.assert_connected()
 
     def subscribe(self, json_read: str) -> None:
+        pd_sub_df = pd.read_json(json_read)
         self.assert_connected()
 
     def assert_connected(self):
