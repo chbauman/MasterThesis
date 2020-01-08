@@ -3,6 +3,7 @@ import logging
 import os
 import pickle
 import time
+from abc import ABC
 from typing import Dict, List, Tuple, Union, Callable
 
 import numpy as np
@@ -111,7 +112,16 @@ ControllerT = Union[Callable[[], Num], Num]  #: Controller type
 ControlT = List[Tuple[int, ControllerT]]  #: Room number to controller map type
 
 
-class FixTimeConstController:
+class Controller(ABC):
+
+    def __call__(self, values):
+        pass
+
+    def terminate(self):
+        return False
+
+
+class FixTimeConstController(Controller):
 
     """Const Controller
 
@@ -126,7 +136,7 @@ class FixTimeConstController:
         self.max_n_minutes = max_n_minutes
         self._start_time = datetime.datetime.now()
 
-    def __call__(self) -> Num:
+    def __call__(self, values) -> Num:
         return self.val
 
     def terminate(self) -> bool:
@@ -161,7 +171,7 @@ class ToggleController(FixTimeConstController):
         self.dt = n_mins
         self.start_low = start_low
 
-    def __call__(self) -> Num:
+    def __call__(self, values) -> Num:
         """Computes the current value according to the current time."""
         time_now = datetime.datetime.now()
         min_diff = get_min_diff(self._start_time, time_now)
@@ -276,7 +286,7 @@ class NodeAndValues:
     Designed for room temperature control at DFAB.
     Number of rooms to be controlled can vary.
 
-    TODO: Integrate into Opcua Client
+    TODO: Integrate into Opcua Client???
     """
     n_rooms: int  #: The number of rooms.
     control: ControlT  #: The controller list.
