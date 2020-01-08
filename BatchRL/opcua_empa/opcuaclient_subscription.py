@@ -87,6 +87,7 @@ class OpcuaClient(object):
 
     # The subscription object
     _sub: Subscription = None
+    _sub_init: bool = False
 
     # Bool specifying successful connection
     _connected: bool = False
@@ -144,6 +145,9 @@ class OpcuaClient(object):
 
     def read_values(self) -> pd.DataFrame:
         """Returns the read values in the dataframe."""
+        if not self._sub_init:
+            logging.warning("You need to subscribe first!")
+
         try:
             self.handler.df_Read.set_index('node', drop=True)
             return self.handler.df_Read
@@ -172,9 +176,14 @@ class OpcuaClient(object):
     def subscribe(self, json_read: str) -> None:
         """Subscribe all values you want to read.
 
+        TODO: Why take a json string as input????
+
         If it fails, a warning is printed and some values might
         not be read correctly.
         """
+        if self._sub_init:
+            logging.warning("You already subscribed!")
+
         self.df_Read = pd.read_json(json_read)
         nodelist_read = [self.client.get_node(row['node'])
                          for i, row in self.df_Read.iterrows()]
@@ -182,6 +191,7 @@ class OpcuaClient(object):
         # Try subscribing to the nodes in the list.
         try:
             sub_res = self._sub.subscribe_data_change(nodelist_read)
+            self._sub_init = True
 
             # Check if subscription was successful
             for ct, s in enumerate(sub_res):
