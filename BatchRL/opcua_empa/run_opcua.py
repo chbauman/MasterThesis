@@ -6,16 +6,19 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from opcua_empa.opcua_util import NodeAndValues, ToggleController, FixTimeConstController, ALL_ROOM_NRS
+from opcua_empa.opcua_util import NodeAndValues, ToggleController, FixTimeConstController, ALL_ROOM_NRS, \
+    analyze_experiment
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from util.numerics import check_in_range
-from util.visualize import plot_valve_opening
 
 TEMP_MIN_MAX = (18.0, 25.0)
 
 
 def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True):
     """User credentials"""
+    analyze_experiment("../Data/Experiments/2020_01_08T12_43_42.pkl")
+    return
+
     print_fun = logging.warning  # Maybe use print instead of logging?
 
     # Check list with room numbers
@@ -31,8 +34,8 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
     if debug:
         room_list = [475]
         used_control = [(r, FixTimeConstController(val=25, max_n_minutes=5)) for r in room_list]
-        used_control = [(r, ToggleController(val_low=10, val_high=35,
-                                             n_mins=10, start_low=False, max_n_minutes=30))
+        used_control = [(r, ToggleController(val_low=10, val_high=28,
+                                             n_mins=5, start_low=False, max_n_minutes=40))
                         for r in room_list]
 
     # Define value and node generator
@@ -96,9 +99,4 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
             # Increment counter and wait.
             iter_ind += 1
 
-        all_valves = node_value_gen.get_valve_values(all_prev=True)[0]
-        all_timesteps = node_value_gen.read_timestamps
-        pub_ts = node_value_gen.write_timestamps
-        temp_sps = node_value_gen.write_values[:, ]
-        plot_valve_opening(all_timesteps, all_valves, "../Plots/test", pub_ts, temp_sps)
         node_value_gen.save_cached_data()

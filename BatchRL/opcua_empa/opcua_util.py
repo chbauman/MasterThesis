@@ -12,14 +12,17 @@ from opcua_empa.opcuaclient_subscription import toggle
 from rest.client import save_dir
 from util.numerics import has_duplicates, nan_avg_between
 from util.util import Num, str2bool, create_dir, now_str
+from util.visualize import plot_valve_opening, PLOT_DIR
 
 # # Set pandas printing options
 # pd.set_option('display.width', 1000)
 # pd.set_option('display.max_columns', 500)
 # pd.options.display.max_colwidth = 200
 
-experiment_data_path = os.path.join(save_dir, "Experiments")  #: Dataset directory
+experiment_data_path = os.path.join(save_dir, "Experiments")  #: Experiment data directory
+experiment_plot_path = os.path.join(PLOT_DIR, "Experiments")  #: Experiment plot directory
 create_dir(experiment_data_path)
+create_dir(experiment_plot_path)
 
 # The dictionary mapping room numbers to thermostat strings
 ROOM_DICT: Dict[int, str] = {
@@ -241,11 +244,39 @@ def str_to_dt(s: str, dt: type):
         raise NotImplementedError(f"Dtype: {dt} not supported!")
 
 
+def analyze_experiment(exp_file_name: str):
+    """Analyzes the data generated in an experiment.
+
+    Assumes one room only, with three valves."""    
+    exp_name = os.path.splitext(os.path.basename(exp_file_name))[0]
+
+    # Load data
+    with open(exp_file_name, "rb") as f:
+        data = pickle.load(f)
+    read_vals, read_ts, write_vals, write_ts = data
+
+    # Extract relevant data parts
+    valve_data = read_vals[:, 4:7]
+    temp_set_p = write_vals[:, 0]
+    temp_set_p_meas = read_vals[:, 2]
+    res_req = read_vals[:, 1]
+
+    # TODO: Check res_req values!
+
+    # Plot valve opening and closing
+    valve_plt_path = os.path.join(experiment_plot_path, exp_name)
+    plot_valve_opening(read_ts, valve_data, valve_plt_path, write_ts, temp_set_p)
+
+    pass
+
+
 class NodeAndValues:
     """Class that defines nodes and values to be used with the opcua client.
 
     Designed for room temperature control at DFAB.
     Number of rooms to be controlled can vary.
+
+    TODO: Integrate into Opcua Client
     """
     n_rooms: int  #: The number of rooms.
     control: ControlT  #: The controller list.
