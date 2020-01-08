@@ -1310,7 +1310,7 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
 
     ax = host_subplot(111)
     ax.set_xlabel("Time")
-    ax.set_ylabel("Valve Closed / Open (0, 1)")
+    ax.set_ylabel("Valve Closed / Open (0 / 1)")
 
     # Plot all valves
     for k in range(n_valves):
