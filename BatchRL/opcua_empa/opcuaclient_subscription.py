@@ -152,6 +152,7 @@ class OpcuaClient(object):
         Deletes the subscription first to avoid error.
         """
         try:
+            # Need to delete the subscription first before disconnecting
             self._sub.delete()
             self.client.disconnect()
             logging.warning("OPC UA Server disconnected.")
@@ -159,6 +160,7 @@ class OpcuaClient(object):
             # This does not catch the error :(
             logging.warning(f"OPC UA Server disconnected with error: {e}")
         except AttributeError:
+            # Connection failed, error will be raised anyway.
             pass
 
     def subscribe(self, json_read: str) -> None:
@@ -215,9 +217,8 @@ class OpcuaClient(object):
         try:
             self._ua_values = [ua.DataValue(ua.Variant(ua_utils.string_to_val(str(value), d_t), d_t)) for
                                value, d_t in zip(self.df_Write['value'].tolist(), self._data_types)]
-
+            self.client.set_values(nodes=self._node_objects, values=self._ua_values)
             for n, val in zip(self._node_objects, self._ua_values):
-                n.set_value(val)  # This is slow!??
                 logger.info('write %s %s' % (n, val))
         except UaStatusCodeError as e:
             logging.warning(f"UaStatusCodeError: {e} happened while publishing!")
