@@ -311,7 +311,7 @@ class NodeAndValues:
 
         self.n_valve_list = [len(ROOM_VALVE_DICT[r]) for r, _ in control]
 
-        # Define name
+        # Define experiment name
         self.experiment_name = now_str() + ("" if exp_name is None else "_" + exp_name)
 
     def get_filename(self, ext: str = ".pkl"):
@@ -323,7 +323,6 @@ class NodeAndValues:
                     self.write_values, self.write_timestamps]
         logging.warning("Saving Experiment Data")
         f_name = self.get_filename()
-        print(f_name)
         with open(f_name, "wb") as f:
             pickle.dump(all_data, f)
 
