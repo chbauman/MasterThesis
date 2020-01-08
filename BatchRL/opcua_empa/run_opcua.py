@@ -16,7 +16,7 @@ TEMP_MIN_MAX = (18.0, 25.0)
 
 def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True):
     """User credentials"""
-    analyze_experiment("../Data/Experiments/2020_01_08T12_43_42.pkl")
+    analyze_experiment("../Data/Experiments/2020_01_08T13_10_34.pkl")
     return
 
     print_fun = logging.warning  # Maybe use print instead of logging?

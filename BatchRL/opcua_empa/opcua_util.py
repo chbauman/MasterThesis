@@ -247,7 +247,7 @@ def str_to_dt(s: str, dt: type):
 def analyze_experiment(exp_file_name: str):
     """Analyzes the data generated in an experiment.
 
-    Assumes one room only, with three valves."""    
+    Assumes one room only, with three valves."""
     exp_name = os.path.splitext(os.path.basename(exp_file_name))[0]
 
     # Load data
@@ -265,7 +265,7 @@ def analyze_experiment(exp_file_name: str):
 
     # Plot valve opening and closing
     valve_plt_path = os.path.join(experiment_plot_path, exp_name)
-    plot_valve_opening(read_ts, valve_data, valve_plt_path, write_ts, temp_set_p)
+    plot_valve_opening(read_ts, valve_data, valve_plt_path, write_ts, temp_set_p, temp_set_p_meas)
 
     pass
 
