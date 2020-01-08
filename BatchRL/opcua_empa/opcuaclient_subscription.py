@@ -87,6 +87,7 @@ class OpcuaClient(object):
 
     # The subscription object
     _sub: Subscription = None
+    _connected: bool = False
 
     def __init__(self, url='opc.tcp://ehub.nestcollaboration.ch:49320',
                  application_uri='Researchclient',
@@ -125,7 +126,9 @@ class OpcuaClient(object):
         """
         try:
             self.client.connect()
+            self._connected = True
             self.client.load_type_definitions()
+            self._sub = self.client.create_subscription(period=0, handler=self.handler)
             logging.warning("OPC UA Connection to server established.")
             return True
         except UaStatusCodeError as e:
@@ -151,6 +154,9 @@ class OpcuaClient(object):
 
         Deletes the subscription first to avoid error.
         """
+        # If it wasn't connected, do nothing
+        if not self._connected:
+            return
         try:
             # Need to delete the subscription first before disconnecting
             self._sub.delete()
@@ -159,9 +165,6 @@ class OpcuaClient(object):
         except UaStatusCodeError as e:
             # This does not catch the error :(
             logging.warning(f"OPC UA Server disconnected with error: {e}")
-        except AttributeError:
-            # Connection failed, error will be raised anyway.
-            pass
 
     def subscribe(self, json_read: str) -> None:
         """Subscribe all values you want to read.
@@ -175,7 +178,6 @@ class OpcuaClient(object):
 
         # Try subscribing to the nodes in the list.
         try:
-            self._sub = self.client.create_subscription(period=0, handler=self.handler)
             sub_res = self._sub.subscribe_data_change(nodelist_read)
 
             # Check if subscription was successful
