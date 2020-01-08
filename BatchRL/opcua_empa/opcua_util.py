@@ -3,7 +3,7 @@ import logging
 import os
 import pickle
 import time
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple, Union, Callable
 
 import numpy as np
@@ -114,6 +114,7 @@ ControlT = List[Tuple[int, ControllerT]]  #: Room number to controller map type
 
 class Controller(ABC):
 
+    @abstractmethod
     def __call__(self, values):
         pass
 
@@ -136,7 +137,7 @@ class FixTimeConstController(Controller):
         self.max_n_minutes = max_n_minutes
         self._start_time = datetime.datetime.now()
 
-    def __call__(self, values) -> Num:
+    def __call__(self, values=None) -> Num:
         return self.val
 
     def terminate(self) -> bool:
@@ -171,13 +172,21 @@ class ToggleController(FixTimeConstController):
         self.dt = n_mins
         self.start_low = start_low
 
-    def __call__(self, values) -> Num:
+    def __call__(self, values=None) -> Num:
         """Computes the current value according to the current time."""
         time_now = datetime.datetime.now()
         min_diff = get_min_diff(self._start_time, time_now)
         is_start_state = int(min_diff) % (2 * self.dt) < self.dt
         is_low = is_start_state if self.start_low else not is_start_state
         return self.v_low if is_low else self.v_high
+
+
+class StatefulController(Controller, ABC):
+
+    state: np.ndarray
+
+    def set_state(self, curr_state: np.ndarray):
+        self.state = curr_state
 
 
 def comp_val(v: ControllerT) -> Num:
@@ -392,6 +401,14 @@ class NodeAndValues:
 
     def compute_current_values(self) -> List:
         """Computes current control inputs."""
+
+        # TODO: Make control depending on state!
+        if isinstance(self.control, StatefulController):
+            # Compute state
+
+            # Set state
+            self.control.set_state(np.array(0))
+
         # Get values
         values = _get_values(self.control)
 

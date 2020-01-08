@@ -55,6 +55,9 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         cont = True
         iter_ind = 0
         while cont:
+            # Read values
+            read_vals = opcua_client.read_values()
+
             # Compute the current values
             df_write["value"] = node_value_gen.compute_current_values()
             if verbose:
@@ -66,9 +69,6 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
             dt = datetime.datetime.now() - t0
             print_fun(f"Publishing took: {dt}")
             time.sleep(1.0)
-
-            # Read values
-            read_vals = opcua_client.read_values()
 
             # Check termination criterion
             ext_values = node_value_gen.extract_values(read_vals)
