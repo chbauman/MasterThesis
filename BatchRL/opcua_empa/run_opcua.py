@@ -48,15 +48,6 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
     df_read = pd.DataFrame({'node': read_nodes})
 
     with OpcuaClient() as opcua_client:
-        print("Hello")
-
-        df_write["value"] = node_value_gen.compute_current_values()
-        opcua_client.publish(json_write=df_write.to_json())
-
-    print("Hello")
-    return
-
-    with OpcuaClient() as opcua_client:
 
         # Subscribe
         opcua_client.subscribe(json_read=df_read.to_json())

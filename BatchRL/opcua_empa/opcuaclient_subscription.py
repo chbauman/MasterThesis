@@ -87,6 +87,8 @@ class OpcuaClient(object):
 
     # The subscription object
     _sub: Subscription = None
+
+    # Bool specifying successful connection
     _connected: bool = False
 
     def __init__(self, url='opc.tcp://ehub.nestcollaboration.ch:49320',
@@ -141,6 +143,7 @@ class OpcuaClient(object):
             return False
 
     def read_values(self) -> pd.DataFrame:
+        """Returns the read values in the dataframe."""
         try:
             self.handler.df_Read.set_index('node', drop=True)
             return self.handler.df_Read
@@ -188,6 +191,7 @@ class OpcuaClient(object):
         except Exception as e:
             # TODO: Remove or catch more specific error!
             logging.warning(f"Exception: {e} happened while subscribing!")
+            raise e
 
     def publish(self, json_write: str) -> None:
         """Publish (write) values to server.
