@@ -32,7 +32,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         room_list = [475]
         used_control = [(r, FixTimeConstController(val=25, max_n_minutes=5)) for r in room_list]
         used_control = [(r, ToggleController(val_low=10, val_high=35,
-                                             n_mins=15, start_low=False, max_n_minutes=45))
+                                             n_mins=10, start_low=False, max_n_minutes=30))
                         for r in room_list]
 
     # Define value and node generator
