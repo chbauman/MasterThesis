@@ -32,7 +32,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         room_list = [475]
         used_control = [(r, FixTimeConstController(val=25, max_n_minutes=5)) for r in room_list]
         used_control = [(r, ToggleController(val_low=10, val_high=35,
-                                             n_mins=5, start_low=False, max_n_minutes=1))
+                                             n_mins=15, start_low=False, max_n_minutes=45))
                         for r in room_list]
 
     # Define value and node generator
@@ -85,7 +85,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
 
             # Print the reason of termination.
             if verbose > 0:
-                print_fun(f"Extracted : {ext_values}")
+                print_fun(f"Extracted: {ext_values}")
                 if not temps_in_bound:
                     print_fun("Temperature bounds reached, aborting experiment.")
                 if not res_ack_true:
@@ -100,5 +100,5 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         all_timesteps = node_value_gen.read_timestamps
         pub_ts = node_value_gen.write_timestamps
         temp_sps = node_value_gen.write_values[:, ]
-        plot_valve_opening(all_timesteps, all_valves, "../test", pub_ts, temp_sps)
+        plot_valve_opening(all_timesteps, all_valves, "../Plots/test", pub_ts, temp_sps)
         node_value_gen.save_cached_data()
