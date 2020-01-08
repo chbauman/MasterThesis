@@ -101,3 +101,4 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         pub_ts = node_value_gen.write_timestamps
         temp_sps = node_value_gen.write_values[:, ]
         plot_valve_opening(all_timesteps, all_valves, "test", pub_ts, temp_sps)
+        node_value_gen.save_cached_data()

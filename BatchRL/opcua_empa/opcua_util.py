@@ -1,5 +1,7 @@
 import datetime
 import logging
+import os
+import pickle
 import time
 from typing import Dict, List, Tuple, Union, Callable
 
@@ -7,14 +9,17 @@ import numpy as np
 import pandas as pd
 
 from opcua_empa.opcuaclient_subscription import toggle
+from rest.client import save_dir
 from util.numerics import has_duplicates, nan_avg_between
-from util.util import Num, str2bool
-
+from util.util import Num, str2bool, create_dir, now_str
 
 # # Set pandas printing options
 # pd.set_option('display.width', 1000)
 # pd.set_option('display.max_columns', 500)
 # pd.options.display.max_colwidth = 200
+
+experiment_data_path = os.path.join(save_dir, "Experiments")  #: Dataset directory
+create_dir(experiment_data_path)
 
 # The dictionary mapping room numbers to thermostat strings
 ROOM_DICT: Dict[int, str] = {
@@ -257,11 +262,13 @@ class NodeAndValues:
     write_timestamps: np.ndarray = None
     write_values: np.ndarray = None
 
+    experiment_name: str
+
     _extract_node_strs: List[List]
     _curr_read_n: int = 0
     _curr_write_n: int = 0
 
-    def __init__(self, control: ControlT):
+    def __init__(self, control: ControlT, exp_name: str = None):
 
         self.n_rooms = len(control)
         assert self.n_rooms > 0, "No rooms to be controlled!"
@@ -303,6 +310,22 @@ class NodeAndValues:
         self.write_timestamps.fill(np.nan)
 
         self.n_valve_list = [len(ROOM_VALVE_DICT[r]) for r, _ in control]
+
+        # Define name
+        self.experiment_name = now_str() + ("" if exp_name is None else "_" + exp_name)
+
+    def get_filename(self, ext: str = ".pkl"):
+        return os.path.join(experiment_data_path, self.experiment_name + ext)
+
+    def save_cached_data(self) -> None:
+        """Save the current data in cache to file."""
+        all_data = [self.read_values, self.read_timestamps,
+                    self.write_values, self.write_timestamps]
+        logging.warning("Saving Experiment Data")
+        f_name = self.get_filename()
+        print(f_name)
+        with open(f_name, "wb") as f:
+            pickle.dump(all_data, f)
 
     def _inc(self, att_str: str):
         """Increments or resets counter."""

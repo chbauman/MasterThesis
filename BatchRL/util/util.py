@@ -261,6 +261,16 @@ def print_if_verb(verb: Union[bool, int] = True, *args, **kwargs):
         print(*args, **kwargs)
 
 
+def now_str() -> str:
+    """Returns the current time as a string.
+
+    Example: '2020_01_08T08_45_03'
+    E.g. for usage in filenames.
+    """
+    n = str(np.datetime_as_string(np.datetime64('now')))
+    return n.replace(":", "_").replace("-", "_")
+
+
 def yeet(msg: str = "YEET") -> None:
     """Raises an exception."""
     raise ValueError(msg)
