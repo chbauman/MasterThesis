@@ -184,6 +184,7 @@ class OpcuaClient(object):
                     warnings.warn(f"Node: {nodelist_read[ct]} not found!")
             logging.warning("OPC UA Subscription requested.")
         except Exception as e:
+            # TODO: Remove or catch more specific error!
             logging.warning(f"Exception: {e} happened while subscribing!")
 
     def publish(self, json_write: str) -> None:
