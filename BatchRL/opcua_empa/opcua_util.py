@@ -1,3 +1,9 @@
+"""Utility module for the opcua client.
+
+Defines node strings for the nodes needed to control rooms at DFAB.
+Includes the read and the write nodes.
+"""
+
 import datetime
 import logging
 import os
