@@ -28,7 +28,6 @@ def run_control(*args, **kwargs):
     """
     with ControlClient(*args, **kwargs) as client:
 
-        # Run controller
         cont = True
         while cont:
             cont = client.read_publish_wait_check()
@@ -45,7 +44,7 @@ class ControlClient:
     write_nodes: List[str]  #: List with the read nodes as strings.
     read_nodes: List[str]  #: List with the write nodes as strings.
 
-    n_pub: int = 0
+    _n_pub: int = 0
 
     def __init__(self,
                  used_control: ControlT,
@@ -53,6 +52,8 @@ class ControlClient:
                  user: str = 'ChristianBaumannETH2020',
                  password: str = 'Christian4_ever',
                  verbose: int = 3):
+
+        assert len(used_control) > 1, "Only one room supported!"
 
         self.verbose = verbose
         self.client = OpcuaClient(user=user, password=password)
@@ -64,7 +65,7 @@ class ControlClient:
         self.write_nodes = self.node_gen.get_nodes()
         self.read_nodes = self.node_gen.get_read_nodes()
 
-        # curr_vals = self.node_gen.compute_current_values()
+        # Initialize dataframes
         self.df_write = pd.DataFrame({'node': self.write_nodes, 'value': None})
         self.df_read = pd.DataFrame({'node': self.read_nodes})
 
@@ -102,7 +103,7 @@ class ControlClient:
 
         # Check that the research acknowledgement is true.
         # Wait for at least 20s before requiring to be true, takes some time.
-        res_ack_true = np.all(ext_values[0]) or self.n_pub < 20
+        res_ack_true = np.all(ext_values[0]) or self._n_pub < 20
 
         # Check measured temperatures, stop if too low or high.
         temps_in_bound = check_in_range(np.array(ext_values[1]), *self.TEMP_MIN_MAX)
@@ -122,5 +123,5 @@ class ControlClient:
                 print_fun("Experiment time over!")
 
         # Increment publishing counter and return termination criterion.
-        self.n_pub += 1
+        self._n_pub += 1
         return cont

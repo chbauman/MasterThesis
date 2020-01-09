@@ -208,8 +208,6 @@ class NodeAndValues:
 
     Designed for room temperature control at DFAB.
     Number of rooms to be controlled can vary.
-
-    TODO: Integrate into Opcua Client???
     """
     n_rooms: int  #: The number of rooms.
     control: ControlT  #: The controller list.
