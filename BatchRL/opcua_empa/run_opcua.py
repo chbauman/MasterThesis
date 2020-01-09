@@ -17,7 +17,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
     """Runs the opcua client."""
 
     # Analyze previous experiment
-    analyze_experiment("../Data/Experiments/2020_01_09T11_29_28_Toggle_6min.pkl")
+    analyze_experiment("../Data/Experiments/2020_01_09T13_46_54_DebugValveToggle.pkl")
 
     # Choose experiment name
     exp_name = "Test"

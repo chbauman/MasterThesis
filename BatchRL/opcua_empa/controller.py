@@ -36,29 +36,18 @@ class Controller(ABC):
         self.state = curr_state
 
 
-ControlT = List[Tuple[int, Controller]]  #: Room number to controller map type
+class FixTimeController(Controller, ABC):
+    """Fixed-time controller.
 
-
-class FixTimeConstController(Controller):
-    """Const Controller.
-
-    Runs for a fixed amount of time if `max_n_minutes` is specified.
-    Sets the value to be controlled to constant `val`.
-    Control inputs do not depend on current time or on state!
+    Runs for a fixed number of timesteps.
     """
-
-    val: Num  #: The numerical value to be set.
     max_n_minutes: int  #: The maximum allowed runtime in minutes.
 
     _start_time: datetime  #: The starting time.
 
-    def __init__(self, val: Num = MIN_TEMP, max_n_minutes: int = None):
-        self.val = val
+    def __init__(self, max_n_minutes: int = None):
         self.max_n_minutes = max_n_minutes
         self._start_time = datetime.now()
-
-    def __call__(self, values=None) -> Num:
-        return self.val
 
     def terminate(self) -> bool:
         """Checks if the maximum time is reached.
@@ -72,7 +61,28 @@ class FixTimeConstController(Controller):
         return h_diff > self.max_n_minutes
 
 
-class ToggleController(FixTimeConstController):
+ControlT = List[Tuple[int, Controller]]  #: Room number to controller map type
+
+
+class FixTimeConstController(FixTimeController):
+    """Const Controller.
+
+    Runs for a fixed amount of time if `max_n_minutes` is specified.
+    Sets the value to be controlled to constant `val`.
+    Control inputs do not depend on current time or on state!
+    """
+
+    val: Num  #: The numerical value to be set.
+
+    def __init__(self, val: Num = MIN_TEMP, max_n_minutes: int = None):
+        super().__init__(max_n_minutes)
+        self.val = val
+
+    def __call__(self, values=None) -> Num:
+        return self.val
+
+
+class ToggleController(FixTimeController):
     """Toggle controller.
 
     Toggles every `n_mins` between two values.
@@ -90,7 +100,7 @@ class ToggleController(FixTimeConstController):
             start_low: Whether to start with `val_low`.
             max_n_minutes: The maximum number of minutes the controller should run.
         """
-        super().__init__(val_low, max_n_minutes)
+        super().__init__(max_n_minutes)
         self.v_low = val_low
         self.v_high = val_high
         self.dt = n_mins
@@ -104,7 +114,7 @@ class ToggleController(FixTimeConstController):
         return self.v_low if is_low else self.v_high
 
 
-class ValveToggler(Controller):
+class ValveToggler(FixTimeController):
     """Controller that toggles as soon as the valves have toggled."""
 
     n_delay: int  #: How many steps to wait with toggling back.
@@ -113,22 +123,24 @@ class ValveToggler(Controller):
     _step_count: int = 0
     _curr_valve_state: bool = False
 
-    def __init__(self, n_steps_delay: int = 10):
-        super().__init__()
+    def __init__(self, n_steps_delay: int = 10, n_steps_max: int = 60 * 60):
+        super().__init__(n_steps_max)
         self.n_delay = n_steps_delay
 
     def __call__(self, values=None):
-        print(self.state)
+        print(self.state[4])
 
         v = self.state[4]  # Extract valve state
         if v > 1.0 - self.TOL:
             if not self._curr_valve_state:
                 # Valves just opened
                 self._step_count = 0
+                print("Valves opened!!!")
                 self._curr_valve_state = True
         elif v < self.TOL:
             if self._curr_valve_state:
                 # Valves just closed
+                print("Valves closed!!!")
                 self._step_count = 0
                 self._curr_valve_state = False
 
