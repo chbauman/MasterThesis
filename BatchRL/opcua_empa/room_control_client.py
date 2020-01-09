@@ -53,7 +53,7 @@ class ControlClient:
                  password: str = 'Christian4_ever',
                  verbose: int = 3):
 
-        assert len(used_control) > 1, "Only one room supported!"
+        assert len(used_control) == 1, "Only one room supported!"
 
         self.verbose = verbose
         self.client = OpcuaClient(user=user, password=password)

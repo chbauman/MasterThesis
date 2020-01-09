@@ -8,7 +8,7 @@ from typing import List
 
 from opcua_empa.controller import ToggleController, ValveToggler
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
-from opcua_empa.room_control_client import ControlClient, run_control
+from opcua_empa.room_control_client import run_control
 
 print_fun = logging.warning  # Maybe use print instead of logging?
 

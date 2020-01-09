@@ -9,6 +9,7 @@ from typing import List, Tuple
 
 import numpy as np
 
+from agents.base_agent import AgentBase
 from util.util import Num, get_min_diff
 
 MAX_TEMP: int = 28  #: Them maximum temperature to set.
@@ -156,3 +157,22 @@ class ValveToggler(FixTimeController):
         # Increment and return
         self._step_count += 1
         return ret
+
+
+class RLController(FixTimeController):
+    """Controller that toggles as soon as the valves have toggled."""
+
+    default_val: Num = 21.0
+    agent: AgentBase = None
+    dt: int = None
+    data_ref = None
+
+    def __init__(self, rl_agent: AgentBase, n_steps_max: int = 60 * 60):
+        super().__init__(n_steps_max)
+        self.agent = rl_agent
+        self.data_ref = rl_agent.env.m.data
+        self.dt = self.data_ref.dt
+
+    def __call__(self, values=None):
+
+        return self.default_val

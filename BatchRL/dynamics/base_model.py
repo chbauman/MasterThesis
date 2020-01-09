@@ -863,6 +863,7 @@ def compare_models(model_list: List[BaseDynamicsModel],
         n_steps: The sequence with the numbers of prediction steps to evaluate.
         part_spec: The string specifying the part of the data, e.g. "val" or "train".
         model_names: The simplified model name showing up in the plot.
+        overwrite: Whether to overwrite existing files.
     """
     # Count models
     n_models = len(model_list)
