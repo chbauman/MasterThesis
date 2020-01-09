@@ -5,6 +5,7 @@ do control on the real system using the opcua client.
 """
 from datetime import datetime
 from abc import ABC, abstractmethod
+from typing import List, Tuple
 
 import numpy as np
 
@@ -12,13 +13,22 @@ from util.util import Num, get_min_diff
 
 
 class Controller(ABC):
+    """Base controller interface.
+
+    A controller needs to implement the __call__ function
+    and optionally a termination criterion: `terminate()`.
+    """
 
     @abstractmethod
     def __call__(self, values):
+        """Returns the current control input."""
         pass
 
     def terminate(self):
         return False
+
+
+ControlT = List[Tuple[int, Controller]]  #: Room number to controller map type
 
 
 class FixTimeConstController(Controller):
@@ -81,7 +91,6 @@ class ToggleController(FixTimeConstController):
 
 
 class StatefulController(Controller, ABC):
-
     state: np.ndarray
 
     def set_state(self, curr_state: np.ndarray):

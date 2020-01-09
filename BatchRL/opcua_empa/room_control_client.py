@@ -12,7 +12,8 @@ from typing import List
 import pandas as pd
 import numpy as np
 
-from opcua_empa.opcua_util import NodeAndValues, ControlT
+from opcua_empa.opcua_util import NodeAndValues
+from opcua_empa.controller import ControlT
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from util.numerics import check_in_range
 

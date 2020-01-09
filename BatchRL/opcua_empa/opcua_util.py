@@ -7,16 +7,16 @@ Includes the read and the write nodes.
 import logging
 import os
 import pickle
-from typing import Dict, List, Tuple, Union, Callable
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
 
-from opcua_empa.controller import StatefulController, Controller
+from opcua_empa.controller import StatefulController, ControlT
 from opcua_empa.opcuaclient_subscription import toggle
 from rest.client import save_dir
 from util.numerics import has_duplicates, nan_avg_between
-from util.util import Num, str2bool, create_dir, now_str
+from util.util import str2bool, create_dir, now_str
 from util.visualize import plot_valve_opening, PLOT_DIR
 
 experiment_data_path = os.path.join(save_dir, "Experiments")  #: Experiment data directory
@@ -110,10 +110,6 @@ def _th_string_to_node_name(th_str: str, ext: str = "", read: bool = False) -> s
     rw_part = "strRead" if read else "strWrite_L"
     pre = BASE_NODE_STR + rw_part + f".strSensoren.str{n1}.str{n2}"
     return pre + ext
-
-
-# Type definitions for control
-ControlT = List[Tuple[int, Controller]]  #: Room number to controller map type
 
 
 def _trf_node(node_str: str) -> str:
