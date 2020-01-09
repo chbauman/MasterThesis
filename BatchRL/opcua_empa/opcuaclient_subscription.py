@@ -18,12 +18,12 @@ from opcua.ua import UaStatusCodeError, DataValue, Variant
 
 # Set pandas printing options, useful e.g. if you want to print
 # dataframes with long strings in them.
-pd.set_option('display.width', 1000)
-pd.set_option('display.max_columns', 500)
+pd.options.display.width = 1000
+pd.options.display.max_columns = 500
 pd.options.display.max_colwidth = 200
 
 # Initialize and configure logger
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.WARNING)
+logging.basicConfig(format='%(asctime)s - OPC UA %(message)s', level=logging.WARNING)
 logger = logging.getLogger('opc ua client')
 
 
@@ -32,6 +32,8 @@ def example_usage():
 
     Sets the room temperature setpoint of room 475 at DFAB to 10 degrees C
     for a short time.
+
+    DO NOT RUN IF AN EXPERIMENT IS CURRENTLY RUNNING!
     """
 
     # The initial values to write
@@ -74,7 +76,7 @@ def example_usage():
             read_vals = opcua_client.read_values()
 
             # Do something with the read values
-            print(read_vals)
+            # print(read_vals)
 
             # Write values
             df_write['value'][0] = 10  # Set temperature setpoint
@@ -191,7 +193,7 @@ class OpcuaClient(object):
             self._connected = True
             self.client.load_type_definitions()
             self._sub = self.client.create_subscription(period=0, handler=self.handler)
-            logging.warning("OPC UA Connection to server established.")
+            logging.warning("Connection to server established.")
             return True
         except UaStatusCodeError as e:
             logging.warning(f"Exception: {e} happened while connecting!")
@@ -227,10 +229,10 @@ class OpcuaClient(object):
             # Need to delete the subscription first before disconnecting
             self._sub.delete()
             self.client.disconnect()
-            logging.warning("OPC UA Server disconnected.")
+            logging.warning("Server disconnected.")
         except UaStatusCodeError as e:
             # This does not catch the error :(
-            logging.warning(f"OPC UA Server disconnected with error: {e}")
+            logging.warning(f"Server disconnected with error: {e}")
 
     def subscribe(self, df_read: pd.DataFrame, sleep_after: float = None) -> None:
         """Subscribe all values you want to read.
@@ -258,7 +260,7 @@ class OpcuaClient(object):
             for ct, s in enumerate(sub_res):
                 if not type(s) is int:
                     warnings.warn(f"Node: {nodelist_read[ct]} not found!")
-            logging.warning("OPC UA Subscription requested.")
+            logging.warning("Subscription requested.")
         except Exception as e:
             # TODO: Remove or catch more specific error!
             logging.warning(f"Exception: {e} happened while subscribing!")
@@ -296,7 +298,7 @@ class OpcuaClient(object):
                 self._data_types = [nodeObject.get_data_type_as_variant_type()
                                     for nodeObject in self._node_objects]
                 self.bInitPublish = True
-                logging.warning("OPC UA Publishing initialized.")
+                logging.warning("Publishing initialized.")
             except UaStatusCodeError as e:
                 print(f"UaStatusCodeError while initializing publishing!: {e}")
                 raise e
