@@ -11,6 +11,9 @@ import numpy as np
 
 from util.util import Num, get_min_diff
 
+MAX_TEMP: int = 28  #: Them maximum temperature to set.
+MIN_TEMP: int = 10  #: Them minimum temperature to set.
+
 
 class Controller(ABC):
     """Base controller interface.
@@ -43,7 +46,7 @@ class FixTimeConstController(Controller):
 
     _start_time: datetime  #: The starting time.
 
-    def __init__(self, val: Num = 20, max_n_minutes: int = None):
+    def __init__(self, val: Num = MIN_TEMP, max_n_minutes: int = None):
         self.val = val
         self.max_n_minutes = max_n_minutes
         self._start_time = datetime.now()
@@ -69,7 +72,7 @@ class ToggleController(FixTimeConstController):
     Toggles every `n_mins` between two values.
     """
 
-    def __init__(self, val_low: Num = 20, val_high: Num = 22, n_mins: int = 2,
+    def __init__(self, val_low: Num = MIN_TEMP, val_high: Num = MAX_TEMP, n_mins: int = 2,
                  start_low: bool = True, max_n_minutes: int = None):
         """Controller that toggles every `n_mins` between two values.
 
@@ -104,3 +107,40 @@ class StatefulController(Controller, ABC):
 
     def set_state(self, curr_state: np.ndarray):
         self.state = curr_state
+
+
+class ValveToggler(StatefulController):
+    """Controller that toggles as soon as the valves have toggled."""
+
+    n_delay: int  #: How many steps to wait with toggling back.
+    TOL: float = 0.05
+
+    _step_count: int = 0
+    _curr_valve_state: bool = False
+
+    def __init__(self, n_steps_delay: int = 10):
+        self.n_delay = n_steps_delay
+        pass
+
+    def __call__(self, values=None):
+
+        v = self.state[4]  # Extract valve state
+        if v > 1.0 - self.TOL:
+            if not self._curr_valve_state:
+                # Valves just opened
+                self._step_count = 0
+                self._curr_valve_state = True
+        elif v < self.TOL:
+            if self._curr_valve_state:
+                # Valves just closed
+                self._step_count = 0
+                self._curr_valve_state = False
+
+        ret = MIN_TEMP if self._curr_valve_state else MAX_TEMP
+        # If valves just switched, ignore change
+        if self._step_count < self.n_delay:
+            ret = not ret
+
+        # Increment and return
+        self._step_count += 1
+        return ret

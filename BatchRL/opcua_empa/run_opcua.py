@@ -27,13 +27,12 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         check_room_list(room_list)
 
     # Define room and control
-    tc = ToggleController(val_low=10, val_high=28, n_mins=60 * 100, start_low=True, max_n_minutes=60 * 16)
+    tc = ToggleController(n_mins=60 * 100, start_low=True, max_n_minutes=60 * 16)
     room_list = [475] if room_list is None else room_list
     used_control = [(i, tc) for i in room_list]
     if debug:
         room_list = [472]
-        used_control = [(r, ToggleController(val_low=10, val_high=28,
-                                             n_mins=6, start_low=False,
+        used_control = [(r, ToggleController(n_mins=6, start_low=False,
                                              max_n_minutes=60))
                         for r in room_list]
         exp_name = "Debug"
