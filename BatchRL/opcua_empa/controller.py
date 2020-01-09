@@ -10,7 +10,7 @@ from typing import List, Tuple
 import numpy as np
 
 from agents.base_agent import AgentBase
-from util.util import Num, get_min_diff
+from util.util import Num, get_min_diff, day_offset_ts
 
 MAX_TEMP: int = 28  #: Them maximum temperature to set.
 MIN_TEMP: int = 10  #: Them minimum temperature to set.
@@ -167,12 +167,27 @@ class RLController(FixTimeController):
     dt: int = None
     data_ref = None
 
+    _curr_ts_ind: int
+
+    def get_dt_ind(self):
+        t_now = np.datetime64('now')
+        return day_offset_ts(t_now, mins=self.dt, remaining=False)
+
     def __init__(self, rl_agent: AgentBase, n_steps_max: int = 60 * 60):
         super().__init__(n_steps_max)
         self.agent = rl_agent
         self.data_ref = rl_agent.env.m.data
         self.dt = self.data_ref.dt
+        self._curr_ts_ind = self.get_dt_ind()
 
     def __call__(self, values=None):
+        
+        next_ts_ind = self.get_dt_ind()
+        if next_ts_ind != self._curr_ts_ind:
+            # Next step, apply new control
+            print(f"{self.dt} minutes passed!!")
+
+            self._curr_ts_ind = next_ts_ind
+            pass
 
         return self.default_val

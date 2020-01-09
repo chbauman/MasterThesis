@@ -866,7 +866,8 @@ def ts_per_day(n_min: int) -> int:
     return 24 * 60 // n_min
 
 
-def day_offset_ts(t_init: str, mins: int = 15, remaining: bool = True) -> int:
+def day_offset_ts(t_init: Union[str, np.datetime64], mins: int = 15,
+                  remaining: bool = True) -> int:
     """Computes the number of timesteps of length `mins` minutes until the next day starts.
 
     Args:
@@ -878,7 +879,10 @@ def day_offset_ts(t_init: str, mins: int = 15, remaining: bool = True) -> int:
     Returns:
         Number of timesteps until next day.
     """
-    np_t_init = str_to_np_dt(t_init)
+    if type(t_init) == str:
+        np_t_init = str_to_np_dt(t_init)
+    else:
+        np_t_init = t_init
     t_0 = np.datetime64(np_t_init, 'D')
     dt_int = np.timedelta64(mins, 'm')
     n_ts_passed = int((np_t_init - t_0) / dt_int)
