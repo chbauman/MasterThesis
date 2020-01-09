@@ -886,13 +886,19 @@ def day_offset_ts(t_init: str, mins: int = 15, remaining: bool = True) -> int:
     return tot_n_ts - n_ts_passed if remaining else n_ts_passed
 
 
-# Create paths
-create_dir(model_dir)
-create_dir(dynamic_model_dir)
+def get_min_diff(t1: datetime, t2: datetime = None) -> float:
+    """Computes the time difference in minutes between two datetimes.
 
-
-def get_min_diff(t1: datetime, t2: datetime):
-    """Computes the time difference in minutes between two datetimes."""
+    `t2` must be a later datetime than `t1`.
+    If `t2` is None, the current datetime will be used.
+    """
+    if t2 is None:
+        t2 = datetime.now()
     d1_ts = time.mktime(t1.timetuple())
     d2_ts = time.mktime(t2.timetuple())
     return (d2_ts - d1_ts) / 60
+
+
+# Create paths
+create_dir(model_dir)
+create_dir(dynamic_model_dir)
