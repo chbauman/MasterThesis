@@ -12,7 +12,7 @@ from typing import Dict, List, Tuple, Union, Callable
 import numpy as np
 import pandas as pd
 
-from opcua_empa.controller import StatefulController
+from opcua_empa.controller import StatefulController, Controller
 from opcua_empa.opcuaclient_subscription import toggle
 from rest.client import save_dir
 from util.numerics import has_duplicates, nan_avg_between
@@ -108,7 +108,7 @@ def _th_string_to_node_name(th_str: str, ext: str = "", read: bool = False) -> s
 
 # Type definitions for control
 ControllerT = Union[Callable[[], Num], Num]  #: Controller type
-ControlT = List[Tuple[int, ControllerT]]  #: Room number to controller map type
+ControlT = List[Tuple[int, Controller]]  #: Room number to controller map type
 
 
 def comp_val(v: ControllerT) -> Num:
