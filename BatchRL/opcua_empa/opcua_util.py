@@ -19,11 +19,6 @@ from util.numerics import has_duplicates, nan_avg_between
 from util.util import Num, str2bool, create_dir, now_str
 from util.visualize import plot_valve_opening, PLOT_DIR
 
-# Set pandas printing options
-pd.set_option('display.width', 1000)
-pd.set_option('display.max_columns', 500)
-pd.options.display.max_colwidth = 200
-
 experiment_data_path = os.path.join(save_dir, "Experiments")  #: Experiment data directory
 experiment_plot_path = os.path.join(PLOT_DIR, "Experiments")  #: Experiment plot directory
 create_dir(experiment_data_path)

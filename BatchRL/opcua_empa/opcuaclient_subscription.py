@@ -1,16 +1,10 @@
-########################################################################################################################
-# Name: opc ua client
-# Version: 0.1
+"""Opcua client wrapper module.
 
-# Activities:                                           Author:                         Date:
-# Initial comment                                       RK                              20190409
-# Add toggle module                                     RK                              20190411
-# Add computer name to the client                       RK                              20190411
-# Changed order to subscribe/ publish                   RK                              20190411
-# Moved the try statement inside the for loop           RK                              20190425
-# Changed from time to datetime to show milliseconds    RK                              20190508
-########################################################################################################################
+Handles a few common exceptions and hides implementation details.
+See the function `example_usage` for an example how to use the `OpcuaClient`.
 
+Original implementation by Ralf Knechtle, modified by me.
+"""
 import datetime
 import logging
 import socket
@@ -20,8 +14,13 @@ from typing import List
 
 import pandas as pd
 from opcua import Client, Subscription
-from opcua.common import ua_utils
 from opcua.ua import UaStatusCodeError, DataValue, Variant
+
+# Set pandas printing options, useful e.g. if you want to print
+# dataframes with long strings in them.
+pd.set_option('display.width', 1000)
+pd.set_option('display.max_columns', 500)
+pd.options.display.max_colwidth = 200
 
 # Initialize and configure logger
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.WARNING)
@@ -96,7 +95,7 @@ def toggle():
     return toggle_state
 
 
-class SubHandler(object):
+class _SubHandler(object):
     """Subscription Handler.
 
     To receive events from server for a subscription
@@ -129,7 +128,12 @@ class SubHandler(object):
 
 # Definition of opcua client
 class OpcuaClient(object):
-    """Wrapper class for Opcua Client."""
+    """Wrapper class for Opcua Client.
+
+    Can be used as a context manager, then it will connect
+    and disconnect automatically. Especially it will also disconnect
+    in case of e.g. KeyboardInterrupts.
+    """
 
     # Read and write data frames.
     df_Read: pd.DataFrame = None
@@ -159,7 +163,7 @@ class OpcuaClient(object):
         self.client.set_password(password)
         self.client.application_uri = application_uri + ":" + socket.gethostname() + ":" + user
         self.client.product_uri = product_uri + ":" + socket.gethostname() + ":" + user
-        self.handler = SubHandler()
+        self.handler = _SubHandler()
         self.bInitPublish = False
 
     def __enter__(self):
