@@ -1,5 +1,10 @@
 """Client that combines the node definitions and the client.
 
+Mainly about the class :class:`ControlClient` which
+uses composition to combine the classes :class:`opcua_empa.opcua_util.NodeAndValues`
+and :class:`opcua_empa.opcuaclient_subscription.OpcuaClient`.
+
+.. moduleauthor:: Christian Baumann
 """
 import logging
 from typing import List
@@ -17,7 +22,7 @@ print_fun = logging.warning
 
 class ControlClient:
 
-    TEMP_MIN_MAX = (18.0, 25.0)
+    TEMP_MIN_MAX = (18.0, 25.0)  #: Temperature bounds, experiment will be aborted if temperature leaves these bounds.
 
     write_nodes: List[str]
     read_nodes: List[str]
