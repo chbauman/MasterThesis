@@ -1,5 +1,9 @@
+"""Module for running the opcua client.
+
+May be removed later and moved to BatchRL.py if
+it is high-level enough.
+"""
 import logging
-import time
 from typing import List
 
 import numpy as np
@@ -7,7 +11,7 @@ import pandas as pd
 
 from opcua_empa.controller import FixTimeConstController, ToggleController
 from opcua_empa.opcua_util import NodeAndValues, analyze_experiment, check_room_list
-from opcua_empa.opcuaclient_subscription import OpcuaClient, example_usage
+from opcua_empa.opcuaclient_subscription import OpcuaClient
 from util.numerics import check_in_range
 
 TEMP_MIN_MAX = (18.0, 25.0)
@@ -16,10 +20,7 @@ print_fun = logging.warning  # Maybe use print instead of logging?
 
 
 def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True):
-    """User credentials"""
-
-    example_usage()
-    return
+    """Runs the opcua client."""
 
     # Analyze previous experiment
     analyze_experiment("../Data/Experiments/2020_01_08T13_10_34.pkl")

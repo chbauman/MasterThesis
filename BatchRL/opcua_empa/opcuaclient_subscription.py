@@ -131,7 +131,6 @@ class _SubHandler(object):
         logger.info("Python: New event", event)
 
 
-# Definition of opcua client
 class OpcuaClient(object):
     """Wrapper class for Opcua Client.
 
@@ -144,17 +143,15 @@ class OpcuaClient(object):
     df_Read: pd.DataFrame = None
     df_Write: pd.DataFrame = None
 
-    # Private members
+    # Private member variables
     _node_objects: List
     _data_types: List
     _ua_values: List
 
-    # The subscription object
-    _sub: Subscription = None
-    _sub_init: bool = False
-
-    # Bool specifying successful connection
-    _connected: bool = False
+    _connected: bool = False  #: Bool specifying successful connection.
+    _sub: Subscription = None  #: The subscription object.
+    _sub_init: bool = False  #: Whether a subscription was initialized.
+    _pub_init: bool = False  #: Whether publishing was initialized.
 
     def __init__(self, url='opc.tcp://ehub.nestcollaboration.ch:49320',
                  application_uri='Researchclient',
@@ -163,13 +160,16 @@ class OpcuaClient(object):
                  password='password'):
         """Initialize the opcua client."""
 
-        self.client = Client(url=url, timeout=4)
-        self.client.set_user(user)
-        self.client.set_password(password)
-        self.client.application_uri = application_uri + ":" + socket.gethostname() + ":" + user
-        self.client.product_uri = product_uri + ":" + socket.gethostname() + ":" + user
+        # Setup client
+        c = Client(url=url, timeout=4)
+        c.set_user(user)
+        c.set_password(password)
+        c.application_uri = application_uri + ":" + socket.gethostname() + ":" + user
+        c.product_uri = product_uri + ":" + socket.gethostname() + ":" + user
+
+        # Store in class
+        self.client = c
         self.handler = _SubHandler()
-        self.bInitPublish = False
 
     def __enter__(self):
         """Enter method for use as context manager."""
@@ -294,13 +294,13 @@ class OpcuaClient(object):
         self.df_Write = df_write
 
         # Initialize publishing
-        if not self.bInitPublish:
+        if not self._pub_init:
             self._node_objects = [self.client.get_node(node)
                                   for node in self.df_Write['node'].tolist()]
             try:
                 self._data_types = [nodeObject.get_data_type_as_variant_type()
                                     for nodeObject in self._node_objects]
-                self.bInitPublish = True
+                self._pub_init = True
                 logging.warning("Publishing initialized.")
             except UaStatusCodeError as e:
                 print(f"UaStatusCodeError while initializing publishing!: {e}")
