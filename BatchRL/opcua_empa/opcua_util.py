@@ -276,7 +276,7 @@ class NodeAndValues:
         self.n_valve_list = [len(ROOM_VALVE_DICT[r]) for r, _ in control]
 
         # Define experiment name
-        self.experiment_name = now_str() + ("" if exp_name is None else "_" + exp_name)
+        self.experiment_name = f"{now_str()}_R{control[0][0]}" + ("" if exp_name is None else "_" + exp_name)
 
     def get_filename(self, ext: str = ".pkl"):
         return os.path.join(experiment_data_path, self.experiment_name + ext)

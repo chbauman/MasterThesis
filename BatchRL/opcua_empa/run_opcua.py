@@ -21,7 +21,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
             print_fun("Running in debug mode!")
 
     # Analyze previous experiment
-    analyze_experiment("../Data/Experiments/2020_01_09T13_46_54_DebugValveToggle.pkl")
+    analyze_experiment("../Data/Experiments/2020_01_09T11_29_28_Toggle_6min.pkl")
 
     # Choose experiment name
     exp_name = "Test"
