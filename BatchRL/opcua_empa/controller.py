@@ -32,7 +32,7 @@ ControlT = List[Tuple[int, Controller]]  #: Room number to controller map type
 
 
 class FixTimeConstController(Controller):
-    """Const Controller
+    """Const Controller.
 
     Runs for a fixed amount of time if `max_n_minutes` is specified.
     Sets the value to be controlled to constant `val`.
@@ -64,6 +64,10 @@ class FixTimeConstController(Controller):
 
 
 class ToggleController(FixTimeConstController):
+    """Toggle controller.
+
+    Toggles every `n_mins` between two values.
+    """
 
     def __init__(self, val_low: Num = 20, val_high: Num = 22, n_mins: int = 2,
                  start_low: bool = True, max_n_minutes: int = None):
@@ -91,6 +95,11 @@ class ToggleController(FixTimeConstController):
 
 
 class StatefulController(Controller, ABC):
+    """Interface of a stateful controller.
+
+    Contains a state, the return value of `self.call`
+    should depend on this state.
+    """
     state: np.ndarray
 
     def set_state(self, curr_state: np.ndarray):
