@@ -21,6 +21,19 @@ from util.numerics import check_in_range
 print_fun = logging.warning
 
 
+def run_control(*args, **kwargs):
+    """Runs the controller until termination.
+
+    Takes the same arguments as :func:`ControlClient.__init__`.
+    """
+    with ControlClient(*args, **kwargs) as client:
+
+        # Run controller
+        cont = True
+        while cont:
+            cont = client.read_publish_wait_check()
+
+
 class ControlClient:
     """Client combining the node definition and the opcua client.
 
