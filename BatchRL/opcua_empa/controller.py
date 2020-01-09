@@ -22,6 +22,8 @@ class Controller(ABC):
     and optionally a termination criterion: `terminate()`.
     """
 
+    state: np.ndarray = None
+
     @abstractmethod
     def __call__(self, values):
         """Returns the current control input."""
@@ -29,6 +31,9 @@ class Controller(ABC):
 
     def terminate(self):
         return False
+
+    def set_state(self, curr_state: np.ndarray):
+        self.state = curr_state
 
 
 ControlT = List[Tuple[int, Controller]]  #: Room number to controller map type
@@ -39,6 +44,7 @@ class FixTimeConstController(Controller):
 
     Runs for a fixed amount of time if `max_n_minutes` is specified.
     Sets the value to be controlled to constant `val`.
+    Control inputs do not depend on current time or on state!
     """
 
     val: Num  #: The numerical value to be set.
@@ -70,6 +76,7 @@ class ToggleController(FixTimeConstController):
     """Toggle controller.
 
     Toggles every `n_mins` between two values.
+    Control inputs only depend on current time and not on state!
     """
 
     def __init__(self, val_low: Num = MIN_TEMP, val_high: Num = MAX_TEMP, n_mins: int = 2,
@@ -97,19 +104,7 @@ class ToggleController(FixTimeConstController):
         return self.v_low if is_low else self.v_high
 
 
-class StatefulController(Controller, ABC):
-    """Interface of a stateful controller.
-
-    Contains a state, the return value of `self.call`
-    should depend on this state.
-    """
-    state: np.ndarray
-
-    def set_state(self, curr_state: np.ndarray):
-        self.state = curr_state
-
-
-class ValveToggler(StatefulController):
+class ValveToggler(Controller):
     """Controller that toggles as soon as the valves have toggled."""
 
     n_delay: int  #: How many steps to wait with toggling back.
@@ -119,10 +114,11 @@ class ValveToggler(StatefulController):
     _curr_valve_state: bool = False
 
     def __init__(self, n_steps_delay: int = 10):
+        super().__init__()
         self.n_delay = n_steps_delay
-        pass
 
     def __call__(self, values=None):
+        print(self.state)
 
         v = self.state[4]  # Extract valve state
         if v > 1.0 - self.TOL:
@@ -136,10 +132,14 @@ class ValveToggler(StatefulController):
                 self._step_count = 0
                 self._curr_valve_state = False
 
-        ret = MIN_TEMP if self._curr_valve_state else MAX_TEMP
+        ret_min = self._curr_valve_state
+
         # If valves just switched, ignore change
         if self._step_count < self.n_delay:
-            ret = not ret
+            ret_min = not ret_min
+
+        # Convert bool to temperature
+        ret = MIN_TEMP if ret_min else MAX_TEMP
 
         # Increment and return
         self._step_count += 1

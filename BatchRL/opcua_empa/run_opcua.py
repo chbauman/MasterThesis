@@ -6,7 +6,7 @@ it is high-level enough.
 import logging
 from typing import List
 
-from opcua_empa.controller import ToggleController
+from opcua_empa.controller import ToggleController, ValveToggler
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
 from opcua_empa.room_control_client import ControlClient
 
@@ -35,7 +35,9 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         used_control = [(r, ToggleController(n_mins=6, start_low=False,
                                              max_n_minutes=60))
                         for r in room_list]
-        exp_name = "Debug"
+        used_control = [(r, ValveToggler(n_steps_delay=30))
+                        for r in room_list]
+        exp_name = "DebugValveToggle"
 
     with ControlClient(used_control=used_control,
                        exp_name=exp_name,

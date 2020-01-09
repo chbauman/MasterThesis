@@ -51,8 +51,8 @@ class ControlClient:
         self.write_nodes = self.node_gen.get_nodes()
         self.read_nodes = self.node_gen.get_read_nodes()
 
-        curr_vals = self.node_gen.compute_current_values()
-        self.df_write = pd.DataFrame({'node': self.write_nodes, 'value': curr_vals})
+        # curr_vals = self.node_gen.compute_current_values()
+        self.df_write = pd.DataFrame({'node': self.write_nodes, 'value': None})
         self.df_read = pd.DataFrame({'node': self.read_nodes})
 
         # Connect client and subscribe
@@ -76,13 +76,13 @@ class ControlClient:
         """
         # Read values
         read_vals = self.client.read_values()
+        ext_values = self.node_gen.extract_values(read_vals)
 
         # Compute and publish current control input
         self.df_write["value"] = self.node_gen.compute_current_values()
         self.client.publish(self.df_write, log_time=True, sleep_after=1.0)
 
         # Extract values
-        ext_values = self.node_gen.extract_values(read_vals)
         if self.verbose:
             print_fun(f"Temperature setpoint: {self.df_write['value'][0]}")
             print_fun(f"Valves: {self.node_gen.get_valve_values()[0]}")

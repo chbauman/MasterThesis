@@ -12,7 +12,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
-from opcua_empa.controller import StatefulController, ControlT
+from opcua_empa.controller import ControlT
 from opcua_empa.opcuaclient_subscription import toggle
 from rest.client import save_dir
 from util.numerics import has_duplicates, nan_avg_between
@@ -316,20 +316,22 @@ class NodeAndValues:
     def compute_current_values(self) -> List:
         """Computes current control inputs."""
 
-        # Get values
-        values = _get_values(self.control)
+        # Set state of the controllers
+        for c in self.control:
+            _, cont = c
 
-        # TODO: Make control depending on state!
-        if isinstance(self.control, StatefulController):
             # Compute state
             state = np.empty((6,), dtype=np.float32)
-            curr_read_vals = self.read_values[self._curr_read_n]
+            curr_read_vals = self.read_values[max(self._curr_read_n - 1, 0)]
             state[:4] = curr_read_vals[-4:]  # Assign weather and water
             state[4] = np.mean(curr_read_vals[4:7])  # Assign valve value
             state[5] = curr_read_vals[1]  # Assign Room temperature
 
             # Set state
-            self.control.set_state(state)
+            cont.set_state(state)
+
+        # Get values
+        values = _get_values(self.control)
 
         # Save values in memory
         self.write_timestamps[self._curr_write_n] = np.datetime64('now')
