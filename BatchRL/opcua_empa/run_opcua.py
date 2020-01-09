@@ -6,8 +6,9 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from opcua_empa.opcua_util import NodeAndValues, ToggleController, FixTimeConstController, ALL_ROOM_NRS, \
+from opcua_empa.opcua_util import NodeAndValues, ALL_ROOM_NRS, \
     analyze_experiment
+from opcua_empa.controller import FixTimeConstController, ToggleController
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from util.numerics import check_in_range
 

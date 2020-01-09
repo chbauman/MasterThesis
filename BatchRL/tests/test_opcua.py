@@ -6,7 +6,8 @@ import pandas as pd
 import numpy as np
 
 import opcua_empa.opcua_util
-from opcua_empa.opcua_util import FixTimeConstController, get_min_diff, NodeAndValues
+from opcua_empa.opcua_util import get_min_diff, NodeAndValues
+from opcua_empa.controller import FixTimeConstController
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 
 
