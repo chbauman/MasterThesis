@@ -4,11 +4,9 @@ Defines node strings for the nodes needed to control rooms at DFAB.
 Includes the read and the write nodes.
 """
 
-import datetime
 import logging
 import os
 import pickle
-import time
 from typing import Dict, List, Tuple, Union, Callable
 
 import numpy as np
@@ -104,13 +102,6 @@ def _th_string_to_node_name(th_str: str, ext: str = "", read: bool = False) -> s
     rw_part = "strRead" if read else "strWrite_L"
     pre = BASE_NODE_STR + rw_part + f".strSensoren.str{n1}.str{n2}"
     return pre + ext
-
-
-def get_min_diff(t1: datetime.datetime, t2: datetime.datetime):
-    """Computes the time difference in minutes between two datetimes."""
-    d1_ts = time.mktime(t1.timetuple())
-    d2_ts = time.mktime(t2.timetuple())
-    return (d2_ts - d1_ts) / 60
 
 
 # Type definitions for control

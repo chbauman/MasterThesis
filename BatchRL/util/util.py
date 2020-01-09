@@ -6,10 +6,12 @@ to handle the datetime of python and numpy. Also some
 tests of these functions are included.
 """
 import builtins as __builtin__
+import datetime
 import os
 import random
 import shutil
 import sys
+import time
 import warnings
 from datetime import datetime
 from functools import wraps
@@ -887,3 +889,10 @@ def day_offset_ts(t_init: str, mins: int = 15, remaining: bool = True) -> int:
 # Create paths
 create_dir(model_dir)
 create_dir(dynamic_model_dir)
+
+
+def get_min_diff(t1: datetime, t2: datetime):
+    """Computes the time difference in minutes between two datetimes."""
+    d1_ts = time.mktime(t1.timetuple())
+    d2_ts = time.mktime(t2.timetuple())
+    return (d2_ts - d1_ts) / 60

@@ -8,8 +8,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from opcua_empa.opcua_util import get_min_diff
-from util.util import Num
+from util.util import Num, get_min_diff
 
 
 class Controller(ABC):
