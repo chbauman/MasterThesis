@@ -1,4 +1,3 @@
-import datetime
 import logging
 import time
 from typing import List
@@ -6,10 +5,9 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from opcua_empa.opcua_util import NodeAndValues, ALL_ROOM_NRS, \
-    analyze_experiment, check_room_list
 from opcua_empa.controller import FixTimeConstController, ToggleController
-from opcua_empa.opcuaclient_subscription import OpcuaClient
+from opcua_empa.opcua_util import NodeAndValues, analyze_experiment, check_room_list
+from opcua_empa.opcuaclient_subscription import OpcuaClient, example_usage
 from util.numerics import check_in_range
 
 TEMP_MIN_MAX = (18.0, 25.0)
@@ -19,6 +17,9 @@ print_fun = logging.warning  # Maybe use print instead of logging?
 
 def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True):
     """User credentials"""
+
+    example_usage()
+    return
 
     # Analyze previous experiment
     analyze_experiment("../Data/Experiments/2020_01_08T13_10_34.pkl")
@@ -52,11 +53,15 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
     df_write = pd.DataFrame({'node': write_nodes, 'value': curr_vals})
     df_read = pd.DataFrame({'node': read_nodes})
 
-    with OpcuaClient() as opcua_client:
+    print(curr_vals)
+    print(write_nodes)
+    print(read_nodes)
+
+    with OpcuaClient(user='ChristianBaumannETH2020',
+                     password='Christian4_ever') as opcua_client:
 
         # Subscribe, need to wait a bit before reading for the first time
-        opcua_client.subscribe(df_read)
-        time.sleep(1.0)
+        opcua_client.subscribe(df_read, sleep_after=1.0)
 
         cont = True
         iter_ind = 0

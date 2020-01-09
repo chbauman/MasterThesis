@@ -28,6 +28,61 @@ logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.WARNING)
 logger = logging.getLogger('opc ua client')
 
 
+def example_usage():
+    """Example usage of the OpcuaClient class defined below.
+
+    Sets the room temperature setpoint of room 475 at DFAB to 10 degrees C
+    for a short time.
+    """
+
+    # The initial values to write
+    write_vals = [
+        28,  # Temperature setpoint
+        True,  # Research request
+        True,  # Watchdog
+    ]
+
+    # Define nodes to read and write
+    write_nodes = [
+        'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB872.rValue1',
+        'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB872.bReqResearch',
+        'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strWrite_L.strSensoren.strR2.strB872.bWdResearch',
+    ]
+    read_nodes = [
+        'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strSensoren.strR2.strB872.bAckResearch',
+        'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strSensoren.strR2.strB872.rValue1',
+        'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strSensoren.strR2.strB872.rValue2',
+        'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strSensoren.strR2.strB872.bValue1',
+        'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strAktoren.strZ2.strY703.bValue1',
+        'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strAktoren.strZ2.strY704.bValue1',
+        'ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3.strRead.strAktoren.strZ2.strY705.bValue1',
+    ]
+
+    # Define dataframes
+    df_write = pd.DataFrame({'node': write_nodes, 'value': write_vals})
+    df_read = pd.DataFrame({'node': read_nodes})
+
+    # Use the opcua client as a context manager, it connects and disconnects
+    # automatically.
+    with OpcuaClient(user='ChristianBaumannETH2020',
+                     password='Christian4_ever') as opcua_client:
+
+        # Subscribe to read nodes and wait a bit
+        opcua_client.subscribe(df_read, sleep_after=1.0)
+
+        for k in range(30):
+            # Read values
+            read_vals = opcua_client.read_values()
+
+            # Do something with the read values
+            print(read_vals)
+
+            # Write values
+            df_write['value'][0] = 10  # Set temperature setpoint
+            df_write['value'][2] = toggle()  # Toggle for watchdog
+            opcua_client.publish(df_write, log_time=True, sleep_after=1.0)
+
+
 def toggle():
     """Toggles every 5 seconds.
 
@@ -95,8 +150,8 @@ class OpcuaClient(object):
     def __init__(self, url='opc.tcp://ehub.nestcollaboration.ch:49320',
                  application_uri='Researchclient',
                  product_uri='Researchclient',
-                 user='ChristianBaumannETH2020',
-                 password='Christian4_ever'):
+                 user='username',
+                 password='password'):
         """Initialize the opcua client."""
 
         self.client = Client(url=url, timeout=4)
@@ -173,7 +228,7 @@ class OpcuaClient(object):
             # This does not catch the error :(
             logging.warning(f"OPC UA Server disconnected with error: {e}")
 
-    def subscribe(self, df_read: pd.DataFrame) -> None:
+    def subscribe(self, df_read: pd.DataFrame, sleep_after: float = None) -> None:
         """Subscribe all values you want to read.
 
         If it fails, a warning is printed and some values might
@@ -181,6 +236,7 @@ class OpcuaClient(object):
 
         Args:
             df_read: The dataframe with the read nodes.
+            sleep_after: Number of seconds to wait after subscribing.
         """
         if self._sub_init:
             logging.warning("You already subscribed!")
@@ -203,6 +259,10 @@ class OpcuaClient(object):
             # TODO: Remove or catch more specific error!
             logging.warning(f"Exception: {e} happened while subscribing!")
             raise e
+
+        # Sleep
+        if sleep_after is not None:
+            time.sleep(sleep_after)
 
     def publish(self, df_write: pd.DataFrame,
                 log_time: bool = False,
