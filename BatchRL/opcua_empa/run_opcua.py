@@ -16,6 +16,10 @@ print_fun = logging.warning  # Maybe use print instead of logging?
 def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True):
     """Runs the opcua client."""
 
+    if verbose:
+        if debug:
+            print_fun("Running in debug mode!")
+
     # Analyze previous experiment
     analyze_experiment("../Data/Experiments/2020_01_09T13_46_54_DebugValveToggle.pkl")
 
@@ -27,7 +31,8 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         check_room_list(room_list)
 
     # Define room and control
-    tc = ToggleController(n_mins=60 * 100, start_low=True, max_n_minutes=60 * 16)
+    # tc = ToggleController(n_mins=60 * 100, start_low=True, max_n_minutes=60 * 16)
+    tc = ValveToggler(n_steps_delay=30)
     room_list = [475] if room_list is None else room_list
     used_control = [(i, tc) for i in room_list]
     if debug:
