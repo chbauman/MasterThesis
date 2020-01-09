@@ -21,11 +21,15 @@ print_fun = logging.warning
 
 
 class ControlClient:
+    """Client combining the node definition and the opcua client.
+
+    Use it as a context manager!
+    """
 
     TEMP_MIN_MAX = (18.0, 25.0)  #: Temperature bounds, experiment will be aborted if temperature leaves these bounds.
 
-    write_nodes: List[str]
-    read_nodes: List[str]
+    write_nodes: List[str]  #: List with the read nodes as strings.
+    read_nodes: List[str]  #: List with the write nodes as strings.
 
     n_pub: int = 0
 
@@ -62,6 +66,13 @@ class ControlClient:
         self.client.__exit__(*args, **kwargs)
 
     def read_publish_wait_check(self) -> bool:
+        """Read and publish values, wait, and check if termination is reached.
+
+        If `self.verbose` is True, some information is logged.
+
+        Returns:
+            Whether termination is reached.
+        """
         # Read values
         read_vals = self.client.read_values()
 

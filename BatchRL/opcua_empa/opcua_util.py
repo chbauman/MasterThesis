@@ -89,6 +89,12 @@ BASE_NODE_STR = f"ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3."
 
 
 def check_room_list(room_list: List[int]) -> None:
+    """Checks if IDs of rooms in list are valid.
+
+    Raises:
+        AssertionError: If any ID is invalid or the argument is
+            not a list.
+    """
     # Check list with room numbers
     assert isinstance(room_list, list), f"Room list: {room_list} needs to be a list!"
     for k in room_list:
@@ -107,18 +113,7 @@ def _th_string_to_node_name(th_str: str, ext: str = "", read: bool = False) -> s
 
 
 # Type definitions for control
-ControllerT = Union[Callable[[], Num], Num]  #: Controller type
 ControlT = List[Tuple[int, Controller]]  #: Room number to controller map type
-
-
-def comp_val(v: ControllerT) -> Num:
-    if type(v) in [float, int]:
-        return v
-    elif callable(v):
-        return v()
-    else:
-        raise NotImplementedError("Only numerical values or functions "
-                                  "taking no arguments allowed!")
 
 
 def _trf_node(node_str: str) -> str:
@@ -130,7 +125,7 @@ def _get_values(control: ControlT) -> List:
     for c in control:
         r_nr, val_fun = c
         val_list += [
-            comp_val(val_fun),
+            val_fun(),
             True,
             toggle(),
         ]
@@ -326,11 +321,12 @@ class NodeAndValues:
         """Computes current control inputs."""
 
         # TODO: Make control depending on state!
+        state = np.array(0)
         if isinstance(self.control, StatefulController):
             # Compute state
 
             # Set state
-            self.control.set_state(np.array(0))
+            self.control.set_state(state)
 
         # Get values
         values = _get_values(self.control)

@@ -17,7 +17,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
     """Runs the opcua client."""
 
     # Analyze previous experiment
-    analyze_experiment("../Data/Experiments/2020_01_08T13_10_34.pkl")
+    analyze_experiment("../Data/Experiments/2020_01_09T11_29_28_Toggle_6min.pkl")
 
     # Choose experiment name
     exp_name = "Test"
@@ -44,6 +44,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
                        password='Christian4_ever',
                        verbose=verbose) as client:
 
+        # Run controller
         cont = True
         while cont:
             cont = client.read_publish_wait_check()
