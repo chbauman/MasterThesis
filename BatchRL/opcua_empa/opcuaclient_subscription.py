@@ -139,9 +139,11 @@ class OpcuaClient(object):
     in case of e.g. KeyboardInterrupts.
     """
 
-    # Read and write data frames.
-    df_Read: pd.DataFrame = None
-    df_Write: pd.DataFrame = None
+    # Public member variables
+    client: Client  #: The original opcua.Client
+
+    df_read: pd.DataFrame = None  #: Read data frames.
+    df_write: pd.DataFrame = None  #: Write data frames.
 
     # Private member variables
     _node_objects: List
@@ -250,9 +252,9 @@ class OpcuaClient(object):
         if self._sub_init:
             logging.warning("You already subscribed!")
 
-        self.df_Read = df_read
+        self.df_read = df_read
         nodelist_read = [self.client.get_node(row['node'])
-                         for i, row in self.df_Read.iterrows()]
+                         for i, row in self.df_read.iterrows()]
 
         # Try subscribing to the nodes in the list.
         try:
@@ -291,12 +293,12 @@ class OpcuaClient(object):
             UaStatusCodeError: If initialization of publishing fails.
         """
         t0 = datetime.datetime.now()
-        self.df_Write = df_write
+        self.df_write = df_write
 
         # Initialize publishing
         if not self._pub_init:
             self._node_objects = [self.client.get_node(node)
-                                  for node in self.df_Write['node'].tolist()]
+                                  for node in self.df_write['node'].tolist()]
             try:
                 self._data_types = [nodeObject.get_data_type_as_variant_type()
                                     for nodeObject in self._node_objects]
@@ -309,7 +311,7 @@ class OpcuaClient(object):
         # Publish values, failures to publish will not raise an exception.
         try:
             self._ua_values = [DataValue(Variant(value, d_t)) for
-                               value, d_t in zip(self.df_Write['value'].tolist(), self._data_types)]
+                               value, d_t in zip(self.df_write['value'].tolist(), self._data_types)]
             self.client.set_values(nodes=self._node_objects, values=self._ua_values)
             for n, val in zip(self._node_objects, self._ua_values):
                 logger.info('write %s %s' % (n, val))
