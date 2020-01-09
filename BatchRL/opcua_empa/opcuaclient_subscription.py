@@ -173,7 +173,7 @@ class OpcuaClient(object):
             # This does not catch the error :(
             logging.warning(f"OPC UA Server disconnected with error: {e}")
 
-    def subscribe(self, json_read: str) -> None:
+    def subscribe(self, df_read: pd.DataFrame) -> None:
         """Subscribe all values you want to read.
 
         TODO: Why take a json string as input????
@@ -184,7 +184,7 @@ class OpcuaClient(object):
         if self._sub_init:
             logging.warning("You already subscribed!")
 
-        self.df_Read = pd.read_json(json_read)
+        self.df_Read = df_read
         nodelist_read = [self.client.get_node(row['node'])
                          for i, row in self.df_Read.iterrows()]
 

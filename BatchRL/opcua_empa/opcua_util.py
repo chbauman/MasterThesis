@@ -93,6 +93,13 @@ READ_SUF_NAME_TYPES: List[Tuple[str, str, type]] = [
 BASE_NODE_STR = f"ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3."
 
 
+def check_room_list(room_list: List[int]) -> None:
+    # Check list with room numbers
+    assert isinstance(room_list, list), f"Room list: {room_list} needs to be a list!"
+    for k in room_list:
+        assert k in ALL_ROOM_NRS, f"Invalid room number: {k}"
+
+
 def _th_string_to_node_name(th_str: str, ext: str = "", read: bool = False) -> str:
     """Turns a thermostat string into a node name string.
 

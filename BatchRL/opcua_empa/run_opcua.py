@@ -7,28 +7,31 @@ import numpy as np
 import pandas as pd
 
 from opcua_empa.opcua_util import NodeAndValues, ALL_ROOM_NRS, \
-    analyze_experiment
+    analyze_experiment, check_room_list
 from opcua_empa.controller import FixTimeConstController, ToggleController
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from util.numerics import check_in_range
 
 TEMP_MIN_MAX = (18.0, 25.0)
 
+print_fun = logging.warning  # Maybe use print instead of logging?
+
 
 def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True):
     """User credentials"""
+
+    # Analyze previous experiment
     analyze_experiment("../Data/Experiments/2020_01_08T13_10_34.pkl")
 
-    print_fun = logging.warning  # Maybe use print instead of logging?
+    # Choose experiment name
+    exp_name = None
 
     # Check list with room numbers
     if room_list is not None:
-        assert isinstance(room_list, list), f"Room list: {room_list} needs to be a list!"
-        for k in room_list:
-            assert k in ALL_ROOM_NRS, f"Invalid room number: {k}"
+        check_room_list(room_list)
 
     # Define room and control
-    tc = ToggleController(val_low=10, val_high=35, n_mins=60 * 100, start_low=True, max_n_minutes=60 * 16)
+    tc = ToggleController(val_low=10, val_high=28, n_mins=60 * 100, start_low=True, max_n_minutes=60 * 16)
     room_list = [475, 571] if room_list is None else room_list
     used_control = [(i, tc) for i in room_list]
     if debug:
@@ -37,9 +40,10 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
         used_control = [(r, ToggleController(val_low=10, val_high=28,
                                              n_mins=5, start_low=False, max_n_minutes=40))
                         for r in room_list]
+        exp_name = "Debug"
 
     # Define value and node generator
-    node_value_gen = NodeAndValues(used_control)
+    node_value_gen = NodeAndValues(used_control, exp_name=exp_name)
     write_nodes = node_value_gen.get_nodes()
     read_nodes = node_value_gen.get_read_nodes()
 
@@ -50,8 +54,9 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
 
     with OpcuaClient() as opcua_client:
 
-        # Subscribe
-        opcua_client.subscribe(json_read=df_read.to_json())
+        # Subscribe, need to wait a bit before reading for the first time
+        opcua_client.subscribe(df_read)
+        time.sleep(1.0)
 
         cont = True
         iter_ind = 0
@@ -73,7 +78,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
 
             # Check termination criterion
             ext_values = node_value_gen.extract_values(read_vals)
-            print(node_value_gen.get_valve_values())
+            print(node_value_gen.get_valve_values()[0])
 
             # Check that the research acknowledgement is true.
             # Wait for at least 20s before requiring to be true, takes some time.
