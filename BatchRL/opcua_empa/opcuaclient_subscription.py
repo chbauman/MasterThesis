@@ -14,14 +14,14 @@
 import datetime
 import logging
 import socket
+import time
 import warnings
 from typing import List
 
 import pandas as pd
 from opcua import Client, Subscription
-from opcua import ua
 from opcua.common import ua_utils
-from opcua.ua import UaStatusCodeError
+from opcua.ua import UaStatusCodeError, DataValue, Variant
 
 # Initialize and configure logger
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.WARNING)
@@ -204,18 +204,24 @@ class OpcuaClient(object):
             logging.warning(f"Exception: {e} happened while subscribing!")
             raise e
 
-    def publish(self, df_write: pd.DataFrame) -> None:
+    def publish(self, df_write: pd.DataFrame,
+                log_time: bool = False,
+                sleep_after: float = None) -> None:
         """Publish (write) values to server.
 
         Initializes publishing if called for first time. If the actual
         publishing fails, a warning message is printed.
+        If `sleep_after` is None, there is no sleeping after publishing.
 
         Args:
             df_write: The dataframe with the write nodes and values.
+            log_time: Whether to log the time it took to publish.
+            sleep_after: Number of seconds to sleep after publishing.
 
         Raises:
             UaStatusCodeError: If initialization fails.
         """
+        t0 = datetime.datetime.now()
         self.df_Write = df_write
 
         # Initialize publishing
@@ -233,10 +239,19 @@ class OpcuaClient(object):
 
         # Publish values, failures to publish will not raise an exception.
         try:
-            self._ua_values = [ua.DataValue(ua.Variant(ua_utils.string_to_val(str(value), d_t), d_t)) for
+            self._ua_values = [DataValue(Variant(ua_utils.string_to_val(str(value), d_t), d_t)) for
                                value, d_t in zip(self.df_Write['value'].tolist(), self._data_types)]
             self.client.set_values(nodes=self._node_objects, values=self._ua_values)
             for n, val in zip(self._node_objects, self._ua_values):
                 logger.info('write %s %s' % (n, val))
         except UaStatusCodeError as e:
             logging.warning(f"UaStatusCodeError: {e} happened while publishing!")
+
+        # Log the time used for publishing
+        if log_time:
+            dt = datetime.datetime.now() - t0
+            logging.warning(f"Publishing took: {dt}")
+
+        # Sleep
+        if sleep_after is not None:
+            time.sleep(sleep_after)

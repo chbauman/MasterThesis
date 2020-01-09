@@ -70,11 +70,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
                 print_fun(f"Temperature setpoint: {df_write['value'][0]}")
 
             # Write (publish) values and wait
-            t0 = datetime.datetime.now()
-            opcua_client.publish(df_write)
-            dt = datetime.datetime.now() - t0
-            print_fun(f"Publishing took: {dt}")
-            time.sleep(1.0)
+            opcua_client.publish(df_write, log_time=True, sleep_after=1.0)
 
             # Check termination criterion
             ext_values = node_value_gen.extract_values(read_vals)
