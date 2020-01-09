@@ -70,7 +70,7 @@ def example_usage():
         # Subscribe to read nodes and wait a bit
         opcua_client.subscribe(df_read, sleep_after=1.0)
 
-        for k in range(30):
+        for k in range(60):
             # Read values
             read_vals = opcua_client.read_values()
 
@@ -279,7 +279,7 @@ class OpcuaClient(object):
             sleep_after: Number of seconds to sleep after publishing.
 
         Raises:
-            UaStatusCodeError: If initialization fails.
+            UaStatusCodeError: If initialization of publishing fails.
         """
         t0 = datetime.datetime.now()
         self.df_Write = df_write
@@ -299,7 +299,7 @@ class OpcuaClient(object):
 
         # Publish values, failures to publish will not raise an exception.
         try:
-            self._ua_values = [DataValue(Variant(ua_utils.string_to_val(str(value), d_t), d_t)) for
+            self._ua_values = [DataValue(Variant(value, d_t)) for
                                value, d_t in zip(self.df_Write['value'].tolist(), self._data_types)]
             self.client.set_values(nodes=self._node_objects, values=self._ua_values)
             for n, val in zip(self._node_objects, self._ua_values):
