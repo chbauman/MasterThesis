@@ -9,6 +9,7 @@ from mpl_toolkits.axes_grid1 import host_subplot
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
+from opcua_empa.controller import MIN_TEMP, MAX_TEMP
 from util.numerics import fit_linear_1d, load_performance, check_shape, ErrMetric, MaxAbsEer, MAE
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
     create_dir, Num, yeet, tot_size, mins_to_str, IndT
@@ -1329,16 +1330,17 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
 
         # Plot written temperature setpoints
         ax_twin = ax.twinx()
+        ax_twin.set_ylim(MIN_TEMP - 2, MAX_TEMP + 2)
         ax_twin.set_ylabel("Temperature [°C]")
         _plot_helper(t_timestamps, t_setpoints, grid=True, dates=True,
-                     m_col=clr_map[n_valves], label=f"Temperature Setpoint", ax=ax_twin)
+                     m_col=clr_map[n_valves], label=f"Temp. Setpoint", ax=ax_twin)
 
         # Plot feedback temperature setpoints
         if t_setpoints_meas is not None:
             _plot_helper(timestamps, t_setpoints_meas, grid=True, dates=True,
                          m_col=clr_map[n_valves + 1],
-                         label=f"Temperature Setpoint Feedback", ax=ax_twin)
+                         label=f"Temp. Setpoint Feedback", ax=ax_twin)
 
     # Save
-    plt.legend()
+    plt.legend(loc=7)
     save_figure(save_name)
