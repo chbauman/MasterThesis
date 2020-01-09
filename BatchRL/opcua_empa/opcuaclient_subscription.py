@@ -30,6 +30,9 @@ logger = logging.getLogger('opc ua client')
 def example_usage():
     """Example usage of the OpcuaClient class defined below.
 
+    You will need to set `user` and `password` to your
+    personal credentials.
+
     Sets the room temperature setpoint of room 475 at DFAB to 10 degrees C
     for a short time.
 
@@ -65,8 +68,8 @@ def example_usage():
 
     # Use the opcua client as a context manager, it connects and disconnects
     # automatically.
-    with OpcuaClient(user='ChristianBaumannETH2020',
-                     password='Christian4_ever') as opcua_client:
+    with OpcuaClient(user='user',
+                     password='password') as opcua_client:
 
         # Subscribe to read nodes and wait a bit
         opcua_client.subscribe(df_read, sleep_after=1.0)
@@ -76,9 +79,9 @@ def example_usage():
             read_vals = opcua_client.read_values()
 
             # Do something with the read values
-            # print(read_vals)
+            print(read_vals)
 
-            # Write values
+            # Write values and wait
             df_write['value'][0] = 10  # Set temperature setpoint
             df_write['value'][2] = toggle()  # Toggle for watchdog
             opcua_client.publish(df_write, log_time=True, sleep_after=1.0)
