@@ -176,10 +176,11 @@ class OpcuaClient(object):
     def subscribe(self, df_read: pd.DataFrame) -> None:
         """Subscribe all values you want to read.
 
-        TODO: Why take a json string as input????
-
         If it fails, a warning is printed and some values might
         not be read correctly.
+
+        Args:
+            df_read: The dataframe with the read nodes.
         """
         if self._sub_init:
             logging.warning("You already subscribed!")
@@ -203,19 +204,19 @@ class OpcuaClient(object):
             logging.warning(f"Exception: {e} happened while subscribing!")
             raise e
 
-    def publish(self, json_write: str) -> None:
+    def publish(self, df_write: pd.DataFrame) -> None:
         """Publish (write) values to server.
 
         Initializes publishing if called for first time. If the actual
         publishing fails, a warning message is printed.
 
         Args:
-            json_write: The string with the json to write.
+            df_write: The dataframe with the write nodes and values.
 
         Raises:
             UaStatusCodeError: If initialization fails.
         """
-        self.df_Write = pd.read_json(json_write)
+        self.df_Write = df_write
 
         # Initialize publishing
         if not self.bInitPublish:

@@ -71,7 +71,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
 
             # Write (publish) values and wait
             t0 = datetime.datetime.now()
-            opcua_client.publish(json_write=df_write.to_json())
+            opcua_client.publish(df_write)
             dt = datetime.datetime.now() - t0
             print_fun(f"Publishing took: {dt}")
             time.sleep(1.0)
