@@ -3,6 +3,7 @@ from typing import List
 from unittest import TestCase
 
 import pandas as pd
+import numpy as np
 
 import opcua_empa.opcua_util
 from dynamics.composite import CompositeModel
@@ -168,7 +169,7 @@ class TestOpcuaRL(TestCase):
         self.cont = [(575, FixTimeConstController(val=self.c_val, max_n_minutes=1))]
 
         # Setup keras test agent
-        mod = get_full_composite_model(add_battery=True)
+        mod = get_full_composite_model(add_battery=True, standardized=True)
         assert isinstance(mod, CompositeModel), "No composite model!"
         p = PWProfile()
         self.full_env = RoomBatteryEnv(mod, p, max_eps=5)
@@ -178,7 +179,7 @@ class TestOpcuaRL(TestCase):
                                         action=0.5)
         self.rl_cont = [(575, RLController(self.test_agent, verbose=0))]
 
-        room_mod = get_full_composite_model(add_battery=False)
+        room_mod = get_full_composite_model(add_battery=False, standardized=True)
         self.room_env = FullRoomEnv(room_mod, max_eps=5)
         self.test_agent_room = KerasDDPGTest(self.room_env,
                                              action_range=self.room_env.action_range,
@@ -199,4 +200,9 @@ class TestOpcuaRL(TestCase):
                            verbose=0,
                            _client_class=OfflineClient) as cc:
             cc.read_publish_wait_check()
+
+    def test_controller_scaling(self):
+        cont = self.rl_cont[0][1]
+        self.assertTrue(cont._scaling.shape == (10, 2), "Wrong shape!!")
+        cont._scaling = np.empty((10, 2))
         pass
