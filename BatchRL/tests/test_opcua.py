@@ -3,13 +3,12 @@ from typing import List
 from unittest import TestCase
 
 import pandas as pd
-import numpy as np
 
 import opcua_empa.opcua_util
-from opcua_empa.opcua_util import NodeAndValues
-from util.util import get_min_diff
 from opcua_empa.controller import FixTimeConstController
+from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.opcuaclient_subscription import OpcuaClient
+from util.util import get_min_diff
 
 
 class OfflineClient(OpcuaClient):
@@ -39,13 +38,15 @@ class OfflineClient(OpcuaClient):
         return pd.DataFrame({'node': self.node_strs,
                              'value': vals})
 
-    def publish(self, json_write: str) -> None:
+    def publish(self, df_write: pd.DataFrame,
+                log_time: bool = False,
+                sleep_after: float = None) -> None:
         self.assert_connected()
 
-    def subscribe(self, json_read: str) -> None:
+    def subscribe(self, df_read: pd.DataFrame, sleep_after: float = None) -> None:
         self.assert_connected()
         self.subscribed = True
-        pd_sub_df: pd.DataFrame = pd.read_json(json_read).sort_index()
+        pd_sub_df: pd.DataFrame = df_read.sort_index()
         self.node_strs = [opcua_empa.opcua_util._trf_node(i) for i in pd_sub_df['node']]
         self.n_read_vals = len(self.node_strs)
 
@@ -84,12 +85,12 @@ class TestOpcua(TestCase):
         self.assertEqual(vals[0], self.c_val)
         self.assertEqual(vals[1], True)
 
-    def test_fake_client(self):
+    def test_offline_client(self):
         nav = NodeAndValues(self.cont)
         read_nodes = nav.get_read_nodes()
         df_read = pd.DataFrame({'node': read_nodes})
         with OfflineClient() as client:
-            client.subscribe(json_read=df_read.to_json())
-            client.publish(df_read.to_json())
+            client.subscribe(df_read)
+            client.publish(df_read)
             r_vals = client.read_values()
             nav.extract_values(r_vals)

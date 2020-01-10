@@ -160,12 +160,12 @@ class ValveToggler(FixTimeController):
 
 
 class RLController(FixTimeController):
-    """Controller that toggles as soon as the valves have toggled."""
+    """Controller uses a RL agent to do control."""
 
     default_val: Num = 21.0
     agent: AgentBase = None
     dt: int = None
-    data_ref = None
+    data_ref = None  # Dataset of model of env
 
     _curr_ts_ind: int
 
@@ -181,7 +181,7 @@ class RLController(FixTimeController):
         self._curr_ts_ind = self.get_dt_ind()
 
     def __call__(self, values=None):
-        
+
         next_ts_ind = self.get_dt_ind()
         if next_ts_ind != self._curr_ts_ind:
             # Next step, apply new control
