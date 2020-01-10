@@ -12,7 +12,8 @@ import numpy as np
 
 # from envs.dynamics_envs import FullRoomEnv, RoomBatteryEnv
 from agents.base_agent import AgentBase
-from util.util import Num, get_min_diff, day_offset_ts, print_if_verb
+from util.numerics import int_to_sin_cos
+from util.util import Num, get_min_diff, day_offset_ts, print_if_verb, ts_per_day
 
 if TYPE_CHECKING:
     from data_processing.dataset import Dataset
@@ -220,8 +221,13 @@ class RLController(FixTimeController):
         else:
             return self._scaling[:, 1] * curr_state + self._scaling[:, 0]
 
-    def add_time_to_state(self, curr_state):
-        pass
+    def add_time_to_state(self, curr_state: np.ndarray, t_ind: int = None) -> np.ndarray:
+        assert len(curr_state) == 6, f"Invalid shape of state: {curr_state}"
+        if t_ind is None:
+            t_ind = self.get_dt_ind()
+        n_ts_per_day = ts_per_day(self.data_ref.dt)
+        t = np.array(int_to_sin_cos(t_ind, n_ts_per_day))
+        return np.concatenate((curr_state, t))
 
     def __call__(self, values=None):
 

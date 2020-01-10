@@ -113,7 +113,6 @@ class TestNumerics(TestCase):
         np.datetime64 = orig_np_dt64
 
     def test_int_to_sin_cos(self):
-
         inds = np.array([0, 1, 2])
         tot_n = 4
         s, c = int_to_sin_cos(inds, tot_n)
