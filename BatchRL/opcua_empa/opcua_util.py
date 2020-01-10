@@ -301,7 +301,7 @@ class NodeAndValues:
 
     def save_and_reset(self) -> None:
         """Saves and resets data and resets counters."""
-        self.save_cached_data()
+        self.save_cached_data(verbose=0)
         self.reset_cache()
         self._curr_read_n = 0
         self._curr_write_n = 0

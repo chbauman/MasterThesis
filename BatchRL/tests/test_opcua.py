@@ -166,7 +166,7 @@ class TestOpcua(TestCase):
         self.assertEqual(nav._curr_read_n, 0)
         self.assertEqual(nav._curr_write_n, 0)
         nav.compute_current_values()
-        nav.save_cached_data()
+        nav.save_cached_data(verbose=0)
 
 
 class TestOpcuaRL(TestCase):
@@ -213,7 +213,7 @@ class TestOpcuaRL(TestCase):
 
     def test_rl_controller_room_only(self):
         with ControlClient(self.rl_cont_room,
-                           exp_name="OfflineRLControllerTest",
+                           exp_name="OfflineRoomRLControllerTest",
                            verbose=0,
                            _client_class=OfflineClient) as cc:
             cc.read_publish_wait_check()
@@ -237,4 +237,16 @@ class TestOpcuaRL(TestCase):
         time_state = cont.add_time_to_state(state, t_ind)
         self.assertTrue(np.allclose(time_state[-2:], np.array([0.0, 1.0])))
         self.assertEqual(len(time_state), 8)
-        pass
+
+    def test_rl_controller_call(self):
+        with ControlClient(self.rl_cont_room,
+                           exp_name="OfflineRLControllerCallTest",
+                           verbose=0,
+                           _client_class=OfflineClient) as cc:
+            cont = self.rl_cont_room[0][1]
+            cont._curr_ts_ind = 0
+            cc.read_publish_wait_check()
+            cont._curr_ts_ind = 5
+            cc.read_publish_wait_check()
+
+    pass

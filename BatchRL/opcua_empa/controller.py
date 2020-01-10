@@ -179,12 +179,11 @@ class RLController(FixTimeController):
     verbose: int
 
     # Protected member variables
+    _change_time: np.datetime64
+    _mins_before_change: float
+
     _curr_ts_ind: int
     _scaling: np.ndarray = None
-
-    def get_dt_ind(self):
-        t_now = np.datetime64('now')
-        return day_offset_ts(t_now, mins=self.dt, remaining=False) - 1
 
     def __init__(self, rl_agent: AgentBase, n_steps_max: int = 60 * 60,
                  verbose: int = 3):
@@ -214,6 +213,11 @@ class RLController(FixTimeController):
         if self.data_ref.fully_scaled:
             self._scaling = self.data_ref.scaling
 
+    def get_dt_ind(self):
+        """Computes the index of the current timestep."""
+        t_now = np.datetime64('now')
+        return day_offset_ts(t_now, mins=self.dt, remaining=False) - 1
+
     def scale_for_agent(self, curr_state, remove_mean: bool = True) -> np.ndarray:
         assert len(curr_state) == 8 + 2 * self.battery, "Shape mismatch!"
         if remove_mean:
@@ -222,6 +226,7 @@ class RLController(FixTimeController):
             return self._scaling[:, 1] * curr_state + self._scaling[:, 0]
 
     def add_time_to_state(self, curr_state: np.ndarray, t_ind: int = None) -> np.ndarray:
+        """Appends the sin and cos of the daytime to the state."""
         assert len(curr_state) == 6, f"Invalid shape of state: {curr_state}"
         if t_ind is None:
             t_ind = self.get_dt_ind()
@@ -233,10 +238,19 @@ class RLController(FixTimeController):
 
         next_ts_ind = self.get_dt_ind()
         if next_ts_ind != self._curr_ts_ind:
-            # Next step, apply new control
+            _change_time = np.datetime64('now')
+            # Next step, get new control
             print(f"{self.dt} minutes passed!!")
+            time_state = self.add_time_to_state(self.state, next_ts_ind)
+            if self.battery:
+                # TODO: Implement this case
+                raise NotImplementedError("Fuck")
+            self.agent.get_action(time_state)
+            print("fucking lit man")
 
             self._curr_ts_ind = next_ts_ind
+        else:
+            # Compute minutes passed since last step
             pass
 
         return self.default_val
