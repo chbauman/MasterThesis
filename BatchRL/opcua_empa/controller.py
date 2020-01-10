@@ -10,7 +10,7 @@ from typing import List, Tuple
 import numpy as np
 
 from agents.base_agent import AgentBase
-from util.util import Num, get_min_diff, day_offset_ts
+from util.util import Num, get_min_diff, day_offset_ts, print_if_verb
 
 MAX_TEMP: int = 28  #: Them maximum temperature to set.
 MIN_TEMP: int = 10  #: Them minimum temperature to set.
@@ -124,24 +124,25 @@ class ValveToggler(FixTimeController):
     _step_count: int = 0
     _curr_valve_state: bool = False
 
-    def __init__(self, n_steps_delay: int = 10, n_steps_max: int = 60 * 60):
+    def __init__(self, n_steps_delay: int = 10, n_steps_max: int = 60 * 60,
+                 verbose: int = 0):
         super().__init__(n_steps_max)
         self.n_delay = n_steps_delay
+        self.verbose = verbose
 
     def __call__(self, values=None):
-        print(self.state[4])
 
         v = self.state[4]  # Extract valve state
         if v > 1.0 - self.TOL:
             if not self._curr_valve_state:
                 # Valves just opened
                 self._step_count = 0
-                print("Valves opened!!!")
+                print_if_verb(self.verbose, "Valves opened!!!")
                 self._curr_valve_state = True
         elif v < self.TOL:
             if self._curr_valve_state:
                 # Valves just closed
-                print("Valves closed!!!")
+                print_if_verb(self.verbose, "Valves closed!!!")
                 self._step_count = 0
                 self._curr_valve_state = False
 
@@ -171,7 +172,7 @@ class RLController(FixTimeController):
 
     def get_dt_ind(self):
         t_now = np.datetime64('now')
-        return day_offset_ts(t_now, mins=self.dt, remaining=False)
+        return day_offset_ts(t_now, mins=self.dt, remaining=False) - 1
 
     def __init__(self, rl_agent: AgentBase, n_steps_max: int = 60 * 60):
         super().__init__(n_steps_max)

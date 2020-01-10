@@ -5,7 +5,7 @@ from unittest import TestCase
 import pandas as pd
 
 import opcua_empa.opcua_util
-from opcua_empa.controller import FixTimeConstController
+from opcua_empa.controller import FixTimeConstController, ValveToggler, MIN_TEMP, MAX_TEMP
 from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import ControlClient, run_control
@@ -111,6 +111,33 @@ class TestOpcua(TestCase):
             client.publish(df_write)
             r_vals = client.read_values()
             nav.extract_values(r_vals)
+
+    def test_valve_toggler(self):
+        class OCToggle(OfflineClient):
+            t_state = False
+            op = ["1" for _ in range(3)]
+            cl = ["0" for _ in range(3)]
+
+            def read_values(self):
+                self.t_state = not self.t_state
+                vals = super().read_values()
+                vals['value'][4:7] = self.op if self.t_state else self.cl
+                return vals
+
+            def publish(self, df_write: pd.DataFrame,
+                        log_time: bool = False,
+                        sleep_after: float = None) -> None:
+                super().publish(df_write, log_time, sleep_after)
+                temp_set = df_write['value'][0]
+
+                assert (self.t_state and temp_set == MIN_TEMP) or\
+                       (not self.t_state and temp_set == MAX_TEMP)
+
+        vt = [(575, ValveToggler(n_steps_delay=0))]
+        run_control(vt,
+                    exp_name="OfflineTest",
+                    verbose=0,
+                    _client_class=OCToggle)
 
     def test_control_client(self):
         # Experiment will terminate after first iteration since
