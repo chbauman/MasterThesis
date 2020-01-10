@@ -8,7 +8,7 @@ import opcua_empa.opcua_util
 from opcua_empa.controller import FixTimeConstController
 from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.opcuaclient_subscription import OpcuaClient
-from opcua_empa.room_control_client import ControlClient
+from opcua_empa.room_control_client import ControlClient, run_control
 from util.util import get_min_diff
 
 
@@ -99,6 +99,11 @@ class TestOpcua(TestCase):
     def test_control_client(self):
         with ControlClient(self.cont,
                            exp_name="OfflineTest",
-                           client_class=OfflineClient) as cc:
+                           _client_class=OfflineClient) as cc:
             cc.read_publish_wait_check()
         pass
+
+    def test_run_control(self):
+        run_control(self.cont,
+                    exp_name="OfflineTest",
+                    _client_class=OfflineClient)

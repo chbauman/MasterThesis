@@ -52,12 +52,16 @@ class ControlClient:
                  user: str = 'ChristianBaumannETH2020',
                  password: str = 'Christian4_ever',
                  verbose: int = 3,
-                 client_class: Callable = OpcuaClient):
+                 _client_class: Callable = OpcuaClient):
+        """Initializer.
+
+        `_client_class` is used for testing / debugging only.
+        """
 
         assert len(used_control) == 1, "Only one room supported!"
 
         self.verbose = verbose
-        self.client = client_class(user=user, password=password)
+        self.client = _client_class(user=user, password=password)
         self.node_gen = NodeAndValues(used_control, exp_name=exp_name)
 
     def __enter__(self):
