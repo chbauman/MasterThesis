@@ -169,9 +169,9 @@ class RLController(FixTimeController):
     """Controller uses a RL agent to do control."""
 
     default_val: Num = 21.0
-    agent: AgentBase = None
+    agent: AgentBase = None  #: RL agent
     dt: int = None
-    data_ref: 'Dataset' = None  # Dataset of model of env
+    data_ref: 'Dataset' = None  #: Dataset of model of env
 
     battery: bool = False
 
@@ -179,7 +179,6 @@ class RLController(FixTimeController):
 
     # Protected member variables
     _curr_ts_ind: int
-
     _scaling: np.ndarray = None
 
     def get_dt_ind(self):
