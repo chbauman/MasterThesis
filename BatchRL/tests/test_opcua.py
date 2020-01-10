@@ -6,7 +6,7 @@ import pandas as pd
 
 import opcua_empa.opcua_util
 from dynamics.composite import CompositeModel
-from envs.dynamics_envs import RoomBatteryEnv, PWProfile
+from envs.dynamics_envs import RoomBatteryEnv, PWProfile, FullRoomEnv
 from opcua_empa.controller import FixTimeConstController, ValveToggler, MIN_TEMP, MAX_TEMP, RLController
 from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.opcuaclient_subscription import OpcuaClient
@@ -134,7 +134,7 @@ class TestOpcua(TestCase):
                 super().publish(df_write, log_time, sleep_after)
                 temp_set = df_write['value'][0]
 
-                assert (self.t_state and temp_set == MIN_TEMP) or\
+                assert (self.t_state and temp_set == MIN_TEMP) or \
                        (not self.t_state and temp_set == MAX_TEMP)
 
         vt = [(575, ValveToggler(n_steps_delay=0))]
@@ -157,20 +157,44 @@ class TestOpcua(TestCase):
                     verbose=0,
                     _client_class=OfflineClient)
 
-    def test_rl_controller(self):
+
+class TestOpcuaRL(TestCase):
+    """Tests the opcua client and related stuff.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.c_val = 10.0
+        self.cont = [(575, FixTimeConstController(val=self.c_val, max_n_minutes=1))]
 
         # Setup keras test agent
-        mod = get_full_composite_model()
+        mod = get_full_composite_model(add_battery=True)
         assert isinstance(mod, CompositeModel), "No composite model!"
         p = PWProfile()
-        full_env = RoomBatteryEnv(mod, p, max_eps=5)
-        action_range = full_env.action_range
-        test_agent = KerasDDPGTest(full_env,
-                                   action_range=action_range,
-                                   action=0.5)
+        self.full_env = RoomBatteryEnv(mod, p, max_eps=5)
+        action_range = self.full_env.action_range
+        self.test_agent = KerasDDPGTest(self.full_env,
+                                        action_range=action_range,
+                                        action=0.5)
+        self.rl_cont = [(575, RLController(self.test_agent, verbose=0))]
 
-        vt = [(575, RLController(test_agent))]
-        with ControlClient(vt,
+        room_mod = get_full_composite_model(add_battery=False)
+        self.room_env = FullRoomEnv(room_mod, max_eps=5)
+        self.test_agent_room = KerasDDPGTest(self.room_env,
+                                             action_range=self.room_env.action_range,
+                                             action=0.5)
+
+        self.rl_cont_room = [(575, RLController(self.test_agent_room, verbose=0))]
+
+    def test_rl_controller(self):
+        with ControlClient(self.rl_cont,
+                           exp_name="OfflineRLControllerTest",
+                           verbose=0,
+                           _client_class=OfflineClient) as cc:
+            cc.read_publish_wait_check()
+
+    def test_rl_controller_room_only(self):
+        with ControlClient(self.rl_cont_room,
                            exp_name="OfflineRLControllerTest",
                            verbose=0,
                            _client_class=OfflineClient) as cc:

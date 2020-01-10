@@ -208,12 +208,17 @@ class RLController(FixTimeController):
         else:
             raise NotImplementedError(f"Env: {env} is not supported!")
 
-        # Save _scaling info
-        if np.all(self.data_ref.is_scaled):
+        # Save scaling info
+        assert not self.data_ref.partially_scaled, "Fuck this!"
+        if self.data_ref.fully_scaled:
             self._scaling = self.data_ref.scaling
 
-    def scale_for_agent(self):
-        pass
+    def scale_for_agent(self, curr_state, remove_mean: bool = True) -> np.ndarray:
+        assert len(curr_state) == 8 + 2 * self.battery, "Shape mismatch!"
+        if remove_mean:
+            return self._scaling[:, 1] * curr_state + self._scaling[:, 0]
+        else:
+            raise NotImplementedError("Do this shit!")
 
     def __call__(self, values=None):
 
