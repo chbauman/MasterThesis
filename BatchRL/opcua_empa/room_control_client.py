@@ -7,7 +7,7 @@ and :class:`opcua_empa.opcuaclient_subscription.OpcuaClient`.
 .. moduleauthor:: Christian Baumann
 """
 import logging
-from typing import List
+from typing import List, Callable
 
 import pandas as pd
 import numpy as np
@@ -51,12 +51,13 @@ class ControlClient:
                  exp_name: str = None,
                  user: str = 'ChristianBaumannETH2020',
                  password: str = 'Christian4_ever',
-                 verbose: int = 3):
+                 verbose: int = 3,
+                 client_class: Callable = OpcuaClient):
 
         assert len(used_control) == 1, "Only one room supported!"
 
         self.verbose = verbose
-        self.client = OpcuaClient(user=user, password=password)
+        self.client = client_class(user=user, password=password)
         self.node_gen = NodeAndValues(used_control, exp_name=exp_name)
 
     def __enter__(self):
