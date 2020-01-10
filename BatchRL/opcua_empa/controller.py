@@ -9,6 +9,7 @@ from typing import List, Tuple
 
 import numpy as np
 
+# from envs.dynamics_envs import FullRoomEnv, RoomBatteryEnv
 from agents.base_agent import AgentBase
 from util.util import Num, get_min_diff, day_offset_ts, print_if_verb
 
@@ -168,18 +169,38 @@ class RLController(FixTimeController):
     dt: int = None
     data_ref = None  # Dataset of model of env
 
+    battery: bool = False
+
+    verbose: int
+
     _curr_ts_ind: int
 
     def get_dt_ind(self):
         t_now = np.datetime64('now')
         return day_offset_ts(t_now, mins=self.dt, remaining=False) - 1
 
-    def __init__(self, rl_agent: AgentBase, n_steps_max: int = 60 * 60):
+    def __init__(self, rl_agent: AgentBase, n_steps_max: int = 60 * 60,
+                 verbose: int = 3):
         super().__init__(n_steps_max)
         self.agent = rl_agent
         self.data_ref = rl_agent.env.m.data
         self.dt = self.data_ref.dt
         self._curr_ts_ind = self.get_dt_ind()
+        self.verbose = verbose
+
+        env = self.agent.env
+
+        # Check if model is a room model with or without battery.
+        # Cannot directly check with isinstance because of cyclic imports.
+        env_class_name = env.__class__.__name__
+        if env_class_name == "RoomBatteryEnv":
+            self.battery = True
+            print_if_verb(self.verbose, "Full model including battery!")
+        elif env_class_name == "FullRoomEnv":
+            self.battery = False
+            print_if_verb(self.verbose, "Room only model!")
+        else:
+            raise NotImplementedError(f"Env: {env} is not supported!")
 
     def __call__(self, values=None):
 

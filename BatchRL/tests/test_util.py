@@ -10,6 +10,7 @@ from agents.agents_heuristic import ConstActionAgent
 from data_processing.dataset import dataset_data_path
 from dynamics.base_hyperopt import hop_path
 from dynamics.recurrent import RNN_TEST_DATA_NAME
+from opcua_empa.opcua_util import experiment_data_path
 from tests.test_data import SYNTH_DATA_NAME
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
@@ -669,3 +670,4 @@ def cleanup_test_data(verbose: int = 0):
     rem_files_and_dirs(rl_plot_path, "FullTest", anywhere=True)
     rem_files_and_dirs(dataset_data_path, "Test", anywhere=True)
     rem_files_and_dirs(TEST_DIR, "")
+    rem_files_and_dirs(experiment_data_path, "Offline", anywhere=True)
