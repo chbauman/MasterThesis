@@ -216,9 +216,12 @@ class RLController(FixTimeController):
     def scale_for_agent(self, curr_state, remove_mean: bool = True) -> np.ndarray:
         assert len(curr_state) == 8 + 2 * self.battery, "Shape mismatch!"
         if remove_mean:
-            return self._scaling[:, 1] * curr_state + self._scaling[:, 0]
+            return (curr_state - self._scaling[:, 0]) / self._scaling[:, 1]
         else:
-            raise NotImplementedError("Do this shit!")
+            return self._scaling[:, 1] * curr_state + self._scaling[:, 0]
+
+    def add_time_to_state(self, curr_state):
+        pass
 
     def __call__(self, values=None):
 

@@ -13,7 +13,7 @@ import numpy as np
 from rest.client import save_dir
 from util.numerics import get_shape1, check_in_range, prepare_supervised_control, align_ts, add_mean_and_std, \
     has_duplicates, trf_mean_and_std, cut_data, find_rows_with_nans, find_all_streaks, find_disjoint_streaks, \
-    find_longest_streak
+    find_longest_streak, int_to_sin_cos
 from util.util import day_offset_ts, ts_per_day, datetime_to_np_datetime, string_to_dt, create_dir, Arr, \
     n_mins_to_np_dt, str_to_np_dt, np_dt_to_str, repl
 from util.visualize import PLOT_DIR, plot_all
@@ -395,9 +395,8 @@ class Dataset:
         """
         dt = self.dt
         t_init = datetime_to_np_datetime(string_to_dt(self.t_init))
-        one_day = np.timedelta64(1, 'D')
         dt_td64 = np.timedelta64(dt, 'm')
-        n_tint_per_day = int(one_day / dt_td64)
+        n_tint_per_day = ts_per_day(dt)
         floor_day = np.array([t_init], dtype='datetime64[D]')[0]
         begin_ind = int((t_init - floor_day) / dt_td64)
         dat = np.empty((self.n,), dtype=np.float32)
@@ -416,8 +415,7 @@ class Dataset:
                                   "Time")
         else:
             all_dat = np.empty((self.n, 2), dtype=np.float32)
-            all_dat[:, 0] = np.sin(2 * np.pi * dat / n_tint_per_day)
-            all_dat[:, 1] = np.cos(2 * np.pi * dat / n_tint_per_day)
+            all_dat[:, 0], all_dat[:, 1] = int_to_sin_cos(dat, n_tint_per_day)
             return self + Dataset(all_dat,
                                   self.dt,
                                   self.t_init,

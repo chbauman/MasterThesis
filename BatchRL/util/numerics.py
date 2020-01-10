@@ -541,6 +541,20 @@ def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False,
     return ret_val
 
 
+def int_to_sin_cos(inds: Arr, tot_n_ts: int) -> Tuple[np.ndarray, np.ndarray]:
+    """Computes the sin and cos of the time indices.
+
+    Args:
+        inds: Indices specifying timesteps.
+        tot_n_ts: Total number of timesteps in a day.
+
+    Returns:
+        Periodic sin and cos.
+    """
+    args = 2 * np.pi * inds / tot_n_ts
+    return np.sin(args), np.cos(args)
+
+
 def make_periodic(arr_1d: np.ndarray, keep_start: bool = True,
                   keep_min: bool = True) -> np.ndarray:
     """Makes a data series periodic.

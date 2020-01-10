@@ -205,4 +205,11 @@ class TestOpcuaRL(TestCase):
         cont = self.rl_cont[0][1]
         self.assertTrue(cont._scaling.shape == (10, 2), "Wrong shape!!")
         cont._scaling = np.empty((10, 2))
-        pass
+        cont._scaling.fill(1.0)
+        cont._scaling[:, 0] = 2.0
+
+        rand_in = np.random.normal(0.0, 1.0, (10,))
+        scaled_in = cont.scale_for_agent(rand_in)
+        scaled_in_mean_added = cont.scale_for_agent(rand_in, remove_mean=False)
+        self.assertTrue(np.allclose(rand_in, scaled_in + 2.0))
+        self.assertTrue(np.allclose(rand_in, scaled_in_mean_added - 2.0))
