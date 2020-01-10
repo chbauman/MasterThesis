@@ -16,7 +16,14 @@ class OfflineClient(OpcuaClient):
     """Test client that works offline and returns arbitrary values.
 
     One room only, with three valves!
+    Will run until `read_values` is called `N_STEPS_MAX` times, then,
+    the read temperature will be set to out of bounds and the
+    experiment will terminate.
     """
+
+    N_STEPS_MAX = 10
+
+    _step_ind: int = 0
 
     connected: bool = False
     subscribed: bool = False
@@ -34,8 +41,12 @@ class OfflineClient(OpcuaClient):
 
     def read_values(self) -> pd.DataFrame:
         assert self.subscribed, "No subscription!"
-        # TODO: Make this useful!
-        vals = ["1" for _ in range(self.n_read_vals)]
+        self._step_ind += 1
+        r_temp = "22.0" if self._step_ind < self.N_STEPS_MAX else "35.0"
+        r_vals = ["1", r_temp, "28.0", "1"]
+        valves = ["1", "1", "1"]
+        exo = ["5.0", "0.0", "26.0", "26.0"]
+        vals = r_vals + valves + exo
         return pd.DataFrame({'node': self.node_strs,
                              'value': vals})
 
@@ -45,7 +56,8 @@ class OfflineClient(OpcuaClient):
         assert len(df_write) == 3, f"Only one room supported! (df_write = {df_write})"
         self.assert_connected()
 
-    def subscribe(self, df_read: pd.DataFrame, sleep_after: float = None) -> None:
+    def subscribe(self, df_read: pd.DataFrame,
+                  sleep_after: float = None) -> None:
         self.assert_connected()
         self.subscribed = True
         pd_sub_df: pd.DataFrame = df_read.sort_index()
