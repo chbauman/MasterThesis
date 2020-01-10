@@ -158,6 +158,16 @@ class TestOpcua(TestCase):
                     verbose=0,
                     _client_class=OfflineClient)
 
+    def test_node_and_val_saving(self):
+        n = 5
+        nav = NodeAndValues(self.cont, n_max=n)
+        for k in range(n):
+            nav.compute_current_values()
+        self.assertEqual(nav._curr_read_n, 0)
+        self.assertEqual(nav._curr_write_n, 0)
+        nav.compute_current_values()
+        nav.save_cached_data()
+
 
 class TestOpcuaRL(TestCase):
     """Tests the opcua client and related stuff.

@@ -216,6 +216,8 @@ class NodeAndValues:
     read_desc: List[str]  #: The descriptions of the read nodes.
     room_inds: List[int]  #: The indices of the rooms.
 
+    n_max: int  #: Number of timesteps of data storage.
+
     # Read data arrays
     read_timestamps: np.ndarray = None
     read_values: np.ndarray = None
@@ -230,11 +232,14 @@ class NodeAndValues:
     _curr_read_n: int = 0
     _curr_write_n: int = 0
 
-    def __init__(self, control: ControlT, exp_name: str = None):
+    _f_count: int = 0  #: File counter
+
+    def __init__(self, control: ControlT, exp_name: str = None, n_max: int = 3600):
 
         self.n_rooms = len(control)
         assert self.n_rooms > 0, "No rooms to be controlled!"
 
+        self.n_max = n_max
         self.control = control
         self.nodes = _get_nodes(control)
         n, d, i, t = _get_read_nodes(control)
@@ -255,7 +260,6 @@ class NodeAndValues:
         self.read_dict = self._get_read_dict()
 
         # Initialize data arrays
-        self.n_max = 3600
         dtypes = np.dtype([(s, t)
                            for s, t in zip(self.read_desc, self.read_types)])
 
@@ -266,17 +270,15 @@ class NodeAndValues:
         self.write_timestamps = np.empty((self.n_max,), dtype='datetime64[s]')
 
         # Fill arrays with nans
-        self.read_values.fill(np.nan)
-        self.write_values.fill(np.nan)
-        self.read_timestamps.fill(np.nan)
-        self.write_timestamps.fill(np.nan)
+        self.reset_cache()
 
         self.n_valve_list = [len(ROOM_VALVE_DICT[r]) for r, _ in control]
 
         # Define experiment name
         self.experiment_name = f"{now_str()}_R{control[0][0]}" + ("" if exp_name is None else "_" + exp_name)
 
-    def get_filename(self, ext: str = ".pkl"):
+    def get_filename(self, ext: str = ".pkl", _f_ct: int = 0):
+        ext = f"_PT_{_f_ct}{ext}"
         return os.path.join(experiment_data_path, self.experiment_name + ext)
 
     def save_cached_data(self, verbose: int = 3) -> None:
@@ -285,18 +287,34 @@ class NodeAndValues:
                     self.write_values, self.write_timestamps]
         if verbose > 0:
             logging.warning("Saving Experiment Data")
-        f_name = self.get_filename()
+        f_name = self.get_filename(_f_ct=self._f_count)
         with open(f_name, "wb") as f:
             pickle.dump(all_data, f)
+        self._f_count += 1
+
+    def reset_cache(self):
+        """Sets the contents of the cache arrays to nan."""
+        self.read_values.fill(np.nan)
+        self.write_values.fill(np.nan)
+        self.read_timestamps.fill(np.nan)
+        self.write_timestamps.fill(np.nan)
+
+    def save_and_reset(self):
+        """Saves and resets data and resets counters."""
+        self.save_cached_data()
+        self.reset_cache()
+        self._curr_read_n = 0
+        self._curr_write_n = 0
 
     def _inc(self, att_str: str):
         """Increments or resets counter."""
         curr_ct = getattr(self, att_str)
         curr_ct += 1
         if curr_ct == self.n_max:
-            # TODO: Save to disk or do something with the data
-            curr_ct = 0
-        setattr(self, att_str, curr_ct)
+            # Save and reset cached data
+            self.save_and_reset()
+        else:
+            setattr(self, att_str, curr_ct)
 
     def get_nodes(self) -> List[str]:
         return self.nodes
