@@ -187,6 +187,13 @@ class TestOpcuaRL(TestCase):
 
         self.rl_cont_room = [(575, RLController(self.test_agent_room, verbose=0))]
 
+    @staticmethod
+    def get_test_scaling():
+        s = np.empty((10, 2))
+        s.fill(1.0)
+        s[:, 0] = 2.0
+        return s
+
     def test_rl_controller(self):
         with ControlClient(self.rl_cont,
                            exp_name="OfflineRLControllerTest",
@@ -204,12 +211,20 @@ class TestOpcuaRL(TestCase):
     def test_controller_scaling(self):
         cont = self.rl_cont[0][1]
         self.assertTrue(cont._scaling.shape == (10, 2), "Wrong shape!!")
-        cont._scaling = np.empty((10, 2))
-        cont._scaling.fill(1.0)
-        cont._scaling[:, 0] = 2.0
+        cont._scaling = self.get_test_scaling()
 
         rand_in = np.random.normal(0.0, 1.0, (10,))
         scaled_in = cont.scale_for_agent(rand_in)
         scaled_in_mean_added = cont.scale_for_agent(rand_in, remove_mean=False)
         self.assertTrue(np.allclose(rand_in, scaled_in + 2.0))
         self.assertTrue(np.allclose(rand_in, scaled_in_mean_added - 2.0))
+
+    def test_time_adding(self):
+        cont = self.rl_cont[0][1]
+        cont._scaling = self.get_test_scaling()
+        t_ind = 0
+        state = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        time_state = cont.add_time_to_state(state, t_ind)
+        self.assertTrue(np.allclose(time_state[-2:], np.array([0.0, 1.0])))
+        self.assertEqual(len(time_state), 8)
+        pass
