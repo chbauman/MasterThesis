@@ -99,6 +99,7 @@ class TestOpcua(TestCase):
     def test_control_client(self):
         with ControlClient(self.cont,
                            exp_name="OfflineTest",
+                           verbose=0,
                            _client_class=OfflineClient) as cc:
             cc.read_publish_wait_check()
         pass
@@ -106,4 +107,5 @@ class TestOpcua(TestCase):
     def test_run_control(self):
         run_control(self.cont,
                     exp_name="OfflineTest",
+                    verbose=0,
                     _client_class=OfflineClient)

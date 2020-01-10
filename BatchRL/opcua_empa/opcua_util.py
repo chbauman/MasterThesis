@@ -279,11 +279,12 @@ class NodeAndValues:
     def get_filename(self, ext: str = ".pkl"):
         return os.path.join(experiment_data_path, self.experiment_name + ext)
 
-    def save_cached_data(self) -> None:
+    def save_cached_data(self, verbose: int = 3) -> None:
         """Save the current data in cache to file."""
         all_data = [self.read_values, self.read_timestamps,
                     self.write_values, self.write_timestamps]
-        logging.warning("Saving Experiment Data")
+        if verbose > 0:
+            logging.warning("Saving Experiment Data")
         f_name = self.get_filename()
         with open(f_name, "wb") as f:
             pickle.dump(all_data, f)

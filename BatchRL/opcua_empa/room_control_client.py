@@ -82,7 +82,7 @@ class ControlClient:
 
     def __exit__(self, *args, **kwargs):
         # Save data and exit client
-        self.node_gen.save_cached_data()
+        self.node_gen.save_cached_data(self.verbose)
         self.client.__exit__(*args, **kwargs)
 
     def read_publish_wait_check(self) -> bool:
