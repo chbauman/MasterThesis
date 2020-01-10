@@ -137,6 +137,14 @@ class Dataset:
         self.c_inds_prep = None
         self.p_inds_prep = None
 
+    @property
+    def fully_scaled(self) -> bool:
+        return np.all(self.is_scaled)
+
+    @property
+    def partially_scaled(self):
+        return not self.fully_scaled and np.any(self.is_scaled)
+
     def split_data(self) -> None:
         """Splits the data into train, validation and test set.
 

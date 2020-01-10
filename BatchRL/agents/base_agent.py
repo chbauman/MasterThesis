@@ -1,11 +1,15 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, TYPE_CHECKING
 
 import numpy as np
 
+
 from util.numerics import npf32
 from util.util import Arr, fix_seed, model_dir, create_dir
+
+if TYPE_CHECKING:
+    from envs.base_dynamics_env import DynEnv
 
 # Define directory for agent models
 rl_model_dir = os.path.join(model_dir, "RL")

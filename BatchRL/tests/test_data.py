@@ -222,6 +222,10 @@ class TestDataset(TestCase):
     def test_standardize(self):
         self.assertTrue(np.allclose(self.ds.scaling[0][0], 1.0), "Standardizing failed!")
 
+    def test_scaling_prop(self):
+        self.assertTrue(self.ds.fully_scaled, "Dataset should be fully scaled!")
+        self.assertFalse(self.ds.partially_scaled, "Dataset should be fully scaled!")
+
     def test_get_scaling_mul(self):
         # Test get_scaling_mul
         scaling, is_sc = self.ds.get_scaling_mul(0, 3)

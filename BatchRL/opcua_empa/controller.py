@@ -3,15 +3,19 @@
 Defines controllers that can be used to
 do control on the real system using the opcua client.
 """
-from datetime import datetime
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import List, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 # from envs.dynamics_envs import FullRoomEnv, RoomBatteryEnv
 from agents.base_agent import AgentBase
 from util.util import Num, get_min_diff, day_offset_ts, print_if_verb
+
+if TYPE_CHECKING:
+    from data_processing.dataset import Dataset
 
 MAX_TEMP: int = 28  #: Them maximum temperature to set.
 MIN_TEMP: int = 10  #: Them minimum temperature to set.
@@ -167,13 +171,16 @@ class RLController(FixTimeController):
     default_val: Num = 21.0
     agent: AgentBase = None
     dt: int = None
-    data_ref = None  # Dataset of model of env
+    data_ref: 'Dataset' = None  # Dataset of model of env
 
     battery: bool = False
 
     verbose: int
 
+    # Protected member variables
     _curr_ts_ind: int
+
+    _scaling: np.ndarray = None
 
     def get_dt_ind(self):
         t_now = np.datetime64('now')
@@ -201,6 +208,13 @@ class RLController(FixTimeController):
             print_if_verb(self.verbose, "Room only model!")
         else:
             raise NotImplementedError(f"Env: {env} is not supported!")
+
+        # Save _scaling info
+        if np.all(self.data_ref.is_scaled):
+            self._scaling = self.data_ref.scaling
+
+    def scale_for_agent(self):
+        pass
 
     def __call__(self, values=None):
 
