@@ -5,10 +5,14 @@ from unittest import TestCase
 import pandas as pd
 
 import opcua_empa.opcua_util
-from opcua_empa.controller import FixTimeConstController, ValveToggler, MIN_TEMP, MAX_TEMP
+from dynamics.composite import CompositeModel
+from envs.dynamics_envs import RoomBatteryEnv, PWProfile
+from opcua_empa.controller import FixTimeConstController, ValveToggler, MIN_TEMP, MAX_TEMP, RLController
 from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import ControlClient, run_control
+from tests.test_dynamics import get_full_composite_model
+from tests.test_rl import KerasDDPGTest
 from util.util import get_min_diff
 
 
@@ -135,13 +139,11 @@ class TestOpcua(TestCase):
 
         vt = [(575, ValveToggler(n_steps_delay=0))]
         run_control(vt,
-                    exp_name="OfflineTest",
+                    exp_name="OfflineValveTogglerTest",
                     verbose=0,
                     _client_class=OCToggle)
 
     def test_control_client(self):
-        # Experiment will terminate after first iteration since
-        # temperature is out of bound.
         with ControlClient(self.cont,
                            exp_name="OfflineTest",
                            verbose=0,
@@ -151,6 +153,26 @@ class TestOpcua(TestCase):
 
     def test_run_control(self):
         run_control(self.cont,
-                    exp_name="OfflineTest",
+                    exp_name="OfflineRunControlTest",
                     verbose=0,
                     _client_class=OfflineClient)
+
+    def test_rl_controller(self):
+
+        # Setup keras test agent
+        mod = get_full_composite_model()
+        assert isinstance(mod, CompositeModel), "No composite model!"
+        p = PWProfile()
+        full_env = RoomBatteryEnv(mod, p, max_eps=5)
+        action_range = full_env.action_range
+        test_agent = KerasDDPGTest(full_env,
+                                   action_range=action_range,
+                                   action=0.5)
+
+        vt = [(575, RLController(test_agent))]
+        with ControlClient(vt,
+                           exp_name="OfflineRLControllerTest",
+                           verbose=0,
+                           _client_class=OfflineClient) as cc:
+            cc.read_publish_wait_check()
+        pass
