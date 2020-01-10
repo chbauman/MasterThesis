@@ -15,7 +15,7 @@ from util.util import get_min_diff
 class OfflineClient(OpcuaClient):
     """Test client that works offline and returns arbitrary values.
 
-    One room only!
+    One room only, with three valves!
     """
 
     connected: bool = False
@@ -42,6 +42,7 @@ class OfflineClient(OpcuaClient):
     def publish(self, df_write: pd.DataFrame,
                 log_time: bool = False,
                 sleep_after: float = None) -> None:
+        assert len(df_write) == 3, f"Only one room supported! (df_write = {df_write})"
         self.assert_connected()
 
     def subscribe(self, df_read: pd.DataFrame, sleep_after: float = None) -> None:
@@ -50,6 +51,7 @@ class OfflineClient(OpcuaClient):
         pd_sub_df: pd.DataFrame = df_read.sort_index()
         self.node_strs = [opcua_empa.opcua_util._trf_node(i) for i in pd_sub_df['node']]
         self.n_read_vals = len(self.node_strs)
+        assert self.n_read_vals == 11, f"Wrong number of read nodes: {self.n_read_vals}"
 
     def assert_connected(self):
         assert self.connected, "Not connected!"
@@ -89,14 +91,18 @@ class TestOpcua(TestCase):
     def test_offline_client(self):
         nav = NodeAndValues(self.cont)
         read_nodes = nav.get_read_nodes()
+        write_nodes = nav.get_nodes()
         df_read = pd.DataFrame({'node': read_nodes})
+        df_write = pd.DataFrame({'node': write_nodes, 'value': None})
         with OfflineClient() as client:
             client.subscribe(df_read)
-            client.publish(df_read)
+            client.publish(df_write)
             r_vals = client.read_values()
             nav.extract_values(r_vals)
 
     def test_control_client(self):
+        # Experiment will terminate after first iteration since
+        # temperature is out of bound.
         with ControlClient(self.cont,
                            exp_name="OfflineTest",
                            verbose=0,
