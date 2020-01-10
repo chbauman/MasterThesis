@@ -292,14 +292,14 @@ class NodeAndValues:
             pickle.dump(all_data, f)
         self._f_count += 1
 
-    def reset_cache(self):
+    def reset_cache(self) -> None:
         """Sets the contents of the cache arrays to nan."""
         self.read_values.fill(np.nan)
         self.write_values.fill(np.nan)
         self.read_timestamps.fill(np.nan)
         self.write_timestamps.fill(np.nan)
 
-    def save_and_reset(self):
+    def save_and_reset(self) -> None:
         """Saves and resets data and resets counters."""
         self.save_cached_data()
         self.reset_cache()
@@ -307,7 +307,11 @@ class NodeAndValues:
         self._curr_write_n = 0
 
     def _inc(self, att_str: str):
-        """Increments or resets counter."""
+        """Increments or resets counter.
+
+        If the counter reaches `n_max`, the data is saved
+        and the counters are reset.
+        """
         curr_ct = getattr(self, att_str)
         curr_ct += 1
         if curr_ct == self.n_max:
