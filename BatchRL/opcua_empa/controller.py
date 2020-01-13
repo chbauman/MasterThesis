@@ -13,7 +13,7 @@ import numpy as np
 # from envs.dynamics_envs import FullRoomEnv, RoomBatteryEnv
 from agents.base_agent import AgentBase
 from util.numerics import int_to_sin_cos
-from util.util import Num, get_min_diff, day_offset_ts, print_if_verb, ts_per_day
+from util.util import Num, get_min_diff, day_offset_ts, print_if_verb, ts_per_day, floor_datetime_to_min
 
 if TYPE_CHECKING:
     from data_processing.dataset import Dataset
@@ -166,8 +166,8 @@ class ValveToggler(FixTimeController):
         return ret
 
 
-def setpoint_toggle_frac(action: Num, prev_state: bool, delay_open: Num,
-                         delay_close: Num, dt: int, tol: float = 0.05) -> float:
+def setpoint_toggle_frac(prev_state: bool, dt: int, action: Num, delay_open: Num,
+                         delay_close: Num, tol: float = 0.05) -> float:
     """Computes the time the setpoint needs to toggle.
 
     Since the opening and the closing of the valves are delayed,
@@ -182,17 +182,35 @@ def setpoint_toggle_frac(action: Num, prev_state: bool, delay_open: Num,
         tol: Tolerance
 
     Returns:
-        The setpoint toggle time in [0, 1]
+        The setpoint toggle time in [0, 2]
     """
     # Check input
     assert tol >= 0 and 0.0 <= action <= 1.0
     assert delay_close >= 0 and delay_open >= 0, "Delays cannot be negative!"
 
+    # Compute toggle time
     valve_tog = action if prev_state else 1.0 - action
     valve_tog_approx = 2.0 if valve_tog + tol >= 1.0 else valve_tog
     delay_needed = delay_close if prev_state else delay_open
     res = max(0.0, valve_tog_approx - delay_needed / dt)
     return res
+
+
+def compute_curr_setpoint(prev_state: bool, dt: int,
+                          *args, start_time: np.datetime64 = None,
+                          curr_time: np.datetime64 = None, **kwargs):
+
+    td = np.timedelta64(dt, 'm')
+    if curr_time is None:
+        curr_time = np.datetime64('now')
+    if start_time is None:
+        start_time = floor_datetime_to_min(curr_time, dt)
+    time_passed = curr_time - start_time
+
+    sp_toggle = setpoint_toggle_frac(prev_state, dt, *args, **kwargs)
+    next_init = prev_state if sp_toggle >= 1.0 else not prev_state
+    ret = prev_state if time_passed / td < sp_toggle else next_init
+    return ret
 
 
 class RLController(FixTimeController):
