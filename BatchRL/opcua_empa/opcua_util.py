@@ -201,6 +201,7 @@ def read_experiment_data(exp_file_name: str, remove_nans: bool = True,
 
     # Extract the basename
     exp_path = save_path(exp_file_name)
+    assert os.path.isfile(exp_path), "File not found!"
     id_and_ext = str(exp_path.split("_PT_")[-1])
     file_id, ext = id_and_ext.split(".")
     assert int(file_id) == 0, "Need to provide first file as input!"

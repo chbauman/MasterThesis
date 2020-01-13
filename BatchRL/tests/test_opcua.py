@@ -9,7 +9,7 @@ import opcua_empa.opcua_util
 from dynamics.composite import CompositeModel
 from envs.dynamics_envs import RoomBatteryEnv, PWProfile, FullRoomEnv
 from opcua_empa.controller import FixTimeConstController, ValveToggler, MIN_TEMP, MAX_TEMP, RLController, \
-    setpoint_toggle_frac, compute_curr_setpoint
+    setpoint_toggle_frac, setpoint_from_fraction
 from opcua_empa.opcua_util import NodeAndValues, read_experiment_data
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import ControlClient, run_control
@@ -176,37 +176,28 @@ class TestOpcua(TestCase):
     def test_setpoint_toggle_time(self):
         dt = 15
         delay_close, delay_open = 5.0, 3.0
-        res1 = setpoint_toggle_frac(True, dt, 0.5, delay_open, delay_close)
-        res2 = setpoint_toggle_frac(False, dt, 0.5, delay_open, delay_close)
-        res3 = setpoint_toggle_frac(True, dt, 1.0, delay_open, delay_close)
-        res4 = setpoint_toggle_frac(False, dt, 0.01, delay_open, delay_close)
-        res5 = setpoint_toggle_frac(True, dt, 0.1, delay_open, delay_close)
+        res1, b1 = setpoint_toggle_frac(True, dt, 0.5, delay_open, delay_close)
+        res2, b2 = setpoint_toggle_frac(False, dt, 0.5, delay_open, delay_close)
+        res3, b3 = setpoint_toggle_frac(True, dt, 1.0, delay_open, delay_close)
+        res4, b4 = setpoint_toggle_frac(False, dt, 0.01, delay_open, delay_close)
+        res5, b5 = setpoint_toggle_frac(True, dt, 0.1, delay_open, delay_close)
         self.assertAlmostEqual(res1, 0.5 - 1 / 3)
         self.assertAlmostEqual(res2, 0.5 - 1 / 5)
         self.assertTrue(res3 >= 1.0)
         self.assertTrue(res4 >= 1.0)
         self.assertAlmostEqual(res5, 0.0)
+        self.assertTrue(not b1 and not b4)
 
     def test_compute_curr_setpoint(self):
         dt = 15
-        delay_close, delay_open = 5.0, 3.0
         t1 = np.datetime64('2019-12-31T00:33:29')
         t_start = np.datetime64('2019-12-31T00:30:00')
-        res1 = compute_curr_setpoint(True, dt, 0.5,
-                                     delay_open, delay_close,
-                                     curr_time=t1)
-        res2 = compute_curr_setpoint(False, dt, 0.5,
-                                     delay_open, delay_close,
-                                     start_time=t_start, curr_time=t1)
-        self.assertTrue(not res1)
+        res1 = setpoint_from_fraction(0.5, True, False, dt,
+                                      start_time=t_start, curr_time=t1)
+        res2 = setpoint_from_fraction(0.5, False, True, dt,
+                                      start_time=t_start, curr_time=t1)
+        self.assertTrue(res1 and not res2)
         self.assertTrue(not res2)
-
-    def test_compute_curr_setpoint_2(self):
-        dt = 15
-        delay_close, delay_open = 5.0, 3.0
-        with self.assertRaises(TypeError):
-            compute_curr_setpoint(True, dt, 0.5,
-                                  delay_open)
 
 
 class TestOpcuaRL(TestCase):

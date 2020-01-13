@@ -167,11 +167,14 @@ class ValveToggler(FixTimeController):
 
 
 def setpoint_toggle_frac(prev_state: bool, dt: int, action: Num, delay_open: Num,
-                         delay_close: Num, tol: float = 0.05) -> float:
+                         delay_close: Num, tol: float = 0.05) -> Tuple[float, bool]:
     """Computes the time the setpoint needs to toggle.
 
     Since the opening and the closing of the valves are delayed,
     the setpoint needs to change earlier to ensure the correct valve behavior.
+
+    This has to be computed once at every beginning of a timestep
+    of length `dt`.
 
     Args:
         action: The action in [0, 1]
@@ -182,7 +185,7 @@ def setpoint_toggle_frac(prev_state: bool, dt: int, action: Num, delay_open: Num
         tol: Tolerance
 
     Returns:
-        The setpoint toggle time in [0, 2]
+        The setpoint toggle time in [0, 2].
     """
     # Check input
     assert tol >= 0 and 0.0 <= action <= 1.0
@@ -193,31 +196,28 @@ def setpoint_toggle_frac(prev_state: bool, dt: int, action: Num, delay_open: Num
     valve_tog_approx = 2.0 if valve_tog + tol >= 1.0 else valve_tog
     delay_needed = delay_close if prev_state else delay_open
     res = max(0.0, valve_tog_approx - delay_needed / dt)
-    return res
+    next_state = prev_state if res >= 1.0 else not prev_state
+    return res, next_state
 
 
-def compute_curr_setpoint(prev_state: bool, dt: int,
-                          *args, start_time: np.datetime64 = None,
-                          curr_time: np.datetime64 = None, **kwargs):
-    """Computes the current setpoint according to the current action.
+def setpoint_from_fraction(setpoint_frac: float, prev_state: bool,
+                           next_state: bool, dt: int, start_time: np.datetime64 = None,
+                           curr_time: np.datetime64 = None) -> bool:
+    """Computes the current setpoint according to the current toggle fraction.
 
-    Handles the time and calls :func:`setpoint_toggle_frac`. You need
-    to provide at least the delays in the arguments or the keyword arguments,
-    otherwise an exception will be raised.
+    Handles the current time.
 
     Args:
+        setpoint_frac: The current setpoint fraction as computed
+            by :func:`setpoint_toggle_frac`.
         prev_state: Previous valve state.
+        next_state: Valve state at the end of the current timestep.
         dt: The number of minutes in a timestep.
-        *args: Arguments for :func:`setpoint_toggle_frac`.
         start_time: Start time of the step, automatically computed if None.
         curr_time: Current time, automatically computed if None.
-        **kwargs: Keyword arguments for :func:`setpoint_toggle_frac`.
 
     Returns:
         Whether the temperature setpoint should be set to high.
-
-    Raises:
-        TypeError: If the delays are not specified.
     """
     # Handle datetimes
     td = np.timedelta64(dt, 'm')
@@ -229,10 +229,9 @@ def compute_curr_setpoint(prev_state: bool, dt: int,
     assert time_fraction_passed <= 1.0
 
     # Use
-    sp_toggle = setpoint_toggle_frac(prev_state, dt, *args, **kwargs)
-    next_init = prev_state if sp_toggle >= 1.0 else not prev_state
-    ret = prev_state if time_fraction_passed < sp_toggle else next_init
-    return ret
+    print(f"time_fraction_passed: {time_fraction_passed}")
+    print(f"setpoint_frac: {setpoint_frac}")
+    return prev_state if time_fraction_passed < setpoint_frac else next_state
 
 
 class RLController(FixTimeController):
@@ -253,9 +252,14 @@ class RLController(FixTimeController):
     _change_time: np.datetime64
     _mins_before_change: float
     _curr_desired_valve_state: bool  #: Open: True, closed: False
+
     _step_start_state: bool = None
+    _next_start_state: bool = None
+    _toggle_time_fraction: float = None
+    _init_phase: bool = True
 
     _curr_ts_ind: int
+
     _scaling: np.ndarray = None
 
     def __init__(self, rl_agent: AgentBase, n_steps_max: int = 60 * 60,
@@ -317,21 +321,33 @@ class RLController(FixTimeController):
 
         next_ts_ind = self.get_dt_ind()
         if next_ts_ind != self._curr_ts_ind:
-            _change_time = np.datetime64('now')
+            self._init_phase = False
+            # Update start state
+            self._step_start_state = self._next_start_state
+
             # Next step, get new control
-            print(f"{self.dt} minutes passed!!")
             time_state = self.add_time_to_state(self.state, next_ts_ind)
             if self.battery:
                 # TODO: Implement this case
                 raise NotImplementedError("Fuck")
-
             scaled_state = self.scale_for_agent(time_state)
             ac = self.agent.get_action(scaled_state)
-            print(f"fucking lit man, action: {ac}")
 
+            # Compute toggle point
+            tog_frac, next_state = setpoint_toggle_frac(self._step_start_state,
+                                                        self.dt, ac,
+                                                        *self.valve_delays)
+            self._next_start_state = next_state
+            self._toggle_time_fraction = tog_frac
             self._curr_ts_ind = next_ts_ind
-        else:
-            # Compute minutes passed since last step
-            pass
 
-        return self.default_val
+        # If it is still in warm-up phase return default value
+        if self._init_phase:
+            return self.default_val
+
+        # Find and return the actual temperature setpoint
+        tog_state = setpoint_from_fraction(self._toggle_time_fraction,
+                                           self._step_start_state,
+                                           self._next_start_state,
+                                           self.dt)
+        return MAX_TEMP if tog_state else MIN_TEMP
