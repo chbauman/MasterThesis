@@ -55,7 +55,9 @@ class ControlClient:
                  _client_class: Callable = OpcuaClient):
         """Initializer.
 
-        `_client_class` is used for testing / debugging only.
+        A non-default `_client_class` should be used for testing / debugging only.
+        E.g. use :class:`tests.test_opcua.OfflineClient` if you are working offline and
+        want to test something.
         """
 
         assert len(used_control) == 1, "Only one room supported!"

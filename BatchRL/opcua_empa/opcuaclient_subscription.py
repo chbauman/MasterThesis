@@ -17,7 +17,7 @@ from opcua import Client, Subscription
 from opcua.ua import UaStatusCodeError, DataValue, Variant
 
 # Set pandas printing options, useful e.g. if you want to print
-# dataframes with long strings in them.
+# dataframes with long strings in them, as they are needed in the client.
 pd.options.display.width = 1000
 pd.options.display.max_columns = 500
 pd.options.display.max_colwidth = 200
@@ -27,8 +27,8 @@ logging.basicConfig(format='%(asctime)s - OPC UA %(message)s', level=logging.WAR
 logger = logging.getLogger('opc ua client')
 
 
-def example_usage():
-    """Example usage of the OpcuaClient class defined below.
+def example_usage() -> None:
+    """Example usage of the :class:`OpcuaClient` class defined below.
 
     You will need to set `user` and `password` to your
     personal credentials.
@@ -68,10 +68,9 @@ def example_usage():
 
     # Use the opcua client as a context manager, it connects and disconnects
     # automatically.
-    with OpcuaClient(user='user',
-                     password='password') as opcua_client:
+    with OpcuaClient(user='user', password='password') as opcua_client:
 
-        # Subscribe to read nodes and wait a bit
+        # Subscribe to read nodes and wait a bit before reading
         opcua_client.subscribe(df_read, sleep_after=1.0)
 
         for k in range(60):
@@ -87,17 +86,13 @@ def example_usage():
             opcua_client.publish(df_write, log_time=True, sleep_after=1.0)
 
 
-def toggle():
+def toggle() -> bool:
     """Toggles every 5 seconds.
 
     The watchdog has to toggle every 5 seconds
     otherwise the connection will be refused.
     """
-    if datetime.datetime.now().second % 10 < 5:
-        toggle_state = False
-    else:
-        toggle_state = True
-    return toggle_state
+    return datetime.datetime.now().second % 10 < 5
 
 
 class _SubHandler(object):
@@ -142,8 +137,8 @@ class OpcuaClient(object):
     # Public member variables
     client: Client  #: The original opcua.Client
 
-    df_read: pd.DataFrame = None  #: Read data frames.
-    df_write: pd.DataFrame = None  #: Write data frames.
+    df_read: pd.DataFrame = None  #: Read data frame.
+    df_write: pd.DataFrame = None  #: Write data frame.
 
     # Private member variables
     _node_objects: List
@@ -166,8 +161,8 @@ class OpcuaClient(object):
         c = Client(url=url, timeout=4)
         c.set_user(user)
         c.set_password(password)
-        c.application_uri = application_uri + ":" + socket.gethostname() + ":" + user
-        c.product_uri = product_uri + ":" + socket.gethostname() + ":" + user
+        c.application_uri = f"{application_uri}:{socket.gethostname()}:{user}"
+        c.product_uri = f"{product_uri}:{socket.gethostname()}:{user}"
 
         # Store in class
         self.client = c
@@ -195,14 +190,14 @@ class OpcuaClient(object):
         """
         try:
             self.client.connect()
-            self._connected = True
             self.client.load_type_definitions()
-            self._sub = self.client.create_subscription(period=0, handler=self.handler)
             logging.warning("Connection to server established.")
+            self._connected = True
             return True
         except UaStatusCodeError as e:
             logging.warning(f"Exception: {e} happened while connecting!")
-            print(f"Try waiting a bit more and rerun!")
+            print(f"I don't know why this keeps happening, "
+                  f"try waiting a bit and rerun it!")
             return False
         except Exception as e:
             logging.warning(f"Exception: {e} happened while connecting!")
@@ -217,7 +212,6 @@ class OpcuaClient(object):
         try:
             self.handler.df_Read.set_index('node', drop=True)
             return self.handler.df_Read
-
         except ValueError as e:
             logging.warning(f"Exception: {e} while reading values")
         return self.handler.df_Read
@@ -232,11 +226,11 @@ class OpcuaClient(object):
             return
         try:
             # Need to delete the subscription first before disconnecting
-            self._sub.delete()
+            if self._sub is not None:
+                self._sub.delete()
             self.client.disconnect()
             logging.warning("Server disconnected.")
         except UaStatusCodeError as e:
-            # This does not catch the error :(
             logging.warning(f"Server disconnected with error: {e}")
 
     def subscribe(self, df_read: pd.DataFrame, sleep_after: float = None) -> None:
@@ -245,10 +239,13 @@ class OpcuaClient(object):
         If it fails, a warning is printed and some values might
         not be read correctly.
 
+        If `sleep_after` is None, there is no sleeping after subscribing.
+
         Args:
             df_read: The dataframe with the read nodes.
             sleep_after: Number of seconds to wait after subscribing.
         """
+        # Check if already subscribed
         if self._sub_init:
             logging.warning("You already subscribed!")
 
@@ -258,6 +255,8 @@ class OpcuaClient(object):
 
         # Try subscribing to the nodes in the list.
         try:
+            # Create subscription and subscribe to read nodes
+            self._sub = self.client.create_subscription(period=0, handler=self.handler)
             sub_res = self._sub.subscribe_data_change(nodelist_read)
             self._sub_init = True
 
@@ -292,6 +291,7 @@ class OpcuaClient(object):
         Raises:
             UaStatusCodeError: If initialization of publishing fails.
         """
+        # Remember current time
         t0 = datetime.datetime.now()
         self.df_write = df_write
 
