@@ -199,17 +199,39 @@ def setpoint_toggle_frac(prev_state: bool, dt: int, action: Num, delay_open: Num
 def compute_curr_setpoint(prev_state: bool, dt: int,
                           *args, start_time: np.datetime64 = None,
                           curr_time: np.datetime64 = None, **kwargs):
+    """Computes the current setpoint according to the current action.
 
+    Handles the time and calls :func:`setpoint_toggle_frac`. You need
+    to provide at least the delays in the arguments or the keyword arguments,
+    otherwise an exception will be raised.
+
+    Args:
+        prev_state: Previous valve state.
+        dt: The number of minutes in a timestep.
+        *args: Arguments for :func:`setpoint_toggle_frac`.
+        start_time: Start time of the step, automatically computed if None.
+        curr_time: Current time, automatically computed if None.
+        **kwargs: Keyword arguments for :func:`setpoint_toggle_frac`.
+
+    Returns:
+        Whether the temperature setpoint should be set to high.
+
+    Raises:
+        TypeError: If the delays are not specified.
+    """
+    # Handle datetimes
     td = np.timedelta64(dt, 'm')
     if curr_time is None:
         curr_time = np.datetime64('now')
     if start_time is None:
         start_time = floor_datetime_to_min(curr_time, dt)
-    time_passed = curr_time - start_time
+    time_fraction_passed = (curr_time - start_time) / td
+    assert time_fraction_passed <= 1.0
 
+    # Use
     sp_toggle = setpoint_toggle_frac(prev_state, dt, *args, **kwargs)
     next_init = prev_state if sp_toggle >= 1.0 else not prev_state
-    ret = prev_state if time_passed / td < sp_toggle else next_init
+    ret = prev_state if time_fraction_passed < sp_toggle else next_init
     return ret
 
 

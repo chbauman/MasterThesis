@@ -197,6 +197,13 @@ class TestOpcua(TestCase):
         self.assertTrue(not res1)
         self.assertTrue(not res2)
 
+    def test_compute_curr_setpoint_2(self):
+        dt = 15
+        delay_close, delay_open = 5.0, 3.0
+        with self.assertRaises(TypeError):
+            compute_curr_setpoint(True, dt, 0.5,
+                                  delay_open)
+
 
 class TestOpcuaRL(TestCase):
     """Tests the opcua client and related stuff.
