@@ -3,7 +3,6 @@
 May be removed later and moved to BatchRL.py if
 it is high-level enough.
 """
-import logging
 from typing import List
 
 from opcua_empa.controller import ToggleController, ValveToggler
@@ -12,15 +11,13 @@ from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control
 from tests.test_opcua import OfflineClient
 
-print_fun = logging.warning  # Maybe use print instead of logging?
-
 
 def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True):
     """Runs the opcua client."""
 
     if verbose:
         if debug:
-            print_fun("Running in debug mode!")
+            print("Running in debug mode!")
 
     # Analyze previous experiment
     analyze_experiment("../Data/Experiments/2020_01_09T11_29_28_Toggle_6min.pkl",
@@ -30,8 +27,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
     exp_name = "Test"
 
     # Check list with room numbers
-    if room_list is not None:
-        check_room_list(room_list)
+    check_room_list(room_list)
 
     # Define room and control
     # tc = ToggleController(n_mins=60 * 100, start_low=True, max_n_minutes=60 * 16)
@@ -45,7 +41,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
                         for r in room_list]
         used_control = [(r, ValveToggler(n_steps_delay=30))
                         for r in room_list]
-        exp_name = "DebugValveToggle"
+        exp_name = "Offline_DebugValveToggle"
 
     # Use offline client in debug mode
     cl_class = OfflineClient if debug else OpcuaClient

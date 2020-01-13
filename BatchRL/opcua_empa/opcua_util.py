@@ -7,7 +7,7 @@ Includes the read and the write nodes.
 import logging
 import os
 import pickle
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Sequence
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,7 @@ import pandas as pd
 from opcua_empa.controller import ControlT
 from opcua_empa.opcuaclient_subscription import toggle
 from rest.client import save_dir
-from util.numerics import has_duplicates, nan_avg_between, find_sequence_inds
+from util.numerics import has_duplicates, nan_avg_between, find_sequence_inds, remove_nan_rows
 from util.util import str2bool, create_dir, now_str, ProgWrap
 from util.visualize import plot_valve_opening, PLOT_DIR
 
@@ -90,14 +90,20 @@ READ_SUF_NAME_TYPES: List[Tuple[str, str, type]] = [
 BASE_NODE_STR = f"ns=2;s=Gateway.PLC1.65NT-71331-D001.PLC1.Units.str3T3."
 
 
-def check_room_list(room_list: List[int]) -> None:
+def check_room_list(room_list: List[int] = None) -> None:
     """Checks if IDs of rooms in list are valid.
+
+    Args:
+        room_list: List with room IDs, can be None, then
+            check is passed.
 
     Raises:
         AssertionError: If any ID is invalid or the argument is
             not a list.
     """
     # Check list with room numbers
+    if room_list is None:
+        return
     assert isinstance(room_list, list), f"Room list: {room_list} needs to be a list!"
     for k in room_list:
         assert k in ALL_ROOM_NRS, f"Invalid room number: {k}"
@@ -192,6 +198,7 @@ def analyze_experiment(exp_file_name: str, compute_valve_delay: bool = False, ve
         read_vals, read_ts, write_vals, write_ts = data
 
         # Remove nan rows
+        # read_ts, [read_vals] = remove_nan_rows(read_ts, [read_vals])
         non_nan_inds = np.where(np.logical_not(np.isnan(read_ts)))
         read_vals = read_vals[non_nan_inds]
         read_ts = read_ts[non_nan_inds]

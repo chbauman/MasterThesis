@@ -16,7 +16,7 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
     get_metrics_eval_save_name_list, load_performance, MSE, find_inds, nan_avg_between, int_to_sin_cos, \
-    find_sequence_inds
+    find_sequence_inds, remove_nan_rows
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, \
     yeet, \
@@ -145,6 +145,14 @@ class TestNumerics(TestCase):
             self.assertTrue(np.allclose(nan_avg, exp_avf))
         finally:
             np.datetime64 = orig_np_dt64
+
+    def test_nan_removal(self):
+        nan_ind_arr = np.array([1, np.nan, 3, 4, np.nan])
+        other_arr = np.array([1, 3, 3, 4, 7])
+        exp = np.array([1, 3, 4])
+        r, [r2] = remove_nan_rows(nan_ind_arr, [other_arr])
+        self.assertTrue(np.array_equal(exp, r))
+        self.assertTrue(np.array_equal(exp, r2))
 
     def test_sequence_inds(self):
         arr = np.array([0, 0, 0, 1, 1, 0, 1])

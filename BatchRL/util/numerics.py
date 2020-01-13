@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Tuple, Sequence, Any, List, Callable
+from typing import Tuple, Sequence, Any, List, Callable, Union
 
 import numpy as np
 import scipy.optimize
@@ -587,6 +587,17 @@ def make_periodic(arr_1d: np.ndarray, keep_start: bool = True,
     arr_01 = np.arange(n) / (n - 1)
     f = 1.0 * np.flip(arr_01) + fac * arr_01
     return (arr_1d - min_val) * f + min_val
+
+
+def remove_nan_rows(arr_1d: np.ndarray, arr_list: Sequence[np.ndarray] = None) \
+        -> Union[np.ndarray, Tuple[np.ndarray, List]]:
+    check_shape(arr_1d, (-1,))
+    non_nan_inds = np.where(np.logical_not(np.isnan(arr_1d)))
+    arr_clean = arr_1d[non_nan_inds]
+    if arr_list is None:
+        return arr_clean
+    arr_clean_list = [a[non_nan_inds] for a in arr_list]
+    return arr_clean, arr_clean_list
 
 
 def find_sequence_inds(arr: np.ndarray, include_ends: bool = True) -> np.ndarray:
