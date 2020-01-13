@@ -168,6 +168,22 @@ class ValveToggler(FixTimeController):
 
 def setpoint_toggle_frac(action: Num, prev_state: bool, delay_open: Num,
                          delay_close: Num, dt: int, tol: float = 0.05) -> float:
+    """Computes the time the setpoint needs to toggle.
+
+    Since the opening and the closing of the valves are delayed,
+    the setpoint needs to change earlier to ensure the correct valve behavior.
+
+    Args:
+        action: The action in [0, 1]
+        prev_state: The previous valve state, open: True, closed: False
+        delay_open: The time needed to open the valves in minutes.
+        delay_close: The time needed to close the valves in minutes.
+        dt: The number of minutes in a timestep.
+        tol: Tolerance
+
+    Returns:
+        The setpoint toggle time in [0, 1]
+    """
     # Check input
     assert tol >= 0 and 0.0 <= action <= 1.0
     assert delay_close >= 0 and delay_open >= 0, "Delays cannot be negative!"
