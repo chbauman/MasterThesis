@@ -4,6 +4,8 @@ Handles a few common exceptions and hides implementation details.
 See the function `example_usage` for an example how to use the `OpcuaClient`.
 
 Original implementation by Ralf Knechtle, modified by me.
+Main changes: Added context manager functionality, more docstrings,
+more specific error handling, type hints and an example.
 """
 import datetime
 import logging
@@ -220,6 +222,7 @@ class OpcuaClient(object):
         """Disconnect the client.
 
         Deletes the subscription first to avoid error.
+        If client hasn't been connected, does nothing.
         """
         # If it wasn't connected, do nothing
         if not self._connected:

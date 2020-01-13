@@ -296,7 +296,7 @@ class NodeAndValues:
 
     _f_count: int = 0  #: File counter
 
-    def __init__(self, control: ControlT, exp_name: str = None, n_max: int = 3600):
+    def __init__(self, control: ControlT, exp_name: str = None, n_max: int = 7200):
 
         self.n_rooms = len(control)
         assert self.n_rooms > 0, "No rooms to be controlled!"

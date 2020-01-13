@@ -243,6 +243,8 @@ class RLController(FixTimeController):
     dt: int = None
     data_ref: 'Dataset' = None  #: Dataset of model of env
 
+    valve_delays: Tuple[float, float] = (232 / 60, 31 / 60)
+
     battery: bool = False
 
     verbose: int

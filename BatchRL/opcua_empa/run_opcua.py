@@ -35,7 +35,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
 
     # Define room and control
     # tc = ToggleController(n_mins=60 * 100, start_low=True, max_n_minutes=60 * 16)
-    tc = ValveToggler(n_steps_delay=30)
+    tc = ValveToggler(n_steps_delay=30, n_steps_max=2 * 60)
     room_list = [475] if room_list is None else room_list
     used_control = [(i, tc) for i in room_list]
     if debug:
