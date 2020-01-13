@@ -15,7 +15,7 @@ import pandas as pd
 from opcua_empa.controller import ControlT
 from opcua_empa.opcuaclient_subscription import toggle
 from rest.client import save_dir
-from util.numerics import has_duplicates, nan_avg_between
+from util.numerics import has_duplicates, nan_avg_between, find_sequence_inds
 from util.util import str2bool, create_dir, now_str, ProgWrap
 from util.visualize import plot_valve_opening, PLOT_DIR
 
@@ -191,6 +191,14 @@ def analyze_experiment(exp_file_name: str, compute_valve_delay: bool = False, ve
             data = pickle.load(f)
         read_vals, read_ts, write_vals, write_ts = data
 
+        # Remove nan rows
+        non_nan_inds = np.where(np.logical_not(np.isnan(read_ts)))
+        read_vals = read_vals[non_nan_inds]
+        read_ts = read_ts[non_nan_inds]
+        non_nan_inds = np.where(np.logical_not(np.isnan(write_ts)))
+        write_vals = write_vals[non_nan_inds]
+        write_ts = write_ts[non_nan_inds]
+
         # Extract relevant data parts
         valve_data = read_vals[:, 4:7]
         temp_set_p = write_vals[:, 0]
@@ -204,12 +212,55 @@ def analyze_experiment(exp_file_name: str, compute_valve_delay: bool = False, ve
     valve_plt_path = os.path.join(experiment_plot_path, exp_name)
     plot_valve_opening(read_ts, valve_data, valve_plt_path, write_ts, temp_set_p, temp_set_p_meas)
 
+    # Compute valve delay
     if compute_valve_delay:
         with ProgWrap("Computing valve delays...", verbose > 0):
+
+            close_op_ct = [0, 0]
+            close_op_tot_time = [np.timedelta64(0) for _ in range(2)]
+            close_op_setpoint_time = [np.timedelta64(0) for _ in range(2)]
+
             valve_avg = np.mean(valve_data, axis=1)
-            setpoint_switches = (temp_set_p[1:] - temp_set_p[:-1]) > 0.0
-            print(setpoint_switches)
-            pass
+            change_inds = find_sequence_inds(temp_set_p)
+            for ct, i in enumerate(change_inds[:-1]):
+                end_ind = change_inds[ct + 1]
+                start_time, end_time = write_ts[i], write_ts[end_ind - 1]
+                write_inds = np.where(np.logical_and(read_ts <= end_time, read_ts >= start_time))
+
+                rel_meas_sp = temp_set_p_meas[write_inds]
+                rel_valve_vals = valve_avg[write_inds]
+                rel_meas_ts = write_ts[write_inds]
+
+                if rel_valve_vals[0] == rel_valve_vals[-1]:
+                    print("Valve did not toggle!")
+                    continue
+
+                meas_sp_toggle_inds = find_sequence_inds(rel_meas_sp, include_ends=False)
+                valve_toggle_inds = find_sequence_inds(rel_valve_vals, include_ends=False)
+
+                if len(meas_sp_toggle_inds) != 1:
+                    print("Measured setpoint is toggling more than once!")
+                    continue
+
+                meas_sp_toggle_time = rel_meas_ts[meas_sp_toggle_inds[0]]
+                valve_toggle_time = rel_meas_ts[valve_toggle_inds[-1]]
+
+                opening = rel_meas_sp[-1] > rel_meas_sp[0]
+
+                close_op_ct[opening] += 1
+                close_op_tot_time[opening] += valve_toggle_time - start_time
+                close_op_setpoint_time[opening] += meas_sp_toggle_time - start_time
+
+            # Take average
+            for ct, n in enumerate(close_op_ct):
+                close_op_tot_time[ct] /= n
+                close_op_setpoint_time[ct] /= n
+
+            # Print
+            print(f"Setpoint reaction time: Closing: {str(close_op_setpoint_time[0])}, "
+                  f"Opening: {str(close_op_setpoint_time[1])}")
+            print(f"Valve reaction time: Closing: {str(close_op_tot_time[0])}, "
+                  f"Opening: {str(close_op_tot_time[1])}")
 
     pass
 
