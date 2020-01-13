@@ -20,7 +20,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
             print("Running in debug mode!")
 
     # Analyze previous experiment
-    analyze_experiment("../Data/Experiments/2020_01_09T11_29_28_Toggle_6min.pkl",
+    analyze_experiment("2020_01_09T11_29_28_Toggle_6min_PT_0",
                        compute_valve_delay=True)
 
     # Choose experiment name

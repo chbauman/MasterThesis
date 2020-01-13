@@ -591,6 +591,19 @@ def make_periodic(arr_1d: np.ndarray, keep_start: bool = True,
 
 def remove_nan_rows(arr_1d: np.ndarray, arr_list: Sequence[np.ndarray] = None) \
         -> Union[np.ndarray, Tuple[np.ndarray, List]]:
+    """Removes nan entries from 1d array `arr_1d`.
+
+    If additional arrays are specified, the same
+    rows are removed from them.
+
+    Args:
+        arr_1d: Array with nans to be removed.
+        arr_list: List with arrays with same elements to be removed.
+
+    Returns:
+        Either a single array, if `arr_list` is None, or else
+        an array and a list of arrays.
+    """
     check_shape(arr_1d, (-1,))
     non_nan_inds = np.where(np.logical_not(np.isnan(arr_1d)))
     arr_clean = arr_1d[non_nan_inds]

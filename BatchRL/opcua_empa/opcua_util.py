@@ -7,7 +7,7 @@ Includes the read and the write nodes.
 import logging
 import os
 import pickle
-from typing import Dict, List, Tuple, Sequence
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -184,27 +184,62 @@ def str_to_dt(s: str, dt: type):
         raise NotImplementedError(f"Dtype: {dt} not supported!")
 
 
-def analyze_experiment(exp_file_name: str, compute_valve_delay: bool = False, verbose: int = 5):
+def read_experiment_data(exp_file_name: str, remove_nans: bool = True,
+                         verbose: int = 2):
+
+    # Extract the basename
+    exp_path = save_path(exp_file_name)
+    id_and_ext = str(exp_path.split("_PT_")[-1])
+    file_id, ext = id_and_ext.split(".")
+    assert int(file_id) == 0, "Need to provide first file!"
+    n_char_after = len(id_and_ext)
+    base_name = exp_path[:-n_char_after]
+
+    # Find all part files
+    file_path_list = []
+    for k in range(100):
+        curr_f_name = f"{base_name}{k}.{ext}"
+        if os.path.isfile(curr_f_name):
+            if verbose:
+                print(f"Found: {curr_f_name}")
+            file_path_list += [curr_f_name]
+        else:
+            break
+
+    # Iterate over all found files and load all the data
+    read_vals, read_ts, write_vals, write_ts = None, None, None, None
+    for f_path in file_path_list:
+        with open(f_path, "rb") as f:
+            data = pickle.load(f)
+        read_v, read_t, write_v, write_t = data
+        if read_vals is not None:
+            read_vals = np.concatenate([read_vals, read_v])
+            read_ts = np.concatenate([read_ts, read_t])
+            write_vals = np.concatenate([write_vals, write_v])
+            write_ts = np.concatenate([write_ts, write_t])
+        else:
+            read_vals = read_v
+            read_ts = read_t
+            write_vals = write_v
+            write_ts = write_t
+
+    # Remove nan rows
+    if remove_nans:
+        read_ts, [read_vals] = remove_nan_rows(read_ts, [read_vals])
+        write_ts, [write_vals] = remove_nan_rows(write_ts, [write_vals])
+
+    return read_vals, read_ts, write_vals, write_ts
+
+
+def analyze_experiment(full_exp_name: str, compute_valve_delay: bool = False, verbose: int = 5):
     """Analyzes the data generated in an experiment.
 
     Assumes one room only, with three valves."""
-    # Extract name
-    exp_name = os.path.splitext(os.path.basename(exp_file_name))[0]
 
+    # Load data
     with ProgWrap("Loading experiment data...", verbose > 0):
-        # Load data
-        with open(exp_file_name, "rb") as f:
-            data = pickle.load(f)
-        read_vals, read_ts, write_vals, write_ts = data
-
-        # Remove nan rows
-        # read_ts, [read_vals] = remove_nan_rows(read_ts, [read_vals])
-        non_nan_inds = np.where(np.logical_not(np.isnan(read_ts)))
-        read_vals = read_vals[non_nan_inds]
-        read_ts = read_ts[non_nan_inds]
-        non_nan_inds = np.where(np.logical_not(np.isnan(write_ts)))
-        write_vals = write_vals[non_nan_inds]
-        write_ts = write_ts[non_nan_inds]
+        read_vals, read_ts, write_vals, write_ts = \
+            read_experiment_data(full_exp_name)
 
         # Extract relevant data parts
         valve_data = read_vals[:, 4:7]
@@ -216,7 +251,7 @@ def analyze_experiment(exp_file_name: str, compute_valve_delay: bool = False, ve
     assert np.any(res_req)
 
     # Plot valve opening and closing
-    valve_plt_path = os.path.join(experiment_plot_path, exp_name)
+    valve_plt_path = os.path.join(experiment_plot_path, full_exp_name)
     plot_valve_opening(read_ts, valve_data, valve_plt_path, write_ts, temp_set_p, temp_set_p_meas)
 
     # Compute valve delay
@@ -270,6 +305,10 @@ def analyze_experiment(exp_file_name: str, compute_valve_delay: bool = False, ve
                   f"Opening: {str(close_op_tot_time[1])}")
 
     pass
+
+
+def save_path(full_exp_name: str, ext: str = ".pkl"):
+    return os.path.join(experiment_data_path, full_exp_name + ext)
 
 
 class NodeAndValues:
@@ -346,9 +385,9 @@ class NodeAndValues:
         # Define experiment name
         self.experiment_name = f"{now_str()}_R{control[0][0]}" + ("" if exp_name is None else "_" + exp_name)
 
-    def get_filename(self, ext: str = ".pkl", _f_ct: int = 0):
-        ext = f"_PT_{_f_ct}{ext}"
-        return os.path.join(experiment_data_path, self.experiment_name + ext)
+    def get_filename(self, _f_ct: int = 0):
+        name = f"{self.experiment_name}_PT_{_f_ct}"
+        return save_path(name)
 
     def save_cached_data(self, verbose: int = 3) -> None:
         """Save the current data in cache to file."""
@@ -444,7 +483,7 @@ class NodeAndValues:
         last_n = max(self._curr_read_n - 1, 0)
         ind = slice(None) if all_prev else last_n
         val_vals = [self.read_values[ind,
-                                     self.room_inds[i] + 4: (self.room_inds[i] + self.n_valve_list[i] + 4)]
+                    self.room_inds[i] + 4: (self.room_inds[i] + self.n_valve_list[i] + 4)]
                     for i in range(self.n_rooms)]
         return val_vals
 

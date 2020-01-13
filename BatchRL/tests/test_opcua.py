@@ -10,7 +10,7 @@ from dynamics.composite import CompositeModel
 from envs.dynamics_envs import RoomBatteryEnv, PWProfile, FullRoomEnv
 from opcua_empa.controller import FixTimeConstController, ValveToggler, MIN_TEMP, MAX_TEMP, RLController, \
     setpoint_toggle_frac, compute_curr_setpoint
-from opcua_empa.opcua_util import NodeAndValues
+from opcua_empa.opcua_util import NodeAndValues, read_experiment_data
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import ControlClient, run_control
 from tests.test_dynamics import get_full_composite_model
@@ -285,4 +285,17 @@ class TestOpcuaRL(TestCase):
             cont._curr_ts_ind = 5
             cc.read_publish_wait_check()
 
+    def test_experiment_read_data(self):
+        with ControlClient(self.rl_cont,
+                           exp_name="OfflineRLControllerTest",
+                           verbose=0,
+                           _client_class=OfflineClient) as cc:
+            cc.node_gen.n_max = 6
+            cont = True
+            while cont:
+                cont = cc.read_publish_wait_check()
+
+            exp_name = cc.node_gen.experiment_name + "_PT_0"
+
+        read_experiment_data(exp_name, verbose=0)
     pass
