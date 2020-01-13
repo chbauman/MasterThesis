@@ -46,6 +46,7 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
                         for r in room_list]
         exp_name = "DebugValveToggle"
 
+    # Use offline client in debug mode
     cl_class = OfflineClient if debug else OpcuaClient
     run_control(used_control=used_control,
                 exp_name=exp_name,

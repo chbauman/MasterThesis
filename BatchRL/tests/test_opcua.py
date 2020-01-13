@@ -8,7 +8,8 @@ import numpy as np
 import opcua_empa.opcua_util
 from dynamics.composite import CompositeModel
 from envs.dynamics_envs import RoomBatteryEnv, PWProfile, FullRoomEnv
-from opcua_empa.controller import FixTimeConstController, ValveToggler, MIN_TEMP, MAX_TEMP, RLController
+from opcua_empa.controller import FixTimeConstController, ValveToggler, MIN_TEMP, MAX_TEMP, RLController, \
+    setpoint_toggle_frac
 from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import ControlClient, run_control
@@ -167,6 +168,20 @@ class TestOpcua(TestCase):
         self.assertEqual(nav._curr_write_n, 0)
         nav.compute_current_values()
         nav.save_cached_data(verbose=0)
+
+    def test_setpoint_toggle_time(self):
+        dt = 15
+        delay_close, delay_open = 5.0, 3.0
+        res1 = setpoint_toggle_frac(0.5, True, delay_open, delay_close, dt)
+        res2 = setpoint_toggle_frac(0.5, False, delay_open, delay_close, dt)
+        res3 = setpoint_toggle_frac(1.0, True, delay_open, delay_close, dt)
+        res4 = setpoint_toggle_frac(0.01, False, delay_open, delay_close, dt)
+        res5 = setpoint_toggle_frac(0.1, True, delay_open, delay_close, dt)
+        self.assertAlmostEqual(res1, 0.5 - 1 / 3)
+        self.assertAlmostEqual(res2, 0.5 - 1 / 5)
+        self.assertTrue(res3 >= 1.0)
+        self.assertTrue(res4 >= 1.0)
+        self.assertAlmostEqual(res5, 0.0)
 
 
 class TestOpcuaRL(TestCase):

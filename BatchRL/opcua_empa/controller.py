@@ -166,6 +166,19 @@ class ValveToggler(FixTimeController):
         return ret
 
 
+def setpoint_toggle_frac(action: Num, prev_state: bool, delay_open: Num,
+                         delay_close: Num, dt: int, tol: float = 0.05) -> float:
+    # Check input
+    assert tol >= 0 and 0.0 <= action <= 1.0
+    assert delay_close >= 0 and delay_open >= 0, "Delays cannot be negative!"
+
+    valve_tog = action if prev_state else 1.0 - action
+    valve_tog_approx = 2.0 if valve_tog + tol >= 1.0 else valve_tog
+    delay_needed = delay_close if prev_state else delay_open
+    res = max(0.0, valve_tog_approx - delay_needed / dt)
+    return res
+
+
 class RLController(FixTimeController):
     """Controller uses a RL agent to do control."""
 
@@ -181,6 +194,8 @@ class RLController(FixTimeController):
     # Protected member variables
     _change_time: np.datetime64
     _mins_before_change: float
+    _curr_desired_valve_state: bool  #: Open: True, closed: False
+    _step_start_state: bool = None
 
     _curr_ts_ind: int
     _scaling: np.ndarray = None
@@ -236,6 +251,12 @@ class RLController(FixTimeController):
 
     def __call__(self, values=None):
 
+        if self._step_start_state is None:
+            # __call__ is called for the first time,
+            # set _step_start_state to valve state.
+            valve_state = self.state[4]
+            self._step_start_state = valve_state > 0.5
+
         next_ts_ind = self.get_dt_ind()
         if next_ts_ind != self._curr_ts_ind:
             _change_time = np.datetime64('now')
@@ -245,7 +266,9 @@ class RLController(FixTimeController):
             if self.battery:
                 # TODO: Implement this case
                 raise NotImplementedError("Fuck")
-            ac = self.agent.get_action(time_state)
+
+            scaled_state = self.scale_for_agent(time_state)
+            ac = self.agent.get_action(scaled_state)
             print(f"fucking lit man, action: {ac}")
 
             self._curr_ts_ind = next_ts_ind
