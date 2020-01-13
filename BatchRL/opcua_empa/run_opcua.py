@@ -5,7 +5,7 @@ it is high-level enough.
 """
 from typing import List
 
-from opcua_empa.controller import ToggleController, ValveToggler
+from opcua_empa.controller import ValveToggler
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control
@@ -36,9 +36,6 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
     used_control = [(i, tc) for i in room_list]
     if debug:
         room_list = [472]
-        used_control = [(r, ToggleController(n_mins=6, start_low=False,
-                                             max_n_minutes=60))
-                        for r in room_list]
         used_control = [(r, ValveToggler(n_steps_delay=30))
                         for r in room_list]
         exp_name = "Offline_DebugValveToggle"

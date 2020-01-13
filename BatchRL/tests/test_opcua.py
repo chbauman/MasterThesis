@@ -143,12 +143,14 @@ class TestOpcua(TestCase):
         run_control(vt,
                     exp_name="OfflineValveTogglerTest",
                     verbose=0,
+                    no_data_saving=True,
                     _client_class=OCToggle)
 
     def test_control_client(self):
         with ControlClient(self.cont,
                            exp_name="OfflineTest",
                            verbose=0,
+                           no_data_saving=True,
                            _client_class=OfflineClient) as cc:
             cc.read_publish_wait_check()
         pass
@@ -157,11 +159,13 @@ class TestOpcua(TestCase):
         run_control(self.cont,
                     exp_name="OfflineRunControlTest",
                     verbose=0,
+                    no_data_saving=True,
                     _client_class=OfflineClient)
 
     def test_node_and_val_saving(self):
         n = 5
-        nav = NodeAndValues(self.cont, n_max=n)
+        nav = NodeAndValues(self.cont, n_max=n,
+                            exp_name="OfflineNAVSavingTest")
         for k in range(n):
             nav.compute_current_values()
         self.assertEqual(nav._curr_read_n, 0)
@@ -244,6 +248,7 @@ class TestOpcuaRL(TestCase):
         with ControlClient(self.rl_cont,
                            exp_name="OfflineRLControllerTest",
                            verbose=0,
+                           no_data_saving=True,
                            _client_class=OfflineClient) as cc:
             cc.read_publish_wait_check()
 
@@ -251,6 +256,7 @@ class TestOpcuaRL(TestCase):
         with ControlClient(self.rl_cont_room,
                            exp_name="OfflineRoomRLControllerTest",
                            verbose=0,
+                           no_data_saving=True,
                            _client_class=OfflineClient) as cc:
             cc.read_publish_wait_check()
 
@@ -278,6 +284,7 @@ class TestOpcuaRL(TestCase):
         with ControlClient(self.rl_cont_room,
                            exp_name="OfflineRLControllerCallTest",
                            verbose=0,
+                           no_data_saving=True,
                            _client_class=OfflineClient) as cc:
             cont = self.rl_cont_room[0][1]
             cont._curr_ts_ind = 0
@@ -287,7 +294,7 @@ class TestOpcuaRL(TestCase):
 
     def test_experiment_read_data(self):
         with ControlClient(self.rl_cont,
-                           exp_name="OfflineRLControllerTest",
+                           exp_name="OfflineReadDataTest",
                            verbose=0,
                            _client_class=OfflineClient) as cc:
             cc.node_gen.n_max = 6
@@ -302,4 +309,5 @@ class TestOpcuaRL(TestCase):
         d1, d2, d3, d4 = dat
         assert len(d1) == len(d2)
         assert len(d3) == len(d4)
+
     pass

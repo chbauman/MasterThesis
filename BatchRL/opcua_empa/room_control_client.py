@@ -52,6 +52,7 @@ class ControlClient:
                  user: str = 'ChristianBaumannETH2020',
                  password: str = 'Christian4_ever',
                  verbose: int = 3,
+                 no_data_saving: bool = False,
                  _client_class: Callable = OpcuaClient):
         """Initializer.
 
@@ -65,6 +66,14 @@ class ControlClient:
         self.verbose = verbose
         self.client = _client_class(user=user, password=password)
         self.node_gen = NodeAndValues(used_control, exp_name=exp_name)
+
+        if no_data_saving:
+            self.node_gen.save_cached_data = self._no_save
+
+    def _no_save(self, verbose: bool = False):
+        """Used to overwrite the save function of `self.node_gen`."""
+        if self.verbose or verbose:
+            print("Saving data...")
 
     def __enter__(self):
 
