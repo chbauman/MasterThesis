@@ -297,5 +297,9 @@ class TestOpcuaRL(TestCase):
 
             exp_name = cc.node_gen.experiment_name + "_PT_0"
 
-        read_experiment_data(exp_name, verbose=0)
+        dat = read_experiment_data(exp_name, verbose=0)
+        assert len(dat) == 4
+        d1, d2, d3, d4 = dat
+        assert len(d1) == len(d2)
+        assert len(d3) == len(d4)
     pass

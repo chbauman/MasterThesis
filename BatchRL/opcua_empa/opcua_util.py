@@ -185,13 +185,25 @@ def str_to_dt(s: str, dt: type):
 
 
 def read_experiment_data(exp_file_name: str, remove_nans: bool = True,
-                         verbose: int = 2):
+                         verbose: int = 2) -> Tuple:
+    """Reads all the data from an experiment.
+
+    The data can be contained in multiple files.
+
+    Args:
+        exp_file_name: The full name of the experiment.
+        remove_nans: Whether to remove nans in the data.
+        verbose: Verbosity.
+
+    Returns:
+        Read data, read timestamps, write data, write timestamps
+    """
 
     # Extract the basename
     exp_path = save_path(exp_file_name)
     id_and_ext = str(exp_path.split("_PT_")[-1])
     file_id, ext = id_and_ext.split(".")
-    assert int(file_id) == 0, "Need to provide first file!"
+    assert int(file_id) == 0, "Need to provide first file as input!"
     n_char_after = len(id_and_ext)
     base_name = exp_path[:-n_char_after]
 
