@@ -249,11 +249,7 @@ class RLController(FixTimeController):
     verbose: int
 
     # Protected member variables
-    _change_time: np.datetime64
-    _mins_before_change: float
-    _curr_desired_valve_state: bool  #: Open: True, closed: False
-
-    _step_start_state: bool = None
+    _step_start_state: bool = None  #: Open: True, closed: False
     _next_start_state: bool = None
     _toggle_time_fraction: float = None
     _init_phase: bool = True

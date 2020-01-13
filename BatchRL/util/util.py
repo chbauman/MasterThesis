@@ -829,10 +829,10 @@ def floor_datetime_to_min(dt, mt: int) -> np.ndarray:
     Returns:
         Floored deltatime.
     """
+    # Check if mt is valid.
     assert mt > 0, f"Timestep: {mt} must be positive!"
     if mt >= 60:
         assert mt % 60 == 0, f"Timestep: {mt} must be divisible by 60 if it is more than 1h.!"
-        print(f"mt = {mt}")
     else:
         assert 60 % mt == 0, f"Timestep: {mt} must divide 60 if it is smaller!"
 
@@ -842,16 +842,17 @@ def floor_datetime_to_min(dt, mt: int) -> np.ndarray:
     ts = (dt64 - np.datetime64('1970-01-01T00:00:00')) / np.timedelta64(1, 's')
     pdt = datetime.utcfromtimestamp(ts)
 
-    # Subtract remainder minutes and seconds
+    # Subtract remainder minutes (, remainder hours, minutes) and seconds
     h = pdt.hour
     minutes = pdt.minute
     if mt > 60:
+        # Subtract remainder hours if mt > 60
         h = h % (mt // 60)
         dt -= np.timedelta64(h, 'h')
     else:
+        # Only subtract remainder minutes if mt < 60
         minutes = minutes % mt
-    secs = pdt.second
-    dt -= np.timedelta64(secs, 's')
+    dt -= np.timedelta64(pdt.second, 's')
     dt -= np.timedelta64(minutes, 'm')
     return dt
 
