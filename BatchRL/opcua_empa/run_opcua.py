@@ -8,7 +8,9 @@ from typing import List
 
 from opcua_empa.controller import ToggleController, ValveToggler
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
+from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control
+from tests.test_opcua import OfflineClient
 
 print_fun = logging.warning  # Maybe use print instead of logging?
 
@@ -44,8 +46,10 @@ def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True)
                         for r in room_list]
         exp_name = "DebugValveToggle"
 
+    cl_class = OfflineClient if debug else OpcuaClient
     run_control(used_control=used_control,
                 exp_name=exp_name,
                 user='ChristianBaumannETH2020',
                 password='Christian4_ever',
-                verbose=verbose)
+                verbose=verbose,
+                _client_class=cl_class)

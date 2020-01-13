@@ -798,7 +798,8 @@ def main() -> None:
 
     # Opcua
     if args.ua:
-        try_opcua(verbose, room_list=args.int, debug=False)
+        debug = args.bool[0] if args.bool is not None else False
+        try_opcua(verbose, room_list=args.int, debug=debug)
 
     # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)

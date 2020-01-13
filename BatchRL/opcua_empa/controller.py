@@ -245,8 +245,8 @@ class RLController(FixTimeController):
             if self.battery:
                 # TODO: Implement this case
                 raise NotImplementedError("Fuck")
-            self.agent.get_action(time_state)
-            print("fucking lit man")
+            ac = self.agent.get_action(time_state)
+            print(f"fucking lit man, action: {ac}")
 
             self._curr_ts_ind = next_ts_ind
         else:
