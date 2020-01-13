@@ -15,7 +15,8 @@ from tests.test_data import SYNTH_DATA_NAME
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
-    get_metrics_eval_save_name_list, load_performance, MSE, find_inds, nan_avg_between, int_to_sin_cos
+    get_metrics_eval_save_name_list, load_performance, MSE, find_inds, nan_avg_between, int_to_sin_cos, \
+    find_sequence_inds
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, \
     yeet, \
@@ -144,6 +145,13 @@ class TestNumerics(TestCase):
             self.assertTrue(np.allclose(nan_avg, exp_avf))
         finally:
             np.datetime64 = orig_np_dt64
+
+    def test_sequence_inds(self):
+        arr = np.array([0, 0, 0, 1, 1, 0, 1])
+        exp_inds = np.array([0, 3, 5, 6, 7])
+        out = find_sequence_inds(arr)
+        self.assertTrue(np.array_equal(exp_inds, out),
+                        msg=f"Expected: {exp_inds}, got: {out}")
 
     def test_find_inds(self):
         # Define input

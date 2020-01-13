@@ -589,6 +589,26 @@ def make_periodic(arr_1d: np.ndarray, keep_start: bool = True,
     return (arr_1d - min_val) * f + min_val
 
 
+def find_sequence_inds(arr: np.ndarray, include_ends: bool = True) -> np.ndarray:
+    """Finds all indices where the value in the 1d array `arr` changed.
+
+    Compared to the previous value.
+
+    Args:
+        arr: The 1D array.
+        include_ends: Whether to include 0 and len(arr) in the result.
+
+    Returns:
+        Numpy index array, 1d.
+    """
+    check_shape(arr, (-1,))
+    n = len(arr)
+    inds = np.where((arr[1:] - arr[:-1]) != 0.0)[0] + 1
+    if include_ends:
+        inds = np.concatenate(([0], inds, [n]))
+    return inds
+
+
 def check_dim(a: np.ndarray, n: int) -> bool:
     """Check whether a is n-dimensional.
 

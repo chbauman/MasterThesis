@@ -16,8 +16,10 @@ from opcua_empa.controller import ControlT
 from opcua_empa.opcuaclient_subscription import toggle
 from rest.client import save_dir
 from util.numerics import has_duplicates, nan_avg_between
-from util.util import str2bool, create_dir, now_str
+from util.util import str2bool, create_dir, now_str, ProgWrap
 from util.visualize import plot_valve_opening, PLOT_DIR
+
+np.set_printoptions(threshold=5000)
 
 experiment_data_path = os.path.join(save_dir, "Experiments")  #: Experiment data directory
 experiment_plot_path = os.path.join(PLOT_DIR, "Experiments")  #: Experiment plot directory
@@ -176,22 +178,24 @@ def str_to_dt(s: str, dt: type):
         raise NotImplementedError(f"Dtype: {dt} not supported!")
 
 
-def analyze_experiment(exp_file_name: str):
+def analyze_experiment(exp_file_name: str, compute_valve_delay: bool = False, verbose: int = 5):
     """Analyzes the data generated in an experiment.
 
     Assumes one room only, with three valves."""
+    # Extract name
     exp_name = os.path.splitext(os.path.basename(exp_file_name))[0]
 
-    # Load data
-    with open(exp_file_name, "rb") as f:
-        data = pickle.load(f)
-    read_vals, read_ts, write_vals, write_ts = data
+    with ProgWrap("Loading experiment data...", verbose > 0):
+        # Load data
+        with open(exp_file_name, "rb") as f:
+            data = pickle.load(f)
+        read_vals, read_ts, write_vals, write_ts = data
 
-    # Extract relevant data parts
-    valve_data = read_vals[:, 4:7]
-    temp_set_p = write_vals[:, 0]
-    temp_set_p_meas = read_vals[:, 2]
-    res_req = read_vals[:, 1]
+        # Extract relevant data parts
+        valve_data = read_vals[:, 4:7]
+        temp_set_p = write_vals[:, 0]
+        temp_set_p_meas = read_vals[:, 2]
+        res_req = read_vals[:, 1]
 
     # TODO: Check res_req values!
     assert np.any(res_req)
@@ -199,6 +203,13 @@ def analyze_experiment(exp_file_name: str):
     # Plot valve opening and closing
     valve_plt_path = os.path.join(experiment_plot_path, exp_name)
     plot_valve_opening(read_ts, valve_data, valve_plt_path, write_ts, temp_set_p, temp_set_p_meas)
+
+    if compute_valve_delay:
+        with ProgWrap("Computing valve delays...", verbose > 0):
+            valve_avg = np.mean(valve_data, axis=1)
+            setpoint_switches = (temp_set_p[1:] - temp_set_p[:-1]) > 0.0
+            print(setpoint_switches)
+            pass
 
     pass
 
