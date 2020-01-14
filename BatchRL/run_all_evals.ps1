@@ -22,7 +22,11 @@ $pen_facs = @("2.5", "50.0")
 foreach ($add_bat in $true_false){
    foreach ($p in $pen_facs){
       foreach ($phys in $true_false){
-         python .\BatchRL.py -r -v -fl $p -bo $add_bat t $phys
+         # Exclude case of battery model where not the
+         # physical model was used.
+         if (($add_bat -eq "f") -or ($phys -eq "t")){
+            python .\BatchRL.py -r -v -fl $p -bo $add_bat t $phys
+         }
       }
    }
 }
