@@ -299,7 +299,7 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
         # Choose agent and fit to env.
         if n_steps is None:
-            n_steps = get_rl_steps(eul=EULER)
+            n_steps = get_rl_steps(eul=True)
         agent = DDPGBaseAgent(env,
                               action_range=env.action_range,
                               n_steps=n_steps,
