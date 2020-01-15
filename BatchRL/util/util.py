@@ -15,7 +15,7 @@ import time
 import warnings
 from datetime import datetime
 from functools import wraps
-from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable
+from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable, Optional
 
 import numpy as np
 
@@ -446,6 +446,23 @@ def apply(list_or_el, fun):
         return [fun(k) for k in list_or_el]
     else:
         return fun(list_or_el)
+
+
+def extract_args(args: Optional[List], *def_vals) -> List:
+    """Extracts single arguments from parsed argument list.
+
+    Default values need to be specified.
+    """
+    n = len(def_vals)
+    assert n > 0, f"No default values provided!"
+    ret = list(def_vals)
+    if args is not None:
+        for ct, a in enumerate(args):
+            if ct < n:
+                ret[ct] = a
+            else:
+                yeet("Too many arguments specified!")
+    return ret
 
 
 def repl(el, n: int) -> List:

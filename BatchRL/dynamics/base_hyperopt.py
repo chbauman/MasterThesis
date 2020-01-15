@@ -183,16 +183,23 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         return hp_sample
 
 
-def optimize_model(mod: HyperOptimizableModel, verbose: bool = True) -> None:
+def optimize_model(mod: HyperOptimizableModel, verbose: bool = True,
+                   n_restarts: int = None) -> None:
     """Executes the hyperparameter optimization of a model.
 
-    Uses reduced number of model trainings if not on Euler.
+    Uses `n_restarts` calls to fit, if it is None,
+    uses reduced number of model trainings if not on Euler.
 
     Args:
         mod: Model whose hyperparameters are to be optimized.
         verbose: Whether to print the result to the console.
+        n_restarts: How many models should be fitted during the
+            optimization. If None, uses different default values depending
+            on whether `EULER` is True or not.
     """
-    n_opt = 40 if EULER else 3
+    n_opt = 50 if EULER else 2
+    if n_restarts is not None:
+        n_opt = n_restarts
     opt_params = mod.optimize(n_opt, verbose=verbose)
 
     if verbose:

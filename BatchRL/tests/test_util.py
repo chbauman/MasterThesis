@@ -20,7 +20,7 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, \
     yeet, \
-    dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str, floor_datetime_to_min
+    dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str, floor_datetime_to_min, extract_args
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
     _trf_desc_units, plot_env_evaluation, plot_valve_opening
 
@@ -479,6 +479,16 @@ class TestUtil(TestCase):
         temps = [22.5, 22]
         res = w_temp_str(temps)
         self.assertEqual(res, "Heating: In / Out temp: 22.5 / 22 C")
+
+    def test_extract_args(self):
+        dum_args = [True]
+        out = extract_args(dum_args, None)
+        exp_out = [True]
+        self.assertEqual(out[0], exp_out[0])
+
+        use_bat_data, enf_opt = extract_args([False], True, None)
+        self.assertEqual(use_bat_data, False)
+        self.assertEqual(enf_opt, None)
 
     def test_yeet(self):
         self.assertRaises(ValueError, yeet)

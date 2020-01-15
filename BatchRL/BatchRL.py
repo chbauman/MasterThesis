@@ -31,7 +31,7 @@ from opcua_empa.run_opcua import try_opcua
 from rest.client import test_rest_client
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
-from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool
+from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset
 
 # Define the models by name
@@ -150,27 +150,34 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
 
 
 def run_dynamic_model_hyperopt(use_bat_data: bool = True,
-                               verbose: int = 1) -> None:
+                               verbose: int = 1,
+                               enforce_optimize: bool = False,
+                               n_fit_calls: int = None) -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
-    Does not much if not on Euler.
+    Does not much if not on Euler, except if `enforce_optimize`
+    is True, then it will optimize anyways.
 
     Args:
         use_bat_data: Whether to include the battery data.
         verbose: Verbosity level.
+        enforce_optimize: Whether to enforce the optimization.
     """
 
     # Get data and constraints
-    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=use_bat_data)
+    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20,
+                                                    add_battery_data=use_bat_data)
 
     # Hyper-optimize model(s)
     for name in base_rnn_models:
+        if name != "PhysConsModel":
+            continue
         mod = get_model(name, ds, rnn_consts, from_hop=False, fit=False)
         if isinstance(mod, HyperOptimizableModel):
             if verbose:
                 print(f"Optimizing: {name}")
-            if EULER:
-                optimize_model(mod, verbose=verbose > 0)
+            if EULER or enforce_optimize:
+                optimize_model(mod, verbose=verbose > 0, n_restarts=n_fit_calls)
             else:
                 print("Not optimizing!")
         else:
@@ -768,8 +775,12 @@ def main() -> None:
 
     # Run hyperparameter optimization
     if args.optimize:
-        use_bat_data = args.bool[0] if args.bool is not None else True
-        run_dynamic_model_hyperopt(use_bat_data=use_bat_data)
+        n_steps = extract_args(args.int, None)[0]
+        use_bat_data, enf_opt = extract_args(args.bool, True, False)
+        run_dynamic_model_hyperopt(use_bat_data=use_bat_data,
+                                   verbose=verbose,
+                                   enforce_optimize=enf_opt,
+                                   n_fit_calls=n_steps)
 
     # Fit and analyze all models
     if args.mod_eval:
@@ -785,10 +796,8 @@ def main() -> None:
     if args.room:
         # Room model
         alpha = args.float[0] if args.float is not None else None
-        n_steps = args.int[0] if args.int is not None else None
-        add_bat = args.bool[0] if args.bool is not None else False
-        perf_eval = args.bool[1] if args.bool is not None and len(args.bool) > 1 else False
-        phys_cons = args.bool[2] if args.bool is not None and len(args.bool) > 2 else False
+        n_steps = extract_args(args.int, None)[0]
+        add_bat, perf_eval, phys_cons = extract_args(args.bool, False, False, False)
         run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps,
                         include_battery=add_bat, perf_eval=perf_eval,
                         physically_consistent=phys_cons)
