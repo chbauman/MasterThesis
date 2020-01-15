@@ -229,9 +229,7 @@ def setpoint_from_fraction(setpoint_frac: float, prev_state: bool,
     time_fraction_passed = (curr_time - start_time) / td
     assert time_fraction_passed <= 1.0
 
-    # Use
-    print(f"time_fraction_passed: {time_fraction_passed}")
-    print(f"setpoint_frac: {setpoint_frac}")
+    # Use setpoint_frac to determine output
     return prev_state if time_fraction_passed < setpoint_frac else next_state
 
 
@@ -370,11 +368,25 @@ class RLController(BaseRLController):
 
 
 class ValveTest2Controller(BaseRLController):
+    """Testing controller.
+
+    Uses the RL agent setting, i.e. makes a decision
+    at the beginning of each 15 minutes interval.
+    Assumes no valve delay, therefore can be used to
+    measure the valve delay.
+    """
 
     class RandomAgent(AbstractAgent):
 
-        def get_action(self, state) -> float:
-            return np.random.uniform(0.0, 1.0)
+        def __init__(self, verbose):
+            self.verbose = verbose
 
-    def __init__(self, n_hours: int = 3):
-        super().__init__(self.RandomAgent(), dt=15, n_steps_max=n_hours * 60)
+        def get_action(self, state) -> float:
+            rand_ac = np.random.uniform(0.0, 1.0)
+            if self.verbose:
+                print(f"Action: {rand_ac}")
+            return rand_ac
+
+    def __init__(self, n_hours: int = 3, verbose: int = 1):
+        super().__init__(self.RandomAgent(verbose), dt=15, n_steps_max=n_hours * 60)
+        self.valve_delays = (0.0, 0.0)

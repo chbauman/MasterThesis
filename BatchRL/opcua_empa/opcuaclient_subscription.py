@@ -148,6 +148,7 @@ class OpcuaClient(object):
     _ua_values: List
 
     _connected: bool = False  #: Bool specifying successful connection.
+    _type_defs = None
     _sub: Subscription = None  #: The subscription object.
     _sub_init: bool = False  #: Whether a subscription was initialized.
     _pub_init: bool = False  #: Whether publishing was initialized.
@@ -192,12 +193,14 @@ class OpcuaClient(object):
         """
         try:
             self.client.connect()
-            self.client.load_type_definitions()
-            logging.warning("Connection to server established.")
             self._connected = True
+            self._type_defs = self.client.load_type_definitions()
+            logging.warning("Connection to server established.")
             return True
         except UaStatusCodeError as e:
             logging.warning(f"Exception: {e} happened while connecting!")
+            if self._type_defs is None and self._connected:
+                print("Fucking type definition loading failed!!")
             print(f"I don't know why this keeps happening, "
                   f"try waiting a bit and rerun it!")
             return False
@@ -232,6 +235,7 @@ class OpcuaClient(object):
             if self._sub is not None:
                 self._sub.delete()
             self.client.disconnect()
+            self._connected = False
             logging.warning("Server disconnected.")
         except UaStatusCodeError as e:
             logging.warning(f"Server disconnected with error: {e}")
