@@ -456,7 +456,7 @@ class DynEnv(ABC, gym.Env):
                              put_on_ol: bool = False):
         name_list = [a.get_short_name() for a in agent_list]
         agent_names = '_'.join(name_list)
-        base = base_name + "_" + str(start_ind) + "_" + agent_names
+        base = f"{base_name}_{start_ind}_{agent_names}"
         if put_on_ol:
             return os.path.join(OVERLEAF_IMG_DIR, base)
         return self.get_plt_path(base)

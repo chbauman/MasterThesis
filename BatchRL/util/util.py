@@ -206,7 +206,7 @@ def print_decorator(print_fun: Callable):
 
 def stdout_decorator(print_fun: Callable):
     def print_fun_dec(text, *args, **kwargs):
-        print_fun("    " + text, *args, **kwargs)
+        print_fun(f"    {text}", *args, **kwargs)
 
     return print_fun_dec
 
@@ -669,7 +669,7 @@ def split_desc_units(desc: str) -> Tuple[str, str]:
     if len(parts) == 1:
         return parts[0], ""
     p1, p2 = parts
-    return p1, "[" + p2
+    return p1, f"[{p2}"
 
 
 def w_temp_str(h_in_and_out) -> str:

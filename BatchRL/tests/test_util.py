@@ -548,8 +548,8 @@ class TestUtil(TestCase):
         f_name = id_str + ".txt"
         with open(f_name, "w") as f:
             f.write("Test")
-        d_name1 = id_str + "_dir"
-        d_name2 = "Test_" + id_str + "_dir"
+        d_name1 = f"{id_str}_dir"
+        d_name2 = f"Test_{d_name1}"
         os.mkdir(d_name1)
         os.mkdir(d_name2)
 

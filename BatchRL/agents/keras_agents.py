@@ -172,7 +172,7 @@ class DDPGBaseAgent(KerasBaseAgent):
         self.gamma = gamma
 
         # Create name
-        name = self.get_short_name() + "_" + env.name + make_param_ext(param_ex_list)
+        name = f"{self.get_short_name()}_{env.name}{make_param_ext(param_ex_list)}"
 
         # Initialize super class.
         super().__init__(env=env, name=name)

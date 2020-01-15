@@ -60,7 +60,7 @@ def _get_data_folder(name: str, start_date: str, end_date: str) -> str:
     Returns:
         Full path of data defined by skl_mod.
     """
-    ext = start_date + "__" + end_date + "__"
+    ext = f"{start_date}__{end_date}__"
     data_dir = os.path.join(save_dir, ext + name)
     return data_dir
 
@@ -174,9 +174,9 @@ class _Client(object):
         ts_list = [None] * ct
         meta_list = [None] * ct
         for k in range(ct):
-            val_list[k] = np.load(os.path.join(data_dir, "values_" + str(k) + ".npy"))
-            ts_list[k] = np.load(os.path.join(data_dir, "dates_" + str(k) + ".npy"))
-            with open(os.path.join(data_dir, "meta_" + str(k) + ".txt"), 'r') as data:
+            val_list[k] = np.load(os.path.join(data_dir, f"values_{k}.npy"))
+            ts_list[k] = np.load(os.path.join(data_dir, f"dates_{k}.npy"))
+            with open(os.path.join(data_dir, f"meta_{k}.txt"), 'r') as data:
                 contents = data.read()
                 meta_list[k] = literal_eval(contents)
 
