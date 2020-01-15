@@ -1,1 +1,0 @@
-scp -rp chbauman@euler.ethz.ch:MT/MasterThesis/Plots/ ./EulerPlots/

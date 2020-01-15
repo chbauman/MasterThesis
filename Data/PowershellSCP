@@ -1,6 +1,0 @@
-# Remember to use VPN connection to access Euler.
-# Copying all the current datasets to Euler:
-scp -rp .\Datasets\ chbauman@euler.ethz.ch:MT/MasterThesis/Data/
-
-# Copying the results from the Hyperparameter optimization to the local computer:
-scp -rp chbauman@euler.ethz.ch:MT/MasterThesis/Models/Hop/ ../Models/

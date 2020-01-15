@@ -26,7 +26,7 @@ param(
 [switch]$b = $false,
 [string]$s = "hoi")
 
-Write-Host "Got parameter: $temp"
+Write-Host "Got parameter: $temp, b: $b"
 
 # Variable definition
 $v = 15
@@ -62,3 +62,6 @@ Function Hello ($name)
 
 # Call the function
 Hello ("Hans")
+
+# Activate python environment
+Invoke-Expression "$($PSScriptRoot)/venv/Scripts/Activate.ps1"
