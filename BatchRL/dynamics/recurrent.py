@@ -499,6 +499,15 @@ class PhysicallyConsistentRNN(RNNDynamicModel):
     def _build_model(self, debug: bool = False) -> Any:
         assert self.n_pred == 1, f"Invalid number of predictions: {self.n_pred}!"
 
+        # Get scaling parameters
+        do_scaling = self.data.fully_scaled
+        water_in_scaling, room_t_scaling, valve_scaling = None, None, None
+        if do_scaling:
+            scale = self.data.scaling
+            water_in_scaling = scale[2]
+            room_t_scaling = scale[4]
+            valve_scaling = scale[5]
+
         # Initialize
         seq_input = Input(shape=(self.train_seq_len, self.n_feats),
                           name="input_sequences")
@@ -513,6 +522,20 @@ class PhysicallyConsistentRNN(RNNDynamicModel):
         weather_input = Lambda(lambda x: x[:, :, :2], name="extract_weather")(first_layer)
         control_input = Lambda(lambda x: x[:, :, -1:], name="extract_control")(first_layer)
         temp_time_input = Lambda(lambda x: x[:, :, 4:7], name="extract_time_r_temp")(first_layer)
+        last_control_input = Lambda(lambda x: x[:, -1], name="extract_last_control")(control_input)
+        water_in_temp = Lambda(lambda x: x[:, -1, 2:3], name="extract_water_in")(first_layer)
+        prev_room_temp = Lambda(lambda x: x[:, -1, -2:-1], name="extract_room_temp")(first_layer)
+        scaled_room_temp = prev_room_temp
+
+        # Scale back
+        if do_scaling:
+            def lam(sc):
+                return lambda x: sc[1] * x + sc[0]
+            water_in_temp = Lambda(lam(water_in_scaling), name="scale_water_in")(water_in_temp)
+            last_control_input = Lambda(lam(valve_scaling), name="scale_last_control")(last_control_input)
+            scaled_room_temp = Lambda(lam(room_t_scaling), name="scale_room_temp")(scaled_room_temp)
+
+        # Concatenate input
         base_input = Lambda(lambda x: K.concatenate(x, axis=-1),
                             name="concat_base_input")([weather_input, temp_time_input])
         correction_input = Lambda(lambda x: K.concatenate(x, axis=-1),
@@ -526,14 +549,9 @@ class PhysicallyConsistentRNN(RNNDynamicModel):
                                  input_tensor=base_input,
                                  n_pred=self.n_pred,
                                  cl_and_oi=None)
-        prev_room_temp = Lambda(lambda x: x[:, -1, -2:-1], name="extract_room_temp")(first_layer)
-        base_room_temp = Lambda(lambda x: x[0] + x[1],
-                                name="base_room_temp")([prev_room_temp, rnn_pred])
 
         # Define the control dependent correction
-        last_control_input = Lambda(lambda x: x[:, -1], name="extract_last_control")(control_input)
-        water_in_temp = Lambda(lambda x: x[:, -1, 2:3], name="extract_water_in")(first_layer)
-        dT = Lambda(lambda x: x[0] - x[1], name="subtract")([water_in_temp, prev_room_temp])
+        dT = Lambda(lambda x: x[0] - x[1], name="subtract")([water_in_temp, scaled_room_temp])
         update_pred = construct_rnn(hidden_sizes=self.hidden_sizes,
                                     use_gru=self.gru,
                                     debug=debug,
@@ -547,6 +565,8 @@ class PhysicallyConsistentRNN(RNNDynamicModel):
                                 name="compute_correction")([act, last_control_input, dT])
 
         # Compute the final output
+        base_room_temp = Lambda(lambda x: x[0] + x[1],
+                                name="base_room_temp")([prev_room_temp, rnn_pred])
         out = Lambda(lambda x: x[0] + x[1],
                      name="add_correction")([base_room_temp, tot_correction])
 
