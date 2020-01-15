@@ -735,13 +735,13 @@ def def_parser() -> argparse.ArgumentParser:
 
     # Add boolean args
     for kw, h in arg_def_list:
-        short_kw = "-" + kw[0]
-        parser.add_argument(short_kw, "--" + kw, action="store_true", help=h)
+        short_kw = f"-{kw[0]}"
+        parser.add_argument(short_kw, f"--{kw}", action="store_true", help=h)
 
     # Add more optional parameters
     for kw, t, h in opt_param_l:
-        short_kw = "-" + kw[0:2]
-        parser.add_argument(short_kw, "--" + kw, nargs='+', type=t, help=h)
+        short_kw = f"-{kw[0:2]}"
+        parser.add_argument(short_kw, f"--{kw}", nargs='+', type=t, help=h)
     return parser
 
 

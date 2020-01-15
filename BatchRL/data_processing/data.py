@@ -1045,7 +1045,7 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
 
     # Set sequence length
     ds.seq_len = seq_len
-    ds.name = base_ds_name[-6:] + "_" + str(ds.seq_len)
+    ds.name = f"{base_ds_name[-6:]}_{ds.seq_len}"
 
     # Add time variables and optionally the battery data
     ds = ds.add_time()

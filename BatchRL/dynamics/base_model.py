@@ -542,7 +542,7 @@ class BaseDynamicsModel(KerasBase, ABC):
     def _get_one_week_plot_name(self, base: str, ext: str = None,
                                 ind: int = None, put_on_ol: bool = False):
         ext = "_" if ext is None else "_" + ext
-        full_b_name = base + '_' + str(ind) + "_" + ext
+        full_b_name = f"{base}_{ind}_{ext}"
         curr_name = self._get_plt_or_ol_path(full_b_name, put_on_ol)
         exists = os.path.isfile(curr_name + ".pdf")
         return curr_name, exists
@@ -772,7 +772,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             plot_dataset(analysis_ds,
                          show=False,
                          title_and_ylab=title_and_ylab,
-                         save_name=self.get_plt_path('OneWeek_WithNoise_' + str(k) + "_" + ext))
+                         save_name=self.get_plt_path(f"OneWeek_WithNoise_{k}_{ext}"))
 
     def hyper_obj(self, n_ts: int = 24, series_ind: Arr = None) -> float:
         """Defines the objective for the hyperparameter optimization.
