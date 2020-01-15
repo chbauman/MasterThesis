@@ -4,7 +4,6 @@ from typing import Any, Dict, TYPE_CHECKING
 
 import numpy as np
 
-
 from util.numerics import npf32
 from util.util import Arr, fix_seed, model_dir, create_dir
 
@@ -16,7 +15,21 @@ rl_model_dir = os.path.join(model_dir, "RL")
 create_dir(rl_model_dir)
 
 
-class AgentBase(ABC):
+class AbstractAgent(ABC):
+    @abstractmethod
+    def get_action(self, state) -> Arr:
+        """Defines the control strategy.
+
+        Args:
+            state: The current state.
+
+        Returns:
+            Next control action.
+        """
+        pass
+
+
+class AgentBase(AbstractAgent, ABC):
     """Base class for an agent / control strategy.
 
     Might be specific for a certain environment accessible
@@ -31,18 +44,6 @@ class AgentBase(ABC):
 
     def fit(self, verbose: int = 0) -> None:
         """No fitting needed."""
-        pass
-
-    @abstractmethod
-    def get_action(self, state) -> Arr:
-        """Defines the control strategy.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            Next control action.
-        """
         pass
 
     def get_short_name(self):

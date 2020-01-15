@@ -10,13 +10,14 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-# from envs.dynamics_envs import FullRoomEnv, RoomBatteryEnv
-from agents.base_agent import AgentBase
+from agents.base_agent import AgentBase, AbstractAgent
 from util.numerics import int_to_sin_cos
 from util.util import Num, get_min_diff, day_offset_ts, print_if_verb, ts_per_day, floor_datetime_to_min
 
 if TYPE_CHECKING:
+    # Avoiding cyclic imports for type checking
     from data_processing.dataset import Dataset
+    from envs.dynamics_envs import RLDynEnv
 
 MAX_TEMP: int = 28  #: Them maximum temperature to set.
 MIN_TEMP: int = 10  #: Them minimum temperature to set.
@@ -234,17 +235,14 @@ def setpoint_from_fraction(setpoint_frac: float, prev_state: bool,
     return prev_state if time_fraction_passed < setpoint_frac else next_state
 
 
-class RLController(FixTimeController):
+class BaseRLController(FixTimeController):
     """Controller uses a RL agent to do control."""
 
     default_val: Num = 21.0
-    agent: AgentBase = None  #: RL agent
+    agent: AbstractAgent = None  #: RL agent
     dt: int = None
-    data_ref: 'Dataset' = None  #: Dataset of model of env
 
     valve_delays: Tuple[float, float] = (232 / 60, 31 / 60)
-
-    battery: bool = False
 
     verbose: int
 
@@ -256,56 +254,22 @@ class RLController(FixTimeController):
 
     _curr_ts_ind: int
 
-    _scaling: np.ndarray = None
-
-    def __init__(self, rl_agent: AgentBase, n_steps_max: int = 60 * 60,
+    def __init__(self, rl_agent: AbstractAgent, dt: int, n_steps_max: int = 60 * 60,
                  verbose: int = 3):
         super().__init__(n_steps_max)
         self.agent = rl_agent
-        self.data_ref = rl_agent.env.m.data
-        self.dt = self.data_ref.dt
-        self._curr_ts_ind = self.get_dt_ind()
+        self.dt = dt
         self.verbose = verbose
 
-        env = self.agent.env
-
-        # Check if model is a room model with or without battery.
-        # Cannot directly check with isinstance because of cyclic imports.
-        env_class_name = env.__class__.__name__
-        if env_class_name == "RoomBatteryEnv":
-            self.battery = True
-            print_if_verb(self.verbose, "Full model including battery!")
-        elif env_class_name == "FullRoomEnv":
-            self.battery = False
-            print_if_verb(self.verbose, "Room only model!")
-        else:
-            raise NotImplementedError(f"Env: {env} is not supported!")
-
-        # Save scaling info
-        assert not self.data_ref.partially_scaled, "Fuck this!"
-        if self.data_ref.fully_scaled:
-            self._scaling = self.data_ref.scaling
+        self._curr_ts_ind = self.get_dt_ind()
 
     def get_dt_ind(self):
         """Computes the index of the current timestep."""
         t_now = np.datetime64('now')
         return day_offset_ts(t_now, mins=self.dt, remaining=False) - 1
 
-    def scale_for_agent(self, curr_state, remove_mean: bool = True) -> np.ndarray:
-        assert len(curr_state) == 8 + 2 * self.battery, "Shape mismatch!"
-        if remove_mean:
-            return (curr_state - self._scaling[:, 0]) / self._scaling[:, 1]
-        else:
-            return self._scaling[:, 1] * curr_state + self._scaling[:, 0]
-
-    def add_time_to_state(self, curr_state: np.ndarray, t_ind: int = None) -> np.ndarray:
-        """Appends the sin and cos of the daytime to the state."""
-        assert len(curr_state) == 6, f"Invalid shape of state: {curr_state}"
-        if t_ind is None:
-            t_ind = self.get_dt_ind()
-        n_ts_per_day = ts_per_day(self.data_ref.dt)
-        t = np.array(int_to_sin_cos(t_ind, n_ts_per_day))
-        return np.concatenate((curr_state, t))
+    def prepared_state(self, next_ts_ind: int = None):
+        return self.state
 
     def __call__(self, values=None):
 
@@ -321,13 +285,8 @@ class RLController(FixTimeController):
             # Update start state
             self._step_start_state = self._next_start_state
 
-            # Next step, get new control
-            time_state = self.add_time_to_state(self.state, next_ts_ind)
-            if self.battery:
-                # TODO: Implement this case
-                raise NotImplementedError("Fuck")
-            scaled_state = self.scale_for_agent(time_state)
-            ac = self.agent.get_action(scaled_state)
+            prepared_state = self.prepared_state(next_ts_ind)
+            ac = self.agent.get_action(prepared_state)
 
             # Compute toggle point
             tog_frac, next_state = setpoint_toggle_frac(self._step_start_state,
@@ -347,3 +306,75 @@ class RLController(FixTimeController):
                                            self._next_start_state,
                                            self.dt)
         return MAX_TEMP if tog_state else MIN_TEMP
+
+
+class RLController(BaseRLController):
+    """Controller using an :class:`agents.base_agent.AgentBase` RL agent to do control."""
+
+    data_ref: 'Dataset' = None  #: Dataset of model of env
+    env: 'RLDynEnv' = None
+
+    _scaling: np.ndarray = None
+
+    def __init__(self, rl_agent: AgentBase, n_steps_max: int = 60 * 60,
+                 verbose: int = 3):
+
+        self.data_ref = rl_agent.env.m.data
+        dt = self.data_ref.dt
+        super().__init__(rl_agent, dt, n_steps_max, verbose)
+
+        assert isinstance(self.agent, AgentBase)
+        env = self.agent.env
+
+        # Check if model is a room model with or without battery.
+        # Cannot directly check with isinstance because of cyclic imports.
+        env_class_name = env.__class__.__name__
+        if env_class_name == "RoomBatteryEnv":
+            self.battery = True
+            print_if_verb(self.verbose, "Full model including battery!")
+        elif env_class_name == "FullRoomEnv":
+            self.battery = False
+            print_if_verb(self.verbose, "Room only model!")
+        else:
+            raise NotImplementedError(f"Env: {env} is not supported!")
+
+        # Save scaling info
+        assert not self.data_ref.partially_scaled, "Fuck this!"
+        if self.data_ref.fully_scaled:
+            self._scaling = self.data_ref.scaling
+
+    def prepared_state(self, next_ts_ind: int = None):
+        # Next step, get new control
+        time_state = self.add_time_to_state(self.state, next_ts_ind)
+        if self.battery:
+            # TODO: Implement this case
+            raise NotImplementedError("Fuck")
+        scaled_state = self.scale_for_agent(time_state)
+        return scaled_state
+
+    def scale_for_agent(self, curr_state, remove_mean: bool = True) -> np.ndarray:
+        assert len(curr_state) == 8 + 2 * self.battery, "Shape mismatch!"
+        if remove_mean:
+            return (curr_state - self._scaling[:, 0]) / self._scaling[:, 1]
+        else:
+            return self._scaling[:, 1] * curr_state + self._scaling[:, 0]
+
+    def add_time_to_state(self, curr_state: np.ndarray, t_ind: int = None) -> np.ndarray:
+        """Appends the sin and cos of the daytime to the state."""
+        assert len(curr_state) == 6, f"Invalid shape of state: {curr_state}"
+        if t_ind is None:
+            t_ind = self.get_dt_ind()
+        n_ts_per_day = ts_per_day(self.dt)
+        t = np.array(int_to_sin_cos(t_ind, n_ts_per_day))
+        return np.concatenate((curr_state, t))
+
+
+class ValveTest2Controller(BaseRLController):
+
+    class RandomAgent(AbstractAgent):
+
+        def get_action(self, state):
+            np.random.uniform(0.0, 1.0)
+
+    def __init__(self, n_hours: int = 3):
+        super().__init__(self.RandomAgent(), dt=15, n_steps_max=n_hours * 60)
