@@ -197,8 +197,14 @@ class ConstrainedNoise(Layer):
 
         # Enforce constraints
         if self.consts is not None:
-            noise_x = x_modify
+
+            # Check shape
             n_feats = len(self.consts)
+            n_feats_actual = x_modify.shape[-1]
+            # assert n_feats == n_feats_actual, f"Shape mismatch: {n_feats} constraints " \
+            #                                   f"and {n_feats_actual} features!"
+
+            noise_x = x_modify
 
             # Split features
             if self.is_input:

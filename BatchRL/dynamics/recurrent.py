@@ -579,8 +579,6 @@ class PhysicallyConsistentRNN(RNNDynamicModel):
     def def_name() -> str:
         return "PC_RNN"
 
-    pass
-
 
 class RNNDynamicOvershootModel(RNNDynamicModel):
     m: Any = None  #: The base model used for prediction.

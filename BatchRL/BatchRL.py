@@ -174,8 +174,6 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
     # Hyper-optimize model(s)
     with ProgWrap(f"Hyperoptimizing models...", verbose > 0):
         for name in base_rnn_models:
-            if name != "PhysConsModel":
-                continue
             # Load model
             with ProgWrap(f"Loading model: {name}...", next_verb > 0):
                 mod = get_model(name, ds, rnn_consts, from_hop=False, fit=False)
@@ -323,11 +321,13 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
         name_ext += "_PHYS" if physically_consistent else ""
         agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}{name_ext}"
 
+        agent_list = [open_agent, closed_agent, rule_based_agent, agent]
+
     with ProgWrap(f"Fitting DDPG agent...", verbose > 0):
         agent.fit(verbose=prog_verb(verbose))
 
     with ProgWrap(f"Analyzing agents...", verbose > 0):
-        agent_list = [open_agent, closed_agent, rule_based_agent, agent]
+
         b_ind = -2 if include_battery else -1
         bounds = [(b_ind, (22.0, 26.0))]
 
@@ -686,13 +686,11 @@ def get_model(name: str, ds: Dataset,
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
-    try_opcua()
-    return
-
     # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
     mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
                     rnn_consts=rnn_consts_full, fit=True, from_hop=True)
+    return
     mod = get_model("FullState_Comp_Phys", ds_full,
                     rnn_consts=rnn_consts_full, fit=True, from_hop=True)
 
@@ -791,9 +789,10 @@ def main() -> None:
 
     # Fit and analyze all models
     if args.mod_eval:
-        run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=True,
-                                       visual_analyze=False,
-                                       include_composite=True)
+        perf_analyze, visual_analyze, include_composite = extract_args(args.bool, True, False, False)
+        run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=perf_analyze,
+                                       visual_analyze=visual_analyze,
+                                       include_composite=include_composite)
 
     if args.battery:
         # Train and analyze the battery model
