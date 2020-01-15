@@ -108,11 +108,19 @@ class RLDynEnv(DynEnv, ABC):
         return c_actions_scaled
 
     def scale_action_for_step(self, action: Arr):
+        """Scales the action to be used with the model of the env."""
         return self._to_scaled(action)
 
     def get_unscaled(self, curr_pred: np.ndarray, orig_ind: int) -> float:
+        """Returns a part of the state scaled to original value.
+
+        Args:
+            curr_pred: Current (predicted) state.
+            orig_ind: Index specifying the desired part of the state.
+        """
         prep_ind = self.m.data.to_prepared(orig_ind)
-        return self._state_to_scale(curr_pred[prep_ind], orig_ind=orig_ind, remove_mean=False).item()
+        return self._state_to_scale(curr_pred[prep_ind], orig_ind=orig_ind,
+                                    remove_mean=False).item()
 
     def _state_to_scale(self, original_state: Arr,
                         orig_ind: int,

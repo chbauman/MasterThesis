@@ -16,7 +16,7 @@ from util.numerics import npf32, trf_mean_and_std
 from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts, ts_per_day
 from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR, MergeListT
 
-Agents = Union[List, base_agent.AgentBase]
+Agents = Union[List[base_agent.AgentBase], base_agent.AgentBase]
 
 
 class DynEnv(ABC, gym.Env):
@@ -180,7 +180,8 @@ class DynEnv(ABC, gym.Env):
         """Evolve the model with the given control input `action`.
 
         This function should not be overridden, instead override
-        `scale_action_for_step`!
+        `scale_action_for_step`! If it is, it should be called at some
+        point in the overriding method.
 
         Args:
             action: The control input (action).
@@ -216,8 +217,12 @@ class DynEnv(ABC, gym.Env):
         ep_over = self.n_ts == self.n_ts_per_eps or self.episode_over(curr_pred)
         return curr_pred, r, ep_over, {}
 
-    def get_curr_state(self):
-        """Returns the current state."""
+    def get_curr_state(self) -> np.ndarray:
+        """Returns the current state.
+
+        Returns:
+            Current state of environment, 1d array.
+        """
         return self.hist[-1, :-self.act_dim]
 
     def get_curr_day_n(self) -> int:
@@ -227,7 +232,12 @@ class DynEnv(ABC, gym.Env):
     def reset(self, start_ind: int = None, use_noise: bool = True) -> np.ndarray:
         """Resets the environment.
 
-        Needs to be called if the episode is over.
+        Always needs to be called if the episode is over.
+        Initializes the environment with a new initial state.
+
+        Args:
+            start_ind: The index specifying the initial condition.
+            use_noise: Whether noise should be added when simulating.
 
         Returns:
             A new initial state.
@@ -272,13 +282,17 @@ class DynEnv(ABC, gym.Env):
         return h_in_and_out
 
     def render(self, mode='human'):
+        """Render method for compatibility with OpenAI gym."""
         print("Rendering not implemented!")
 
     def _to_scaled(self, action: Arr, to_original: bool = False) -> np.ndarray:
-        """Converts actions to the right range."""
+        """Converts actions to the right range.
+
+        Needs to be overridden by subclasses.
+        """
         raise NotImplementedError("Implement this!")
 
-    def analyze_agents_visually(self, agents: Union[List, base_agent.AgentBase],
+    def analyze_agents_visually(self, agents: Agents,
                                 fitted: bool = True,
                                 use_noise: bool = False,
                                 start_ind: int = None,
@@ -293,6 +307,11 @@ class DynEnv(ABC, gym.Env):
                                 series_merging_list: MergeListT = None,
                                 overwrite: bool = False) -> None:
         """Analyzes and compares a set of agents / control strategies.
+
+        Uses the same initial condition of the environment and evaluates
+        all the given agents in `agents` starting from these initial conditions.
+        Then makes a plot comparing how the environment behaves under all the
+        agents.
 
         Args:
             agents: A list of agents or a single agent.
@@ -310,6 +329,10 @@ class DynEnv(ABC, gym.Env):
             series_merging_list: Defines series that will be merged. Should be
                 independent of agent's actions.
             overwrite: Whether to overwrite existing plot files.
+
+        Raises:
+            ValueError: If `start_ind` is too large or if an agent is not suited
+                for this environment.
         """
         # Make function compatible for single agent input
         if not isinstance(agents, list):
@@ -331,7 +354,7 @@ class DynEnv(ABC, gym.Env):
         if start_ind is None:
             start_ind = np.random.randint(self.n_start_data)
         elif start_ind >= self.n_start_data:
-            raise ValueError("start_ind is too large!")
+            raise ValueError(f"start_ind: {start_ind} cannot be larger than: {self.n_start_data}!")
 
         # Check if file already exists
         analysis_plot_path = self._construct_plot_name("AgentAnalysis", start_ind, agents, put_on_ol)
@@ -415,26 +438,6 @@ class DynEnv(ABC, gym.Env):
         if put_on_ol:
             return os.path.join(OVERLEAF_IMG_DIR, base)
         return self.get_plt_path(base)
-
-    def eval_agents(self, agent_list: Agents, n_steps: int = 100) -> np.ndarray:
-
-        # Make function compatible for single agent input.
-        if not isinstance(agent_list, list):
-            agent_list = [agent_list]
-
-        # Init scores.
-        n_agents = len(agent_list)
-        scores = np.empty((n_agents,), dtype=np.float32)
-
-        for a_id, a in enumerate(agent_list):
-            # Check that agent references this environment
-            if not a.env == self:
-                raise ValueError(f"Agent {a_id} was not assigned to this env!")
-
-            # Evaluate agent.
-            scores[a_id] = a.eval(n_steps, reset_seed=True)
-
-        return scores
 
     def _get_detail_eval_title_ext(self):
         # This is so fucking ugly!
