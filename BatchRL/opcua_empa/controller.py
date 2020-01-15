@@ -373,8 +373,8 @@ class ValveTest2Controller(BaseRLController):
 
     class RandomAgent(AbstractAgent):
 
-        def get_action(self, state):
-            np.random.uniform(0.0, 1.0)
+        def get_action(self, state) -> float:
+            return np.random.uniform(0.0, 1.0)
 
     def __init__(self, n_hours: int = 3):
         super().__init__(self.RandomAgent(), dt=15, n_steps_max=n_hours * 60)

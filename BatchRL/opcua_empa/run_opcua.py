@@ -12,7 +12,7 @@ from opcua_empa.room_control_client import run_control
 from tests.test_opcua import OfflineClient
 
 
-def try_opcua(verbose: int = 2, room_list: List[int] = None, debug: bool = True):
+def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True):
     """Runs the opcua client."""
 
     if verbose:

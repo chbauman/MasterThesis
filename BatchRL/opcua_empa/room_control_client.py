@@ -7,7 +7,7 @@ and :class:`opcua_empa.opcuaclient_subscription.OpcuaClient`.
 .. moduleauthor:: Christian Baumann
 """
 import logging
-from typing import List, Callable
+from typing import List, Callable, Tuple
 
 import pandas as pd
 import numpy as np
@@ -46,12 +46,16 @@ class ControlClient:
 
     _n_pub: int = 0
 
+    _curr_ex_vals: Tuple = None
+    _curr_temp_sp: float = None
+    _curr_valves: Tuple = None
+
     def __init__(self,
                  used_control: ControlT,
                  exp_name: str = None,
                  user: str = 'ChristianBaumannETH2020',
                  password: str = 'Christian4_ever',
-                 verbose: int = 3,
+                 verbose: int = 1,
                  no_data_saving: bool = False,
                  _client_class: Callable = OpcuaClient):
         """Initializer.
@@ -96,6 +100,15 @@ class ControlClient:
         self.node_gen.save_cached_data(self.verbose)
         self.client.__exit__(*args, **kwargs)
 
+    def _print_set_on_change(self, attr_name, val, msg: str):
+        curr_val = getattr(self, attr_name)
+        if curr_val != val:
+            setattr(self, attr_name, val)
+            if self.verbose > 0:
+                print_fun(f"{msg}: {val}")
+        elif self.verbose > 1:
+            print_fun(f"{msg}: {val}")
+
     def read_publish_wait_check(self) -> bool:
         """Read and publish values, wait, and check if termination is reached.
 
@@ -104,18 +117,22 @@ class ControlClient:
         Returns:
             Whether termination is reached.
         """
-        # Read values
+        # Read and extract values
         read_vals = self.client.read_values()
         ext_values = self.node_gen.extract_values(read_vals)
+        ex_vals = (ext_values[0][0], ext_values[1][0])
+        self._print_set_on_change("_curr_ex_vals", ex_vals,
+                                  msg="Extracted")
+        valve_tuple = tuple(self.node_gen.get_valve_values()[0])
+        self._print_set_on_change("_curr_valves", valve_tuple,
+                                  msg="Valves")
 
         # Compute and publish current control input
         self.df_write["value"] = self.node_gen.compute_current_values()
-        self.client.publish(self.df_write, log_time=True, sleep_after=1.0)
+        self.client.publish(self.df_write, log_time=self.verbose > 1, sleep_after=1.0)
 
-        # Extract values
-        if self.verbose:
-            print_fun(f"Temperature setpoint: {self.df_write['value'][0]}")
-            print_fun(f"Valves: {self.node_gen.get_valve_values()[0]}")
+        self._print_set_on_change("_curr_temp_sp", self.df_write['value'][0],
+                                  msg="Temperature setpoint")
 
         # Check that the research acknowledgement is true.
         # Wait for at least 20s before requiring to be true, takes some time.
@@ -130,7 +147,6 @@ class ControlClient:
 
         # Print the reason of termination.
         if self.verbose > 0:
-            print_fun(f"Extracted: {ext_values}")
             if not temps_in_bound:
                 print_fun("Temperature bounds reached, aborting experiment.")
             if not res_ack_true:
