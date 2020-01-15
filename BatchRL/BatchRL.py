@@ -162,27 +162,34 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
         use_bat_data: Whether to include the battery data.
         verbose: Verbosity level.
         enforce_optimize: Whether to enforce the optimization.
+        n_fit_calls: Number of fit evaluations, default if None.
     """
+    next_verb = prog_verb(verbose)
 
     # Get data and constraints
-    ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20,
-                                                    add_battery_data=use_bat_data)
+    with ProgWrap(f"Loading data...", verbose > 0):
+        ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20,
+                                                        add_battery_data=use_bat_data)
 
     # Hyper-optimize model(s)
-    for name in base_rnn_models:
-        if name != "PhysConsModel":
-            continue
-        mod = get_model(name, ds, rnn_consts, from_hop=False, fit=False)
-        if isinstance(mod, HyperOptimizableModel):
-            if verbose:
-                print(f"Optimizing: {name}")
-            if EULER or enforce_optimize:
-                optimize_model(mod, verbose=verbose > 0, n_restarts=n_fit_calls)
+    with ProgWrap(f"Hyperoptimizing models...", verbose > 0):
+        for name in base_rnn_models:
+            if name != "PhysConsModel":
+                continue
+            # Load model
+            with ProgWrap(f"Loading model: {name}...", next_verb > 0):
+                mod = get_model(name, ds, rnn_consts, from_hop=False, fit=False)
+
+            # Optimize model
+            if isinstance(mod, HyperOptimizableModel):
+                if EULER or enforce_optimize:
+                    with ProgWrap(f"Optimizing model: {name}...", next_verb > 0):
+                        optimize_model(mod, verbose=next_verb > 0, n_restarts=n_fit_calls)
+                else:
+                    print("Not optimizing!")
             else:
-                print("Not optimizing!")
-        else:
-            warnings.warn(f"Model {name} not hyperparameter-optimizable!")
-            # raise ValueError(f"Model {name} not hyperparameter-optimizable!")
+                warnings.warn(f"Model {name} not hyperparameter-optimizable!")
+                # raise ValueError(f"Model {name} not hyperparameter-optimizable!")
 
 
 def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
