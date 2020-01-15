@@ -467,7 +467,6 @@ class BatteryEnv(RLDynEnv):
         # Init base class.
         super().__init__(m, name=name, action_range=[(-100, 100)], **kwargs, init_res=False)
 
-        self.p = p
         assert p is None, "Cost profile does not make sense here!"
         # TODO: Remove cost profile from model!
 
