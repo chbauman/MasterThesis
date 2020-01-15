@@ -209,8 +209,8 @@ def analyze_data(dat: Sequence) -> None:
     """
     values, dates = dat
     n_data_p = len(values)
-    print("Total: {} data points.".format(n_data_p))
-    print("Data ranges from {} to {}".format(dates[0], dates[-1]))
+    print(f"Total: {n_data_p} data points.")
+    print(f"Data ranges from {dates[0]} to {dates[-1]}")
 
     t_diffs = dates[1:] - dates[:-1]
     max_t_diff = np.max(t_diffs)

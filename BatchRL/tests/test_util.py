@@ -459,7 +459,7 @@ class TestUtil(TestCase):
             print("Cache Decorator Test failed!!")
             raise e
         except Exception as e:
-            raise AssertionError("Some error happened: {}".format(e))
+            raise AssertionError(f"Some error happened: {e}")
 
     def test_floor_datetime_to_min(self):
         exp1 = np.datetime64('2000-01-01T01:00', 'm')

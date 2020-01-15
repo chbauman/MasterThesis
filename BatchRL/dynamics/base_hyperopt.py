@@ -21,11 +21,13 @@ OptHP = Tuple[Dict, float]  #: The type of the stored info.
 
 
 def save_hp(name_hp: str, opt_hp: OptHP) -> None:
+    """Save hyperparameters."""
     with open(name_hp, 'wb') as f:
         pickle.dump(opt_hp, f)
 
 
 def load_hp(name_hp) -> OptHP:
+    """Load hyperparameters."""
     with open(name_hp, 'rb') as f:
         opt_hp = pickle.load(f)
     return opt_hp
@@ -192,6 +194,6 @@ def optimize_model(mod: HyperOptimizableModel, verbose: bool = True) -> None:
     """
     n_opt = 40 if EULER else 3
     opt_params = mod.optimize(n_opt, verbose=verbose)
-    # print("All tried parameter combinations: {}.".format(mod.param_list))
+
     if verbose:
-        print("Optimal parameters: {}.".format(opt_params))
+        print(f"Optimal parameters: {opt_params}.")

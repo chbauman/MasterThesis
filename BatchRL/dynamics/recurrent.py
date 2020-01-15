@@ -58,9 +58,9 @@ def _constr_hp_name(hidden_sizes: Sequence,
         String combining all these parameters.
     """
     arch = '_L' + '-'.join(map(str, hidden_sizes))
-    ep_s = '_E' + str(n_iter_max)
-    lrs = '_LR' + "{:.4g}".format(lr)
-    n_str = '' if input_noise_std is None else '_N' + "{:.4g}".format(input_noise_std)
+    ep_s = f"_E{n_iter_max}"
+    lrs = f"_LR{lr:.4g}"
+    n_str = '' if input_noise_std is None else f"_N{input_noise_std:.4g}"
     gru_str = '' if not gru else '_GRU'
     return ep_s + arch + lrs + n_str + gru_str
 
@@ -168,7 +168,7 @@ def construct_rnn(hidden_sizes: Sequence[int],
         else:
             lay = rnn(int(hidden_sizes[k]),
                       return_sequences=ret_seq,
-                      name="rnn_layer_{}{}".format(k, name_ext),
+                      name=f"rnn_layer_{k}{name_ext}",
                       **input_shape_dict)
         layer_list += [lay]
         input_shape_dict = {}

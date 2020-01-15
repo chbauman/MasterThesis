@@ -375,9 +375,9 @@ class BaseDynamicsModel(KerasBase, ABC):
 
         # Do checks
         if n < 1:
-            raise ValueError("n: ({}) has to be larger than 0!".format(n))
+            raise ValueError(f"n: ({n}) has to be larger than 0!")
         if n_out <= 0:
-            raise ValueError("n: ({}) too large".format(n))
+            raise ValueError(f"n: ({n}) too large")
         if in_data.shape[0] != out_data.shape[0]:
             raise ValueError("Shape mismatch of prepared data.")
         if in_data.shape[-1] != n_tot or out_data.shape[-1] != n_feat:
@@ -571,7 +571,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             add_errors: Whether to add errors in a box. Do not do this!
         """
         if verbose:
-            print("Analyzing model {}".format(self.name))
+            print(f"Analyzing model {self.name}")
         d = self.data
 
         # Check input

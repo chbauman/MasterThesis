@@ -262,7 +262,8 @@ class TestDataset(TestCase):
             out = fun(inp)
             if not np.array_equal(sol, out):
                 print("Test failed :(")
-                raise AssertionError("Function: {} with input: {} not giving: {} but: {}!!!".format(fun, inp, sol, out))
+                raise AssertionError(f"Function: {fun} with input: {inp} "
+                                     f"not giving: {sol} but: {out}!!!")
 
     pass
 

@@ -739,7 +739,7 @@ def extract_streak(all_data: np.ndarray, s_len: int, lag: int) -> Tuple[np.ndarr
     # Find last sequence of length tot_s_len
     inds = find_all_streaks(find_rows_with_nans(all_data), tot_s_len)
     if len(inds) < 1:
-        raise IndexError("No fucking streak of length {} found!!!".format(tot_s_len))
+        raise IndexError(f"No fucking streak of length {tot_s_len} found!!!")
     last_seq_start = inds[-1]
 
     # Extract

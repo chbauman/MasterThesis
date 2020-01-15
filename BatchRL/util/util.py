@@ -162,7 +162,8 @@ def stdout_redirection_test():
         print("after puts")
         os.system('echo and this is from echo')
         print("after echo")
-    print('Got stdout: "{0}"'.format(f.getvalue().decode('utf-8')))
+    std_out_val = f.getvalue().decode("utf-8")
+    print(f'Got stdout: "{std_out_val}"')
 
 
 def str2bool(v) -> bool:
@@ -321,7 +322,7 @@ def make_param_ext(l: List[Tuple[str, Any]]) -> str:
         elif type(el) in [int, str]:
             s += str(el)
         elif type(el) is float:
-            s += "{:.4g}".format(el)
+            s += f"{el:.4g}"
         elif type(el) in [list, tuple]:
             s += '-'.join(map(str, el))
         else:
@@ -580,11 +581,11 @@ class TestDecoratorFactory(object):
             try:
                 f(*args, **kwargs)
             except AssertionError as a:
-                print("{}-test failed!".format(self.m))
+                print(f"{self.m}-test failed!")
                 raise a
             except Exception as e:
-                print("Exception: {}".format(e))
-                raise AssertionError("Unexpected error happened in test {}".format(self.m))
+                print(f"Exception: {e}")
+                raise AssertionError(f"Unexpected error happened in test {self.m}")
 
         return decorated
 
@@ -683,7 +684,7 @@ def w_temp_str(h_in_and_out) -> str:
     assert len(h_in_and_out) == 2
     h_in, h_out = h_in_and_out
     h = h_in > h_out
-    title_ext = "In / Out temp: {:.3g} / {:.3g} C".format(h_in, h_out)
+    title_ext = f"In / Out temp: {h_in:.3g} / {h_out:.3g} C"
     suf = "Heating: " if h else "Cooling: "
     title_ext = suf + title_ext
     return title_ext

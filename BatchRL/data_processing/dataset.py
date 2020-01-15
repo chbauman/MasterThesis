@@ -49,7 +49,7 @@ class SeriesConstraint:
         self.name = name
         if name != 'interval':
             if extra_dat is not None:
-                raise ValueError("What the fuck are you passing?? : {}".format(extra_dat))
+                raise ValueError(f"What the fuck are you passing?? : {extra_dat}")
         else:
             self.extra_dat = np.array(extra_dat)
 
@@ -409,7 +409,7 @@ class Dataset:
                                   self.t_init,
                                   np.array([0.0, 1.0]),
                                   np.array([False]),
-                                  np.array(["Time of day [{} mins.]".format(dt)]),
+                                  np.array([f"Time of day [{dt} mins.]"]),
                                   no_inds,
                                   no_inds,
                                   "Time")
@@ -524,7 +524,7 @@ class Dataset:
         """
         f_name = Dataset.get_filename(name)
         if not os.path.isfile(f_name):
-            raise FileNotFoundError("Dataset {} does not exist.".format(f_name))
+            raise FileNotFoundError(f"Dataset {f_name} does not exist.")
         with open(f_name, 'rb') as f:
             ds = pickle.load(f)
             return ds

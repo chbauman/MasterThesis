@@ -140,7 +140,7 @@ class _Client(object):
             url = self._URL + column
             meta_data = s.get(url=url).json()
             self.meta_data += [meta_data]
-            url += '/timeline?startDate=' + self.start_date + '&endDate=' + self.end_date
+            url += f"/timeline?startDate={self.start_date}&endDate={self.end_date}"
             df = pd.DataFrame(data=s.get(url=url).json())
 
             # Convert to Numpy
@@ -148,7 +148,7 @@ class _Client(object):
             ts = pd.to_datetime(df.loc[:, "timestamp"])
             ts = ts.to_numpy(dtype=np.datetime64)
             self.np_data += [(values, ts)]
-            print("Added column {} with ID {}.".format(ct + 1, column))
+            print(f"Added column {ct + 1} with ID {column}.")
 
         print(time.ctime() + ' REST client data acquired')
         return self.np_data, self.meta_data

@@ -951,7 +951,7 @@ def plot_reward_details(labels: Sequence[str],
         """Attach a text label above each bar in *rects*, displaying its height."""
         for rect in rect_list:
             height = rect.get_height()
-            ax.annotate('{:.4g}'.format(height),
+            ax.annotate('{height:.4g}',
                         xy=(rect.get_x() + rect.get_width() / 2, height),
                         xytext=(0, 3),  # 3 points vertical offset
                         textcoords="offset points",
@@ -1083,12 +1083,12 @@ def plot_performance_table(model_list: List, parts: List[str], metric_list: List
         # Fill header cols
         table_array[k, 0] = mod_names[all_inds[0]]
         table_array[k, 1] = parts[all_inds[1]]
-        table_array[k, 2] = "{}".format(int(inds[all_inds[2]]))
+        table_array[k, 2] = f"{int(inds[all_inds[2]])}"
         table_array[k, 3] = series_descs[all_inds[3]]
 
         for i in range(n_last):
             ind_list = np.array(all_inds + [i])[sec_order]
-            table_array[k, 4 + i] = "{:.4g}".format(data_array[tuple(ind_list)])
+            table_array[k, 4 + i] = f"{data_array[tuple(ind_list)]:.4g}"
 
     # Define column labels
     col_labels = ["Model", "Set", "Steps", "Series"]

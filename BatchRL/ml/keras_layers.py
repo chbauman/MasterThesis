@@ -214,7 +214,7 @@ class ConstrainedNoise(Layer):
                 elif c[0] == 'exact' and self.input_noise_std > 0:
                     feature_tensors[ct] = x[:, :, ct:(ct + 1)]
                 else:
-                    raise ValueError("Constraint type {} not supported!!".format(c[0]))
+                    raise ValueError(f"Constraint type {c[0]} not supported!!")
 
             # Concatenate again
             x_modify = K.concatenate(feature_tensors, axis=-1)
