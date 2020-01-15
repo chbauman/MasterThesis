@@ -55,6 +55,9 @@ class AgentBase(ABC):
              use_noise: bool = False):
         """Evaluates the agent for a given number of steps.
 
+        If the number is greater than the number of steps in an episode, the
+        env is reset and a new episode is started.
+
         Args:
             n_steps: Number of steps.
             reset_seed: Whether to reset the seed at start.
@@ -62,7 +65,8 @@ class AgentBase(ABC):
             use_noise: Whether to use noise during the evaluation.
 
         Returns:
-            The mean received reward.
+            The mean received reward if `detailed` is False, else
+            all the rewards for all steps.
         """
         # Fix seed if needed.
         if reset_seed:

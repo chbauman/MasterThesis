@@ -92,7 +92,6 @@ class RLDynEnv(DynEnv, ABC):
 
         # This should not do anything
         cont_action = action
-        assert np.array_equal(cont_action, action), "This is deprecated!!"
 
         # Do the extra scaling for rl agents with output in [0, 1]
         if extra_scaling and self.do_scaling:

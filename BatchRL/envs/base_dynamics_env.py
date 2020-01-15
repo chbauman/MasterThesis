@@ -448,7 +448,22 @@ class DynEnv(ABC, gym.Env):
                              verbose: int = 0) -> Optional[np.ndarray]:
         """Evaluates the given agents for this environment.
 
-        Plots the mean rewards and returns all rewards.
+        Let's the agents act in the environment and observes the
+        rewards. These are then averaged, plotted and returned.
+        If `overwrite` is False and the plot already exists, nothing
+        is returned.
+
+        Args:
+            agent_list: List of agents that are based on this env.
+            n_steps: Number of evaluation steps.
+            use_noise: Whether to use noise in the evaluation.
+            put_on_ol: Whether to put the resulting plot into the Overleaf plot folder.
+            overwrite: Whether to overwrite pre-existing plot files.
+            verbose: Verbosity.
+
+        Returns:
+            The rewards seen by all the agents, or None if `overwrite` is False
+            and the plot already exists.
         """
         # Make function compatible for single agent input.
         if not isinstance(agent_list, list):
