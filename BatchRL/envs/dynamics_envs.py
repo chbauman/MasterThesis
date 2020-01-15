@@ -108,7 +108,10 @@ class RLDynEnv(DynEnv, ABC):
         return c_actions_scaled
 
     def scale_action_for_step(self, action: Arr):
-        """Scales the action to be used with the model of the env."""
+        """Scales the action to be used with the model of the env.
+
+        Overrides function in base class.
+        """
         return self._to_scaled(action)
 
     def get_unscaled(self, curr_pred: np.ndarray, orig_ind: int) -> float:
@@ -529,7 +532,7 @@ class BatteryEnv(RLDynEnv):
         scaled_action = self._to_scaled(action, extra_scaling=True)
 
         # Extract and scale current soc, bound and goal
-        curr_state = self.get_curr_state()
+        curr_state = self.curr_state
         soc_bound_arr = np.array(self.soc_bound, copy=True)
         scaled_soc_bound = self._get_scaled_soc(soc_bound_arr, remove_mean=True)
         min_goal_soc = self._get_scaled_soc(self.req_soc, remove_mean=True)
@@ -735,7 +738,7 @@ class RoomBatteryEnv(RLDynEnv):
 
         # Clip battery action
         scaled_ac = self.action_range_scaled[1]
-        curr_state = self.get_curr_state()
+        curr_state = self.curr_state
         bat_soc_ind_prep = self.prep_inds[-1]
         bat_action_clipped = clip_battery_action(bat_action,
                                                  curr_state[bat_soc_ind_prep],

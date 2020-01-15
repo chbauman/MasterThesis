@@ -98,10 +98,22 @@ class DynEnv(ABC, gym.Env):
         if init_res:
             self.reset()
 
-    def set_agent(self, a: base_agent.AgentBase):
+    def set_agent(self, a: base_agent.AgentBase) -> None:
+        """Sets the given agent to the environment.
+
+        Handles the extra scaling if it is required by the
+        agent, the environment does not actually get access to the
+        agent.
+
+        Args:
+            a: The agent to be used with the env.
+        """
+        # Get info about agent and check whether scaling is needed
         self.info = a.get_info()
         scaling = self.info.get('action_scaled_01')
         self.do_scaling = scaling is not None
+
+        # Handle scaling
         if self.do_scaling:
             p1 = np.array([i[0] for i in scaling], dtype=np.float32)
             p2 = np.array([i[1] - i[0] for i in scaling], dtype=np.float32)
@@ -173,7 +185,16 @@ class DynEnv(ABC, gym.Env):
         """
         return False
 
-    def scale_action_for_step(self, action: Arr):
+    def scale_action_for_step(self, action: Arr) -> Arr:
+        """Scales the action to be used by the underlying ML model.
+
+        This does nothing, override if needed.
+
+        Args:
+            action: The action to be scaled.
+        Returns:
+            The scaled action, same shape as the input.
+        """
         return action
 
     def step(self, action: Arr) -> Tuple[np.ndarray, float, bool, Dict]:
@@ -217,7 +238,8 @@ class DynEnv(ABC, gym.Env):
         ep_over = self.n_ts == self.n_ts_per_eps or self.episode_over(curr_pred)
         return curr_pred, r, ep_over, {}
 
-    def get_curr_state(self) -> np.ndarray:
+    @property
+    def curr_state(self) -> np.ndarray:
         """Returns the current state.
 
         Returns:
@@ -274,7 +296,7 @@ class DynEnv(ABC, gym.Env):
         """
         # Find the current heating water temperatures
         self.reset(init_ind, use_noise=False)
-        curr_s = self.get_curr_state()
+        curr_s = self.curr_state
         scaling = self.m.data.scaling
         h_in_and_out = npf32((2,))
         for ct, k in enumerate(heat_inds):
