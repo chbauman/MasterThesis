@@ -39,7 +39,7 @@ class ControlClient:
     Use it as a context manager!
     """
 
-    TEMP_MIN_MAX = (18.0, 25.0)  #: Temperature bounds, experiment will be aborted if temperature leaves these bounds.
+    TEMP_MIN_MAX = (20.0, 25.0)  #: Temperature bounds, experiment will be aborted if temperature leaves these bounds.
 
     write_nodes: List[str]  #: List with the read nodes as strings.
     read_nodes: List[str]  #: List with the write nodes as strings.
