@@ -141,7 +141,7 @@ def _get_nodes(control: ControlT) -> List:
     for c in control:
         r_nr, val_fun = c
         n_str = _th_string_to_node_name(ROOM_DICT[r_nr])
-        node_list += [n_str + "." + s for s in TH_SUFFIXES]
+        node_list += [f"{n_str}.{s}" for s in TH_SUFFIXES]
     return node_list
 
 
@@ -160,7 +160,7 @@ def _get_read_nodes(control: ControlT) -> Tuple[List[str], List[str], List[int],
         b_s = _th_string_to_node_name(room_str, read=True)
         room_inds += [len(node_descs)]
         for s, d, t in READ_SUF_NAME_TYPES:
-            node_list += [b_s + "." + s]
+            node_list += [f"{b_s}.{s}"]
             node_descs += [f"{r_nr}: {d}"]
             types += [t]
 

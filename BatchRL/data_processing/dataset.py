@@ -18,7 +18,6 @@ from util.util import day_offset_ts, ts_per_day, datetime_to_np_datetime, string
     n_mins_to_np_dt, str_to_np_dt, np_dt_to_str, repl
 from util.visualize import PLOT_DIR, plot_all
 
-
 dataset_data_path = os.path.join(save_dir, "Datasets")  #: Dataset directory
 no_inds = np.array([], dtype=np.int32)  #: Empty index set
 
@@ -453,7 +452,7 @@ class Dataset:
                            np.copy(self.descriptions[ind_low: ind_high]),
                            no_inds,
                            no_inds,
-                           self.name + "[" + str(ind_low) + ":" + str(ind_high) + "]")
+                           f"{self.name}[{ind_low}:{ind_high}]")
         else:
             return Dataset(np.copy(self.data[:, low:low + 1]),
                            self.dt,
@@ -463,7 +462,7 @@ class Dataset:
                            np.copy(self.descriptions[low:low + 1]),
                            no_inds,
                            no_inds,
-                           self.name + "[" + str(low) + "]")
+                           f"{self.name}[{low}]")
 
     def __getitem__(self, key) -> 'Dataset':
         """Allows for slicing.

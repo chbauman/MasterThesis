@@ -76,10 +76,10 @@ def getMLPModel(mlp_layers: Sequence = (20, 20), out_dim: int = 1,
                            activation='relu',
                            trainable=trainable,
                            kernel_regularizer=l2(ker_reg),
-                           name="dense" + str(i))
+                           name=f"dense{i}")
         model.add(next_layer)
         if bn:
-            model.add(BatchNormalization(trainable=trainable, name="bn" + str(i + 1)))
+            model.add(BatchNormalization(trainable=trainable, name=f"bn{i + 1}"))
         if dropout:
             model.add(Dropout(0.2))
 

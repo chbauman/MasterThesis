@@ -190,7 +190,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         out_inds, _ = BaseDynamicsModel._get_inds(out_inds, data, False)
         in_inds, _ = BaseDynamicsModel._get_inds(in_inds, data, True)
         ind_str = _get_inds_str(out_inds, "Out") + _get_inds_str(in_inds)
-        str_out = ind_str + "_MODEL_" + b_name
+        str_out = f"{ind_str}_MODEL_{b_name}"
         if not no_data:
             str_out = data.name + str_out
         return str_out

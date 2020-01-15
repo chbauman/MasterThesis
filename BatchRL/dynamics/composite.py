@@ -33,7 +33,7 @@ class CompositeModel(BaseDynamicsModel):
         # Compute name and check datasets
         name = dataset.name + "Composite"
         for m in model_list:
-            name += "_" + m.name
+            name += f"_{m.name}"
             if m.data != dataset:
                 raise ValueError(f"Model {m.name} needs to model the same dataset "
                                  "as the Composite model.")

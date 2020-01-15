@@ -628,7 +628,7 @@ def _setup_axis(ax, base_title: str, desc: str, title: bool = True):
     t, u = split_desc_units(desc)
     ax.set_ylabel(u)
     if title:
-        ax.set_title(base_title + ": " + t)
+        ax.set_title(f"{base_title}: {t}")
 
 
 def _full_setup_axis(ax_list: List, desc_list: List, title: str = None):
@@ -1238,7 +1238,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
                     if scale_back:
                         fac = scaling_fac_arr[series_id, ct_m] if scale_over_series else None
                         s_desc = _trf_desc_units(s_desc, m, fac)
-                    lab = set_name + ": " + s_desc
+                    lab = f"{set_name}: {s_desc}"
                     if compare_models:
                         si = data_array[set_id, model_ind, series_id, ct_m]
                     else:

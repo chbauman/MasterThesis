@@ -385,18 +385,19 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind: int, dt_mins,
     if np.isnan(np.nanmax(all_dat[:, col_ind])):
         raise ValueError("Something went very fucking wrong!!")
 
+    base_plot_name = f"{base_plot_dir}_{plot_name}"
+
     # Plot before data
-    plot_file_name = base_plot_dir + "_" + plot_name + "_Raw"
+    plot_file_name = f"{base_plot_name}_Raw"
     plot_time_series(data[ind][1], data[ind][0], m=m[ind], show=False, save_name=plot_file_name)
 
     # Plot after data
-    plot_file_name2 = base_plot_dir + "_" + plot_name
     plot_single(np.copy(all_dat[:, col_ind]),
                 m[ind],
                 use_time=True,
                 show=False,
                 title_and_ylab=[title, m[ind]['unit']],
-                save_name=plot_file_name2)
+                save_name=base_plot_name)
 
     return all_dat, dt_init_new
 
