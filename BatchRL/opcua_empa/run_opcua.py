@@ -10,6 +10,7 @@ from opcua_empa.opcua_util import analyze_experiment, check_room_list
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control
 from tests.test_opcua import OfflineClient
+from util.util import prog_verb, ProgWrap
 
 
 def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True):
@@ -20,8 +21,11 @@ def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True)
             print("Running in debug mode!")
 
     # Analyze previous experiment
-    analyze_experiment("2020_01_13T14_22_54_R475_ValveToggle_Experiment2_PT_0",
-                       compute_valve_delay=True)
+    exp_name = "2020_01_15T21_14_51_R475_Experiment_15min_PT_0"
+    with ProgWrap(f"Analyzing experiment {exp_name}...", verbose > 0):
+        analyze_experiment(exp_name,
+                           compute_valve_delay=True,
+                           verbose=prog_verb(verbose))
 
     # Choose experiment name
     exp_name = "Test"

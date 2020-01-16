@@ -240,7 +240,7 @@ class BaseRLController(FixTimeController):
     agent: AbstractAgent = None  #: RL agent
     dt: int = None
 
-    valve_delays: Tuple[float, float] = (232 / 60, 31 / 60)
+    valve_delays: Tuple[float, float] = (0.5, 0.5)
 
     verbose: int
 
