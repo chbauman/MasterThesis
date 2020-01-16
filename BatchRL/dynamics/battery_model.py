@@ -59,9 +59,14 @@ class BatteryModel(BaseDynamicsModel):
     # The data to plot after fitting
     p: np.ndarray = None
     ds: np.ndarray = None
+    soc: np.ndarray = None
 
     masked_p: np.ndarray = None
     masked_ds: np.ndarray = None
+    masked_soc: np.ndarray = None
+    init_data: Tuple[np.ndarray, ...]
+    nan_mask: np.ndarray
+    exp_mask: np.ndarray
 
     def __init__(self, dataset: Dataset, base_ind: int = None):
         """Initializes the battery model with the specified dataset.
@@ -108,13 +113,15 @@ class BatteryModel(BaseDynamicsModel):
         # Extract data
         s_ind, p_ind = self.in_inds
         p = np.copy(dat[1:, p_ind])
-        ds = np.copy(dat[1:, s_ind] - dat[:-1, s_ind])
+        soc = np.copy(dat[:-1, s_ind])
+        ds = np.copy(dat[1:, s_ind] - soc)
+        self.init_data = p, ds, soc
 
         # Remove nans
         not_nans = np.logical_not(np.logical_or(np.isnan(p), np.isnan(ds)))
-        p = p[not_nans]
-        ds = ds[not_nans]
-        self.p, self.ds = p, ds
+        self.nan_mask = not_nans
+        p, ds, soc = (dat[not_nans] for dat in [p, ds, soc])
+        self.p, self.ds, self.soc = p, ds, soc
 
         # Reduce data to exclude strange part
         n_p = len(p)
@@ -122,8 +129,9 @@ class BatteryModel(BaseDynamicsModel):
         m = np.zeros((n_p,), dtype=np.bool)
         m[:n] = True
         m[-n:] = True
-        self.masked_p = p[m]
-        self.masked_ds = ds[m]
+        self.masked_p, self.masked_ds = p[m], ds[m]
+        self.masked_soc = soc[m]
+        self.exp_mask = m
 
         # Fit parameters
         params = fit_linear_bf_1d(self.masked_p, self.masked_ds, self._feat_fun)
@@ -173,11 +181,8 @@ class BatteryModel(BaseDynamicsModel):
         return res
 
     def _get_plot_name(self, base: str, put_on_ol: bool = False):
-        if put_on_ol:
-            p = os.path.join(OVERLEAF_IMG_DIR, base)
-        else:
-            p = self.get_plt_path(base)
-        return p
+        ol_name = os.path.join(OVERLEAF_IMG_DIR, base)
+        return ol_name if put_on_ol else self.get_plt_path(base)
 
     def analyze_bat_model(self, put_on_ol: bool = False, overwrite: bool = False) -> None:
         """This is basically the fit method, but it also
@@ -203,6 +208,25 @@ class BatteryModel(BaseDynamicsModel):
                          m_and_std_y=scale[0],
                          add_line=True,
                          save_name=before_plt_path)
+
+        # Plot residuals vs. SoC
+        res_plt_path = self._get_plot_name("ResVsSoc", put_on_ol)
+        if not os.path.isfile(res_plt_path + ".pdf") or overwrite:
+            labs_res = {"title": "Residual Plot", "xlab": "State of Charge",
+                        "ylab": "Residuals"}
+            p_orig, _, soc_orig = self.init_data
+            res = soc_orig[:-1] + self._eval_at(p_orig[:-1]) - soc_orig[1:]
+            last_bool = self.nan_mask[-1]
+            n_used = len(self.exp_mask) - last_bool
+            filtered_res = res[self.nan_mask[:-1]][self.exp_mask[:n_used]]
+
+            # Plot data
+            n_soc = len(self.masked_soc) - last_bool
+            scatter_plot(self.masked_soc[:n_soc], filtered_res, lab_dict=labs_res,
+                         show=False,
+                         m_and_std_x=d.scaling[self.in_inds[0]],
+                         add_line=True,
+                         save_name=res_plt_path)
 
         # Check if plot already exists
         after_plt_path = self._get_plot_name("Cleaned", put_on_ol)

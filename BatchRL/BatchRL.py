@@ -359,9 +359,9 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
         print("No performance evaluation!")
 
 
-def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
+def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
+                          debug: bool = False):
     # If debug is true, the plots are not saved to Overleaf.
-    debug: bool = False
     if verbose > 0 and debug:
         print("Running in debug mode!")
 
@@ -400,12 +400,19 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
                        overwrite=overwrite)
 
         # Plot prediction performance
-        plot_performance_graph(mod_list, PARTS, METRICS, "WeatherPerformance",
-                               short_mod_names=model_names,
-                               series_mask=None, scale_back=True,
-                               remove_units=False, put_on_ol=not debug,
-                               compare_models=True, overwrite=overwrite,
-                               scale_over_series=True)
+        try:
+            # for m in mod_list:
+            #     m.analyze_performance(metrics=METRICS)
+            plot_performance_graph(mod_list, PARTS, METRICS, "WeatherPerformance",
+                                   short_mod_names=model_names,
+                                   series_mask=None, scale_back=True,
+                                   remove_units=False, put_on_ol=not debug,
+                                   compare_models=True, overwrite=overwrite,
+                                   scale_over_series=True)
+        except OSError as e:
+            if verbose:
+                print(f"{e}")
+                print(f"Need to analyze performance of model first!")
 
     # Heating water constant
     with ProgWrap(f"Plotting heating water...", verbose > 0):
@@ -448,11 +455,11 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False):
     #                            series_mask=np.array([5]), scale_back=True, remove_units=False,
     #                            put_on_ol=True)
 
-    # DDPG Performance Evaluation
-    with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
-        eval_list = [11889]
-        run_room_models(verbose=prog_verb(verbose), put_on_ol=not debug,
-                        eval_list=eval_list)
+    # # DDPG Performance Evaluation
+    # with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
+    #     eval_list = [11889]
+    #     run_room_models(verbose=prog_verb(verbose), put_on_ol=not debug,
+    #                     eval_list=eval_list, alpha=2.5)
     pass
 
 
@@ -810,7 +817,8 @@ def main() -> None:
 
     # Overleaf plots
     if args.plot:
-        update_overleaf_plots(verbose)
+        debug, overwrite = extract_args(args.bool, False, False)
+        update_overleaf_plots(verbose, overwrite=overwrite, debug=debug)
 
     # Opcua
     if args.ua:
