@@ -1,12 +1,12 @@
 import os
-from typing import Callable
+from typing import Callable, Tuple
 
 import numpy as np
 
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import fit_linear_bf_1d, npf32
-from util.util import print_if_verb, yeet
+from util.util import print_if_verb, yeet, Num
 from util.visualize import scatter_plot, OVERLEAF_IMG_DIR
 
 
@@ -51,7 +51,9 @@ class BatteryModel(BaseDynamicsModel):
     average charging power from time t to t+1 (control input)
     """
 
-    feat_fun: Callable = None  #: The function specifying the features.
+    hard_soc_limits: Tuple[Num, Num] = (10.0, 90.0)  #: SoC limit for prediction.
+
+    _feat_fun: Callable = None  #: The function specifying the features.
     params: np.ndarray = None  #: Parameters of the pw linear model.
 
     # The data to plot after fitting
@@ -76,7 +78,7 @@ class BatteryModel(BaseDynamicsModel):
                          in_inds=in_inds)
 
         # Define feature function
-        self.feat_fun = pw_lin_fun_factory(cont_at_zero=True)
+        self._feat_fun = pw_lin_fun_factory(cont_at_zero=True)
 
     def fit(self, verbose: int = 0) -> None:
         """Fits the battery model.
@@ -118,14 +120,8 @@ class BatteryModel(BaseDynamicsModel):
         self.masked_p = p[m]
         self.masked_ds = ds[m]
 
-        # Fit linear Model and filter out outliers
-        # fitted_ds = fit_linear_1d(p, ds, p)
-        # mask = np.logical_or(ds > fitted_ds - 0.35, p < -1.0)
-        # self.masked_p = p[mask]
-        # self.masked_ds = ds[mask]
-
         # Fit parameters
-        params = fit_linear_bf_1d(self.masked_p, self.masked_ds, self.feat_fun)
+        params = fit_linear_bf_1d(self.masked_p, self.masked_ds, self._feat_fun)
         self.params = params
 
         # Remove outliers based on fit
@@ -136,7 +132,7 @@ class BatteryModel(BaseDynamicsModel):
         self.masked_ds = self.masked_ds[errs < thresh]
 
         # Update params
-        params = fit_linear_bf_1d(self.masked_p, self.masked_ds, self.feat_fun)
+        params = fit_linear_bf_1d(self.masked_p, self.masked_ds, self._feat_fun)
         self.params = params
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
@@ -151,7 +147,9 @@ class BatteryModel(BaseDynamicsModel):
         p = np.copy(in_data[:, -1, 1])
         s_t = np.copy(in_data[:, -1, 0])
 
+        # Evaluate model and clip to limits
         s_tp1 = s_t + self._eval_at(p)
+        s_tp1 = np.clip(s_tp1, *self.hard_soc_limits)
         return s_tp1.reshape((-1, 1))
 
     def disturb(self):
@@ -164,7 +162,7 @@ class BatteryModel(BaseDynamicsModel):
         if self.params is None:
             yeet("Need to fit battery model first!")
         res = 0
-        f_eval = self.feat_fun(p)
+        f_eval = self._feat_fun(p)
         for ct, p in enumerate(self.params):
             res += p * f_eval[:, ct]
         return res
