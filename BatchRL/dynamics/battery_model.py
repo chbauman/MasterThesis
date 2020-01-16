@@ -5,14 +5,13 @@ import numpy as np
 
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
-from util.numerics import fit_linear_bf_1d, npf32
+from util.numerics import fit_linear_bf_1d, npf32, trf_mean_and_std
 from util.util import print_if_verb, yeet, Num
 from util.visualize import scatter_plot, OVERLEAF_IMG_DIR
 
 
 # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
 def pw_lin_fun_factory(cont_at_zero: bool = True, through_zero: bool = False) -> Callable:
-
     fun_list = [
         lambda x: x,
         lambda x: np.maximum(0.0, x),
@@ -52,6 +51,7 @@ class BatteryModel(BaseDynamicsModel):
     """
 
     hard_soc_limits: Tuple[Num, Num] = (10.0, 90.0)  #: SoC limit for prediction.
+    _scaled_soc_limits: Tuple[Num, Num]
 
     _feat_fun: Callable = None  #: The function specifying the features.
     params: np.ndarray = None  #: Parameters of the pw linear model.
@@ -79,6 +79,11 @@ class BatteryModel(BaseDynamicsModel):
 
         # Define feature function
         self._feat_fun = pw_lin_fun_factory(cont_at_zero=True)
+
+        # Scale soc limits
+        scale = np.copy(dataset.scaling[self.in_inds[0]])
+        self._scaled_soc_limits = tuple(trf_mean_and_std(np.array(self.hard_soc_limits),
+                                                         scale, remove=True))
 
     def fit(self, verbose: int = 0) -> None:
         """Fits the battery model.
@@ -149,7 +154,7 @@ class BatteryModel(BaseDynamicsModel):
 
         # Evaluate model and clip to limits
         s_tp1 = s_t + self._eval_at(p)
-        s_tp1 = np.clip(s_tp1, *self.hard_soc_limits)
+        s_tp1 = np.clip(s_tp1, *self._scaled_soc_limits)
         return s_tp1.reshape((-1, 1))
 
     def disturb(self):
