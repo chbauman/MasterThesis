@@ -7,7 +7,7 @@ from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import fit_linear_bf_1d, npf32, trf_mean_and_std
 from util.util import print_if_verb, yeet, Num
-from util.visualize import scatter_plot, OVERLEAF_IMG_DIR
+from util.visualize import scatter_plot, OVERLEAF_IMG_DIR, basic_plot
 
 
 # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
@@ -211,7 +211,9 @@ class BatteryModel(BaseDynamicsModel):
 
         # Plot residuals vs. SoC
         res_plt_path = self._get_plot_name("ResVsSoc", put_on_ol)
-        if not os.path.isfile(res_plt_path + ".pdf") or overwrite:
+        res_time_plt_path = self._get_plot_name("ResVsTime", put_on_ol)
+        if not os.path.isfile(res_plt_path + ".pdf") or overwrite or \
+                not os.path.isfile(res_time_plt_path + ".pdf"):
             labs_res = {"title": "Residual Plot", "xlab": "State of Charge",
                         "ylab": "Residuals"}
             p_orig, _, soc_orig = self.init_data
@@ -227,6 +229,11 @@ class BatteryModel(BaseDynamicsModel):
                          m_and_std_x=d.scaling[self.in_inds[0]],
                          add_line=True,
                          save_name=res_plt_path)
+
+            # Plot residuals vs. time
+            time_labs = ("Time", "Residuals")
+            basic_plot(None, filtered_res, res_time_plt_path,
+                       time_labs)
 
         # Check if plot already exists
         after_plt_path = self._get_plot_name("Cleaned", put_on_ol)

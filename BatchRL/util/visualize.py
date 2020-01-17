@@ -103,7 +103,6 @@ def _plot_helper(x, y, m_col='blue', label: str = None,
     """Defining basic plot style for all plots.
 
     TODO: Make x optional. (Except for `dates` == True case!)
-    TODO: Add grid!
 
     Args:
         x: X values
@@ -137,7 +136,25 @@ def _plot_helper(x, y, m_col='blue', label: str = None,
     return plot_method(x, y, **kwargs)
 
 
-# Plotting raw data series
+def basic_plot(x, y, save_name: str,
+               xy_lab: Tuple[str, str] = (None, None),
+               title: str = None):
+    """Simple plot function that plots one data series."""
+
+    if x is None:
+        x = range(len(y))
+    _plot_helper(x, y)
+
+    # Set labels and title
+    plt.ylabel(xy_lab[1])
+    plt.xlabel(xy_lab[0])
+    if title is not None:
+        plt.title(title)
+
+    # Save
+    save_figure(save_name)
+
+
 def plot_time_series(x, y, m: Dict, show: bool = True,
                      series_index: int = 0,
                      title: str = None,
@@ -234,7 +251,7 @@ def plot_ip_time_series(y, lab=None, m=None, show=True, init=None, mean_and_stds
     # Show plot
     if show:
         plt.show()
-    return
+    raise NotImplementedError("This was deprecated as of 17.01.20.")
 
 
 def plot_single_ip_ts(y,
