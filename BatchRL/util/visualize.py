@@ -929,6 +929,7 @@ def plot_reward_details(labels: Sequence[str],
         title_ext: Extension to add to the title.
         scale_tot_rew: Whether to scale the total reward to a nice range.
         sum_reward: Whether to sum the rewards instead of averaging it.
+        tol: Values smaller than `tol` will be set to 0.0 to avoid very small numbers in plot.
     """
     n_agents, _, n_rewards = rewards.shape
     assert n_rewards == len(rew_descs) + 1, "No correct number of descriptions!"
