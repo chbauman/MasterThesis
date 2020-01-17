@@ -915,7 +915,8 @@ def plot_reward_details(labels: Sequence[str],
                         n_eval_steps: int = 2000,
                         title_ext: str = None,
                         scale_tot_rew: bool = True,
-                        sum_reward: bool = False) -> None:
+                        sum_reward: bool = False,
+                        tol: float = 0.0005) -> None:
     """Creates a bar plot with the different rewards of the different agents.
 
     Args:
@@ -950,6 +951,9 @@ def plot_reward_details(labels: Sequence[str],
         max_tot = np.max(np.abs(mean_rewards[:, 0]))
         max_not_tot = np.max(np.abs(mean_rewards[:, 1:]))
         mean_rewards[:, 0] *= max_not_tot / max_tot
+
+    if tol > 0:
+        mean_rewards[np.abs(mean_rewards) < tol] = 0.0
 
     fig, ax = plt.subplots()
 
