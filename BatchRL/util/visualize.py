@@ -914,7 +914,8 @@ def plot_reward_details(labels: Sequence[str],
                         dt: int = 15,
                         n_eval_steps: int = 2000,
                         title_ext: str = None,
-                        scale_tot_rew: bool = True) -> None:
+                        scale_tot_rew: bool = True,
+                        sum_reward: bool = False) -> None:
     """Creates a bar plot with the different rewards of the different agents.
 
     Args:
@@ -926,17 +927,23 @@ def plot_reward_details(labels: Sequence[str],
         n_eval_steps: Number of evaluation steps.
         title_ext: Extension to add to the title.
         scale_tot_rew: Whether to scale the total reward to a nice range.
+        sum_reward: Whether to sum the rewards instead of averaging it.
     """
-    n_rewards = rewards.shape[-1]
+    n_agents, _, n_rewards = rewards.shape
     assert n_rewards == len(rew_descs) + 1, "No correct number of descriptions!"
-    mean_rewards = np.mean(rewards, axis=1)
+    assert n_agents == len(labels)
+    red_fun = np.sum if sum_reward else np.mean
+    mean_rewards = red_fun(rewards, axis=1)
     all_descs = ["Total Reward"] + rew_descs
 
-    title = f"Mean rewards per hour for {n_eval_steps} steps. "
+    agg_rew = "Total reward" if sum_reward else "Mean rewards per hour"
+    title = f"{agg_rew} for {n_eval_steps} steps. "
     if title_ext is not None:
         title += title_ext
-    fac = 60 / dt
-    mean_rewards *= fac
+
+    if not sum_reward:
+        fac = 60 / dt
+        mean_rewards *= fac
 
     if scale_tot_rew and n_rewards > 1:
         # Scale the maximum reward to the same magnitude of any of the other parts
@@ -968,7 +975,7 @@ def plot_reward_details(labels: Sequence[str],
         """Attach a text label above each bar in *rects*, displaying its height."""
         for rect in rect_list:
             height = rect.get_height()
-            ax.annotate('{height:.4g}',
+            ax.annotate(f'{height:.4g}',
                         xy=(rect.get_x() + rect.get_width() / 2, height),
                         xytext=(0, 3),  # 3 points vertical offset
                         textcoords="offset points",

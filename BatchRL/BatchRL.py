@@ -282,8 +282,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
         m_name = "FullState_Comp_Phys"
 
     if eval_list is None:
-        eval_list = [0, 2595, 8221]
-        eval_list = [None, None, None, None]
+        eval_list = [0, 2595, 8221, None]
+        # eval_list = [None, None, None, None]
 
     # Get dataset and constraints
     with ProgWrap(f"Loading dataset...", verbose > 0):

@@ -390,10 +390,10 @@ class DynEnv(ABC, gym.Env):
         action_sequences.fill(np.nan)
         clipped_action_sequences = np.empty((n_agents, self.n_ts_per_eps, self.act_dim), dtype=np.float32)
         clipped_action_sequences.fill(np.nan)
-        trajectories = np.empty((n_agents, self.n_ts_per_eps, n_non_c_states), dtype=np.float32)
-        trajectories.fill(np.nan)
-        rewards = np.empty((n_agents, self.n_ts_per_eps), dtype=np.float32)
-        rewards.fill(np.nan)
+        trajectories = npf32((n_agents, self.n_ts_per_eps, n_non_c_states), fill=np.nan)
+        rewards = npf32((n_agents, self.n_ts_per_eps), fill=np.nan)
+        n_tot_rewards = len(self.reward_descs) + 1
+        all_rewards = npf32((n_agents, self.n_ts_per_eps, n_tot_rewards), fill=np.nan)
 
         for a_id, a in enumerate(agents):
             # Check that agent references this environment
@@ -415,11 +415,17 @@ class DynEnv(ABC, gym.Env):
             # Evaluate agent and save states, actions and reward
             while not episode_over and count < max_steps:
                 curr_action = a.get_action(curr_state)
+                scaled_a = self.scale_action_for_step(curr_action)
+
                 curr_state, rew, episode_over, extra = self.step(curr_action)
+                det_rew = self.detailed_reward(curr_state, scaled_a)
                 action_sequences[a_id, count, :] = curr_action
 
+                # Save trajectories and reward
                 trajectories[a_id, count, :] = np.copy(curr_state)
                 rewards[a_id, count] = rew
+                all_rewards[a_id, count, 0] = rew
+                all_rewards[a_id, count, 1:] = det_rew
                 count += 1
 
             # Get original actions
@@ -451,6 +457,13 @@ class DynEnv(ABC, gym.Env):
                             state_mask, show_rewards=show_rewards, title_ext=title_ext,
                             np_dt_init=np_st_init, rew_save_path=add_pth, bounds=bounds,
                             series_merging_list=series_merging_list)
+
+        # Plot the rewards for this episode
+        add_pth = self._construct_plot_name("AgentAnalysisRewardDetailed", start_ind, agents, put_on_ol)
+        names = [a.get_short_name() for a in agents]
+        plot_reward_details(names, all_rewards, add_pth,
+                            self.reward_descs, self.m.data.dt, self.n_ts_per_eps,
+                            title_ext=title_ext)
 
     def _construct_plot_name(self, base_name: str, start_ind: int, agent_list: List,
                              put_on_ol: bool = False):
