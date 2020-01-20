@@ -167,7 +167,6 @@ class TestBatteryEnv(TestCase):
 
     def test_detailed_analysis(self):
         self.env.detailed_eval_agents([self.ag_1, self.ag_2], n_steps=10)
-        self.env.detailed_eval_agents([self.ag_1, self.ag_2], n_steps=10, plt_fun=plot_heat_cool_rew_det)
 
     def test_scaled(self):
         self.assertTrue(self.env.scaling is not None, "Data should be scaled!!")
@@ -296,7 +295,9 @@ class TestFullEnv(TestCase):
         self.full_env = RoomBatteryEnv(mod, p, max_eps=5)
 
         mod2 = get_full_composite_model(standardized=True, dt_h=6)
+        mod2.name = "FullTestModel2"
         self.full_env2 = RoomBatteryEnv(mod2, p, max_eps=5)
+        self.full_env2.name = "TestFullBatteryRoomModelTest2"
         self.full_env2.connect_inds = (1, 3)
 
     def test_get_scaled_init_state(self):
@@ -364,6 +365,12 @@ class TestFullEnv(TestCase):
         self.assertEqual(len(self.full_env.reward_descs), 4,
                          "Reward descriptions incorrect!")
         self.full_env.detailed_eval_agents([ag1, ag2], n_steps=3, use_noise=False)
+
+    def test_agents_eval_2(self):
+        ag1 = agents_heuristic.ConstActionAgent(self.full_env2, 10.0)
+        ag2 = agents_heuristic.ConstActionAgent(self.full_env2, -10.0)
+        self.full_env2.detailed_eval_agents([ag1, ag2], n_steps=3, use_noise=False,
+                                            plt_fun=plot_heat_cool_rew_det)
 
     def test_ddpg_test_agent(self):
         ddpg_ag = get_keras_test_agent(self.full_env)

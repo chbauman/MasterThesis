@@ -84,7 +84,7 @@ class AgentBase(AbstractAgent, ABC):
         det_rewards, state_t = None, None
         if detailed:
             n_det = len(self.env.reward_descs)
-            n_states = self.env.state_dim
+            n_states = self.env.state_dim - self.env.act_dim
             det_rewards = npf32((n_steps, n_det), fill=np.nan)
             state_t = npf32((n_steps, n_states), fill=np.nan)
         elif scale_states:

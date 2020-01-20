@@ -522,7 +522,9 @@ class DynEnv(ABC, gym.Env):
         n_extra_rewards = len(self.reward_descs)
         n_tot_rewards = n_extra_rewards + 1
         all_rewards = npf32((n_agents, n_steps, n_tot_rewards))
-        all_states = npf32((n_agents, n_steps, self.state_dim))
+        all_states = npf32((n_agents, n_steps, self.state_dim - self.act_dim))
+
+        do_scaling = self.m.data.fully_scaled
 
         if verbose > 0:
             print("Evaluating agents...")
@@ -540,7 +542,7 @@ class DynEnv(ABC, gym.Env):
 
             # Evaluate agent.
             rew, ex_rew, states = a.eval(n_steps, reset_seed=True, detailed=True,
-                                         use_noise=use_noise, scale_states=True)
+                                         use_noise=use_noise, scale_states=do_scaling)
             all_rewards[a_id, :, 0] = rew
             all_rewards[a_id, :, 1:] = ex_rew
             all_states[a_id] = states
