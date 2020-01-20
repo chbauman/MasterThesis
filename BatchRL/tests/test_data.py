@@ -141,25 +141,30 @@ class TestDataset(TestCase):
         # Create MDV
         self.mdv = ModelDataView(self.ds_nan, "Test", 2, 7)
 
+    def scaling_helper(self, sc_state, uns_state, **kwargs):
+        sc_state_exp = self.ds.scale(uns_state, remove_mean=True, **kwargs)
+        uns_state_exp = self.ds.scale(sc_state, remove_mean=False, **kwargs)
+        assert np.allclose(sc_state, sc_state_exp, atol=1.e-6), f"{sc_state} != {sc_state_exp}"
+        assert np.allclose(uns_state, uns_state_exp, atol=1.e-6), f"{uns_state} != {uns_state_exp}"
+
     def test_scale_fun(self):
         # This fails sometimes...
         ind = np.random.randint(0, len(self.dat))
         uns_state = self.dat[ind]
         sc_state = self.ds.data[ind]
-        sc_state_exp = self.ds.scale(uns_state, remove_mean=True)
-        uns_state_exp = self.ds.scale(sc_state, remove_mean=False)
-        assert np.allclose(sc_state, sc_state_exp), f"{sc_state} != {sc_state_exp}"
-        assert np.allclose(uns_state, uns_state_exp), f"{uns_state} != {uns_state_exp}"
+        self.scaling_helper(sc_state, uns_state)
 
     def test_scale_fun_2(self):
         ind = np.random.randint(0, len(self.dat))
         uns_state_c = self.dat[ind][self.c_inds]
         sc_state_c = self.ds.data[ind][self.c_inds]
-        sc_state_exp = self.ds.scale(uns_state_c, remove_mean=True, control_only=True)
-        uns_state_exp = self.ds.scale(sc_state_c, remove_mean=False, control_only=True)
-        assert np.allclose(sc_state_c, sc_state_exp), f"{sc_state_c} != {sc_state_exp}"
-        assert np.allclose(uns_state_c, uns_state_exp), f"{uns_state_c} != {uns_state_exp}"
+        self.scaling_helper(sc_state_c, uns_state_c, control_only=True)
 
+    def test_scale_fun_3(self):
+        uns_state_c = self.dat[:, self.ds.non_c_inds]
+        sc_state_c = self.ds.data[:, self.ds.non_c_inds]
+        self.scaling_helper(sc_state_c, uns_state_c, state_only=True)
+        
     def test_slice_time(self):
         ds_sliced = self.ds_nan.slice_time(4, 8)
         self.assertTrue(np.all(np.logical_not(np.isnan(ds_sliced.data))))
