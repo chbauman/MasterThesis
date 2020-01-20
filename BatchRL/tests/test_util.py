@@ -16,7 +16,7 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
     get_metrics_eval_save_name_list, load_performance, MSE, find_inds, nan_avg_between, int_to_sin_cos, \
-    find_sequence_inds, remove_nan_rows
+    find_sequence_inds, remove_nan_rows, contrary_indices
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, \
     yeet, \
@@ -112,6 +112,15 @@ class TestNumerics(TestCase):
         self.assertEqual(np.datetime64('now'), "test")
 
         np.datetime64 = orig_np_dt64
+
+    def test_contrary_indices(self):
+        inds = np.array([1, 3])
+        c_inds = contrary_indices(inds, tot_len=5)
+        exp_out = np.array([0, 2, 4])
+        self.assertTrue(np.array_equal(c_inds, exp_out), "Wrong indices!")
+        c_inds_2 = contrary_indices(np.array([], dtype=np.int32), tot_len=2)
+        exp_out_2 = np.array([0, 1])
+        self.assertTrue(np.array_equal(c_inds_2, exp_out_2), "Wrong indices!")
 
     def test_int_to_sin_cos(self):
         inds = np.array([0, 1, 2])

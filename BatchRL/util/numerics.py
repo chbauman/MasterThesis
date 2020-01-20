@@ -511,6 +511,31 @@ def copy_arr_list(arr_list: Sequence[Arr]) -> Sequence[Arr]:
     return copied_arr_list
 
 
+def contrary_indices(inds: np.ndarray, tot_len: int = None) -> np.ndarray:
+    """Returns all indices that are not in `inds`.
+
+    If `inds` is empty, `tot_len` cannot be None.
+
+    Args:
+        inds: The original indices.
+        tot_len: The highest possible index, max of `inds` if None.
+
+    Returns:
+        New indices, 1d int array.
+    """
+    if tot_len is None:
+        assert len(inds) > 0
+        tot_len = np.max(inds)
+    else:
+        arr_max = 0 if inds.size == 0 else np.max(inds)
+        assert arr_max < tot_len
+
+    all_inds = np.ones((tot_len, ), dtype=np.bool)
+    all_inds[inds] = False
+
+    return np.where(all_inds)[0]
+
+
 def solve_ls(a_mat: np.ndarray, b: np.ndarray, offset: bool = False,
              non_neg: bool = False,
              ret_fit: bool = False):
