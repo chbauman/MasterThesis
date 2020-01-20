@@ -59,7 +59,7 @@ class DynEnv(ABC, gym.Env):
     # Scaling info
     info: Dict = None  #: A dict with info about the current agent.
     do_scaling: bool = False
-    a_scaling_pars: Tuple[np.ndarray, np.ndarray] = None
+    a_scaling_pars: Tuple[np.ndarray, np.ndarray] = None  #: Extra scaling parameters.
 
     # Plotting default values
     default_state_mask: np.ndarray = None
@@ -83,15 +83,16 @@ class DynEnv(ABC, gym.Env):
         self.plot_path = os.path.join(rl_plot_path, self.name)
 
         # Set attributes.
+        dat = m.data
         self.disturb_fac = disturb_fac
-        self.act_dim = m.data.n_c
-        self.state_dim = m.data.d
+        self.act_dim = dat.n_c
+        self.state_dim = dat.d
 
         # Time indices
         self.n_ts_per_eps = 100 if max_eps is None else max_eps
-        self.t_init_n = day_offset_ts(self.m.data.t_init, self.m.data.dt,
+        self.t_init_n = day_offset_ts(dat.t_init, dat.dt,
                                       remaining=False)
-        self.n_ts_per_day = ts_per_day(self.m.data.dt)
+        self.n_ts_per_day = ts_per_day(dat.dt)
 
         # Set data and initialize env.
         self._set_data("train")
@@ -298,7 +299,7 @@ class DynEnv(ABC, gym.Env):
         self.reset(init_ind, use_noise=False)
         curr_s = self.curr_state
         scaling = self.m.data.scaling
-        h_in_and_out = npf32((2,))
+        h_in_and_out = npf32((len(heat_inds),))
         for ct, k in enumerate(heat_inds):
             h_in_and_out[ct] = trf_mean_and_std(curr_s[k], scaling[k], remove=False)
         return h_in_and_out
@@ -386,10 +387,8 @@ class DynEnv(ABC, gym.Env):
         # Define arrays to save trajectories
         n_non_c_states = self.state_dim - self.act_dim
         n_agents = len(agents)
-        action_sequences = np.empty((n_agents, self.n_ts_per_eps, self.act_dim), dtype=np.float32)
-        action_sequences.fill(np.nan)
-        clipped_action_sequences = np.empty((n_agents, self.n_ts_per_eps, self.act_dim), dtype=np.float32)
-        clipped_action_sequences.fill(np.nan)
+        action_sequences = npf32((n_agents, self.n_ts_per_eps, self.act_dim), fill=np.nan)
+        clipped_action_sequences = npf32((n_agents, self.n_ts_per_eps, self.act_dim), fill=np.nan)
         trajectories = npf32((n_agents, self.n_ts_per_eps, n_non_c_states), fill=np.nan)
         rewards = npf32((n_agents, self.n_ts_per_eps), fill=np.nan)
         n_tot_rewards = len(self.reward_descs) + 1
@@ -400,7 +399,7 @@ class DynEnv(ABC, gym.Env):
             if not a.env == self:
                 raise ValueError(f"Agent {a_id} was not assigned to this env!")
 
-            # Set agent
+            # Set agent, required for the ones that need special scaling
             self.set_agent(a)
 
             # Fit agent if not already fitted
@@ -475,6 +474,7 @@ class DynEnv(ABC, gym.Env):
         return self.get_plt_path(base)
 
     def _get_detail_eval_title_ext(self):
+        # For the water temperature info in the title, see overriding method.
         # This is so fucking ugly!
         return None
 

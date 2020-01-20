@@ -431,10 +431,8 @@ def trf_mean_and_std(ts: Arr, mean_and_std: Sequence, remove: bool = True) -> Ar
     Returns:
         New time series with mean and std removed or added.
     """
-    if remove:
-        return rem_mean_and_std(ts, mean_and_std)
-    else:
-        return add_mean_and_std(ts, mean_and_std)
+    f = rem_mean_and_std if remove else add_mean_and_std
+    return f(ts, mean_and_std)
 
 
 def add_mean_and_std(ts: Arr, mean_and_std: Sequence) -> Arr:
@@ -464,7 +462,7 @@ def rem_mean_and_std(ts: Arr, mean_and_std: Sequence) -> Arr:
     """
     if len(mean_and_std) < 2:
         raise ValueError("Invalid value for mean_and_std")
-    if mean_and_std[1] == 0:
+    if np.any(mean_and_std[1] == 0):
         raise ZeroDivisionError("Standard deviation cannot be 0")
     return (ts - mean_and_std[0]) / mean_and_std[1]
 

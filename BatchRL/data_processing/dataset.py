@@ -506,6 +506,12 @@ class Dataset:
                 data_out[:, k] = add_mean_and_std(data_out[:, k], self.scaling[k, :])
         return data_out
 
+    def scale(self, state: np.ndarray, remove_mean: bool = True) -> np.ndarray:
+        assert self.fully_scaled, f"Dataset not fully scaled!"
+        scaled_state = trf_mean_and_std(state, (self.scaling[:, 0], self.scaling[:, 1]),
+                                        remove=remove_mean)
+        return scaled_state
+
     @staticmethod
     def get_filename(name: str) -> str:
         """Returns path where to store this `Dataset`."""

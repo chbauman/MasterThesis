@@ -46,7 +46,7 @@ class AgentBase(AbstractAgent, ABC):
         """No fitting needed."""
         pass
 
-    def get_short_name(self):
+    def get_short_name(self) -> str:
         return self.name
 
     def get_info(self) -> Dict:

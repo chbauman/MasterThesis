@@ -112,12 +112,12 @@ class TestDataset(TestCase):
         super().__init__(*args, **kwargs)
 
         # Define dataset
-        dat = np.array([0, 2, 3, 7, 8,
-                        1, 3, 4, 8, 9,
-                        1, 4, 5, 7, 8,
-                        2, 5, 6, 7, 9], dtype=np.float32).reshape((4, -1))
+        self.dat = np.array([0, 2, 3, 7, 8,
+                             1, 3, 4, 8, 9,
+                             1, 4, 5, 7, 8,
+                             2, 5, 6, 7, 9], dtype=np.float32).reshape((4, -1))
         self.c_inds = np.array([1, 3])
-        self.ds = get_test_ds(dat, self.c_inds)
+        self.ds = get_test_ds(np.copy(self.dat), self.c_inds)
         self.ds.standardize()
 
         # Dataset containing nans
@@ -140,6 +140,13 @@ class TestDataset(TestCase):
 
         # Create MDV
         self.mdv = ModelDataView(self.ds_nan, "Test", 2, 7)
+
+    def test_scale_fun(self):
+        ind = np.random.randint(0, len(self.dat))
+        uns_state = self.dat[ind]
+        sc_state = self.ds.data[ind]
+        assert np.allclose(sc_state, self.ds.scale(uns_state, remove_mean=True))
+        assert np.allclose(uns_state, self.ds.scale(sc_state, remove_mean=False))
 
     def test_slice_time(self):
         ds_sliced = self.ds_nan.slice_time(4, 8)
