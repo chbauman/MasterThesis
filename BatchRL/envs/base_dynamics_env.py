@@ -461,7 +461,7 @@ class DynEnv(ABC, gym.Env):
         add_pth = self._construct_plot_name("AgentAnalysisRewardDetailed", start_ind, agents, put_on_ol)
         names = [a.get_short_name() for a in agents]
         plot_reward_details(names, all_rewards, add_pth,
-                            self.reward_descs, self.m.data.dt, self.n_ts_per_eps,
+                            self.reward_descs, dt=self.m.data.dt, n_eval_steps=self.n_ts_per_eps,
                             title_ext=title_ext)
 
     def _construct_plot_name(self, base_name: str, start_ind: int, agent_list: List,
@@ -500,6 +500,7 @@ class DynEnv(ABC, gym.Env):
             put_on_ol: Whether to put the resulting plot into the Overleaf plot folder.
             overwrite: Whether to overwrite pre-existing plot files.
             verbose: Verbosity.
+            plt_fun: The plotting function.
 
         Returns:
             The rewards seen by all the agents, or None if `overwrite` is False

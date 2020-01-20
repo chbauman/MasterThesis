@@ -904,13 +904,38 @@ def plot_env_evaluation(actions: np.ndarray,
     if rew_save_path is not None:
         n_rewards = rewards.shape[1]
         r_res = rewards.reshape((n_agents, n_rewards, 1))
-        plot_reward_details(agent_names, r_res, rew_save_path, [], ds.dt, n_rewards)
+        plot_reward_details(agent_names, r_res, rew_save_path, [],
+                            dt=ds.dt, n_eval_steps=n_rewards)
+
+
+def plot_heat_cool_rew_det(*args, **kwargs):
+    plot_reward_details(*args, **kwargs)
+
+    # Extract states and rewards
+    all_states = kwargs['all_states']
+    labels, rewards, path_name = args[:3]
+
+    heat_mask = all_states[:, :, 2] > all_states[:, :, 4]
+    assert np.allclose(np.max(heat_mask, axis=0), np.min(heat_mask, axis=0))
+    heat_mask = heat_mask[0]
+
+    heat_rewards = rewards[:, heat_mask]
+    cool_rewards = rewards[:, np.logical_not(heat_mask)]
+
+    heat_path = f"{path_name}_Heat"
+    cool_path = f"{path_name}_Cool"
+
+    print(heat_path)
+    print(cool_path)
+
+    plot_reward_details(labels, heat_rewards, heat_path, **kwargs)
+    plot_reward_details(labels, cool_rewards, cool_path, **kwargs)
 
 
 def plot_reward_details(labels: Sequence[str],
                         rewards: np.ndarray,
                         path_name: str,
-                        rew_descs: List[str],
+                        rew_descs: List[str], *,
                         dt: int = 15,
                         n_eval_steps: int = 2000,
                         title_ext: str = None,

@@ -12,6 +12,7 @@ from tests.test_data import construct_test_ds
 from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model, get_full_composite_model
 from util.numerics import rem_mean_and_std, add_mean_and_std
 from util.util import Arr
+from util.visualize import plot_heat_cool_rew_det
 
 
 def get_keras_test_agent(env: RLDynEnv) -> DDPGBaseAgent:
@@ -166,6 +167,7 @@ class TestBatteryEnv(TestCase):
 
     def test_detailed_analysis(self):
         self.env.detailed_eval_agents([self.ag_1, self.ag_2], n_steps=10)
+        self.env.detailed_eval_agents([self.ag_1, self.ag_2], n_steps=10, plt_fun=plot_heat_cool_rew_det)
 
     def test_scaled(self):
         self.assertTrue(self.env.scaling is not None, "Data should be scaled!!")
