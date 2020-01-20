@@ -909,6 +909,7 @@ def plot_env_evaluation(actions: np.ndarray,
 
 
 def plot_heat_cool_rew_det(*args, **kwargs):
+    """Plotting reward details separately for heating and cooling."""
     plot_reward_details(*args, **kwargs)
 
     # Extract states and rewards
@@ -924,11 +925,10 @@ def plot_heat_cool_rew_det(*args, **kwargs):
     heat_path = f"{path_name}_Heat"
     cool_path = f"{path_name}_Cool"
 
-    print(heat_path)
-    print(cool_path)
-
-    plot_reward_details(labels, heat_rewards, heat_path, *args[3:], **kwargs)
-    plot_reward_details(labels, cool_rewards, cool_path, *args[3:], **kwargs)
+    if heat_rewards.size != 0:
+        plot_reward_details(labels, heat_rewards, heat_path, *args[3:], **kwargs)
+    if cool_rewards.size != 0:
+        plot_reward_details(labels, cool_rewards, cool_path, *args[3:], **kwargs)
 
 
 def plot_reward_details(labels: Sequence[str],

@@ -2,7 +2,7 @@ mock
 scikit-learn
 requests
 opcua
-tensorflow==1.13.2
+tensorflow==1.14
 matplotlib
 pandas
 scipy

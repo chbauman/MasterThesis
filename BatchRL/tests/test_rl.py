@@ -369,7 +369,7 @@ class TestFullEnv(TestCase):
     def test_agents_eval_2(self):
         ag1 = agents_heuristic.ConstActionAgent(self.full_env2, 10.0)
         ag2 = agents_heuristic.ConstActionAgent(self.full_env2, -10.0)
-        self.full_env2.detailed_eval_agents([ag1, ag2], n_steps=3, use_noise=False,
+        self.full_env2.detailed_eval_agents([ag1, ag2], n_steps=20, use_noise=False,
                                             plt_fun=plot_heat_cool_rew_det,
                                             episode_marker=heat_marker)
 

@@ -19,6 +19,7 @@ Plots/*
 EulerPlots/*
 
 venv
+venv_upgrade
 
 BatchRL/lsf.*
 BatchRL/test.pdf
