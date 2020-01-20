@@ -164,7 +164,7 @@ class TestDataset(TestCase):
         uns_state_c = self.dat[:, self.ds.non_c_inds]
         sc_state_c = self.ds.data[:, self.ds.non_c_inds]
         self.scaling_helper(sc_state_c, uns_state_c, state_only=True)
-        
+
     def test_slice_time(self):
         ds_sliced = self.ds_nan.slice_time(4, 8)
         self.assertTrue(np.all(np.logical_not(np.isnan(ds_sliced.data))))

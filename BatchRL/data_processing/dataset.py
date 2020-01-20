@@ -518,6 +518,23 @@ class Dataset:
               state_only: bool = False,
               control_only: bool = False,
               ) -> np.ndarray:
+        """Scales the given data according to the own scaling.
+
+        Dataset needs to be scaled, otherwise no scaling info is available
+        and an AssertionError will be raised. If `state_only` is true,
+        it is assumed that the data does not contain any control series,
+        if `control_only` is true, then the data should only contain (all)
+        control series.
+
+        Args:
+            state: The data to be scaled.
+            remove_mean: Whether to remove the mean and the std.
+            state_only: Whether only state data is given.
+            control_only: Whether only control data is given.
+
+        Returns:
+            Scaled data.
+        """
 
         # Test a few properties
         assert self.fully_scaled, f"Dataset not fully scaled!"
