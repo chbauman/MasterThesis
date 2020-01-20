@@ -26,13 +26,14 @@ from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel, PhysicallyConsistentRNN
 from dynamics.sin_cos_time import SCTimeModel
-from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv, LowHighProfile
+from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv, LowHighProfile, heat_marker
 from opcua_empa.run_opcua import try_opcua
 from rest.client import test_rest_client
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args
-from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset
+from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
+    plot_heat_cool_rew_det
 
 # Define the models by name
 base_rnn_models = [
@@ -351,10 +352,12 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
     # Do performance evaluation
     if perf_eval:
         with ProgWrap(f"Evaluating agents...", verbose > 0):
-            n_eval_steps = 5000  # n_steps // 100
+            n_eval_steps = 10000  # n_steps // 100
             env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps,
                                      put_on_ol=put_on_ol, overwrite=overwrite,
-                                     verbose=prog_verb(verbose))
+                                     verbose=prog_verb(verbose),
+                                     plt_fun=plot_heat_cool_rew_det,
+                                     episode_marker=heat_marker)
     elif verbose > 0:
         print("No performance evaluation!")
 
@@ -810,10 +813,11 @@ def main() -> None:
         # Room model
         alpha = args.float[0] if args.float is not None else None
         n_steps = extract_args(args.int, None)[0]
-        add_bat, perf_eval, phys_cons = extract_args(args.bool, False, False, False)
+        ext_args = extract_args(args.bool, False, False, False, False)
+        add_bat, perf_eval, phys_cons, overwrite = ext_args
         run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps,
                         include_battery=add_bat, perf_eval=perf_eval,
-                        physically_consistent=phys_cons)
+                        physically_consistent=phys_cons, overwrite=overwrite)
 
     # Overleaf plots
     if args.plot:
