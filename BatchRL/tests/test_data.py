@@ -151,6 +151,15 @@ class TestDataset(TestCase):
         assert np.allclose(sc_state, sc_state_exp), f"{sc_state} != {sc_state_exp}"
         assert np.allclose(uns_state, uns_state_exp), f"{uns_state} != {uns_state_exp}"
 
+    def test_scale_fun_2(self):
+        ind = np.random.randint(0, len(self.dat))
+        uns_state_c = self.dat[ind][self.c_inds]
+        sc_state_c = self.ds.data[ind][self.c_inds]
+        sc_state_exp = self.ds.scale(uns_state_c, remove_mean=True, control_only=True)
+        uns_state_exp = self.ds.scale(sc_state_c, remove_mean=False, control_only=True)
+        assert np.allclose(sc_state_c, sc_state_exp), f"{sc_state_c} != {sc_state_exp}"
+        assert np.allclose(uns_state_c, uns_state_exp), f"{uns_state_c} != {uns_state_exp}"
+
     def test_slice_time(self):
         ds_sliced = self.ds_nan.slice_time(4, 8)
         self.assertTrue(np.all(np.logical_not(np.isnan(ds_sliced.data))))
