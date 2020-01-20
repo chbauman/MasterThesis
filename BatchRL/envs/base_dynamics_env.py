@@ -248,6 +248,11 @@ class DynEnv(ABC, gym.Env):
         """
         return self.hist[-1, :-self.act_dim]
 
+    def scale_state(self, state: np.ndarray,
+                    remove_mean: bool = False) -> np.ndarray:
+        """Scales the state using the Dataset."""
+        return self.m.data.scale(state, remove_mean=remove_mean, state_only=True)
+        
     def get_curr_day_n(self) -> int:
         """Returns the current timestep index."""
         return (self.curr_n + self.n_ts) % self.n_ts_per_day
@@ -285,7 +290,7 @@ class DynEnv(ABC, gym.Env):
         self.curr_n = (self.t_init_n + self.curr_ind) % self.n_ts_per_day
         return np.copy(self.hist[-1, :-self.act_dim])
 
-    def get_scaled_init_state(self, init_ind, heat_inds):
+    def get_scaled_init_state(self, init_ind: int, heat_inds) -> np.ndarray:
         """Returns the initial states when reset with `init_ind`.
 
         Args:
@@ -297,12 +302,7 @@ class DynEnv(ABC, gym.Env):
         """
         # Find the current heating water temperatures
         self.reset(init_ind, use_noise=False)
-        curr_s = self.curr_state
-        scaling = self.m.data.scaling
-        h_in_and_out = npf32((len(heat_inds),))
-        for ct, k in enumerate(heat_inds):
-            h_in_and_out[ct] = trf_mean_and_std(curr_s[k], scaling[k], remove=False)
-        return h_in_and_out
+        return self.scale_state(self.curr_state, remove_mean=False)[heat_inds]
 
     def render(self, mode='human'):
         """Render method for compatibility with OpenAI gym."""

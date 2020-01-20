@@ -292,9 +292,13 @@ class TestFullEnv(TestCase):
         p = PWProfile()
         self.full_env = RoomBatteryEnv(mod, p, max_eps=5)
 
-        mod2 = get_full_composite_model(dt_h=6)
+        mod2 = get_full_composite_model(standardized=True, dt_h=6)
         self.full_env2 = RoomBatteryEnv(mod2, p, max_eps=5)
         self.full_env2.connect_inds = (1, 3)
+
+    def test_get_scaled_init_state(self):
+        self.full_env2.get_scaled_init_state(0, [2, 3])
+        # self.full_env2.get_scaled_init_state(0, [2, 3, 4, 5])
 
     def test_ev_connect(self):
 

@@ -535,7 +535,6 @@ class Dataset:
         Returns:
             Scaled data.
         """
-
         # Test a few properties
         assert self.fully_scaled, f"Dataset not fully scaled!"
         assert not (state_only and control_only), "Cannot have both!"
