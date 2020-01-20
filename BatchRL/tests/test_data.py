@@ -142,11 +142,14 @@ class TestDataset(TestCase):
         self.mdv = ModelDataView(self.ds_nan, "Test", 2, 7)
 
     def test_scale_fun(self):
+        # This fails sometimes...
         ind = np.random.randint(0, len(self.dat))
         uns_state = self.dat[ind]
         sc_state = self.ds.data[ind]
-        assert np.allclose(sc_state, self.ds.scale(uns_state, remove_mean=True))
-        assert np.allclose(uns_state, self.ds.scale(sc_state, remove_mean=False))
+        sc_state_exp = self.ds.scale(uns_state, remove_mean=True)
+        uns_state_exp = self.ds.scale(sc_state, remove_mean=False)
+        assert np.allclose(sc_state, sc_state_exp), f"{sc_state} != {sc_state_exp}"
+        assert np.allclose(uns_state, uns_state_exp), f"{uns_state} != {uns_state_exp}"
 
     def test_slice_time(self):
         ds_sliced = self.ds_nan.slice_time(4, 8)

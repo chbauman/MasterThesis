@@ -13,7 +13,7 @@ import numpy as np
 from rest.client import save_dir
 from util.numerics import get_shape1, check_in_range, prepare_supervised_control, align_ts, add_mean_and_std, \
     has_duplicates, trf_mean_and_std, cut_data, find_rows_with_nans, find_all_streaks, find_disjoint_streaks, \
-    find_longest_streak, int_to_sin_cos
+    find_longest_streak, int_to_sin_cos, contrary_indices
 from util.util import day_offset_ts, ts_per_day, datetime_to_np_datetime, string_to_dt, create_dir, Arr, \
     n_mins_to_np_dt, str_to_np_dt, np_dt_to_str, repl
 from util.visualize import PLOT_DIR, plot_all
@@ -90,6 +90,12 @@ class Dataset:
     split_dict: Dict[str, 'ModelDataView'] = None  #: The saved splits.
     pats_defs: List[Tuple] = None  #: List of tuples specifying the subsets of the data.
 
+    # Basic dataset parameters
+    d: int  #: The total number of series in the dataset.
+    n_c: int  #: The number of control series.
+    n_non_c: int  #: The number of non-control series.
+    n: int  #: The number of timesteps in the dataset.
+
     def __init__(self, all_data: np.ndarray, dt: int, t_init, scaling: np.ndarray,
                  is_scaled: np.ndarray,
                  descs: Union[np.ndarray, List],
@@ -108,6 +114,7 @@ class Dataset:
         self.n = all_data.shape[0]
         self.d = get_shape1(all_data)
         self.n_c = c_inds.shape[0]
+        self.n_non_c = self.d - self.n_c
         self.n_p = p_inds.shape[0]
 
         # Check that indices are in range
@@ -125,6 +132,7 @@ class Dataset:
         self.descriptions = descs
         self.c_inds = c_inds
         self.p_inds = p_inds
+        self.non_c_inds = contrary_indices(c_inds, self.d)
 
         # Full data
         self.data = all_data
@@ -506,9 +514,22 @@ class Dataset:
                 data_out[:, k] = add_mean_and_std(data_out[:, k], self.scaling[k, :])
         return data_out
 
-    def scale(self, state: np.ndarray, remove_mean: bool = True) -> np.ndarray:
+    def scale(self, state: np.ndarray, remove_mean: bool = True,
+              state_only: bool = False,
+              control_only: bool = False,
+              ) -> np.ndarray:
+
+        # Test a few properties
         assert self.fully_scaled, f"Dataset not fully scaled!"
-        scaled_state = trf_mean_and_std(state, (self.scaling[:, 0], self.scaling[:, 1]),
+        assert not (state_only and control_only), "Cannot have both!"
+
+        # Do the scaling
+        sc_used = self.scaling
+        inds = self.c_inds if control_only else (self.non_c_inds if state_only else None)
+        if inds is not None:
+            sc_used = self.scaling[inds]
+        sc_pars = (sc_used[:, 0], sc_used[:, 1])
+        scaled_state = trf_mean_and_std(state, sc_pars,
                                         remove=remove_mean)
         return scaled_state
 
