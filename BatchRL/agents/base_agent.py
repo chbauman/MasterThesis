@@ -1,7 +1,7 @@
 import os
 import warnings
 from abc import ABC, abstractmethod
-from typing import Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING, Callable
 
 import numpy as np
 
@@ -54,7 +54,8 @@ class AgentBase(AbstractAgent, ABC):
         return {}
 
     def eval(self, n_steps: int = 100, reset_seed: bool = False, detailed: bool = False,
-             use_noise: bool = False, scale_states: bool = False):
+             use_noise: bool = False, scale_states: bool = False,
+             episode_marker: Callable = None):
         """Evaluates the agent for a given number of steps.
 
         If the number is greater than the number of steps in an episode, the
@@ -67,6 +68,7 @@ class AgentBase(AbstractAgent, ABC):
             use_noise: Whether to use noise during the evaluation.
             scale_states: Whether to scale the state trajectory to
                 original values, only used if `detailed` is True.
+            episode_marker: Function mapping from state to natural numbers.
 
         Returns:
             The mean received reward if `detailed` is False, else
@@ -78,15 +80,17 @@ class AgentBase(AbstractAgent, ABC):
 
         # Initialize env and reward.
         s_curr = self.env.reset(use_noise=use_noise)
+        ep_mark = 0 if episode_marker is None else episode_marker(s_curr)
         all_rewards = npf32((n_steps,))
 
         # Detailed stuff
-        det_rewards, state_t = None, None
+        det_rewards, state_t, ep_marks = None, None, None
         if detailed:
             n_det = len(self.env.reward_descs)
             n_states = self.env.state_dim - self.env.act_dim
             det_rewards = npf32((n_steps, n_det), fill=np.nan)
             state_t = npf32((n_steps, n_states), fill=np.nan)
+            ep_marks = npf32((n_steps, ), fill=np.nan)
         elif scale_states:
             warnings.warn(f"Argument: {scale_states} ignored!")
 
@@ -106,16 +110,18 @@ class AgentBase(AbstractAgent, ABC):
                 det_rew = self.env.detailed_reward(s_curr, scaled_a)
                 det_rewards[k, :] = det_rew
                 state_t[k, :] = s_curr
+                ep_marks[k] = ep_mark
 
             # Reset env if episode is over.
             if fin:
                 s_curr = self.env.reset()
+                ep_mark = 0 if episode_marker is None else episode_marker(s_curr)
 
         # Return all rewards
         if detailed:
             if scale_states:
                 state_t = self.env.scale_state(state_t, remove_mean=False)
-            return all_rewards, det_rewards, state_t
+            return all_rewards, det_rewards, state_t, ep_marks
 
         # Return mean reward.
         return np.sum(all_rewards) / n_steps

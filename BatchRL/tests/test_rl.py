@@ -7,7 +7,7 @@ from agents.agents_heuristic import get_const_agents, RuleBasedAgent
 from agents.keras_agents import DDPGBaseAgent, KerasBaseAgent
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.composite import CompositeModel
-from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT, RoomBatteryEnv, PWProfile, FullRoomEnv
+from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT, RoomBatteryEnv, PWProfile, FullRoomEnv, heat_marker
 from tests.test_data import construct_test_ds
 from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model, get_full_composite_model
 from util.numerics import rem_mean_and_std, add_mean_and_std
@@ -161,7 +161,7 @@ class TestBatteryEnv(TestCase):
 
     def test_agent_eval(self):
         n = 20
-        r, r_other, _ = self.ag_1.eval(n, detailed=True)
+        r, r_other, _, _ = self.ag_1.eval(n, detailed=True)
         self.assertTrue(np.allclose(-r, r_other[:, 0]), "agent.eval not correct")
         self.ag_1.eval(n, reset_seed=True, detailed=True, scale_states=True)
 
@@ -370,7 +370,8 @@ class TestFullEnv(TestCase):
         ag1 = agents_heuristic.ConstActionAgent(self.full_env2, 10.0)
         ag2 = agents_heuristic.ConstActionAgent(self.full_env2, -10.0)
         self.full_env2.detailed_eval_agents([ag1, ag2], n_steps=3, use_noise=False,
-                                            plt_fun=plot_heat_cool_rew_det)
+                                            plt_fun=plot_heat_cool_rew_det,
+                                            episode_marker=heat_marker)
 
     def test_ddpg_test_agent(self):
         ddpg_ag = get_keras_test_agent(self.full_env)

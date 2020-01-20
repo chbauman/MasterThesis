@@ -485,6 +485,7 @@ class DynEnv(ABC, gym.Env):
                              overwrite: bool = False,
                              verbose: int = 0,
                              plt_fun: Callable = plot_reward_details,
+                             episode_marker: Callable = None,
                              ) -> Optional[np.ndarray]:
         """Evaluates the given agents for this environment.
 
@@ -501,6 +502,8 @@ class DynEnv(ABC, gym.Env):
             overwrite: Whether to overwrite pre-existing plot files.
             verbose: Verbosity.
             plt_fun: The plotting function.
+            episode_marker: Marker for the case if `plt_fun`
+                is :func:`util.visualize.plot_heat_cool_rew_det`
 
         Returns:
             The rewards seen by all the agents, or None if `overwrite` is False
@@ -523,6 +526,7 @@ class DynEnv(ABC, gym.Env):
         n_tot_rewards = n_extra_rewards + 1
         all_rewards = npf32((n_agents, n_steps, n_tot_rewards))
         all_states = npf32((n_agents, n_steps, self.state_dim - self.act_dim))
+        all_marks = np.empty((n_agents, n_steps), dtype=np.int32)
 
         do_scaling = self.m.data.fully_scaled
 
@@ -541,11 +545,13 @@ class DynEnv(ABC, gym.Env):
                 raise ValueError(f"Agent {a_id} was not assigned to this env!")
 
             # Evaluate agent.
-            rew, ex_rew, states = a.eval(n_steps, reset_seed=True, detailed=True,
-                                         use_noise=use_noise, scale_states=do_scaling)
+            rew, ex_rew, states, ep_marks = a.eval(n_steps, reset_seed=True, detailed=True,
+                                                   use_noise=use_noise, scale_states=do_scaling,
+                                                   episode_marker=episode_marker)
             all_rewards[a_id, :, 0] = rew
             all_rewards[a_id, :, 1:] = ex_rew
             all_states[a_id] = states
+            all_marks[a_id] = ep_marks
 
         # Plot
         if verbose > 0:
@@ -554,5 +560,6 @@ class DynEnv(ABC, gym.Env):
         names = [a.get_short_name() for a in agent_list]
         plt_fun(names, all_rewards, p_name,
                 self.reward_descs, dt=self.m.data.dt, n_eval_steps=n_steps,
-                title_ext=title_ext, all_states=all_states)
+                title_ext=title_ext, all_states=all_states,
+                verbose=0, ep_marks=all_marks)
         return all_rewards

@@ -34,6 +34,11 @@ TEMP_BOUND_PEN: str = "Temperature Bound Violation [Kh]"
 ENG_COST: str = "Energy Costs []"
 
 
+def heat_marker(state: np.ndarray) -> bool:
+    """Determines whether it is a heating case or not."""
+    return state[2] > state[4]
+
+
 class RLDynEnv(DynEnv, ABC):
     """The base class for RL environments based on `BaseDynamicsModel`.
 

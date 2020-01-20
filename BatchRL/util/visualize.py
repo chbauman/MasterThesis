@@ -912,15 +912,14 @@ def plot_heat_cool_rew_det(*args, **kwargs):
     plot_reward_details(*args, **kwargs)
 
     # Extract states and rewards
-    all_states = kwargs['all_states']
+    ep_marks = kwargs['ep_marks']
     labels, rewards, path_name = args[:3]
 
-    heat_mask = all_states[:, :, 2] > all_states[:, :, 4]
-    assert np.allclose(np.max(heat_mask, axis=0), np.min(heat_mask, axis=0))
-    heat_mask = heat_mask[0]
+    assert np.allclose(np.max(ep_marks, axis=0), np.min(ep_marks, axis=0))
+    ep_marks = ep_marks[0]
 
-    heat_rewards = rewards[:, heat_mask]
-    cool_rewards = rewards[:, np.logical_not(heat_mask)]
+    heat_rewards = rewards[:, ep_marks]
+    cool_rewards = rewards[:, np.logical_not(ep_marks)]
 
     heat_path = f"{path_name}_Heat"
     cool_path = f"{path_name}_Cool"
@@ -928,8 +927,8 @@ def plot_heat_cool_rew_det(*args, **kwargs):
     print(heat_path)
     print(cool_path)
 
-    plot_reward_details(labels, heat_rewards, heat_path, **kwargs)
-    plot_reward_details(labels, cool_rewards, cool_path, **kwargs)
+    plot_reward_details(labels, heat_rewards, heat_path, *args[3:], **kwargs)
+    plot_reward_details(labels, cool_rewards, cool_path, *args[3:], **kwargs)
 
 
 def plot_reward_details(labels: Sequence[str],
@@ -942,7 +941,8 @@ def plot_reward_details(labels: Sequence[str],
                         scale_tot_rew: bool = True,
                         sum_reward: bool = False,
                         tol: float = 0.0005,
-                        all_states: np.ndarray = None) -> None:
+                        verbose: int = 0,
+                        **kwargs) -> None:
     """Creates a bar plot with the different rewards of the different agents.
 
     Args:
@@ -956,7 +956,12 @@ def plot_reward_details(labels: Sequence[str],
         scale_tot_rew: Whether to scale the total reward to a nice range.
         sum_reward: Whether to sum the rewards instead of averaging it.
         tol: Values smaller than `tol` will be set to 0.0 to avoid very small numbers in plot.
+        verbose: Verbosity.
     """
+
+    if verbose:
+        if len(kwargs) > 0:
+            print(f"Unused kwargs: {kwargs}")
     n_agents, _, n_rewards = rewards.shape
     assert n_rewards == len(rew_descs) + 1, "Incorrect number of descriptions!"
     assert n_agents == len(labels)
