@@ -5,7 +5,7 @@ based on a model of class `BaseDynamicsModel`.
 """
 import os
 from abc import ABC, abstractmethod
-from typing import Dict, Union, List, Tuple, Optional
+from typing import Dict, Union, List, Tuple, Optional, Callable
 
 import gym
 import numpy as np
@@ -483,7 +483,9 @@ class DynEnv(ABC, gym.Env):
                              use_noise: bool = False,
                              put_on_ol: bool = False,
                              overwrite: bool = False,
-                             verbose: int = 0) -> Optional[np.ndarray]:
+                             verbose: int = 0,
+                             plt_fun: Callable = plot_reward_details,
+                             ) -> Optional[np.ndarray]:
         """Evaluates the given agents for this environment.
 
         Let's the agents act in the environment and observes the
@@ -519,6 +521,7 @@ class DynEnv(ABC, gym.Env):
         n_extra_rewards = len(self.reward_descs)
         n_tot_rewards = n_extra_rewards + 1
         all_rewards = npf32((n_agents, n_steps, n_tot_rewards))
+        all_states = npf32((n_agents, n_steps, self.state_dim))
 
         if verbose > 0:
             print("Evaluating agents...")
@@ -535,16 +538,18 @@ class DynEnv(ABC, gym.Env):
                 raise ValueError(f"Agent {a_id} was not assigned to this env!")
 
             # Evaluate agent.
-            rew, ex_rew, _ = a.eval(n_steps, reset_seed=True, detailed=True, use_noise=use_noise)
+            rew, ex_rew, states = a.eval(n_steps, reset_seed=True, detailed=True,
+                                         use_noise=use_noise, scale_states=True)
             all_rewards[a_id, :, 0] = rew
             all_rewards[a_id, :, 1:] = ex_rew
+            all_states[a_id] = states
 
         # Plot
         if verbose > 0:
             print("Plotting evaluation...")
         title_ext = self._get_detail_eval_title_ext()
         names = [a.get_short_name() for a in agent_list]
-        plot_reward_details(names, all_rewards, p_name,
-                            self.reward_descs, self.m.data.dt, n_steps,
-                            title_ext=title_ext)
+        plt_fun(names, all_rewards, p_name,
+                self.reward_descs, dt=self.m.data.dt, n_eval_steps=n_steps,
+                title_ext=title_ext, all_states=all_states)
         return all_rewards

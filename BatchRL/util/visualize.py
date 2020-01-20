@@ -916,7 +916,8 @@ def plot_reward_details(labels: Sequence[str],
                         title_ext: str = None,
                         scale_tot_rew: bool = True,
                         sum_reward: bool = False,
-                        tol: float = 0.0005) -> None:
+                        tol: float = 0.0005,
+                        all_states: np.ndarray = None) -> None:
     """Creates a bar plot with the different rewards of the different agents.
 
     Args:
@@ -932,7 +933,7 @@ def plot_reward_details(labels: Sequence[str],
         tol: Values smaller than `tol` will be set to 0.0 to avoid very small numbers in plot.
     """
     n_agents, _, n_rewards = rewards.shape
-    assert n_rewards == len(rew_descs) + 1, "No correct number of descriptions!"
+    assert n_rewards == len(rew_descs) + 1, "Incorrect number of descriptions!"
     assert n_agents == len(labels)
     red_fun = np.sum if sum_reward else np.mean
     mean_rewards = red_fun(rewards, axis=1)

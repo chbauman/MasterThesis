@@ -182,6 +182,22 @@ def str2bool(v) -> bool:
         raise ValueError(f"Boolean value expected, got {v}")
 
 
+class FunClassBase:
+
+    def __call__(self, *args, **kwargs):
+        pass
+
+
+def fun_to_class(fun: Callable):
+
+    class FunClass(FunClassBase):
+
+        def __call__(self, *args, **kwargs):
+            return fun(*args, **kwargs)
+
+    return FunClass()
+
+
 def prog_verb(verbose: int) -> int:
     """Propagates verbosity.
 

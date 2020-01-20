@@ -20,7 +20,7 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, \
     yeet, \
-    dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str, floor_datetime_to_min, extract_args
+    dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str, floor_datetime_to_min, extract_args, fun_to_class
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
     _trf_desc_units, plot_env_evaluation, plot_valve_opening
 
@@ -469,6 +469,21 @@ class TestUtil(TestCase):
             raise e
         except Exception as e:
             raise AssertionError(f"Some error happened: {e}")
+
+    def test_fun_to_class(self):
+        def f1():
+            return
+
+        def f2():
+            return 0
+
+        f_class_1 = fun_to_class(f1)
+        f_class_2 = fun_to_class(f1)
+        f_class_3 = fun_to_class(f2)
+        self.assertEqual(f_class_1(), f_class_2())
+        self.assertEqual(f_class_1.__class__.__name__, f_class_2.__class__.__name__)
+        self.assertEqual(f_class_1.__class__.__name__, f_class_3.__class__.__name__)
+        self.assertNotEqual(f_class_1.__class__, f_class_3.__class__)
 
     def test_floor_datetime_to_min(self):
         exp1 = np.datetime64('2000-01-01T01:00', 'm')
