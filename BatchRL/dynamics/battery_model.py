@@ -86,9 +86,12 @@ class BatteryModel(BaseDynamicsModel):
         self._feat_fun = pw_lin_fun_factory(cont_at_zero=True)
 
         # Scale soc limits
-        scale = np.copy(dataset.scaling[self.in_inds[0]])
-        self._scaled_soc_limits = tuple(trf_mean_and_std(np.array(self.hard_soc_limits),
-                                                         scale, remove=True))
+        if dataset.fully_scaled:
+            scale = np.copy(dataset.scaling[self.in_inds[0]])
+            self._scaled_soc_limits = tuple(trf_mean_and_std(np.array(self.hard_soc_limits),
+                                                             scale, remove=True))
+        else:
+            self._scaled_soc_limits = self.hard_soc_limits
 
     def fit(self, verbose: int = 0) -> None:
         """Fits the battery model.
