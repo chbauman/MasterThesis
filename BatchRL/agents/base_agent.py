@@ -1,6 +1,7 @@
 import os
+import warnings
 from abc import ABC, abstractmethod
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING
 
 import numpy as np
 
@@ -35,7 +36,7 @@ class AgentBase(AbstractAgent, ABC):
     Might be specific for a certain environment accessible
     by attribute `env`.
     """
-    env: Any  #: The corresponding environment
+    env: 'DynEnv'  #: The corresponding environment
     name: str  #: The name of the Agent / control strategy
 
     def __init__(self, env: 'DynEnv', name: str = "Abstract Agent"):
@@ -53,7 +54,7 @@ class AgentBase(AbstractAgent, ABC):
         return {}
 
     def eval(self, n_steps: int = 100, reset_seed: bool = False, detailed: bool = False,
-             use_noise: bool = False):
+             use_noise: bool = False, scale_states: bool = False):
         """Evaluates the agent for a given number of steps.
 
         If the number is greater than the number of steps in an episode, the
@@ -64,6 +65,8 @@ class AgentBase(AbstractAgent, ABC):
             reset_seed: Whether to reset the seed at start.
             detailed: Whether to return all parts of the reward.
             use_noise: Whether to use noise during the evaluation.
+            scale_states: Whether to scale the state trajectory to
+                original values, only used if `detailed` is True.
 
         Returns:
             The mean received reward if `detailed` is False, else
@@ -78,10 +81,14 @@ class AgentBase(AbstractAgent, ABC):
         all_rewards = npf32((n_steps,))
 
         # Detailed stuff
-        det_rewards = None
+        det_rewards, state_t = None, None
         if detailed:
             n_det = len(self.env.reward_descs)
-            det_rewards = np.empty((n_steps, n_det), dtype=np.float32)
+            n_states = self.env.state_dim
+            det_rewards = npf32((n_steps, n_det), fill=np.nan)
+            state_t = npf32((n_steps, n_states), fill=np.nan)
+        elif scale_states:
+            warnings.warn(f"Argument: {scale_states} ignored!")
 
         # Evaluate for `n_steps` steps.
         for k in range(n_steps):
@@ -98,6 +105,7 @@ class AgentBase(AbstractAgent, ABC):
             if det_rewards is not None:
                 det_rew = self.env.detailed_reward(s_curr, scaled_a)
                 det_rewards[k, :] = det_rew
+                state_t[k, :] = s_curr
 
             # Reset env if episode is over.
             if fin:
@@ -105,7 +113,9 @@ class AgentBase(AbstractAgent, ABC):
 
         # Return all rewards
         if detailed:
-            return all_rewards, det_rewards
+            if scale_states:
+                state_t = self.env.scale_state(state_t, remove_mean=False)
+            return all_rewards, det_rewards, state_t
 
         # Return mean reward.
         return np.sum(all_rewards) / n_steps

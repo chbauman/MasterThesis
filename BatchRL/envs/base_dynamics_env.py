@@ -12,7 +12,7 @@ import numpy as np
 
 from agents import base_agent
 from dynamics.base_model import BaseDynamicsModel
-from util.numerics import npf32, trf_mean_and_std
+from util.numerics import npf32
 from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts, ts_per_day
 from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR, MergeListT
 
@@ -252,7 +252,7 @@ class DynEnv(ABC, gym.Env):
                     remove_mean: bool = False) -> np.ndarray:
         """Scales the state using the Dataset."""
         return self.m.data.scale(state, remove_mean=remove_mean, state_only=True)
-        
+
     def get_curr_day_n(self) -> int:
         """Returns the current timestep index."""
         return (self.curr_n + self.n_ts) % self.n_ts_per_day
@@ -535,7 +535,7 @@ class DynEnv(ABC, gym.Env):
                 raise ValueError(f"Agent {a_id} was not assigned to this env!")
 
             # Evaluate agent.
-            rew, ex_rew = a.eval(n_steps, reset_seed=True, detailed=True, use_noise=use_noise)
+            rew, ex_rew, _ = a.eval(n_steps, reset_seed=True, detailed=True, use_noise=use_noise)
             all_rewards[a_id, :, 0] = rew
             all_rewards[a_id, :, 1:] = ex_rew
 

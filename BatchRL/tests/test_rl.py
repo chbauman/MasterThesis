@@ -160,8 +160,9 @@ class TestBatteryEnv(TestCase):
 
     def test_agent_eval(self):
         n = 20
-        r, r_other = self.ag_1.eval(n, detailed=True)
+        r, r_other, _ = self.ag_1.eval(n, detailed=True)
         self.assertTrue(np.allclose(-r, r_other[:, 0]), "agent.eval not correct")
+        self.ag_1.eval(n, detailed=True, scale_states=True)
 
     def test_detailed_analysis(self):
         self.env.detailed_eval_agents([self.ag_1, self.ag_2], n_steps=10)
