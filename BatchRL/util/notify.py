@@ -3,7 +3,7 @@ import smtplib
 import ssl
 from pathlib import Path
 
-port = 465  #: For SSL
+port = 465  #: Port for SSL
 smtp_server: str = "smtp.gmail.com"
 sender_email: str = "chris.python.notifyer@gmail.com"  #: Sender address
 debug_email: str = "chris.python.debug@gmail.com"  #: Debug receiver address

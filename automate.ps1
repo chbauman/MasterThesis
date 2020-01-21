@@ -3,7 +3,11 @@
     Script that runs various commands commands.
 
 .DESCRIPTION
-    What is run depends on the flags that are passed.
+    What is run depends on the flags that are passed. Pass '-act'
+    to activate the python environment, '-docs' to build
+    the documentations or one of '-cp_plots', '-cp_hop', '-cp_data'
+    to copy plot / hyperopf / data from / to Euler via scp. (Copying
+    data needs a VPN connection to ETH.)
 
 .PARAMETER cp_plots
     Set if you want to copy plots from Euler.
