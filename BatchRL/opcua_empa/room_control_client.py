@@ -68,7 +68,6 @@ class ControlClient:
         E.g. use :class:`tests.test_opcua.OfflineClient` if you are working offline and
         want to test something.
         """
-
         assert len(used_control) == 1, "Only one room supported!"
 
         self.notify_failures = notify_failures
@@ -83,9 +82,13 @@ class ControlClient:
     def _no_save(self, verbose: bool = False):
         """Used to overwrite the save function of `self.node_gen`."""
         if self.verbose or verbose:
-            print("Saving data...")
+            print("Not saving data...")
 
     def __enter__(self):
+        """Setup the ControlClient.
+
+        Define nodes, initialize dataframes and enter
+        and subscribe with client."""
 
         # Get node strings
         self.write_nodes = self.node_gen.get_nodes()
@@ -102,11 +105,11 @@ class ControlClient:
         return self
 
     def __exit__(self, *args, **kwargs):
-        # Save data and exit client
+        """Save data and exit client."""
         self.node_gen.save_cached_data(self.verbose)
         self.client.__exit__(*args, **kwargs)
 
-    def _print_set_on_change(self, attr_name, val, msg: str):
+    def _print_set_on_change(self, attr_name: str, val, msg: str) -> None:
         curr_val = getattr(self, attr_name)
         if curr_val != val:
             setattr(self, attr_name, val)
