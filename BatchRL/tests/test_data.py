@@ -5,7 +5,9 @@ import numpy as np
 from data_processing.data import TestData2
 from data_processing.dataset import ModelDataView, SeriesConstraint, Dataset
 from data_processing.preprocess import standardize, fill_holes_linear_interpolate, remove_outliers, clean_data
+from rest.client import test_rest_client
 from util.numerics import nan_array_equal, num_nans
+from util.util import EULER
 from util.visualize import plot_dataset
 
 SYNTH_DATA_NAME = "SyntheticModelData"
@@ -310,6 +312,10 @@ class TestDataProcessing(TestCase):
 
         self.dt_mins = 15
         self.dat, self.m = TestData2.get_data()
+
+    def test_rest(self):
+        if not EULER:
+            test_rest_client()
 
     def test_standardize(self):
         # Test Standardizing

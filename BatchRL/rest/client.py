@@ -170,8 +170,8 @@ class _Client(object):
                 ct += 1
 
         # Loop over files in directory and insert data into lists
-        val_list = [None] * ct
-        ts_list = [None] * ct
+        val_list: List[Optional[np.ndarray]] = [None] * ct
+        ts_list: List[Optional[np.ndarray]] = [None] * ct
         meta_list = [None] * ct
         for k in range(ct):
             val_list[k] = np.load(os.path.join(data_dir, f"values_{k}.npy"))
