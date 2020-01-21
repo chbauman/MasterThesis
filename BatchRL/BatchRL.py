@@ -94,8 +94,13 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
     Loads and prepares the battery data, fits the
     battery model and evaluates some agents.
     """
+    # Print info to console
     if verbose:
         print("Running battery modeling...")
+        if put_on_ol:
+            print("Putting images into Overleaf directory.")
+        if overwrite:
+            print("Overwriting existing images.")
 
     # Load and prepare battery data.
     with ProgWrap(f"Loading battery data...", verbose > 0):
@@ -109,7 +114,7 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
     with ProgWrap(f"Fitting and analyzing battery...", verbose > 0):
         bat_mod = BatteryModel(bat_ds)
         bat_mod.fit(verbose=prog_verb(verbose))
-        bat_mod.analyze_bat_model(put_on_ol=put_on_ol)
+        bat_mod.analyze_bat_model(put_on_ol=put_on_ol, overwrite=overwrite)
         bat_mod.analyze_visually(save_to_ol=put_on_ol, base_name="Bat",
                                  overwrite=overwrite, n_steps=steps, verbose=verbose > 0)
         # bat_mod_naive = ConstModel(bat_ds)
@@ -806,8 +811,10 @@ def main() -> None:
 
     if args.battery:
         # Train and analyze the battery model
-        do_rl = args.bool[0] if args.bool is not None else True
-        run_battery(verbose=verbose, do_rl=do_rl)
+        ext_args = extract_args(args.bool, False, False, False)
+        do_rl, put_on_ol, overwrite = ext_args
+        run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=put_on_ol,
+                    overwrite=overwrite)
 
     if args.room:
         # Room model

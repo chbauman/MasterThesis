@@ -199,7 +199,9 @@ class BatteryModel(BaseDynamicsModel):
         scale[0, 0] = 0.0
 
         # Define plot labels
-        labs = {'title': 'Battery Model', 'xlab': 'Active Power [kW]', 'ylab': r'$\Delta$ SoC [%]'}
+        labs = {'title': 'Battery Model',
+                'xlab': 'Active Power [kW]',
+                'ylab': r'$\Delta$ SoC [%]'}
 
         # Check if file exists
         before_plt_path = self._get_plot_name("WithOutliers", put_on_ol)
@@ -217,8 +219,8 @@ class BatteryModel(BaseDynamicsModel):
         res_time_plt_path = self._get_plot_name("ResVsTime", put_on_ol)
         if not os.path.isfile(res_plt_path + ".pdf") or overwrite or \
                 not os.path.isfile(res_time_plt_path + ".pdf"):
-            labs_res = {"title": "Residual Plot", "xlab": "State of Charge",
-                        "ylab": "Residuals"}
+            labs_res = {"title": "Residual Plot", "xlab": "State of Charge [%]",
+                        "ylab": r"Residuals ($\Delta$ SoC [%])"}
             p_orig, _, soc_orig = self.init_data
             res = soc_orig[:-1] + self._eval_at(p_orig[:-1]) - soc_orig[1:]
             last_bool = self.nan_mask[-1]
@@ -230,6 +232,7 @@ class BatteryModel(BaseDynamicsModel):
             scatter_plot(self.masked_soc[:n_soc], filtered_res, lab_dict=labs_res,
                          show=False,
                          m_and_std_x=d.scaling[self.in_inds[0]],
+                         m_and_std_y=scale[0],
                          add_line=True,
                          save_name=res_plt_path)
 
