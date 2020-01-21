@@ -37,7 +37,8 @@ def send_mail(debug: bool = True,
     rec_mail = debug_email if debug else receiver_email
 
     message = f"""Subject: {subject}\n\n\
-    {msg}"""
+    {msg}\n\n
+    This is an automatically generated message, do not reply!"""
 
     password = _pw_from_file()
     context = ssl.create_default_context()
