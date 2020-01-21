@@ -51,5 +51,5 @@ if ($act){
 
 # Build the docs
 if ($docs){
-    ./make_doc.ps1
+    Invoke-Expression "cd $PSScriptRoot; ./make_doc.ps1"
 }

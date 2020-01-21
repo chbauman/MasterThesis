@@ -14,7 +14,7 @@ curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
 
 
-def _pw_from_file(file_name: str = pw_def_path):
+def _pw_from_file(file_name: str = pw_def_path) -> str:
     """Reads the password in the file given."""
     with open(file_name, "r") as f:
         return f.read()
@@ -22,7 +22,7 @@ def _pw_from_file(file_name: str = pw_def_path):
 
 def send_mail(debug: bool = True,
               subject: str = "Hello there!",
-              msg: str = "General Kenobi"):
+              msg: str = "General Kenobi") -> None:
     """Sends a mail via python.
 
     Args:
