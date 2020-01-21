@@ -23,3 +23,5 @@ venv_upgrade
 
 BatchRL/lsf.*
 BatchRL/test.pdf
+
+python_notifyer.txt

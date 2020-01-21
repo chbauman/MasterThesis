@@ -12,6 +12,7 @@ from dynamics.base_hyperopt import hop_path
 from dynamics.recurrent import RNN_TEST_DATA_NAME
 from opcua_empa.opcua_util import experiment_data_path
 from tests.test_data import SYNTH_DATA_NAME
+from util.notify import send_mail
 from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_rows_with_nans, nan_array_equal, \
     extract_streak, cut_data, find_all_streaks, find_disjoint_streaks, prepare_supervised_control, npf32, align_ts, \
     num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
@@ -711,6 +712,15 @@ class TestPlot(TestCase):
                                 series_merging_list=[(w_inds, "Weather"), ([s_mask[-1] - 1, 0], "Fail")])
 
     pass
+
+
+class TestNotify(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def test_send_mail(self):
+        send_mail()
 
 
 def cleanup_test_data(verbose: int = 0):
