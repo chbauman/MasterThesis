@@ -720,7 +720,7 @@ class TestNotify(TestCase):
         super().__init__(*args, **kwargs)
 
     def test_send_mail(self):
-        send_mail()
+        send_mail(subject="Running Tests", msg="Sali")
 
 
 def cleanup_test_data(verbose: int = 0):
