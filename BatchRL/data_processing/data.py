@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import Dict, Optional, Sequence, List, Tuple
 
 import numpy as np
@@ -127,8 +128,6 @@ DFAB_AllValves = DataStruct(id_list=[421110008,  # First Floor
                             start_date='2017-01-01',
                             end_date='2019-12-31')
 
-rooms = [Room4BlueData, Room5BlueData, Room4RedData, Room5RedData]
-
 # Weather Data
 WeatherData = DataStruct(id_list=[3200000,
                                   3200002,
@@ -174,6 +173,20 @@ BatteryData = DataStruct(id_list=[40200000,
                          name="Battery",
                          start_date='2019-01-01',
                          end_date='2019-12-31')
+
+dfab_rooms = [Room4BlueData, Room5BlueData, Room4RedData, Room5RedData]
+all_experiment_data = dfab_rooms + [DFAB_AddData, DFAB_AllValves, WeatherData, BatteryData]
+
+
+def update_data():
+    """Updates the base datasets with all the currently available data."""
+    for ds in all_experiment_data:
+        new_name = f"New_{ds.name}"
+        now_str = datetime.now().strftime("%Y-%m-%d")
+        new_ds = DataStruct(ds.data_ids, new_name,
+                            start_date=ds.start_date,
+                            end_date=now_str)
+        new_ds.get_data()
 
 
 #######################################################################################################
@@ -689,7 +702,7 @@ def get_DFAB_heating_data() -> List['Dataset']:
     create_dir(dfab_rooms_plot_path)
 
     # Single Rooms
-    for e in rooms:
+    for e in dfab_rooms:
         data, m = e.get_data()
         n_cols = len(data)
 
@@ -925,7 +938,7 @@ def generate_room_datasets() -> List[Dataset]:
 
     # Get room data
     dfab_dataset_list = get_DFAB_heating_data()
-    n_rooms = len(rooms)
+    n_rooms = len(dfab_rooms)
     dfab_room_dataset_list = [dfab_dataset_list[i] for i in range(n_rooms)]
 
     # Heating water temperature

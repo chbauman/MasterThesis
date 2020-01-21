@@ -29,9 +29,10 @@ Written by Christian Baumann and Ralf Knechtle @ Empa, 2019
 """
 
 import os
+import shutil
 import time
 from ast import literal_eval
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -47,6 +48,15 @@ else:
 save_dir: str = '../Data/'
 
 
+def check_date_str(ds: str, err: Exception = None) -> None:
+    """Raises an error if `ds` is not a valid date string."""
+    invalid = len(ds) != 10 or ds[4] != "-" or ds[6] != "-"
+    if invalid:
+        if err is None:
+            err = ValueError(f"Invalid date string: {ds}")
+        raise err
+
+
 def _get_data_folder(name: str, start_date: str, end_date: str) -> str:
     """
     Defines the naming of the data directory given
@@ -58,10 +68,10 @@ def _get_data_folder(name: str, start_date: str, end_date: str) -> str:
         end_date: End of data collection.
 
     Returns:
-        Full path of data defined by skl_mod.
+        Full path of data folder.
     """
-    ext = f"{start_date}__{end_date}__"
-    data_dir = os.path.join(save_dir, ext + name)
+    full_name = f"{start_date}__{end_date}__{name}"
+    data_dir = os.path.join(save_dir, full_name)
     return data_dir
 
 
@@ -234,14 +244,14 @@ class DataStruct:
     """
 
     def __init__(self,
-                 id_list: List[int],
+                 id_list: Union[List[int], List[str]],
                  name: str,
                  start_date: str = '2019-01-01',
                  end_date: str = '2019-12-31'):
         """Initialize DataStruct.
 
         Args:
-            id_list: IDs of the data series.
+            id_list: IDs of the data series, can be strings or ints.
             name: Name of the collection of data series.
             start_date: Begin of time interval.
             end_date: End of time interval.
@@ -339,10 +349,4 @@ def test_rest_client() -> None:
 
     # Remove data again
     fol = TestData.get_data_folder()
-    for f in os.listdir(fol):
-        file_path = os.path.join(fol, f)
-        try:
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-        except Exception as e:
-            print(e)
+    shutil.rmtree(fol)
