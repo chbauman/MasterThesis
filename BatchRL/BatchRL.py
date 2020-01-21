@@ -16,7 +16,7 @@ from sklearn.linear_model import MultiTaskLassoCV
 from agents.agents_heuristic import ConstActionAgent, RuleBasedAgent, get_const_agents
 from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, get_data_test, \
-    choose_dataset_and_constraints
+    choose_dataset_and_constraints, update_data
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
 from dynamics.base_model import BaseDynamicsModel, compare_models
@@ -703,9 +703,8 @@ def curr_tests() -> None:
 
     # Load the dataset and setup the model
     ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
-    mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
-                    rnn_consts=rnn_consts_full, fit=True, from_hop=True)
-    return
+    # mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
+    #                 rnn_consts=rnn_consts_full, fit=True, from_hop=True)
     mod = get_model("FullState_Comp_Phys", ds_full,
                     rnn_consts=rnn_consts_full, fit=True, from_hop=True)
 
@@ -736,6 +735,7 @@ arg_def_list = [
     ("verbose", "output verbosity"),
     ("mod_eval", "fit and evaluate the room models"),
     ("optimize", "optimize hyperparameters of models"),
+    ("data", "update the data from the nest database"),
     ("battery", "run the battery model."),
     ("room", "run the room model"),
     ("test", "run tests"),
@@ -793,6 +793,10 @@ def main() -> None:
     if args.cleanup:
         test_cleanup(verbose=verbose)
 
+    # Update stored data
+    if args.data:
+        update_data()
+
     # Run hyperparameter optimization
     if args.optimize:
         n_steps = extract_args(args.int, None)[0]
@@ -809,15 +813,15 @@ def main() -> None:
                                        visual_analyze=visual_analyze,
                                        include_composite=include_composite)
 
+    # Train and analyze the battery model
     if args.battery:
-        # Train and analyze the battery model
         ext_args = extract_args(args.bool, False, False, False)
         do_rl, put_on_ol, overwrite = ext_args
         run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=put_on_ol,
                     overwrite=overwrite)
 
+    # Evaluate room model
     if args.room:
-        # Room model
         alpha = args.float[0] if args.float is not None else None
         n_steps = extract_args(args.int, None)[0]
         ext_args = extract_args(args.bool, False, False, False, False)
