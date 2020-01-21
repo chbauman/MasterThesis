@@ -7,7 +7,7 @@ import numpy as np
 from data_processing.dataset import SeriesConstraint, no_inds, Dataset, DatasetConstraints
 from data_processing.preprocess import clean_data, remove_out_interval, clip_to_interval, interpolate_time_series, \
     fill_holes_linear_interpolate, remove_outliers, gaussian_filter_ignoring_nans, standardize
-from rest.client import DataStruct
+from rest.client import DataStruct, DEFAULT_END_DATE
 from util.numerics import align_ts, copy_arr_list, solve_ls, \
     find_rows_with_nans
 from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init
@@ -33,7 +33,7 @@ Room272Data = DataStruct(id_list=[42150280,
                                   42150270],
                          name="UMAR_Room272",
                          start_date='2017-01-01',
-                         end_date='2019-12-31')
+                         end_date=DEFAULT_END_DATE)
 
 Room274Data = DataStruct(id_list=[42150281,
                                   42150312,
@@ -50,7 +50,7 @@ Room274Data = DataStruct(id_list=[42150281,
                                   42150274],
                          name="UMAR_Room274",
                          start_date='2017-01-01',
-                         end_date='2019-12-31')
+                         end_date=DEFAULT_END_DATE)
 
 # DFAB Data
 Room4BlueData = DataStruct(id_list=[421110054,  # Temp
@@ -61,7 +61,7 @@ Room4BlueData = DataStruct(id_list=[421110054,  # Temp
                                     ],
                            name="DFAB_Room41",
                            start_date='2017-01-01',
-                           end_date='2019-12-31')
+                           end_date=DEFAULT_END_DATE)
 
 Room5BlueData = DataStruct(id_list=[421110072,  # Temp
                                     421110038,  # Valves
@@ -71,7 +71,7 @@ Room5BlueData = DataStruct(id_list=[421110072,  # Temp
                                     ],
                            name="DFAB_Room51",
                            start_date='2017-01-01',
-                           end_date='2019-12-31')
+                           end_date=DEFAULT_END_DATE)
 
 Room4RedData = DataStruct(id_list=[421110066,  # Temp
                                    421110026,  # Valves
@@ -80,7 +80,7 @@ Room4RedData = DataStruct(id_list=[421110066,  # Temp
                                    ],
                           name="DFAB_Room43",
                           start_date='2017-01-01',
-                          end_date='2019-12-31')
+                          end_date=DEFAULT_END_DATE)
 
 Room5RedData = DataStruct(id_list=[421110084,  # Temp
                                    421110039,  # Valves
@@ -89,7 +89,7 @@ Room5RedData = DataStruct(id_list=[421110084,  # Temp
                                    ],
                           name="DFAB_Room53",
                           start_date='2017-01-01',
-                          end_date='2019-12-31')
+                          end_date=DEFAULT_END_DATE)
 
 DFAB_AddData = DataStruct(id_list=[421100168,  # Inflow Temp
                                    421100170,  # Outflow Temp
@@ -100,7 +100,7 @@ DFAB_AddData = DataStruct(id_list=[421100168,  # Inflow Temp
                                    ],
                           name="DFAB_Extra",
                           start_date='2017-01-01',
-                          end_date='2019-12-31')
+                          end_date=DEFAULT_END_DATE)
 
 DFAB_AllValves = DataStruct(id_list=[421110008,  # First Floor
                                      421110009,
@@ -126,7 +126,7 @@ DFAB_AllValves = DataStruct(id_list=[421110008,  # First Floor
                                      ],
                             name="DFAB_Valves",
                             start_date='2017-01-01',
-                            end_date='2019-12-31')
+                            end_date=DEFAULT_END_DATE)
 
 # Weather Data
 WeatherData = DataStruct(id_list=[3200000,
@@ -134,7 +134,7 @@ WeatherData = DataStruct(id_list=[3200000,
                                   3200008],
                          name="Weather",
                          start_date='2019-01-01',
-                         end_date='2019-12-31')
+                         end_date=DEFAULT_END_DATE)
 
 # Battery Data
 BatteryData = DataStruct(id_list=[40200000,
@@ -172,16 +172,20 @@ BatteryData = DataStruct(id_list=[40200000,
                                   40200108],
                          name="Battery",
                          start_date='2019-01-01',
-                         end_date='2019-12-31')
+                         end_date=DEFAULT_END_DATE)
 
 dfab_rooms = [Room4BlueData, Room5BlueData, Room4RedData, Room5RedData]
 all_experiment_data = dfab_rooms + [DFAB_AddData, DFAB_AllValves, WeatherData, BatteryData]
 
 
+def _new_modify(base: str) -> str:
+    return f"New_{base}"
+
+
 def update_data():
     """Updates the base datasets with all the currently available data."""
     for ds in all_experiment_data:
-        new_name = f"New_{ds.name}"
+        new_name = _new_modify(ds.name)
         now_str = datetime.now().strftime("%Y-%m-%d")
         new_ds = DataStruct(ds.data_ids, new_name,
                             start_date=ds.start_date,
@@ -562,7 +566,7 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
 #######################################################################################################
 # Full Data Retrieval and Pre-processing
 
-def get_battery_data(analyze: bool = False) -> 'Dataset':
+def get_battery_data(analyze: bool = False, newest: bool = False) -> 'Dataset':
     """Loads the battery dataset if existing.
 
     Else it is created from the raw data and a few plots are make.
@@ -574,6 +578,8 @@ def get_battery_data(analyze: bool = False) -> 'Dataset':
     # Constants
     dt_mins = 15
     name = "Battery"
+    if newest:
+        name = _new_modify(name)
     bat_plot_path = os.path.join(preprocess_plot_path, name)
     create_dir(bat_plot_path)
     inds = [19, 17]
@@ -623,7 +629,7 @@ def get_battery_data(analyze: bool = False) -> 'Dataset':
     return ds
 
 
-def get_weather_data() -> 'Dataset':
+def get_weather_data(newest: bool = False) -> 'Dataset':
     """Load and interpolate the weather data.
     """
     # Constants
@@ -632,6 +638,8 @@ def get_weather_data() -> 'Dataset':
     fill_by_ip_max = 2
     name = "Weather"
     name += "" if filter_sigma is None else str(filter_sigma)
+    if newest:
+        name = _new_modify(name)
     inds = [0, 2]
 
     # Specify kwargs for pipeline
@@ -688,7 +696,7 @@ def get_UMAR_heating_data() -> List['Dataset']:
     return all_ds
 
 
-def get_DFAB_heating_data() -> List['Dataset']:
+def get_DFAB_heating_data(newest: bool = False) -> List['Dataset']:
     """Loads or creates all data from DFAB then returns
     a list of all datasets. 4 for the rooms, one for the heating water
     and one with all the valves.

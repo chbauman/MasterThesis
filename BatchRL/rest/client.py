@@ -32,7 +32,7 @@ import os
 import shutil
 import time
 from ast import literal_eval
-from typing import Tuple, List, Optional, Union
+from typing import Tuple, List, Optional, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -46,6 +46,8 @@ else:
 
 #: Where to put the local copy of the data.
 save_dir: str = '../Data/'
+
+DEFAULT_END_DATE: str = "2019-12-31"
 
 
 def check_date_str(ds: str, err: Exception = None) -> None:
@@ -84,13 +86,19 @@ class _Client(object):
     the local disk.
     """
 
+    np_data: List[Tuple[np.ndarray, np.ndarray]] = []
+    meta_data: List[str] = []
+
+    auth: Any = None
+
     _DOMAIN: str = 'nest.local'
     _URL: str = 'https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/'
 
     def __init__(self,
                  name,
                  start_date: str = '2019-01-01',
-                 end_date: str = '2019-12-31'):
+                 end_date: str = DEFAULT_END_DATE,
+                 verbose: int = 0):
         """
         Initialize parameters and empty data containers.
 
@@ -101,10 +109,35 @@ class _Client(object):
         self.save_dir = save_dir
         self.start_date = start_date
         self.end_date = end_date
-        self.np_data = []
-        self.meta_data = []
-        self.auth = None
         self.name = name
+        self.verbose = verbose
+
+    def set_end(self, end_str: str = None) -> None:
+        """Set the end date to given string.
+
+        If input is None, the newest already loaded data is chosen."""
+        if end_str is not None:
+            check_date_str(end_str)
+            self.end_date = end_str
+        else:
+            # Find already loaded data
+            name_len = len(self.name)
+            init_str = "0000-00-00"
+            curr_str = init_str
+            assert name_len > 0, f"What the fuck??"
+            for f in os.listdir(save_dir):
+                if len(f) > max(24, name_len):
+                    if f[-name_len:] == self.name:
+                        # Found match
+                        end_date_str = f[12:22]
+                        if end_date_str > curr_str:
+                            curr_str = end_date_str
+            if curr_str != init_str:
+                check_date_str(curr_str)
+                self.end_date = curr_str
+            else:
+                print("No existing data found!")
+                self.end_date = DEFAULT_END_DATE
 
     def read(self, df_data: List[str]) -> Optional[Tuple[List, List]]:
         """
