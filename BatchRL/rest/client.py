@@ -49,6 +49,8 @@ save_dir: str = '../Data/'
 
 DEFAULT_END_DATE: str = "2019-12-31"
 
+NestDataT = Tuple[List[Tuple[np.ndarray, np.ndarray]], List[str]]
+
 
 def check_date_str(ds: str, err: Exception = None) -> None:
     """Raises an error if `ds` is not a valid date string."""
@@ -89,7 +91,7 @@ class _Client(object):
     np_data: List[Tuple[np.ndarray, np.ndarray]] = []
     meta_data: List[str] = []
 
-    auth: Any = None
+    _auth: Any = None
 
     _DOMAIN: str = 'nest.local'
     _URL: str = 'https://visualizer.nestcollaboration.ch/Backend/api/v1/datapoints/'
@@ -99,12 +101,12 @@ class _Client(object):
                  start_date: str = '2019-01-01',
                  end_date: str = DEFAULT_END_DATE,
                  verbose: int = 0):
-        """
-        Initialize parameters and empty data containers.
+        """Initialize parameters and empty data containers.
 
-        :param name: Name of the data.
-        :param start_date: Starting date in string format.
-        :param end_date: End date in string format.
+        Args:
+            name: Name of the data.
+            start_date: Starting date in string format.
+            end_date: End date in string format.
         """
         self.save_dir = save_dir
         self.start_date = start_date
@@ -115,7 +117,11 @@ class _Client(object):
     def set_end(self, end_str: str = None) -> None:
         """Set the end date to given string.
 
-        If input is None, the newest already loaded data is chosen."""
+        If input is None, the newest already loaded data is chosen.
+
+        Args:
+            end_str: The string specifying the end date.
+        """
         if end_str is not None:
             check_date_str(end_str)
             self.end_date = end_str
@@ -139,10 +145,12 @@ class _Client(object):
                 print("No existing data found!")
                 self.end_date = DEFAULT_END_DATE
 
-    def read(self, df_data: List[str]) -> Optional[Tuple[List, List]]:
-        """
-        Reads data defined by the list of column IDs df_data
-        that was acquired between startDate and endDate.
+    def read(self, df_data: List[str]) -> Optional[NestDataT]:
+        """Reads data defined by the list of column IDs `df_data`.
+
+        Reads only the data that was collected between
+        `self.start_date` and `self.end_date`. Returns None if
+        some error is raised by the client.
 
         Args:
             df_data: List of IDs in string format.
@@ -156,14 +164,14 @@ class _Client(object):
 
         # Check Login
         username, pw = get_pw()
-        self.auth = HttpNegotiateAuth(domain=self._DOMAIN,
-                                      username=username,
-                                      password=pw)
+        self._auth = HttpNegotiateAuth(domain=self._DOMAIN,
+                                       username=username,
+                                       password=pw)
         s = requests.Session()
         try:
             # This fails if the username exists but the password
             # is wrong, but not if the username does not exist?!!
-            r = s.get(url=self._URL, auth=self.auth)
+            r = s.get(url=self._URL, auth=self._auth)
         except TypeError:
             print("Login failed, invalid password!")
             return None
@@ -196,7 +204,7 @@ class _Client(object):
         print(time.ctime() + ' REST client data acquired')
         return self.np_data, self.meta_data
 
-    def read_offline(self) -> Tuple[List, List]:
+    def read_offline(self) -> NestDataT:
         """Read numpy and text data that has already been created.
 
         Returns:
@@ -215,7 +223,7 @@ class _Client(object):
         # Loop over files in directory and insert data into lists
         val_list: List[Optional[np.ndarray]] = [None] * ct
         ts_list: List[Optional[np.ndarray]] = [None] * ct
-        meta_list = [None] * ct
+        meta_list: List[str] = [""] * ct
         for k in range(ct):
             val_list[k] = np.load(os.path.join(data_dir, f"values_{k}.npy"))
             ts_list[k] = np.load(os.path.join(data_dir, f"dates_{k}.npy"))
@@ -227,16 +235,13 @@ class _Client(object):
         list_of_tuples = list(zip(val_list, ts_list))
         return list_of_tuples, meta_list
 
-    def write_np(self, overwrite: bool = False):
+    def write_np(self, overwrite: bool = False) -> None:
         """
         Writes the read data in numpy format
         to files.
 
         Args:
             overwrite: Whether to overwrite existing data with same name.
-
-        Returns:
-            None
         """
         name = self.name
         print("Writing Data to local disk.")
@@ -263,7 +268,6 @@ class _Client(object):
             meta_name = os.path.join(data_dir, 'meta_' + str(ct) + '.txt')
             with open(meta_name, 'w') as data:
                 data.write(str(self.meta_data[ct]))
-        return
 
 
 class DataStruct:
