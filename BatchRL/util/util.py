@@ -516,7 +516,7 @@ def b_cast(l_or_el, n: int) -> List:
     if isinstance(l_or_el, list):
         if len(l_or_el) == n:
             return l_or_el
-        raise ValueError("Broadcast failed!!!")
+        raise ValueError(f"Broadcast failed, len({l_or_el}) != {n}!")
     return repl(l_or_el, n)
 
 

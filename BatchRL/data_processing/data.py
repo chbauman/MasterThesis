@@ -550,8 +550,9 @@ def dataset_name_from_dat_struct(dat_struct: DataStruct) -> str:
 def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int, pl_kwargs,
                         c_inds: np.ndarray = None,
                         p_inds: np.ndarray = None,
-                        standardize_data=False) -> 'Dataset':
+                        standardize_data: bool = False) -> 'Dataset':
     """Converts a DataStruct to a Dataset.
+
     Using the same pre-processing steps for each series
     in the DataStruct.
 
@@ -578,6 +579,7 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
     except FileNotFoundError:
         data, m = dat_struct.get_data()
         n_cols = len(data)
+
         pl_kwargs = b_cast(pl_kwargs, n_cols)
         all_data = None
         dt_init = None
@@ -754,12 +756,13 @@ def get_DFAB_heating_data(date_str: str = DEFAULT_END_DATE) -> List['Dataset']:
     create_dir(dfab_rooms_plot_path)
 
     # Single Rooms
+    print(dfab_rooms)
     for e in dfab_rooms:
 
+        # Set date and load
         e.set_end(date_str)
         data, m = e.get_data()
         n_cols = len(data)
-        print(e.end_date)
 
         # Single Room Heating Data  
         temp_kwargs = {'clean_args': [([0.0], 24 * 60, [])], 'gauss_sigma': 5.0, 'rem_out_args': (1.5, None)}
@@ -768,6 +771,8 @@ def get_DFAB_heating_data(date_str: str = DEFAULT_END_DATE) -> List['Dataset']:
         prep_kwargs = [temp_kwargs, valve_kwargs, valve_kwargs, valve_kwargs]
         if n_cols == 5:
             prep_kwargs += [blinds_kwargs]
+        else:
+            assert len(prep_kwargs) == n_cols == 4, f"Invalid data with {n_cols} series!"
         data_list += [convert_data_struct(e, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
 
     # General Heating Data
