@@ -1,5 +1,5 @@
 import os
-from typing import Sequence, Union
+from typing import Sequence, Union, Any
 
 from keras import Model
 from keras.layers import Dense, Dropout, BatchNormalization
@@ -7,7 +7,7 @@ from keras.models import Sequential
 from keras.regularizers import l2
 
 from ml.sklearn_util import SKLoader
-from util.util import dynamic_model_dir
+from util.util import dynamic_model_dir, create_dir
 
 KerasModel = Union[Sequential, Model, SKLoader]
 
@@ -126,7 +126,7 @@ class KerasBase:
             m.load_weights(full_path)
         return found
 
-    def get_path(self, name: str, ext: str = ".h5") -> str:
+    def get_path(self, name: str, ext: str = ".h5", env: Any = None) -> str:
         """
         Returns the path where the model parameters
         are stored.
@@ -134,8 +134,14 @@ class KerasBase:
         Args:
             name: Model name.
             ext: Filename extension.
+            env: Environment with a name attribute.
 
         Returns:
             Model parameter file path.
         """
-        return os.path.join(self.model_path, name + ext)
+        res_folder = self.model_path
+        if env is not None and hasattr(env, "name"):
+            res_folder = os.path.join(res_folder, env.name)
+            create_dir(res_folder)
+
+        return os.path.join(res_folder, name + ext)

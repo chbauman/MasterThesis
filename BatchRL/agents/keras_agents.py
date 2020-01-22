@@ -242,7 +242,7 @@ class DDPGBaseAgent(KerasBaseAgent):
         Returns:
              True if model could be loaded else False.
         """
-        full_path = self.get_path(name)
+        full_path = self.get_path(name, env=self.env)
         path_actor = full_path[:-3] + "_actor.h5"
         path_critic = full_path[:-3] + "_critic.h5"
 
@@ -261,7 +261,7 @@ class DDPGBaseAgent(KerasBaseAgent):
             m: Keras-rl agent model.
             name: Name of the model.
         """
-        m.save_weights(self.get_path(name))
+        m.save_weights(self.get_path(name, env=self.env))
 
     @train_decorator(True)
     def fit(self, verbose: int = 1) -> None:

@@ -292,7 +292,6 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
     if eval_list is None:
         eval_list = [2595, 8221, 0, 2042, 12067, None]
-        # eval_list = [None, None, None, None]
 
     # Get dataset and constraints
     with ProgWrap(f"Loading dataset...", verbose > 0):
