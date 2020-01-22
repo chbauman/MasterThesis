@@ -182,7 +182,9 @@ def update_data(verbose: int = 4,
                 date_str: str = DEFAULT_END_DATE):
     """Updates the base datasets with all the currently available data."""
 
-    date_str = "2020-01-21"
+    # date_str = "2020-01-21"
+
+    # Select today if no date specified
     if date_str is None:
         date_str = datetime.now().strftime("%Y-%m-%d")
 
@@ -191,10 +193,8 @@ def update_data(verbose: int = 4,
 
     with ProgWrap(f"Loading raw data...", verbose > 0):
         for ds in all_experiment_data:
-            new_ds = DataStruct(ds.data_ids, ds.name,
-                                start_date=ds.start_date,
-                                end_date=date_str)
-            new_ds.get_data()
+            ds.set_end(date_str)
+            ds.get_data()
 
     with ProgWrap(f"Creating datasets...", verbose > 0):
         get_DFAB_heating_data(date_str=date_str)
@@ -474,9 +474,9 @@ def get_from_data_struct(dat_struct: DataStruct,
     """
 
     # Get name
-    name = dat_struct.name
     if new_name is None:
-        new_name = name
+        new_name = dat_struct.name
+    new_name = full_ds_name(new_name, dat_struct.end_date)
 
     # Try loading data
     try:
@@ -522,14 +522,18 @@ def get_from_data_struct(dat_struct: DataStruct,
                                 custom_descs=desc_list)
 
 
+def full_ds_name(dat_struct_name: str, date_str: str):
+    if date_str != DEFAULT_END_DATE:
+        dat_struct_name = f"{dat_struct_name}_{date_str}"
+    return dat_struct_name
+
+
 def dataset_name_from_dat_struct(dat_struct: DataStruct) -> str:
     """Defines the dataset name from the `DataStruct`."""
     n = dat_struct.name
     end_date = dat_struct.end_date
     print(f"end date: {end_date}")
-    if end_date != DEFAULT_END_DATE:
-        n = f"{n}_{end_date}"
-    return n
+    return full_ds_name(n, end_date)
 
 
 def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int, pl_kwargs,
@@ -995,6 +999,7 @@ def generate_room_datasets(date_str: str = DEFAULT_END_DATE) -> List[Dataset]:
         # Get name
         room_nr_str = room_ds.name[-2:]
         new_name = "Model_Room" + room_nr_str
+        new_name = full_ds_name(new_name, date_str)
         print("Processing", new_name)
 
         # Try loading from disk
@@ -1092,6 +1097,7 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
     # Check `base_ds_name`.
     if base_ds_name[:10] != "Model_Room" or base_ds_name[-2:] not in ["43", "53"]:
         raise ValueError(f"Dataset: {base_ds_name} does not exist!")
+    base_ds_name = full_ds_name(base_ds_name, date_str)
 
     # Load dataset, generate if not found.
     try:
