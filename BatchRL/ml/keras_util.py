@@ -99,7 +99,7 @@ class KerasBase:
     m: KerasModel
 
     def _model_path_name(self, name, train_data: str):
-        ext = f"_{train_data}" if train_data != DEFAULT_TRAIN_SET else ""
+        ext = f"_TDP_{train_data}" if train_data != DEFAULT_TRAIN_SET else ""
         return self.get_path(f"{name}{ext}")
 
     def save_model(self, m, name: str,

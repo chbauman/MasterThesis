@@ -454,8 +454,6 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         TODO: Compute more accurate val_percent for fit method!
         """
-        if train_data != "train":
-            print("Fuck")
 
         # Define optimizer and compile
         opt = Adam(lr=self.lr)

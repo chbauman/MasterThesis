@@ -31,7 +31,7 @@ from opcua_empa.run_opcua import try_opcua
 from rest.client import test_rest_client, DEFAULT_END_DATE
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
-from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args
+from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args, DEFAULT_TRAIN_SET
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
     plot_heat_cool_rew_det
 
@@ -285,7 +285,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                     include_battery: bool = False,
                     physically_consistent: bool = False,
                     date_str: str = DEFAULT_END_DATE,
-                    temp_bds: RangeT = None) -> None:
+                    temp_bds: RangeT = None,
+                    train_data: str = "train") -> None:
 
     # Print what the code does
     if verbose:
@@ -309,7 +310,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
     # Load the model and init env
     with ProgWrap(f"Preparing environment...", verbose > 0):
-        m = get_model(m_name, ds, rnn_consts, from_hop=True, fit=True, verbose=prog_verb(verbose))
+        m = get_model(m_name, ds, rnn_consts, from_hop=True,
+                      fit=True, verbose=prog_verb(verbose), train_data=train_data)
         # m.analyze_visually(overwrite=False, plot_acf=False, verbose=prog_verb(verbose) > 0)
         if include_battery:
             c_prof = LowHighProfile(ds.dt)
@@ -542,6 +544,8 @@ def get_model(name: str, ds: Dataset,
                 comp_name = comp_name + "_Battery"
             if rnn_consts is not None:
                 comp_name += "_CON"
+            if train_data != DEFAULT_TRAIN_SET:
+                comp_name += f"_{train_data}"
         return CompositeModel(ds, model_list, new_name=comp_name)
 
     # Basic parameter set
@@ -805,6 +809,9 @@ def main() -> None:
     if args.verbose:
         print("Verbosity turned on.")
 
+    # Common arguments
+    date_str, train_data = extract_args(args.str, DEFAULT_END_DATE, "train")
+
     # Run integration tests and optionally the cleanup after.
     if args.test:
         run_integration_tests(verbose=verbose)
@@ -813,7 +820,6 @@ def main() -> None:
 
     # Update stored data
     if args.data:
-        date_str = extract_args(args.str, DEFAULT_END_DATE)[0]
         update_data(date_str=date_str)
 
     # Run hyperparameter optimization
@@ -827,7 +833,6 @@ def main() -> None:
 
     # Fit and analyze all models
     if args.mod_eval:
-        date_str, train_data = extract_args(args.str, DEFAULT_END_DATE, "train")
         perf_analyze, visual_analyze, include_composite = extract_args(args.bool, True, False, False)
         run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=perf_analyze,
                                        visual_analyze=visual_analyze,
@@ -843,7 +848,6 @@ def main() -> None:
 
     # Evaluate room model
     if args.room:
-        date_str = extract_args(args.str, DEFAULT_END_DATE)[0]
         alpha, tb_low, tb_high = extract_args(args.float, 50.0, None, None)
         n_steps = extract_args(args.int, None)[0]
         ext_args = extract_args(args.bool, False, False, False, False)
@@ -852,7 +856,7 @@ def main() -> None:
         run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps,
                         include_battery=add_bat, perf_eval=perf_eval,
                         physically_consistent=phys_cons, overwrite=overwrite,
-                        date_str=date_str, temp_bds=temp_bds)
+                        date_str=date_str, temp_bds=temp_bds, train_data=train_data)
 
     # Overleaf plots
     if args.plot:
