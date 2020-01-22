@@ -20,7 +20,7 @@ from dynamics.base_hyperopt import HyperOptimizableModel
 from ml.keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecurrent, IdDense
 from tests.test_data import get_test_ds
 from tests.test_keras import get_multi_input_layer_output
-from util.util import EULER, create_dir, rem_first, train_decorator
+from util.util import EULER, create_dir, rem_first, train_decorator, DEFAULT_TRAIN_SET
 from util.visualize import plot_train_history
 
 
@@ -447,7 +447,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                    dpi=500)
 
     @train_decorator(True)
-    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
+    def fit(self, verbose: int = 0, train_data: str = DEFAULT_TRAIN_SET) -> None:
         """Fit the model if it hasn't been fitted before.
 
         Else it loads the trained model.
@@ -455,7 +455,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         TODO: Compute more accurate val_percent for fit method!
         """
         if train_data != "train":
-            raise NotImplementedError("Fuck")
+            print("Fuck")
 
         # Define optimizer and compile
         opt = Adam(lr=self.lr)
@@ -466,17 +466,20 @@ class RNNDynamicModel(HyperOptimizableModel):
             self._plot_model(self.m)
 
         # Prepare the data
-        input_data, output_data = self.get_fit_data('train_val')
+        monitor_val_loss = train_data != "all"
+        used_data = "train_val" if train_data == DEFAULT_TRAIN_SET else "all"
+        input_data, output_data = self.get_fit_data(used_data)
 
         # Fit and save model
+        val_per = 0 if not monitor_val_loss else self.data.val_percent
         h = self.m.fit(input_data, output_data,
                        epochs=self.n_iter_max,
                        initial_epoch=0,
                        batch_size=128,
-                       validation_split=self.data.val_percent,
+                       validation_split=val_per,
                        verbose=self.verbose)
         pth = self.get_plt_path("TrainHist")
-        plot_train_history(h, pth)
+        plot_train_history(h, pth, val=monitor_val_loss)
         create_dir(self.model_path)
 
     def predict(self, input_data: np.ndarray) -> np.ndarray:
