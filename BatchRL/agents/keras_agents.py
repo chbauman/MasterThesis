@@ -228,7 +228,7 @@ class DDPGBaseAgent(KerasBaseAgent):
     def get_info(self) -> Dict:
         return {'action_scaled_01': self.action_range}
 
-    def load_if_exists(self, m, name: str) -> bool:
+    def load_if_exists(self, m, name: str, **kwargs) -> bool:
         """Loads the keras model if it exists.
 
         Returns true if it could be loaded, else False.
@@ -251,7 +251,7 @@ class DDPGBaseAgent(KerasBaseAgent):
             return True
         return False
 
-    def save_model(self, m, name: str) -> None:
+    def save_model(self, m, name: str, **kwargs) -> None:
         """Saves a keras model.
 
         Needs to be overridden here since the keras-rl

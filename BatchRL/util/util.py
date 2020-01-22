@@ -25,6 +25,8 @@ import numpy as np
 # Determine platform, assuming we are on Euler if it is not a windows platform.
 EULER: bool = os.name != 'nt'
 
+DEFAULT_TRAIN_SET: str = "train"  #: Default training set
+
 
 def get_rl_steps(eul: bool = EULER):
     return 1000000 if eul else 1000
@@ -639,9 +641,10 @@ def train_decorator(verb: bool = True):
     def decorator(fit):
 
         @wraps(fit)
-        def decorated(self, verbose: int = 0, **kwargs):
+        def decorated(self, verbose: int = 0,
+                      train_data: str = DEFAULT_TRAIN_SET, **kwargs):
 
-            loaded = self.load_if_exists(self.m, self.name)
+            loaded = self.load_if_exists(self.m, self.name, train_data=train_data)
             if not loaded:
                 # Set seed for reproducibility
                 np.random.seed(SEED)
@@ -649,8 +652,8 @@ def train_decorator(verb: bool = True):
                 # Fit and save
                 if verbose:
                     print("Fitting Model...")
-                fit(self, verbose, **kwargs)
-                self.save_model(self.m, self.name)
+                fit(self, verbose, train_data, **kwargs)
+                self.save_model(self.m, self.name, train_data=train_data)
             elif verbose:
                 print("Restored trained model")
 

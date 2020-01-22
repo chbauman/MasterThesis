@@ -7,7 +7,7 @@ from keras.models import Sequential
 from keras.regularizers import l2
 
 from ml.sklearn_util import SKLoader
-from util.util import dynamic_model_dir, create_dir
+from util.util import dynamic_model_dir, create_dir, DEFAULT_TRAIN_SET
 
 KerasModel = Union[Sequential, Model, SKLoader]
 
@@ -98,16 +98,23 @@ class KerasBase:
     model_path: str = dynamic_model_dir
     m: KerasModel
 
-    def save_model(self, m, name: str) -> None:
+    def _model_path_name(self, name, train_data: str):
+        ext = f"_{train_data}" if train_data != DEFAULT_TRAIN_SET else ""
+        return self.get_path(f"{name}{ext}")
+
+    def save_model(self, m, name: str,
+                   train_data: str = DEFAULT_TRAIN_SET) -> None:
         """Saves a keras model.
 
         Args:
             m: Keras model.
             name: Name of the model.
+            train_data: Train data specifier.
         """
-        m.save(self.get_path(name))
+        m.save(self._model_path_name(name, train_data))
 
-    def load_if_exists(self, m, name: str) -> bool:
+    def load_if_exists(self, m, name: str,
+                       train_data: str = DEFAULT_TRAIN_SET) -> bool:
         """Loads the keras model if it exists.
 
         Returns true if it could be loaded, else False.
@@ -115,11 +122,12 @@ class KerasBase:
         Args:
             m: Keras model to be loaded.
             name: Name of model.
+            train_data: Train data specifier.
 
         Returns:
              True if model could be loaded else False.
         """
-        full_path = self.get_path(name)
+        full_path = self._model_path_name(name, train_data)
         found = os.path.isfile(full_path)
         # print(f"Model: {full_path}, found? {found}")
         if found:

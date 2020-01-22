@@ -231,7 +231,7 @@ class KerasDDPGTest(DDPGBaseAgent):
     def fit(self, verbose: int = 0) -> None:
         pass
 
-    def load_if_exists(self, m, name: str) -> bool:
+    def load_if_exists(self, m, name: str, **kwargs) -> bool:
         pass
 
     def get_short_name(self):
