@@ -20,7 +20,7 @@ from rl.random import OrnsteinUhlenbeckProcess
 from agents.base_agent import AgentBase, rl_model_dir
 from envs.dynamics_envs import FullRoomEnv, RLDynEnv, RangeListT
 from ml.keras_util import getMLPModel, KerasBase
-from util.util import make_param_ext, train_decorator
+from util.util import make_param_ext, train_decorator, DEFAULT_TRAIN_SET
 from util.visualize import plot_rewards
 
 
@@ -264,7 +264,7 @@ class DDPGBaseAgent(KerasBaseAgent):
         m.save_weights(self.get_path(name, env=self.env))
 
     @train_decorator()
-    def fit(self, verbose: int = 1) -> None:
+    def fit(self, verbose: int = 1, train_data: str = DEFAULT_TRAIN_SET) -> None:
         """Fit the agent using the environment.
 
         Makes a plot of the rewards received during the training.

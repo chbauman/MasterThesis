@@ -11,7 +11,7 @@ from envs.dynamics_envs import RLDynEnv, BatteryEnv, RangeListT, RoomBatteryEnv,
 from tests.test_data import construct_test_ds
 from tests.test_dynamics import TestModel, ConstTestModelControlled, get_test_battery_model, get_full_composite_model
 from util.numerics import rem_mean_and_std, add_mean_and_std
-from util.util import Arr
+from util.util import Arr, DEFAULT_TRAIN_SET
 from util.visualize import plot_heat_cool_rew_det
 
 
@@ -228,7 +228,7 @@ class KerasDDPGTest(DDPGBaseAgent):
             assert len(action_range) == env.nb_actions, "Wrong amount of ranges!"
         self.action_range = action_range
 
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = DEFAULT_TRAIN_SET) -> None:
         pass
 
     def load_if_exists(self, m, name: str, **kwargs) -> bool:
