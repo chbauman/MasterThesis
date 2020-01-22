@@ -47,8 +47,11 @@ class SKLearnModel(BaseDynamicsModel):
         self.skl_mod = skl_model
 
     @train_decorator()
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         """Fit linear model."""
+
+        if train_data != "train":
+            raise NotImplementedError("Fuck")
 
         # Check if already fitted
         if self.is_fitted:

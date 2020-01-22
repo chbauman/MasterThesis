@@ -49,7 +49,7 @@ class Periodic1DayModel(BaseDynamicsModel):
                 dat_copy[i, :, k] = make_periodic(dat_copy[i, :, k])
         self.hist = dat_copy
 
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         """No need to fit anything.
         """
         pass

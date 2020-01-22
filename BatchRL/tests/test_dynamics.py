@@ -86,9 +86,9 @@ class TestModel(BaseDynamicsModel):
         if ds.d - 1 != self.n_pred:
             raise ValueError("Dataset needs exactly 3 non-controllable state variables!")
 
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         if verbose:
-            print("Not fitting anything!")
+            print(f"Not fitting anything, data part: '{train_data}'!")
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
 
@@ -132,9 +132,9 @@ class ConstSeriesTestModel(NoDisturbanceModel):
         self.values = np.array(pred_val_list)
         self.use_AR = False
 
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         if verbose:
-            print("Not fitting anything!")
+            print(f"Not fitting anything, data part: '{train_data}'!")
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """Predicts a constant value for each series.
@@ -348,9 +348,9 @@ class TestHopTable(HyperOptimizableModel):
         x = self.h_param
         return -x * x + 12 * x + 15
 
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         if verbose:
-            print("Not fitting anything!")
+            print(f"Not fitting anything, data part: '{train_data}'!")
 
     def predict(self, in_data):
         pass

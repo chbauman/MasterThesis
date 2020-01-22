@@ -93,7 +93,7 @@ class BatteryModel(BaseDynamicsModel):
         else:
             self._scaled_soc_limits = self.hard_soc_limits
 
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         """Fits the battery model.
 
         Does nothing if it has already been fitted.
@@ -102,12 +102,16 @@ class BatteryModel(BaseDynamicsModel):
 
         Args:
             verbose: Verbosity, 0: silent.
+            train_data: Ignored.
         """
         if self.params is not None:
             print_if_verb(verbose, "Battery model already fitted!")
             return
         else:
             print_if_verb(verbose, "Fitting battery model...")
+
+        if train_data != "train" and verbose:
+            print(f"Ignoring argument: train_data = {train_data}")
 
         # Get data
         d = self.data

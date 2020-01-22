@@ -13,7 +13,7 @@ from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get
 from util.util import create_dir, mins_to_str, Arr, tot_size, yeet
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one
 
-# Plot title definition
+#: Plot title definition
 CONT_TITLE: str = "1 Week Continuous Predictions"
 
 
@@ -23,7 +23,8 @@ def check_train_str(train_data: str) -> None:
         yeet(f"String specifying training data: {train_data} is not valid!")
 
 
-def _get_title(n: int, dt: int = 15):
+def _get_title(n: int, dt: int = 15) -> str:
+    """Plot title generating helper function."""
     return CONT_TITLE if n == 0 else mins_to_str(dt * n) + " Ahead Predictions"
 
 
@@ -65,7 +66,8 @@ def _get_inds_str(indices: np.ndarray, pre: str = "In") -> str:
     return inds_str
 
 
-def check_model_compatibility(model_list: List['BaseDynamicsModel'], raise_error: bool = True) -> bool:
+def check_model_compatibility(model_list: List['BaseDynamicsModel'],
+                              raise_error: bool = True) -> bool:
     """Checks if models in list are compatible.
 
     I.e. they need to predict the same series.
