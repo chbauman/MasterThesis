@@ -197,9 +197,8 @@ def update_data(verbose: int = 4,
             ds.get_data()
 
     with ProgWrap(f"Creating datasets...", verbose > 0):
-        get_DFAB_heating_data(date_str=date_str)
-        generate_room_datasets(date_str=date_str)
         get_battery_data(date_str=date_str)
+        generate_room_datasets(date_str=date_str)
 
 
 #######################################################################################################
@@ -285,7 +284,8 @@ def add_time(all_data, dt_init1, col_ind=0, dt_mins=15):
     start_t = (dt_init1 - t_temp_round) / interval
     for k in range(n_data):
         all_data[k, col_ind] = (start_t + k) % n_ts_per_day
-    return
+
+    raise NotImplementedError("This is deprecated!")
 
 
 def pipeline_preps(orig_dat,
@@ -483,11 +483,12 @@ def get_from_data_struct(dat_struct: DataStruct,
     # Try loading data
     try:
         loaded = Dataset.loadDataset(new_name)
+        print(f"Found Dataset: {new_name}")
         if desc_list is not None:
             loaded.descriptions = desc_list
         return loaded
     except FileNotFoundError:
-        print("Did not find Dataset:", new_name)
+        print(f"Did not find Dataset: {new_name}")
         data, m = dat_struct.get_data()
         n_cols = len(data)
 
@@ -677,7 +678,7 @@ def get_weather_data(date_str: str = DEFAULT_END_DATE) -> 'Dataset':
 
     filter_sigma = 2.0
     name = "Weather"
-    name += "" if filter_sigma is None else str(filter_sigma)
+    full_name = name + ("" if filter_sigma is None else str(filter_sigma))
     dat_struct = WeatherData
     dat_struct.set_end(date_str)
 
@@ -700,7 +701,7 @@ def get_weather_data(date_str: str = DEFAULT_END_DATE) -> 'Dataset':
 
     # Get the data
     custom_descs = np.array(["Outside Temperature [°C]", "Irradiance [W/m^2]"])
-    ds = get_from_data_struct(dat_struct, prep_plot_dir, dt_mins, name, inds, kws,
+    ds = get_from_data_struct(dat_struct, prep_plot_dir, dt_mins, full_name, inds, kws,
                               desc_list=custom_descs,
                               standardize_data=True)
     return ds

@@ -136,7 +136,7 @@ def interpolate_time_series(dat: Tuple, dt_mins: int,
     interval = np.timedelta64(dt_mins, 'm')
     n_ts = int((end_dt - start_dt) / interval + 1)
     if verbose:
-        print(n_ts, "Timesteps")
+        print(f"Total: {n_ts} Timesteps")
 
     # Initialize
     new_values = np.empty((n_ts,), dtype=np.float32)
@@ -172,7 +172,7 @@ def interpolate_time_series(dat: Tuple, dt_mins: int,
                 count += 1
                 n_data_missing = int((curr_dt - curr_upper_lim) / interval)
                 if verbose:
-                    print("Missing", n_data_missing, "data points :(")
+                    print(f"Missing {n_data_missing} data points :(")
                 for k in range(n_data_missing):
                     new_values[count] = np.nan
                     count += 1
