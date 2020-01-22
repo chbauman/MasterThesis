@@ -72,7 +72,7 @@ class DQNBaseAgent(KerasBaseAgent):
                           target_model_update=500)
         self.m.compile(Adam(lr=1e-5), metrics=['mae'])
 
-    @train_decorator(True)
+    @train_decorator()
     def fit(self) -> None:
         # Fit and plot rewards
         hist = self.m.fit(self.env, nb_steps=self.n_train_steps, visualize=False, verbose=1)
@@ -263,7 +263,7 @@ class DDPGBaseAgent(KerasBaseAgent):
         """
         m.save_weights(self.get_path(name, env=self.env))
 
-    @train_decorator(True)
+    @train_decorator()
     def fit(self, verbose: int = 1) -> None:
         """Fit the agent using the environment.
 

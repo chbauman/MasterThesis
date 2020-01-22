@@ -625,19 +625,20 @@ class TestDecoratorFactory(object):
         return decorated
 
 
-def train_decorator(verb: bool = True):
+def train_decorator():
     """Decorator factory for fit method of ML model.
 
-    Assumes the model has a keras model `m` as member
-    variable and a name `name`. Then it tries loading
-    the model, if that fails the actual fitting is done.
+    It tries loading the model from disk,
+    if that fails the original fitting method is called.
+    If the model can be loaded from disk, no actual fitting
+    is done.
 
-    # TODO: Remove `verb` in argument of decorator.
-    # TODO: Fix warning when using `verbose` in fit after decorating.
+    Assumes `self` has a model `m` as member
+    variable and a name `name`, further the methods
+    `self.load_if_exists(self.m, self.name, train_data=train_data)`
+    and `self.save_model(self.m, self.name, train_data=train_data)` that
+    load and save the model respectively.
     """
-    if not verb:
-        print("This is deprecated!")
-
     def decorator(fit):
 
         @wraps(fit)

@@ -50,9 +50,6 @@ class SKLearnModel(BaseDynamicsModel):
     def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         """Fit linear model."""
 
-        if train_data != "train":
-            raise NotImplementedError("Fuck")
-
         # Check if already fitted
         if self.is_fitted:
             if verbose:
@@ -60,7 +57,8 @@ class SKLearnModel(BaseDynamicsModel):
             return
 
         # Prepare the data
-        input_data, output_data = self.get_fit_data('train', residual_output=self.residual_learning)
+        input_data, output_data = self.get_fit_data(train_data,
+                                                    residual_output=self.residual_learning)
         in_sh = input_data.shape
         first_sh, last_sh = in_sh[0], in_sh[-1]
         input_data_2d = input_data.reshape((first_sh, -1))

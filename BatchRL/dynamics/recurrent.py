@@ -446,7 +446,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                    expand_nested=expand,
                    dpi=500)
 
-    @train_decorator(True)
+    @train_decorator()
     def fit(self, verbose: int = 0, train_data: str = DEFAULT_TRAIN_SET) -> None:
         """Fit the model if it hasn't been fitted before.
 
