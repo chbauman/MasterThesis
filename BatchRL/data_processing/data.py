@@ -10,7 +10,7 @@ from data_processing.preprocess import clean_data, remove_out_interval, clip_to_
 from rest.client import DataStruct, DEFAULT_END_DATE
 from util.numerics import align_ts, copy_arr_list, solve_ls, \
     find_rows_with_nans
-from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init
+from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init, ProgWrap
 from util.visualize import plot_time_series, plot_all, plot_single, preprocess_plot_path, \
     plot_multiple_time_series, plot_dataset, stack_compare_plot
 
@@ -182,15 +182,25 @@ def _new_modify(base: str) -> str:
     return f"New_{base}"
 
 
-def update_data():
+def update_data(verbose: int = 4,
+                date_str: str = DEFAULT_END_DATE):
     """Updates the base datasets with all the currently available data."""
-    for ds in all_experiment_data:
-        new_name = _new_modify(ds.name)
-        now_str = datetime.now().strftime("%Y-%m-%d")
-        new_ds = DataStruct(ds.data_ids, new_name,
-                            start_date=ds.start_date,
-                            end_date=now_str)
-        new_ds.get_data()
+
+    if date_str is None:
+        date_str = datetime.now().strftime("%Y-%m-%d")
+
+    with ProgWrap(f"Loading raw data...", verbose > 0):
+        for ds in all_experiment_data:
+            new_name = _new_modify(ds.name)
+            new_ds = DataStruct(ds.data_ids, new_name,
+                                start_date=ds.start_date,
+                                end_date=date_str)
+            new_ds.get_data()
+
+    with ProgWrap(f"Creating datasets...", verbose > 0):
+        get_DFAB_heating_data(date_str=date_str)
+        generate_room_datasets(date_str=date_str)
+        get_battery_data(date_str=date_str)
 
 
 #######################################################################################################
@@ -946,7 +956,7 @@ def analyze_room_energy_consumption():
 # Dataset generation
 
 
-def generate_room_datasets() -> List[Dataset]:
+def generate_room_datasets(date_str: str = DEFAULT_END_DATE) -> List[Dataset]:
     """Gather the right data and put it all together.
 
     Returns:
@@ -954,10 +964,10 @@ def generate_room_datasets() -> List[Dataset]:
     """
 
     # Get weather
-    w_dataset = get_weather_data()
+    w_dataset = get_weather_data(date_str=date_str)
 
     # Get room data
-    dfab_dataset_list = get_DFAB_heating_data()
+    dfab_dataset_list = get_DFAB_heating_data(date_str=date_str)
     n_rooms = len(dfab_rooms)
     dfab_room_dataset_list = [dfab_dataset_list[i] for i in range(n_rooms)]
 
@@ -1021,12 +1031,14 @@ def generate_room_datasets() -> List[Dataset]:
 
 
 def generate_sin_cos_time_ds(other: Dataset) -> Dataset:
-    """
-    Generates a time dataset from the last two
+    """Generates a time dataset from the last two
     time series of another dataset.
 
-    :param other: The other dataset.
-    :return: A new dataset containing only the time series.
+    Args:
+        other: The other dataset to extract the series from.
+
+    Returns:
+        A new dataset containing only the two last time series.
     """
     # Try loading
     name = other.name + "_SinCosTime"
@@ -1047,7 +1059,8 @@ def generate_sin_cos_time_ds(other: Dataset) -> Dataset:
 
 def choose_dataset(base_ds_name: str = "Model_Room43",
                    seq_len: int = 20,
-                   add_battery: bool = False) -> Dataset:
+                   add_battery: bool = False,
+                   date_str: str = DEFAULT_END_DATE) -> Dataset:
     """Let's you choose a dataset.
 
     Reads a room dataset, if it is not found, it is generated.
@@ -1060,6 +1073,7 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
             with nr = 43 or 53.
         seq_len: The sequence length to use for the RNN training.
         add_battery: Whether to add the battery dataset.
+        date_str: The end date of the acquired data, most recent available if None.
 
     Returns:
         The prepared dataset.
@@ -1072,8 +1086,8 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
     try:
         ds = Dataset.loadDataset(base_ds_name)
     except FileNotFoundError:
-        get_DFAB_heating_data()
-        generate_room_datasets()
+        get_DFAB_heating_data(date_str=date_str)
+        generate_room_datasets(date_str=date_str)
         ds = Dataset.loadDataset(base_ds_name)
 
     # Set sequence length
@@ -1083,7 +1097,7 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
     # Add time variables and optionally the battery data
     ds = ds.add_time()
     if add_battery:
-        bat_ds = get_battery_data()
+        bat_ds = get_battery_data(date_str=date_str)
         assert bat_ds.dt == ds.dt, "Incompatible timestep!"
         ds = ds + bat_ds
 
