@@ -8,6 +8,7 @@ from mock import call
 
 import util.notify
 from agents.agents_heuristic import ConstActionAgent
+from agents.base_agent import rl_model_dir
 from data_processing.dataset import dataset_data_path
 from dynamics.base_hyperopt import hop_path
 from dynamics.recurrent import RNN_TEST_DATA_NAME
@@ -751,9 +752,11 @@ def cleanup_test_data(verbose: int = 0):
     rem_files_and_dirs(dynamic_model_dir, SYNTH_DATA_NAME)
     rem_files_and_dirs(dynamic_model_dir, "Test")
     rem_files_and_dirs(hop_path, "TestHop", anywhere=True)
-    rem_files_and_dirs(rl_plot_path, "TestEnv")
-    rem_files_and_dirs(rl_plot_path, "BatteryTest", anywhere=True)
-    rem_files_and_dirs(rl_plot_path, "FullTest", anywhere=True)
+
+    for s in ["TestEnv", "BatteryTest", "FullTest"]:
+        rem_files_and_dirs(rl_plot_path, s, anywhere=True)
+        rem_files_and_dirs(rl_model_dir, s, anywhere=True)
+
     rem_files_and_dirs(dataset_data_path, "Test", anywhere=True)
     rem_files_and_dirs(TEST_DIR, "")
     rem_files_and_dirs(experiment_data_path, "Offline", anywhere=True)

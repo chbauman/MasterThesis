@@ -1283,4 +1283,3 @@ class TestDataSynthetic(DataStruct):
 
 
 TestData2 = TestDataSynthetic()
-
