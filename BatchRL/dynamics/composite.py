@@ -71,7 +71,8 @@ class CompositeModel(BaseDynamicsModel):
     def fit(self, verbose: int = 0) -> None:
         """Fits all the models."""
         with ProgWrap(f"Fitting sub-models...", verbose > 0):
-            for m in self.model_list:
+            for ct, m in enumerate(self.model_list):
+                print(f"Fitting model {ct}: {m.name}")
                 m.fit(verbose=prog_verb(verbose))
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:

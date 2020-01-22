@@ -524,11 +524,6 @@ def get_model(name: str, ds: Dataset,
                 battery_mod.fit()
             model_list = model_list + [battery_mod]
 
-        # Print model names
-        if verbose > 1:
-            for ct, m in enumerate(model_list):
-                print(f"Model {ct}: {m.name}")
-
         # Adjust the name for full models.
         if comp_name.startswith("FullState_"):
             if battery_used:
