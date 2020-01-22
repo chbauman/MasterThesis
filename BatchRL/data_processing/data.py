@@ -178,21 +178,17 @@ dfab_rooms = [Room4BlueData, Room5BlueData, Room4RedData, Room5RedData]
 all_experiment_data = dfab_rooms + [DFAB_AddData, DFAB_AllValves, WeatherData, BatteryData]
 
 
-def _new_modify(base: str) -> str:
-    return f"New_{base}"
-
-
 def update_data(verbose: int = 4,
                 date_str: str = DEFAULT_END_DATE):
     """Updates the base datasets with all the currently available data."""
 
     if date_str is None:
         date_str = datetime.now().strftime("%Y-%m-%d")
+        print(f"Loading data with end date: {date_str}")
 
     with ProgWrap(f"Loading raw data...", verbose > 0):
         for ds in all_experiment_data:
-            new_name = _new_modify(ds.name)
-            new_ds = DataStruct(ds.data_ids, new_name,
+            new_ds = DataStruct(ds.data_ids, ds.name,
                                 start_date=ds.start_date,
                                 end_date=date_str)
             new_ds.get_data()

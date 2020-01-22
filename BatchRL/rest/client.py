@@ -61,7 +61,7 @@ NestDataT = Tuple[List[Tuple[np.ndarray, np.ndarray]], List[str]]
 
 def check_date_str(ds: str, err: Exception = None) -> None:
     """Raises an error if `ds` is not a valid date string."""
-    invalid = len(ds) != 10 or ds[4] != "-" or ds[6] != "-"
+    invalid = len(ds) != 10 or ds[4] != "-" or ds[7] != "-"
     if invalid:
         if err is None:
             err = ValueError(f"Invalid date string: {ds}")
