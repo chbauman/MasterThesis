@@ -39,6 +39,8 @@ import numpy as np
 import pandas as pd
 import requests
 
+from util.notify import login_from_file
+
 USE_CL: bool = True  #: Whether to use the command line for the login.
 if not USE_CL:
     from .pw_gui import get_pw
@@ -47,7 +49,7 @@ else:
 
 
 curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
-pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
+login_path = os.path.join(curr_dir.parent.parent, "rest_login.txt")
 
 #: Where to put the local copy of the data.
 save_dir: str = '../Data/'
@@ -169,8 +171,7 @@ class _Client(object):
         from requests_negotiate_sspi import HttpNegotiateAuth
 
         # Check Login
-        login_file =
-        username, pw = get_pw() if self.pw_from_cl else login_from_file()
+        username, pw = get_pw() if self.pw_from_cl else login_from_file(login_path)
         self._auth = HttpNegotiateAuth(domain=self._DOMAIN,
                                        username=username,
                                        password=pw)
