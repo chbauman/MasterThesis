@@ -73,7 +73,7 @@ class CompositeModel(BaseDynamicsModel):
         with ProgWrap(f"Fitting sub-models on part: '{train_data}'...", verbose > 0):
             for ct, m in enumerate(self.model_list):
                 print(f"Fitting model {ct}: {m.name}")
-                m.fit(verbose=prog_verb(verbose))
+                m.fit(verbose=prog_verb(verbose), train_data=train_data)
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
         """Aggregated prediction by predicting with all models.
