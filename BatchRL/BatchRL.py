@@ -28,7 +28,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv, LowHighProfile, heat_marker
 from opcua_empa.run_opcua import try_opcua
-from rest.client import test_rest_client
+from rest.client import test_rest_client, DEFAULT_END_DATE
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args
@@ -199,7 +199,8 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                    verbose: int = 1,
                                    visual_analyze: bool = True,
                                    perf_analyze: bool = False,
-                                   include_composite: bool = False) -> None:
+                                   include_composite: bool = False,
+                                   date_str: str = DEFAULT_END_DATE) -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
     Does not much if not on Euler.
@@ -210,6 +211,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
         visual_analyze: Whether to do the visual analysis.
         perf_analyze: Whether to do the performance analysis.
         include_composite: Whether to also do all the stuff for the composite models.
+        date_str: End date string specifying data.
     """
     next_verb = prog_verb(verbose)
 
@@ -217,7 +219,8 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
     with ProgWrap(f"Loading data...", verbose > 0):
         ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
                                                         seq_len=20,
-                                                        add_battery_data=use_bat_data)
+                                                        add_battery_data=use_bat_data,
+                                                        date_str=date_str)
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
@@ -245,26 +248,27 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                                  metrics=METRICS)
 
     # Create the performance table
-    with ProgWrap("Creating performance table and plots...", verbose > 0):
+    if include_composite:
+        with ProgWrap("Creating performance table and plots...", verbose > 0):
 
-        orig_mask = np.array([0, 1, 2, 3, 5])
-        full_mods = [all_mods[n] for n in full_models]
-        metric_names = [m.name for m in METRICS]
+            orig_mask = np.array([0, 1, 2, 3, 5])
+            full_mods = [all_mods[n] for n in full_models]
+            metric_names = [m.name for m in METRICS]
 
-        # Plot the performance
-        name = "EvalTable"
-        if use_bat_data:
-            name += "WithBat"
-        plot_performance_table(full_mods, PARTS, metric_names, name,
-                               short_mod_names=full_models_short_names,
-                               series_mask=orig_mask)
-        plot_name = "EvalPlot"
-        plot_performance_graph(full_mods, PARTS, METRICS, plot_name + "_RTempOnly",
-                               short_mod_names=full_models_short_names,
-                               series_mask=np.array([5]), scale_back=True, remove_units=False)
-        plot_performance_graph(full_mods, PARTS, METRICS, plot_name,
-                               short_mod_names=full_models_short_names,
-                               series_mask=orig_mask)
+            # Plot the performance
+            name = "EvalTable"
+            if use_bat_data:
+                name += "WithBat"
+            plot_performance_table(full_mods, PARTS, metric_names, name,
+                                   short_mod_names=full_models_short_names,
+                                   series_mask=orig_mask)
+            plot_name = "EvalPlot"
+            plot_performance_graph(full_mods, PARTS, METRICS, plot_name + "_RTempOnly",
+                                   short_mod_names=full_models_short_names,
+                                   series_mask=np.array([5]), scale_back=True, remove_units=False)
+            plot_performance_graph(full_mods, PARTS, METRICS, plot_name,
+                                   short_mod_names=full_models_short_names,
+                                   series_mask=orig_mask)
 
 
 def run_room_models(verbose: int = 1, put_on_ol: bool = False,
@@ -794,7 +798,8 @@ def main() -> None:
 
     # Update stored data
     if args.data:
-        update_data()
+        date_str = extract_args(args.str, DEFAULT_END_DATE)[0]
+        update_data(date_str=date_str)
 
     # Run hyperparameter optimization
     if args.optimize:
@@ -807,10 +812,12 @@ def main() -> None:
 
     # Fit and analyze all models
     if args.mod_eval:
+        date_str = extract_args(args.str, DEFAULT_END_DATE)[0]
         perf_analyze, visual_analyze, include_composite = extract_args(args.bool, True, False, False)
         run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=perf_analyze,
                                        visual_analyze=visual_analyze,
-                                       include_composite=include_composite)
+                                       include_composite=include_composite,
+                                       date_str=date_str)
 
     # Train and analyze the battery model
     if args.battery:

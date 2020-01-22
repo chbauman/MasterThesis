@@ -182,7 +182,7 @@ def update_data(verbose: int = 4,
                 date_str: str = DEFAULT_END_DATE):
     """Updates the base datasets with all the currently available data."""
 
-    date_str = "2020-01-21"
+    # date_str = "2020-01-21"
 
     # Select today if no date specified
     if date_str is None:
@@ -194,7 +194,7 @@ def update_data(verbose: int = 4,
     with ProgWrap(f"Loading raw data...", verbose > 0):
         for ds in all_experiment_data:
             ds.set_end(date_str)
-            ds.get_data()
+            ds.get_data(verbose=1)
 
     with ProgWrap(f"Creating datasets...", verbose > 0):
         get_battery_data(date_str=date_str)
@@ -1017,7 +1017,7 @@ def generate_room_datasets(date_str: str = DEFAULT_END_DATE,
     for ct, room_ds in enumerate(dfab_room_dataset_list):
 
         # Get name
-        room_nr_str = room_ds.name[-2:]
+        room_nr_str = room_ds.name[9:11]
         new_name = "Model_Room" + room_nr_str
         new_name = full_ds_name(new_name, date_str)
         if verbose:
@@ -1187,6 +1187,35 @@ def get_constraints(ds: Dataset = None, include_bat: bool = False) -> List[Serie
     return rnn_consts
 
 
+def choose_dataset_and_constraints(base_ds_name: str = "Model_Room43",
+                                   seq_len: int = 20,
+                                   add_battery_data: bool = False,
+                                   date_str: str = DEFAULT_END_DATE
+                                   ) -> Tuple[Dataset, DatasetConstraints]:
+    """Let's you choose a dataset.
+
+    Reads a room dataset, if it is not found, it is generated.
+    Then the sequence length is set, the time variable is added and
+    it is standardized and split into parts for training, validation
+    and testing. Finally it is returned with the corresponding constraints.
+
+    Args:
+        base_ds_name: The name of the base dataset, must be of the form "Model_Room<nr>",
+            with nr = 43 or 53.
+        seq_len: The sequence length to use for the RNN training.
+        add_battery_data: Whether to add the battery data.
+        date_str: Date string specifying which data to use.
+
+    Returns:
+        The prepared dataset and the corresponding list of constraints.
+    """
+
+    ds = choose_dataset(base_ds_name, seq_len, add_battery_data, date_str=date_str)
+    rnn_consts = get_constraints(ds, add_battery_data)
+
+    # Return
+    return ds, rnn_consts
+
 #######################################################################################################
 # Testing
 
@@ -1251,30 +1280,3 @@ class TestDataSynthetic(DataStruct):
 
 TestData2 = TestDataSynthetic()
 
-
-def choose_dataset_and_constraints(base_ds_name: str = "Model_Room43",
-                                   seq_len: int = 20,
-                                   add_battery_data: bool = False,
-                                   ) -> Tuple[Dataset, DatasetConstraints]:
-    """Let's you choose a dataset.
-
-    Reads a room dataset, if it is not found, it is generated.
-    Then the sequence length is set, the time variable is added and
-    it is standardized and split into parts for training, validation
-    and testing. Finally it is returned with the corresponding constraints.
-
-    Args:
-        base_ds_name: The name of the base dataset, must be of the form "Model_Room<nr>",
-            with nr = 43 or 53.
-        seq_len: The sequence length to use for the RNN training.
-        add_battery_data: Whether to add the battery data.
-
-    Returns:
-        The prepared dataset and the corresponding list of constraints.
-    """
-
-    ds = choose_dataset(base_ds_name, seq_len, add_battery_data)
-    rnn_consts = get_constraints(ds, add_battery_data)
-
-    # Return
-    return ds, rnn_consts
