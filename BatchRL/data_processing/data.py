@@ -182,8 +182,11 @@ def update_data(verbose: int = 4,
                 date_str: str = DEFAULT_END_DATE):
     """Updates the base datasets with all the currently available data."""
 
+    date_str = "2020-01-21"
     if date_str is None:
         date_str = datetime.now().strftime("%Y-%m-%d")
+
+    if verbose:
         print(f"Loading data with end date: {date_str}")
 
     with ProgWrap(f"Loading raw data...", verbose > 0):
@@ -519,6 +522,16 @@ def get_from_data_struct(dat_struct: DataStruct,
                                 custom_descs=desc_list)
 
 
+def dataset_name_from_dat_struct(dat_struct: DataStruct) -> str:
+    """Defines the dataset name from the `DataStruct`."""
+    n = dat_struct.name
+    end_date = dat_struct.end_date
+    print(f"end date: {end_date}")
+    if end_date != DEFAULT_END_DATE:
+        n = f"{n}_{end_date}"
+    return n
+
+
 def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int, pl_kwargs,
                         c_inds: np.ndarray = None,
                         p_inds: np.ndarray = None,
@@ -538,7 +551,7 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
     """
 
     # Get name
-    name = dat_struct.name
+    name = dataset_name_from_dat_struct(dat_struct)
 
     # Try loading data
     try:
@@ -724,9 +737,11 @@ def get_DFAB_heating_data(date_str: str = DEFAULT_END_DATE) -> List['Dataset']:
 
     # Single Rooms
     for e in dfab_rooms:
+
         e.set_end(date_str)
         data, m = e.get_data()
         n_cols = len(data)
+        print(e.end_date)
 
         # Single Room Heating Data  
         temp_kwargs = {'clean_args': [([0.0], 24 * 60, [])], 'gauss_sigma': 5.0, 'rem_out_args': (1.5, None)}

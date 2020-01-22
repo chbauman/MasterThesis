@@ -122,37 +122,6 @@ class _Client(object):
         self.name = name
         self.verbose = verbose
 
-    def set_end(self, end_str: str = None) -> None:
-        """Set the end date to given string.
-
-        If input is None, the newest already loaded data is chosen.
-
-        Args:
-            end_str: The string specifying the end date.
-        """
-        if end_str is not None:
-            check_date_str(end_str)
-            self.end_date = end_str
-        else:
-            # Find already loaded data
-            name_len = len(self.name)
-            init_str = "0000-00-00"
-            curr_str = init_str
-            assert name_len > 0, f"What the fuck??"
-            for f in os.listdir(save_dir):
-                if len(f) > max(24, name_len):
-                    if f[-name_len:] == self.name:
-                        # Found match
-                        end_date_str = f[12:22]
-                        if end_date_str > curr_str:
-                            curr_str = end_date_str
-            if curr_str != init_str:
-                check_date_str(curr_str)
-                self.end_date = curr_str
-            else:
-                print("No existing data found!")
-                self.end_date = DEFAULT_END_DATE
-
     def read(self, df_data: List[str]) -> Optional[NestDataT]:
         """Reads data defined by the list of column IDs `df_data`.
 
@@ -292,7 +261,7 @@ class DataStruct:
                  id_list: Union[List[int], List[str]],
                  name: str,
                  start_date: str = '2019-01-01',
-                 end_date: str = '2019-12-31'):
+                 end_date: str = DEFAULT_END_DATE):
         """Initialize DataStruct.
 
         Args:
@@ -318,8 +287,31 @@ class DataStruct:
         Args:
             end_str: The string specifying the end date.
         """
-        # Use the method from the client
-        self.REST.set_end(end_str)
+        if end_str is not None:
+            check_date_str(end_str)
+            self.end_date = end_str
+        else:
+            # Find already loaded data
+            name_len = len(self.name)
+            init_str = "0000-00-00"
+            curr_str = init_str
+            assert name_len > 0, f"What the fuck??"
+            for f in os.listdir(save_dir):
+                if len(f) > max(24, name_len):
+                    if f[-name_len:] == self.name:
+                        # Found match
+                        end_date_str = f[12:22]
+                        if end_date_str > curr_str:
+                            curr_str = end_date_str
+            if curr_str != init_str:
+                check_date_str(curr_str)
+                self.end_date = curr_str
+            else:
+                print("No existing data found!")
+                self.end_date = DEFAULT_END_DATE
+
+        # Set attribute in rest client
+        self.REST.end_date = self.end_date
 
     def get_data_folder(self) -> str:
         """Returns path to data.
