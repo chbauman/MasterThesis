@@ -564,7 +564,7 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
 #######################################################################################################
 # Full Data Retrieval and Pre-processing
 
-def get_battery_data(analyze: bool = False, newest: bool = False) -> 'Dataset':
+def get_battery_data(analyze: bool = False, date_str: str = DEFAULT_END_DATE) -> 'Dataset':
     """Loads the battery dataset if existing.
 
     Else it is created from the raw data and a few plots are make.
@@ -572,18 +572,20 @@ def get_battery_data(analyze: bool = False, newest: bool = False) -> 'Dataset':
 
     Args:
         analyze: Whether to analyze and make plots of the data.
+        date_str: Date string specifying the end date of the data to be used.
 
     Returns:
         Battery dataset.
     """
     # Constants
+    dat_struct = BatteryData
     dt_mins = 15
-    name = "Battery"
-    if newest:
-        name = _new_modify(name)
+    inds = [19, 17]
+
+    dat_struct.set_end(date_str)
+    name = dat_struct.name
     bat_plot_path = os.path.join(preprocess_plot_path, name)
     create_dir(bat_plot_path)
-    inds = [19, 17]
     n_feats = len(inds)
 
     # Define arguments
@@ -596,7 +598,7 @@ def get_battery_data(analyze: bool = False, newest: bool = False) -> 'Dataset':
     custom_descs = np.array(["State of Charge [%]", "Active Power [kW]"])
 
     # Get the data
-    ds = get_from_data_struct(BatteryData, bat_plot_path, dt_mins, name, inds, kws,
+    ds = get_from_data_struct(dat_struct, bat_plot_path, dt_mins, name, inds, kws,
                               c_inds=c_inds,
                               standardize_data=True,
                               desc_list=custom_descs)
@@ -630,20 +632,24 @@ def get_battery_data(analyze: bool = False, newest: bool = False) -> 'Dataset':
     return ds
 
 
-def get_weather_data(newest: bool = False) -> 'Dataset':
+def get_weather_data(date_str: str = DEFAULT_END_DATE) -> 'Dataset':
     """Load and interpolate the weather data.
     """
     # Constants
     dt_mins = 15
-    filter_sigma = 2.0
-    fill_by_ip_max = 2
-    name = "Weather"
-    name += "" if filter_sigma is None else str(filter_sigma)
-    if newest:
-        name = _new_modify(name)
     inds = [0, 2]
 
+    filter_sigma = 2.0
+    name = "Weather"
+    name += "" if filter_sigma is None else str(filter_sigma)
+    dat_struct = WeatherData
+    dat_struct.set_end(date_str)
+
+    # Set name
+    dat_struct.name = name
+
     # Specify kwargs for pipeline
+    fill_by_ip_max = 2
     p_kwargs_temp = {'clean_args': [([], 30, [])],
                      'hole_fill_args': fill_by_ip_max,
                      'gauss_sigma': filter_sigma}
@@ -658,7 +664,7 @@ def get_weather_data(newest: bool = False) -> 'Dataset':
 
     # Get the data
     custom_descs = np.array(["Outside Temperature [°C]", "Irradiance [W/m^2]"])
-    ds = get_from_data_struct(WeatherData, prep_plot_dir, dt_mins, name, inds, kws,
+    ds = get_from_data_struct(dat_struct, prep_plot_dir, dt_mins, name, inds, kws,
                               desc_list=custom_descs,
                               standardize_data=True)
     return ds
@@ -697,7 +703,7 @@ def get_UMAR_heating_data() -> List['Dataset']:
     return all_ds
 
 
-def get_DFAB_heating_data(newest: bool = False) -> List['Dataset']:
+def get_DFAB_heating_data(date_str: str = DEFAULT_END_DATE) -> List['Dataset']:
     """Loads or creates all data from DFAB then returns
     a list of all datasets. 4 for the rooms, one for the heating water
     and one with all the valves.
@@ -712,6 +718,7 @@ def get_DFAB_heating_data(newest: bool = False) -> List['Dataset']:
 
     # Single Rooms
     for e in dfab_rooms:
+        e.set_end(date_str)
         data, m = e.get_data()
         n_cols = len(data)
 
@@ -727,10 +734,14 @@ def get_DFAB_heating_data(newest: bool = False) -> List['Dataset']:
     # General Heating Data
     temp_kwargs = {'remove_out_int_args': [10, 50], 'gauss_sigma': 5.0}
     prep_kwargs = [temp_kwargs, temp_kwargs, {}, {}, {}, {}]
-    data_list += [convert_data_struct(DFAB_AddData, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
+    data_struct = DFAB_AddData
+    data_struct.set_end(date_str)
+    data_list += [convert_data_struct(data_struct, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
 
     # All Valves Together
     prep_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
+    data_struct = DFAB_AllValves
+    data_struct.set_end(date_str)
     data_list += [convert_data_struct(DFAB_AllValves, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
     return data_list
 

@@ -310,6 +310,17 @@ class DataStruct:
         # Convert elements of id_list to strings.
         self.data_ids = [str(e) for e in id_list]
 
+    def set_end(self, end_str: str = None) -> None:
+        """Set the end date to given string.
+
+        If input is None, the newest already loaded data is chosen.
+
+        Args:
+            end_str: The string specifying the end date.
+        """
+        # Use the method from the client
+        self.REST.set_end(end_str)
+
     def get_data_folder(self) -> str:
         """Returns path to data.
 
