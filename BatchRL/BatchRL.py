@@ -26,7 +26,7 @@ from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel, PhysicallyConsistentRNN
 from dynamics.sin_cos_time import SCTimeModel
-from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv, LowHighProfile, heat_marker
+from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv, LowHighProfile, heat_marker, RangeT
 from opcua_empa.run_opcua import try_opcua
 from rest.client import test_rest_client, DEFAULT_END_DATE
 from tests.test_util import cleanup_test_data, TEST_DIR
@@ -279,7 +279,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                     overwrite: bool = False,
                     include_battery: bool = False,
                     physically_consistent: bool = False,
-                    date_str: str = DEFAULT_END_DATE) -> None:
+                    date_str: str = DEFAULT_END_DATE,
+                    temp_bds: RangeT = None) -> None:
 
     # Print what the code does
     if verbose:
@@ -310,10 +311,11 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
             assert isinstance(m, CompositeModel), f"Invalid model: {m}, needs to be composite!"
             env = RoomBatteryEnv(m, p=c_prof,
                                  cont_actions=True,
-                                 disturb_fac=0.3, alpha=alpha)
+                                 disturb_fac=0.3, alpha=alpha,
+                                 temp_bounds=temp_bds)
         else:
             env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1,
-                              disturb_fac=0.3, alpha=alpha)
+                              disturb_fac=0.3, alpha=alpha, temp_bounds=temp_bds)
 
     # Define default agents and compare
     with ProgWrap(f"Initializing agents...", verbose > 0):
@@ -833,14 +835,15 @@ def main() -> None:
 
     # Evaluate room model
     if args.room:
-        alpha = args.float[0] if args.float is not None else None
+        alpha, tb_low, tb_high = extract_args(args.float, 50.0, None, None)
         n_steps = extract_args(args.int, None)[0]
         ext_args = extract_args(args.bool, False, False, False, False)
         add_bat, perf_eval, phys_cons, overwrite = ext_args
+        temp_bds = None if tb_high is None else (tb_low, tb_high)
         run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps,
                         include_battery=add_bat, perf_eval=perf_eval,
                         physically_consistent=phys_cons, overwrite=overwrite,
-                        date_str=date_str)
+                        date_str=date_str, temp_bds=temp_bds)
 
     # Overleaf plots
     if args.plot:
