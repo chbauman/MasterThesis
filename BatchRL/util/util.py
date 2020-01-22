@@ -30,7 +30,7 @@ DEFAULT_TRAIN_SET: str = "train"  #: Default training set
 
 
 def get_rl_steps(eul: bool = EULER):
-    return 1000000 if eul else 1000
+    return 2000000 if eul else 1000
 
 
 #######################################################################################################
