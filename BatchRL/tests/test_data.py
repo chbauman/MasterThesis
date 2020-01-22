@@ -318,7 +318,7 @@ class TestDataProcessing(TestCase):
         interpolate_time_series(self.dat[0], self.dt_mins, verbose=False)
 
     def test_gaussian_filter(self):
-        data2, dt_init2 = interpolate_time_series(self.dat[1], self.dt_mins)
+        data2, dt_init2 = interpolate_time_series(self.dat[1], self.dt_mins, verbose=False)
         gaussian_filter_ignoring_nans(data2)
 
     def test_rest(self):

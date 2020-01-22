@@ -168,6 +168,7 @@ class Dataset:
             ('val', n_train, n_val),
             ('train_val', 0, n_train + n_val),
             ('test', n_train + n_val, n_test),
+            ('all', 0, n),
         ]
 
         # Save dict and sizes
@@ -446,7 +447,7 @@ class Dataset:
         :return: Dataset containing series [ind_low: ind_high) of current dataset.
         """
 
-        warnings.warn("Prediction and control indices are lost when slicing.")
+        # warnings.warn("Prediction and control indices are lost when slicing.")
         low = ind_low
 
         if ind_low < 0 or ind_high > self.d or ind_low >= ind_high:
