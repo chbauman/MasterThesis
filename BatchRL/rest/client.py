@@ -96,8 +96,8 @@ class _Client(object):
     """
     pw_from_cl: bool = False
 
-    np_data: List[Tuple[np.ndarray, np.ndarray]] = []
-    meta_data: List[str] = []
+    np_data: List[Tuple[np.ndarray, np.ndarray]] = None
+    meta_data: List[str] = None
 
     _auth: Any = None
 
@@ -135,6 +135,9 @@ class _Client(object):
         Returns:
             (List[(Values, Dates)], List[Metadata])
         """
+
+        self.np_data = []
+        self.meta_data = []
 
         # https://github.com/brandond/requests-negotiate-sspi/blob/master/README.md
         from requests_negotiate_sspi import HttpNegotiateAuth
@@ -236,6 +239,7 @@ class _Client(object):
             return
 
         # Loop over data and save column-wise
+        assert len(self.np_data) != 0, f"Nothing to save!"
         for ct, data_tup in enumerate(self.np_data):
             v, t = data_tup
             v_name = os.path.join(data_dir, 'values_' + str(ct) + '.npy')
@@ -347,6 +351,10 @@ class DataStruct:
         else:
             # Read locally
             ret_val, meta_data = self.REST.read_offline()
+
+        # Check data and return
+        assert len(ret_val) == len(meta_data) == len(self.data_ids), \
+            f"Something fucked up horribly!"
         return ret_val, meta_data
 
 
