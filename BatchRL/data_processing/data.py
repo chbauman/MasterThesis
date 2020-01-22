@@ -543,7 +543,6 @@ def dataset_name_from_dat_struct(dat_struct: DataStruct) -> str:
     """
     n = dat_struct.name
     end_date = dat_struct.end_date
-    print(f"end date: {end_date}")
     return full_ds_name(n, end_date)
 
 
@@ -575,9 +574,11 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
     # Try loading data
     try:
         loaded = Dataset.loadDataset(name)
+        print(f"Found Dataset: {name}")
         return loaded
     except FileNotFoundError:
-        data, m = dat_struct.get_data()
+        print(f"Did not find Dataset: {name}")
+        data, m = dat_struct.get_data(verbose=1)
         n_cols = len(data)
 
         pl_kwargs = b_cast(pl_kwargs, n_cols)
@@ -756,7 +757,6 @@ def get_DFAB_heating_data(date_str: str = DEFAULT_END_DATE) -> List['Dataset']:
     create_dir(dfab_rooms_plot_path)
 
     # Single Rooms
-    print(dfab_rooms)
     for e in dfab_rooms:
 
         # Set date and load
@@ -990,7 +990,8 @@ def analyze_room_energy_consumption():
 # Dataset generation
 
 
-def generate_room_datasets(date_str: str = DEFAULT_END_DATE) -> List[Dataset]:
+def generate_room_datasets(date_str: str = DEFAULT_END_DATE,
+                           verbose: int = 0) -> List[Dataset]:
     """Gather the right data and put it all together.
 
     Returns:
@@ -1019,7 +1020,8 @@ def generate_room_datasets(date_str: str = DEFAULT_END_DATE) -> List[Dataset]:
         room_nr_str = room_ds.name[-2:]
         new_name = "Model_Room" + room_nr_str
         new_name = full_ds_name(new_name, date_str)
-        print("Processing", new_name)
+        if verbose:
+            print(f"Processing: {new_name}")
 
         # Try loading from disk
         try:
@@ -1202,7 +1204,7 @@ class TestDataSynthetic(DataStruct):
         name = "SyntheticTest"
         super().__init__([], name=name)
 
-    def get_data(self) -> Optional[Tuple[List, List]]:
+    def get_data(self, verbose: int = 0) -> Optional[Tuple[List, List]]:
         # First Time series
         dict1 = {'description': "Synthetic Data Series 1: Base Series", 'unit': "Test Unit 1"}
         val_1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])

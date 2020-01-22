@@ -328,7 +328,7 @@ class DataStruct:
         """
         return _get_data_folder(self.name, self.start_date, self.end_date)
 
-    def get_data(self) -> Optional[Tuple[List, List]]:
+    def get_data(self, verbose: int = 0) -> Optional[Tuple[List, List]]:
         """Get the data associated with the DataStruct
 
         If the data is not found locally it is
@@ -340,16 +340,19 @@ class DataStruct:
             the datetimes for each series and the second one contains
             the metadata dict of each series.
         """
-
         data_folder = self.get_data_folder()
         if not os.path.isdir(data_folder):
             # Read from SQL database and write for later use
+            if verbose:
+                print("Getting data from NEST database.")
             ret_val, meta_data = self.REST.read(self.data_ids)
             if ret_val is None:
                 return None
             self.REST.write_np()
         else:
             # Read locally
+            if verbose:
+                print("Reading data locally.")
             ret_val, meta_data = self.REST.read_offline()
 
         # Check data and return
