@@ -572,19 +572,33 @@ class TestRNN(TestCase):
 
         n, n_feat = 200, 7
         self.ds = get_full_model_dataset(n)
-        p_inds = np.array([0, 1, 3], dtype=np.int32)
-        self.fix_kwargs = {'data': self.ds,
-                           'residual_learning': True,
-                           'weight_vec': None,
-                           'out_inds': p_inds,
-                           'constraint_list': None}
+        self.p_inds = np.array([0, 1, 3], dtype=np.int32)
+        self.fix_kwargs = self.get_kwargs(self.ds)
         self.mod_test = RNNDynamicModel(name="TestRNN", **test_kwargs, **self.fix_kwargs)
+
+    def get_kwargs(self, ds):
+        return {'data': ds,
+                'residual_learning': True,
+                'weight_vec': None,
+                'out_inds': self.p_inds,
+                'constraint_list': None}
+
+    def test_fit_2(self):
+        ds2 = Dataset.copy(self.ds)
+        ds2.name = ds2.name + "_2020-01-21"
+        kws = self.get_kwargs(ds2)
+        mod2 = RNNDynamicModel(name="TestRNN", **test_kwargs, **kws)
+        mod2.fit()
+        # print(self.mod_test.name)
+        # print(mod2.name)
+        assert mod2.name != self.mod_test.name, f"Names matching: {mod2.name}"
 
     def test_fit(self):
         self.mod_test.fit()
 
     def test_hyperopt(self):
         self.mod_test.optimize(1, verbose=0)
+
     pass
 
 
