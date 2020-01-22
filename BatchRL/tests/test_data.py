@@ -8,7 +8,7 @@ from data_processing.preprocess import standardize, fill_holes_linear_interpolat
     interpolate_time_series, gaussian_filter_ignoring_nans
 from rest.client import test_rest_client
 from util.numerics import nan_array_equal, num_nans
-from util.util import EULER
+from util.util import EULER, skip_if_no_internet
 from util.visualize import plot_dataset
 
 SYNTH_DATA_NAME = "SyntheticModelData"
@@ -321,6 +321,7 @@ class TestDataProcessing(TestCase):
         data2, dt_init2 = interpolate_time_series(self.dat[1], self.dt_mins, verbose=False)
         gaussian_filter_ignoring_nans(data2)
 
+    @skip_if_no_internet
     def test_rest(self):
         if not EULER:
             test_rest_client()

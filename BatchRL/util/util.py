@@ -10,6 +10,7 @@ import datetime
 import os
 import random
 import shutil
+import socket
 import sys
 import time
 import warnings
@@ -960,3 +961,34 @@ def get_min_diff(t1: datetime, t2: datetime = None) -> float:
 # Create paths
 create_dir(model_dir)
 create_dir(dynamic_model_dir)
+
+
+def internet(host="8.8.8.8", port=53, timeout=0.5):
+    """Checks if internet connection is available.
+
+    FROM: https://stackoverflow.com/questions/3764291/checking-network-connection
+    Host: 8.8.8.8 (google-public-dns-a.google.com)
+    OpenPort: 53/tcp
+    Service: domain (DNS/TCP)
+    """
+    try:
+        socket.setdefaulttimeout(timeout)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((host, port))
+        return True
+    except socket.error as ex:
+        print(f"No internet connection available: {ex}")
+        return False
+
+
+def skip_if_no_internet(f):
+    """TestCase method decorator.
+
+    Skips test method if there is no internet connection.
+    """
+    def wrapper(self, *args, **kwargs):
+        if not internet():
+            self.skipTest("No internet connection available!")
+        else:
+            f(self, *args, **kwargs)
+    return wrapper

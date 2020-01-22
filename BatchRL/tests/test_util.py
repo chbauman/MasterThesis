@@ -23,7 +23,8 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, \
     yeet, \
-    dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str, floor_datetime_to_min, extract_args, fun_to_class
+    dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str, floor_datetime_to_min, extract_args, fun_to_class, \
+    skip_if_no_internet
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
     _trf_desc_units, plot_env_evaluation, plot_valve_opening
 
@@ -722,6 +723,7 @@ class TestNotify(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    @skip_if_no_internet
     def test_send_mail(self):
         send_mail(subject="Running Tests", msg="Sali")
 
