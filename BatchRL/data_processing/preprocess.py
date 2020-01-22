@@ -109,7 +109,8 @@ def clip_to_interval(dat: Tuple, interval: Sequence = (0.0, 100.0)) -> None:
 
 
 def interpolate_time_series(dat: Tuple, dt_mins: int,
-                            lin_ip: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+                            lin_ip: bool = False,
+                            verbose: bool = True) -> Tuple[np.ndarray, np.ndarray]:
     """Interpolates the given time series.
 
     Produces another one with equidistant timesteps
@@ -119,6 +120,7 @@ def interpolate_time_series(dat: Tuple, dt_mins: int,
         dat: Raw time series tuple (values, datetimes).
         dt_mins: The number of minutes in a time interval.
         lin_ip: Whether to use linear interpolation instead of averaging.
+        verbose: Verbosity
 
     Returns:
         The data tuple (values, datetimes) with equidistant
@@ -133,7 +135,8 @@ def interpolate_time_series(dat: Tuple, dt_mins: int,
     end_dt = floor_datetime_to_min(dates[-1], dt_mins)
     interval = np.timedelta64(dt_mins, 'm')
     n_ts = int((end_dt - start_dt) / interval + 1)
-    print(n_ts, "Timesteps")
+    if verbose:
+        print(n_ts, "Timesteps")
 
     # Initialize
     new_values = np.empty((n_ts,), dtype=np.float32)
@@ -168,7 +171,8 @@ def interpolate_time_series(dat: Tuple, dt_mins: int,
                     new_values[count] = last_val
                 count += 1
                 n_data_missing = int((curr_dt - curr_upper_lim) / interval)
-                print("Missing", n_data_missing, "data points :(")
+                if verbose:
+                    print("Missing", n_data_missing, "data points :(")
                 for k in range(n_data_missing):
                     new_values[count] = np.nan
                     count += 1

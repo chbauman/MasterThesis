@@ -7,7 +7,7 @@ import numpy as np
 from data_processing.dataset import SeriesConstraint, no_inds, Dataset, DatasetConstraints
 from data_processing.preprocess import clean_data, remove_out_interval, clip_to_interval, interpolate_time_series, \
     fill_holes_linear_interpolate, remove_outliers, gaussian_filter_ignoring_nans, standardize
-from rest.client import DataStruct, DEFAULT_END_DATE
+from rest.client import DataStruct, DEFAULT_END_DATE, check_date_str
 from util.numerics import align_ts, copy_arr_list, solve_ls, \
     find_rows_with_nans
 from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init, ProgWrap
@@ -182,7 +182,7 @@ def update_data(verbose: int = 4,
                 date_str: str = DEFAULT_END_DATE):
     """Updates the base datasets with all the currently available data."""
 
-    # date_str = "2020-01-21"
+    date_str = "2020-01-21"
 
     # Select today if no date specified
     if date_str is None:
@@ -274,6 +274,8 @@ def add_time(all_data, dt_init1, col_ind=0, dt_mins=15):
     """
     Adds the time as indices to the data,
     periodic with period one day.
+
+    Deprecated, do not use?
     """
 
     n_data = all_data.shape[0]
@@ -522,14 +524,22 @@ def get_from_data_struct(dat_struct: DataStruct,
                                 custom_descs=desc_list)
 
 
-def full_ds_name(dat_struct_name: str, date_str: str):
+def full_ds_name(dat_struct_name: str, date_str: str) -> str:
+    """Defines the dataset name.
+
+    From the name of the `DataStruct` and the
+    string specifying the end date.
+    """
     if date_str != DEFAULT_END_DATE:
         dat_struct_name = f"{dat_struct_name}_{date_str}"
     return dat_struct_name
 
 
 def dataset_name_from_dat_struct(dat_struct: DataStruct) -> str:
-    """Defines the dataset name from the `DataStruct`."""
+    """Defines the dataset name from the `DataStruct`.
+
+    Uses :func:`data_processing.data.full_ds_name`.
+    """
     n = dat_struct.name
     end_date = dat_struct.end_date
     print(f"end date: {end_date}")
@@ -544,14 +554,17 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
     Using the same pre-processing steps for each series
     in the DataStruct.
 
-    :param dat_struct: DataStruct to convert to Dataset.
-    :param base_plot_dir: Where to save the preprocessing plots.
-    :param dt_mins: Number of minutes in a timestep.
-    :param pl_kwargs: Preprocessing pipeline kwargs.
-    :param c_inds: Control indices.
-    :param p_inds: Prediction indices.
-    :param standardize_data: Whether to standardize the series in the dataset.
-    :return: Converted Dataset.
+    Args:
+        dat_struct: DataStruct to convert to Dataset.
+        base_plot_dir: Where to save the preprocessing plots.
+        dt_mins: Number of minutes in a timestep.
+        pl_kwargs: Preprocessing pipeline kwargs.
+        c_inds: Control indices.
+        p_inds: Prediction indices.
+        standardize_data: Whether to standardize the series in the dataset.
+
+    Returns:
+        Converted Dataset.
     """
 
     # Get name
@@ -1094,6 +1107,8 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
     Returns:
         The prepared dataset.
     """
+    check_date_str(date_str)
+
     # Check `base_ds_name`.
     if base_ds_name[:10] != "Model_Room" or base_ds_name[-2:] not in ["43", "53"]:
         raise ValueError(f"Dataset: {base_ds_name} does not exist!")
@@ -1227,35 +1242,6 @@ class TestDataSynthetic(DataStruct):
 
 
 TestData2 = TestDataSynthetic()
-
-
-# Tests
-def get_data_test():
-    name = "Test"
-
-    dt_mins = 15
-    dat, m = TestData2.get_data()
-
-    # Interpolate
-    [data1, dt_init1] = interpolate_time_series(dat[0], dt_mins)
-    n_data = data1.shape[0]
-    print(n_data, "total data points.")
-
-    # Initialize np array for compact storage
-    all_data = np.empty((n_data, 3), dtype=np.float32)
-    all_data.fill(np.nan)
-
-    # Add data
-    add_time(all_data, dt_init1, 0, dt_mins)
-    all_data[:, 1] = data1
-    [data2, dt_init2] = interpolate_time_series(dat[1], dt_mins)
-
-    print(data2)
-    data2 = gaussian_filter_ignoring_nans(data2)
-    print(data2)
-
-    add_col(all_data, data2, dt_init1, dt_init2, 2, dt_mins)
-    return all_data, m, name
 
 
 def choose_dataset_and_constraints(base_ds_name: str = "Model_Room43",

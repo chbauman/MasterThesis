@@ -4,7 +4,8 @@ import numpy as np
 
 from data_processing.data import TestData2
 from data_processing.dataset import ModelDataView, SeriesConstraint, Dataset
-from data_processing.preprocess import standardize, fill_holes_linear_interpolate, remove_outliers, clean_data
+from data_processing.preprocess import standardize, fill_holes_linear_interpolate, remove_outliers, clean_data, \
+    interpolate_time_series, gaussian_filter_ignoring_nans
 from rest.client import test_rest_client
 from util.numerics import nan_array_equal, num_nans
 from util.util import EULER
@@ -312,6 +313,13 @@ class TestDataProcessing(TestCase):
 
         self.dt_mins = 15
         self.dat, self.m = TestData2.get_data()
+
+    def test_interpolate(self):
+        interpolate_time_series(self.dat[0], self.dt_mins, verbose=False)
+
+    def test_gaussian_filter(self):
+        data2, dt_init2 = interpolate_time_series(self.dat[1], self.dt_mins)
+        gaussian_filter_ignoring_nans(data2)
 
     def test_rest(self):
         if not EULER:

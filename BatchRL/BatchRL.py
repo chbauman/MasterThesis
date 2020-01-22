@@ -15,7 +15,7 @@ from sklearn.linear_model import MultiTaskLassoCV
 
 from agents.agents_heuristic import ConstActionAgent, RuleBasedAgent, get_const_agents
 from agents.keras_agents import DDPGBaseAgent
-from data_processing.data import get_battery_data, get_data_test, \
+from data_processing.data import get_battery_data, \
     choose_dataset_and_constraints, update_data
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
@@ -76,7 +76,6 @@ def run_integration_tests(verbose: int = 1) -> None:
     with ProgWrap(f"Running a few tests...", verbose > 0):
         test_rnn_models()
         test_rest_client()
-        get_data_test()
 
 
 def test_cleanup(verbose: int = 0):
