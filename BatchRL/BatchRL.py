@@ -200,7 +200,8 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                    visual_analyze: bool = True,
                                    perf_analyze: bool = False,
                                    include_composite: bool = False,
-                                   date_str: str = DEFAULT_END_DATE) -> None:
+                                   date_str: str = DEFAULT_END_DATE,
+                                   train_data: str = "train") -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
     Does not much if not on Euler.
@@ -212,6 +213,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
         perf_analyze: Whether to do the performance analysis.
         include_composite: Whether to also do all the stuff for the composite models.
         date_str: End date string specifying data.
+        train_data: String specifying the part of the data to train the model on.
     """
     next_verb = prog_verb(verbose)
 
@@ -228,7 +230,9 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
         if include_composite:
             lst += full_models
         all_mods = {nm: get_model(nm, ds, rnn_consts,
-                                  from_hop=True, fit=True, verbose=next_verb) for nm in lst}
+                                  from_hop=True, fit=True,
+                                  verbose=next_verb,
+                                  train_data=train_data) for nm in lst}
 
     # Fit or load all initialized models
     with ProgWrap(f"Analyzing models...", verbose > 0):
@@ -482,7 +486,8 @@ def get_model(name: str, ds: Dataset,
               rnn_consts: DatasetConstraints = None,
               from_hop: bool = False,
               fit: bool = False,
-              verbose: int = 0) -> BaseDynamicsModel:
+              verbose: int = 0,
+              train_data: str = "train") -> BaseDynamicsModel:
     """Loads and optionally fits a model.
 
     Args:
@@ -492,6 +497,7 @@ def get_model(name: str, ds: Dataset,
         from_hop: Whether to initialize the model from optimal hyperparameters.
         fit: Whether to fit the model before returning it.
         verbose: Verbosity.
+        train_data: String specifying the part of the data to train the model on.
 
     Returns:
         The requested model.
@@ -502,7 +508,8 @@ def get_model(name: str, ds: Dataset,
 
     # Fit if required using one step recursion
     if fit:
-        mod = get_model(name, ds, rnn_consts, from_hop, fit=False, verbose=prog_verb(verbose))
+        mod = get_model(name, ds, rnn_consts, from_hop, fit=False,
+                        verbose=prog_verb(verbose), train_data=train_data)
         mod.fit(verbose=prog_verb(verbose))
         return mod
 
