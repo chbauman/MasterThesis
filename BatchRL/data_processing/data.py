@@ -239,8 +239,8 @@ def analyze_data(dat: Sequence) -> None:
 
 
 def add_col(full_dat_array, data, dt_init, dt_init_new, col_ind, dt_mins=15):
-    """
-    Add time series as column to data array at the right index.
+    """Add time series as column to data array at the right index.
+
     If the second time series exceeds the datetime range of the
     first one it is cut to fit the first one. If it is too short
     the missing values are filled with NaNs.
@@ -291,9 +291,7 @@ def pipeline_preps(orig_dat,
                    n_tot_cols=None,
                    gauss_sigma=None,
                    lin_ip=False):
-    """
-    Applies all the specified pre-processing to the
-    given data.
+    """Applies all the specified pre-processing to the given data.
     """
     modified_data = orig_dat
 
@@ -571,6 +569,9 @@ def get_battery_data(analyze: bool = False, newest: bool = False) -> 'Dataset':
 
     Else it is created from the raw data and a few plots are make.
     Then the dataset is returned.
+
+    Args:
+        analyze: Whether to analyze and make plots of the data.
 
     Returns:
         Battery dataset.
