@@ -1,3 +1,8 @@
+"""Data preprocessing module.
+
+Used to process data series from the NEST database.
+The parameters for the functions need to be chosen heuristically.
+"""
 from typing import Sequence, Tuple, List, Dict
 
 import numpy as np
@@ -74,7 +79,7 @@ def clean_data(dat: Tuple, rem_values: Sequence = (),
 
     # Return clean data
     if verbose:
-        print(tot_dat - count, "data points removed.")
+        print(f"{tot_dat - count} data points removed.")
     assert count > 0, "All data thrown away while cleaning!"
     return new_values[:count], new_dates[:count]
 

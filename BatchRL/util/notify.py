@@ -1,10 +1,17 @@
+"""Notification module.
+
+Can be used to send mails from your gmail account.
+You need to allow unsave apps access under your
+account settings.
+"""
+
 import os
 import smtplib
 import ssl
 from pathlib import Path
 from typing import List
 
-port = 465  #: Port for SSL
+PORT = 465  #: Port for SSL
 smtp_server: str = "smtp.gmail.com"
 sender_email: str = "chris.python.notifyer@gmail.com"  #: Sender address
 debug_email: str = "chris.python.debug@gmail.com"  #: Debug receiver address
@@ -16,6 +23,7 @@ pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
 
 
 def login_from_file(file_name: str) -> List[str]:
+    """Loads login information from a file."""
     assert os.path.isfile(file_name), f"File: {file_name} not found!"
     with open(file_name, "r") as f:
         return [l.rstrip() for l in f if l.rstrip() != ""]
@@ -50,7 +58,7 @@ def send_mail(debug: bool = True,
 
     password = _pw_from_file()
     context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+    with smtplib.SMTP_SSL(smtp_server, PORT, context=context) as server:
         server.login(sender_email, password)
         send_errs = server.sendmail(sender_email, rec_mail, message)
         if len(send_errs) > 0:
