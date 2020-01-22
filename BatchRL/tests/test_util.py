@@ -743,20 +743,24 @@ def cleanup_test_data(verbose: int = 0):
     if verbose:
         print("Cleaning up some test files...")
 
-    # Remove files
+    # Remove plots and graphs
     eval_tab_path = os.path.join(model_plot_path, "EvalTables")
     rem_files_and_dirs(model_plot_path, SYNTH_DATA_NAME)
     rem_files_and_dirs(model_plot_path, RNN_TEST_DATA_NAME)
     rem_files_and_dirs(eval_tab_path, "Test")
+
+    # Cleanup models
     rem_files_and_dirs(dynamic_model_dir, RNN_TEST_DATA_NAME)
     rem_files_and_dirs(dynamic_model_dir, SYNTH_DATA_NAME)
     rem_files_and_dirs(dynamic_model_dir, "Test")
     rem_files_and_dirs(hop_path, "TestHop", anywhere=True)
 
+    # Cleanup environments
     for s in ["TestEnv", "BatteryTest", "FullTest"]:
         rem_files_and_dirs(rl_plot_path, s, anywhere=True)
         rem_files_and_dirs(rl_model_dir, s, anywhere=True)
 
+    # Cleanup other test data
     rem_files_and_dirs(dataset_data_path, "Test", anywhere=True)
     rem_files_and_dirs(TEST_DIR, "")
     rem_files_and_dirs(experiment_data_path, "Offline", anywhere=True)
