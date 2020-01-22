@@ -447,13 +447,16 @@ class RNNDynamicModel(HyperOptimizableModel):
                    dpi=500)
 
     @train_decorator(True)
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         """Fit the model if it hasn't been fitted before.
 
         Else it loads the trained model.
 
         TODO: Compute more accurate val_percent for fit method!
         """
+        if train_data != "train":
+            raise NotImplementedError("Fuck")
+
         # Define optimizer and compile
         opt = Adam(lr=self.lr)
         self.m.compile(loss=self.loss, optimizer=opt)
@@ -662,7 +665,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
             self._plot_model(train_mod, "TrainModel.png", expand=False)
         self.train_mod = train_mod
 
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         """Fits the model using the data from the dataset.
 
         TODO: Use decorator for 'loading if existing' to avoid duplicate
@@ -671,6 +674,9 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
         Returns:
             None
         """
+        if train_data != "train":
+            raise NotImplementedError("Fuck")
+
         loaded = self.load_if_exists(self.m, self.name)
         if not loaded or self.debug:
             if self.verbose:

@@ -68,9 +68,9 @@ class CompositeModel(BaseDynamicsModel):
         for m in self.model_list:
             m.init_1day(day_data)
 
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         """Fits all the models."""
-        with ProgWrap(f"Fitting sub-models...", verbose > 0):
+        with ProgWrap(f"Fitting sub-models on part: '{train_data}'...", verbose > 0):
             for ct, m in enumerate(self.model_list):
                 print(f"Fitting model {ct}: {m.name}")
                 m.fit(verbose=prog_verb(verbose))

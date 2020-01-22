@@ -43,10 +43,10 @@ class SCTimeModel(BaseDynamicsModel):
         self.s_scale, self.c_scale = dataset.scaling[s_ind], dataset.scaling[c_ind]
         self.s_ind_prep, self.c_ind_prep = dataset.to_prepared(self.out_inds)
 
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         """No need to fit anything, model is deterministic."""
         if verbose > 0:
-            print("Exact model, nothing to fit!")
+            print(f"Exact model, nothing to fit on part: '{train_data}'!")
         return
 
     def predict(self, in_data: np.ndarray) -> np.ndarray:
