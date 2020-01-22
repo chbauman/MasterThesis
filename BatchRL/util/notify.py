@@ -2,6 +2,7 @@ import os
 import smtplib
 import ssl
 from pathlib import Path
+from typing import List
 
 port = 465  #: Port for SSL
 smtp_server: str = "smtp.gmail.com"
@@ -14,10 +15,17 @@ curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
 
 
+def login_from_file(file_name: str) -> List[str]:
+    assert os.path.isfile(file_name), f"File: {file_name} not found!"
+    with open(file_name, "r") as f:
+        return [l.rstrip() for l in f if l.rstrip() != ""]
+
+
 def _pw_from_file(file_name: str = pw_def_path) -> str:
     """Reads the password in the file given."""
-    with open(file_name, "r") as f:
-        return f.read()
+    login = login_from_file(file_name)
+    assert len(login) == 1, f"Invalid password: {login}"
+    return login[0]
 
 
 def send_mail(debug: bool = True,

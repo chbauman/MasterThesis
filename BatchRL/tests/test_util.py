@@ -6,6 +6,7 @@ import mock
 import numpy as np
 from mock import call
 
+import util.notify
 from agents.agents_heuristic import ConstActionAgent
 from data_processing.dataset import dataset_data_path
 from dynamics.base_hyperopt import hop_path
@@ -27,6 +28,7 @@ from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_pl
 
 # Define and create directory for test files.
 TEST_DIR = os.path.join(PLOT_DIR, "Test")  #: Directory for test output.
+TEST_DATA_DIR = "./tests/data"
 create_dir(TEST_DIR)
 
 
@@ -721,6 +723,17 @@ class TestNotify(TestCase):
 
     def test_send_mail(self):
         send_mail(subject="Running Tests", msg="Sali")
+
+    def test_load_pw(self):
+        test_pw_file = os.path.join(TEST_DATA_DIR, "test_pw.txt")
+        pw = util.notify._pw_from_file(test_pw_file)
+        self.assertEqual(pw, "test_pw")
+
+    def test_load_login(self):
+        test_login_file = os.path.join(TEST_DATA_DIR, "test_login.txt")
+        user, pw = util.notify.login_from_file(test_login_file)
+        self.assertEqual(pw, "test_pw")
+        self.assertEqual(user, "test_user")
 
 
 def cleanup_test_data(verbose: int = 0):

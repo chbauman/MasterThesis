@@ -32,6 +32,7 @@ import os
 import shutil
 import time
 from ast import literal_eval
+from pathlib import Path
 from typing import Tuple, List, Optional, Union, Any
 
 import numpy as np
@@ -43,6 +44,10 @@ if not USE_CL:
     from .pw_gui import get_pw
 else:
     from .pw_cl import get_pw
+
+
+curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
+pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
 
 #: Where to put the local copy of the data.
 save_dir: str = '../Data/'
@@ -87,6 +92,7 @@ class _Client(object):
     server, it can be stored to and reloaded from
     the local disk.
     """
+    pw_from_cl: bool = False
 
     np_data: List[Tuple[np.ndarray, np.ndarray]] = []
     meta_data: List[str] = []
@@ -163,7 +169,8 @@ class _Client(object):
         from requests_negotiate_sspi import HttpNegotiateAuth
 
         # Check Login
-        username, pw = get_pw()
+        login_file =
+        username, pw = get_pw() if self.pw_from_cl else login_from_file()
         self._auth = HttpNegotiateAuth(domain=self._DOMAIN,
                                        username=username,
                                        password=pw)
