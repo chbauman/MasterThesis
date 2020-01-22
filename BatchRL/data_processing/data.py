@@ -1132,8 +1132,7 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
 
     # Set sequence length
     ds.seq_len = seq_len
-    ext = "" if date_str == DEFAULT_END_DATE else f"_{date_str}"
-    ds.name = f"{base_ds_name[6:12]}_{ds.seq_len}{ext}"
+    ds.name = f"{base_ds_name[6:12]}_{ds.seq_len}"
 
     # Add time variables and optionally the battery data
     ds = ds.add_time()
@@ -1141,6 +1140,10 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
         bat_ds = get_battery_data(date_str=date_str)
         assert bat_ds.dt == ds.dt, "Incompatible timestep!"
         ds = ds + bat_ds
+
+    # Add additional info to name
+    ext_data_str = "" if date_str == DEFAULT_END_DATE else f"_{date_str}"
+    ds.name = f"{ds.name}{ext_data_str}"
 
     # Standardize and prepare different parts of dataset.
     ds.standardize()
