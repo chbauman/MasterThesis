@@ -278,7 +278,9 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                     n_steps: int = None,
                     overwrite: bool = False,
                     include_battery: bool = False,
-                    physically_consistent: bool = False) -> None:
+                    physically_consistent: bool = False,
+                    date_str: str = DEFAULT_END_DATE) -> None:
+
     # Print what the code does
     if verbose:
         print("Running RL agents on learned room model.")
@@ -296,7 +298,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
     # Get dataset and constraints
     with ProgWrap(f"Loading dataset...", verbose > 0):
         ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20,
-                                                        add_battery_data=include_battery)
+                                                        add_battery_data=include_battery,
+                                                        date_str=date_str)
 
     # Load the model and init env
     with ProgWrap(f"Preparing environment...", verbose > 0):
@@ -513,12 +516,18 @@ def get_model(name: str, ds: Dataset,
 
     # Helper function to build composite models including the battery model.
     def _build_composite(model_list: List[BaseDynamicsModel], comp_name: str):
+
         # Load battery model.
         if battery_used:
             assert battery_mod is not None, "Need to rethink this!"
             if fit:
                 battery_mod.fit()
             model_list = model_list + [battery_mod]
+
+        # Print model names
+        if verbose > 1:
+            for ct, m in enumerate(model_list):
+                print(f"Model {ct}: {m.name}")
 
         # Adjust the name for full models.
         if comp_name.startswith("FullState_"):
@@ -789,6 +798,9 @@ def main() -> None:
     if args.verbose:
         print("Verbosity turned on.")
 
+    # Common arguments
+    date_str = extract_args(args.str, DEFAULT_END_DATE)[0]
+
     # Run integration tests and optionally the cleanup after.
     if args.test:
         run_integration_tests(verbose=verbose)
@@ -797,7 +809,6 @@ def main() -> None:
 
     # Update stored data
     if args.data:
-        date_str = extract_args(args.str, DEFAULT_END_DATE)[0]
         update_data(date_str=date_str)
 
     # Run hyperparameter optimization
@@ -833,7 +844,8 @@ def main() -> None:
         add_bat, perf_eval, phys_cons, overwrite = ext_args
         run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps,
                         include_battery=add_bat, perf_eval=perf_eval,
-                        physically_consistent=phys_cons, overwrite=overwrite)
+                        physically_consistent=phys_cons, overwrite=overwrite,
+                        date_str=date_str)
 
     # Overleaf plots
     if args.plot:
