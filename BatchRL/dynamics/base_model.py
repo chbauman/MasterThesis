@@ -10,11 +10,17 @@ from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, \
     save_performance_extended, get_metrics_eval_save_name_list, ErrMetric, MSE, find_inds
-from util.util import create_dir, mins_to_str, Arr, tot_size
+from util.util import create_dir, mins_to_str, Arr, tot_size, yeet
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one
 
 # Plot title definition
 CONT_TITLE: str = "1 Week Continuous Predictions"
+
+
+def check_train_str(train_data: str) -> None:
+    """Check if training data string is valid."""
+    if train_data not in ["train", "train_val", "all"]:
+        yeet(f"String specifying training data: {train_data} is not valid!")
 
 
 def _get_title(n: int, dt: int = 15):
@@ -196,7 +202,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         return str_out
 
     @abstractmethod
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         pass
 
     @abstractmethod

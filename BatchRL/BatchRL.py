@@ -19,7 +19,7 @@ from data_processing.data import get_battery_data, \
     choose_dataset_and_constraints, update_data
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
-from dynamics.base_model import BaseDynamicsModel, compare_models
+from dynamics.base_model import BaseDynamicsModel, compare_models, check_train_str
 from dynamics.battery_model import BatteryModel
 from dynamics.classical import SKLearnModel
 from dynamics.composite import CompositeModel
@@ -215,6 +215,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
         date_str: End date string specifying data.
         train_data: String specifying the part of the data to train the model on.
     """
+    check_train_str(train_data)
     next_verb = prog_verb(verbose)
 
     # Get data and constraints
@@ -510,7 +511,9 @@ def get_model(name: str, ds: Dataset,
     if fit:
         mod = get_model(name, ds, rnn_consts, from_hop, fit=False,
                         verbose=prog_verb(verbose), train_data=train_data)
-        mod.fit(verbose=prog_verb(verbose))
+        mod.fit(verbose=prog_verb(verbose), train_data=train_data)
+        if train_data != "train":
+            print(f"Trained on: {train_data}")
         return mod
 
     if verbose and not fit:
@@ -802,9 +805,6 @@ def main() -> None:
     if args.verbose:
         print("Verbosity turned on.")
 
-    # Common arguments
-    date_str = extract_args(args.str, DEFAULT_END_DATE)[0]
-
     # Run integration tests and optionally the cleanup after.
     if args.test:
         run_integration_tests(verbose=verbose)
@@ -813,6 +813,7 @@ def main() -> None:
 
     # Update stored data
     if args.data:
+        date_str = extract_args(args.str, DEFAULT_END_DATE)[0]
         update_data(date_str=date_str)
 
     # Run hyperparameter optimization
@@ -826,12 +827,12 @@ def main() -> None:
 
     # Fit and analyze all models
     if args.mod_eval:
-        date_str = extract_args(args.str, DEFAULT_END_DATE)[0]
+        date_str, train_data = extract_args(args.str, DEFAULT_END_DATE, "train")
         perf_analyze, visual_analyze, include_composite = extract_args(args.bool, True, False, False)
         run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=perf_analyze,
                                        visual_analyze=visual_analyze,
                                        include_composite=include_composite,
-                                       date_str=date_str)
+                                       date_str=date_str, train_data=train_data)
 
     # Train and analyze the battery model
     if args.battery:
@@ -842,6 +843,7 @@ def main() -> None:
 
     # Evaluate room model
     if args.room:
+        date_str = extract_args(args.str, DEFAULT_END_DATE)[0]
         alpha, tb_low, tb_high = extract_args(args.float, 50.0, None, None)
         n_steps = extract_args(args.int, None)[0]
         ext_args = extract_args(args.bool, False, False, False, False)
