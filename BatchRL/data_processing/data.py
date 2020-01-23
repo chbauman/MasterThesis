@@ -10,7 +10,7 @@ from data_processing.preprocess import clean_data, remove_out_interval, clip_to_
 from rest.client import DataStruct, DEFAULT_END_DATE, check_date_str
 from util.numerics import align_ts, copy_arr_list, solve_ls, \
     find_rows_with_nans
-from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init, ProgWrap
+from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init, ProgWrap, yeet
 from util.visualize import plot_time_series, plot_all, plot_single, preprocess_plot_path, \
     plot_multiple_time_series, plot_dataset, stack_compare_plot
 
@@ -176,6 +176,19 @@ BatteryData = DataStruct(id_list=[40200000,
 
 dfab_rooms = [Room4BlueData, Room5BlueData, Room4RedData, Room5RedData]
 all_experiment_data = dfab_rooms + [DFAB_AddData, DFAB_AllValves, WeatherData, BatteryData]
+
+
+def unique_room_nr(room_nr: int):
+    """Returns the unique short room number."""
+    if room_nr in [43, 475, 476]:
+        return 43
+    elif room_nr in [41, 472, 471]:
+        return 41
+    elif room_nr in [53, 575, 574]:
+        return 53
+    elif room_nr in [51, 571, 572]:
+        return 52
+    yeet(f"Room number: {room_nr} not supported!")
 
 
 def update_data(verbose: int = 4,

@@ -16,7 +16,7 @@ from sklearn.linear_model import MultiTaskLassoCV
 from agents.agents_heuristic import ConstActionAgent, RuleBasedAgent, get_const_agents
 from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, \
-    choose_dataset_and_constraints, update_data
+    choose_dataset_and_constraints, update_data, unique_room_nr
 from data_processing.dataset import DatasetConstraints, Dataset
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
 from dynamics.base_model import BaseDynamicsModel, compare_models, check_train_str
@@ -28,7 +28,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv, LowHighProfile, heat_marker, RangeT
 from opcua_empa.run_opcua import try_opcua
-from rest.client import test_rest_client, DEFAULT_END_DATE
+from rest.client import test_rest_client, DEFAULT_END_DATE, check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args, DEFAULT_TRAIN_SET
@@ -824,7 +824,15 @@ def main() -> None:
 
     # Common arguments
     train_data, date_str = args.train_data, args.data_end_date
-    room_nr = args.data_end_date
+    room_nr = unique_room_nr(args.room_nr)
+
+    # Check arguments
+    check_date_str(date_str)
+    check_train_str(train_data)
+    if room_nr in [41, 51] and date_str != DEFAULT_END_DATE:
+        raise ValueError(f"Room number and data end date combination"
+                         f"not supported because of backwards compatibility"
+                         f"reasons :(")
 
     # Run integration tests and optionally the cleanup after.
     if args.test:
