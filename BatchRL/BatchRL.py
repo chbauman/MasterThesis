@@ -27,7 +27,7 @@ from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvershootModel, PhysicallyConsistentRNN
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv, LowHighProfile, heat_marker, RangeT
-from opcua_empa.run_opcua import try_opcua
+from opcua_empa.run_opcua import try_opcua, run_rl_control
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
@@ -806,6 +806,7 @@ def get_model(name: str,
 
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
+    try_opcua()
     return
 
 
@@ -965,8 +966,9 @@ def main() -> None:
 
     # Opcua
     if args.ua:
-        debug = args.bool[0] if args.bool is not None else False
-        try_opcua(verbose + 1, room_list=args.int, debug=debug)
+        debug, notify_failure = extract_args(args.bool, False, False)
+        run_rl_control(room_nr=room_nr, notify_failure=notify_failure,
+                       debug=debug)
 
     # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)

@@ -84,7 +84,7 @@ class TestOpcua(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.c_val = 10.0
-        self.cont = [(575, FixTimeConstController(val=self.c_val, max_n_minutes=1))]
+        self.cont = [(41, FixTimeConstController(val=self.c_val, max_n_minutes=1))]
 
     def test_string_manipulation(self):
         inp = "Hoi_Du"
@@ -139,7 +139,7 @@ class TestOpcua(TestCase):
                 assert (self.t_state and temp_set == MIN_TEMP) or \
                        (not self.t_state and temp_set == MAX_TEMP)
 
-        vt = [(575, ValveToggler(n_steps_delay=0))]
+        vt = [(41, ValveToggler(n_steps_delay=0))]
         run_control(vt,
                     exp_name="OfflineValveTogglerTest",
                     verbose=0,
@@ -207,7 +207,7 @@ class TestOpcuaRL(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.c_val = 10.0
-        self.cont = [(575, FixTimeConstController(val=self.c_val, max_n_minutes=1))]
+        self.cont = [(41, FixTimeConstController(val=self.c_val, max_n_minutes=1))]
 
         # Setup keras test agent
         mod = get_full_composite_model(add_battery=True, standardized=True)
@@ -218,7 +218,7 @@ class TestOpcuaRL(TestCase):
         self.test_agent = KerasDDPGTest(self.full_env,
                                         action_range=action_range,
                                         action=0.5)
-        self.rl_cont = [(575, RLController(self.test_agent, verbose=0))]
+        self.rl_cont = [(41, RLController(self.test_agent, verbose=0))]
 
         room_mod = get_full_composite_model(add_battery=False, standardized=True)
         self.room_env = FullRoomEnv(room_mod, max_eps=5)
@@ -226,7 +226,7 @@ class TestOpcuaRL(TestCase):
                                              action_range=self.room_env.action_range,
                                              action=0.5)
 
-        self.rl_cont_room = [(575, RLController(self.test_agent_room, verbose=0))]
+        self.rl_cont_room = [(41, RLController(self.test_agent_room, verbose=0))]
 
     @staticmethod
     def get_test_scaling():

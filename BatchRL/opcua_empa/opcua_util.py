@@ -28,13 +28,13 @@ create_dir(experiment_plot_path)
 
 # The dictionary mapping room numbers to thermostat strings
 ROOM_DICT: Dict[int, str] = {
-    371: "R1_B870",
-    472: "R2_B870",
-    473: "R2_B871",
-    475: "R2_B872",
-    571: "R3_B870",
-    573: "R3_B871",
-    575: "R3_B872",
+    31: "R1_B870",
+    41: "R2_B870",
+    42: "R2_B871",
+    43: "R2_B872",
+    51: "R3_B870",
+    52: "R3_B871",
+    53: "R3_B872",
 }
 
 ALL_ROOM_NRS = [k for k in ROOM_DICT]
@@ -44,13 +44,13 @@ INV_ROOM_DICT = {v: k for k, v in ROOM_DICT.items()}
 
 # Valves of each room
 ROOM_VALVE_DICT: Dict[int, List[str]] = {
-    371: ["Y700", "Y701", "Y702", "Y703", "Y704", "Y705", "Y706"],
-    472: ["Y700", "Y701", "Y706"],
-    473: ["Y702"],
-    475: ["Y703", "Y704", "Y705"],
-    571: ["Y700", "Y705", "Y706"],
-    573: ["Y704"],
-    575: ["Y701", "Y702", "Y703"],
+    31: ["Y700", "Y701", "Y702", "Y703", "Y704", "Y705", "Y706"],
+    41: ["Y700", "Y701", "Y706"],
+    42: ["Y702"],
+    43: ["Y703", "Y704", "Y705"],
+    51: ["Y700", "Y705", "Y706"],
+    52: ["Y704"],
+    53: ["Y701", "Y702", "Y703"],
 }
 
 # Read nodes that are the same for each room

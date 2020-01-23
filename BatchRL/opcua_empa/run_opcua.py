@@ -10,7 +10,7 @@ from opcua_empa.opcua_util import analyze_experiment, check_room_list
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control
 from tests.test_opcua import OfflineClient
-from util.util import prog_verb, ProgWrap
+from util.util import prog_verb, ProgWrap, DEFAULT_ROOM_NR
 
 
 def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True):
@@ -37,10 +37,10 @@ def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True)
     # tc = ToggleController(n_mins=60 * 100, start_low=True, max_n_minutes=60 * 16)
     # tc = ValveToggler(n_steps_delay=30, n_steps_max=2 * 60)
     tc = ValveTest2Controller()
-    room_list = [475] if room_list is None else room_list
+    room_list = [43] if room_list is None else room_list
     used_control = [(i, tc) for i in room_list]
     if debug:
-        room_list = [472]
+        room_list = [41]
         used_control = [(r, ValveToggler(n_steps_delay=30))
                         for r in room_list]
         exp_name = "Offline_DebugValveToggle"
@@ -53,3 +53,24 @@ def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True)
                 password='Christian4_ever',
                 verbose=verbose,
                 _client_class=cl_class)
+
+
+def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
+                   notify_failure: bool = False,
+                   debug: bool = False,
+                   verbose: int = 5):
+
+    assert room_nr in [41, 43], f"Invalid room number: {room_nr}"
+
+    used_control = [(room_nr, ValveTest2Controller(n_hours=12))]
+    exp_name = "DefaultExperimentName"
+
+    cl_class = OfflineClient if debug else OpcuaClient
+    run_control(used_control=used_control,
+                exp_name=exp_name,
+                user='ChristianBaumannETH2020',
+                password='Christian4_ever',
+                verbose=verbose,
+                _client_class=cl_class,
+                notify_failures=notify_failure)
+    pass
