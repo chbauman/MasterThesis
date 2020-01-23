@@ -13,7 +13,7 @@ from typing import List, Tuple, Sequence, Type
 import numpy as np
 from sklearn.linear_model import MultiTaskLassoCV
 
-from agents.agents_heuristic import ConstActionAgent, RuleBasedAgent, get_const_agents
+from agents.agents_heuristic import RuleBasedAgent, get_const_agents
 from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, \
     choose_dataset_and_constraints, update_data, unique_room_nr
@@ -28,7 +28,7 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv, LowHighProfile, heat_marker, RangeT
 from opcua_empa.run_opcua import try_opcua
-from rest.client import test_rest_client, check_date_str
+from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args, DEFAULT_TRAIN_SET, \
@@ -918,7 +918,6 @@ def main() -> None:
         ind_list = []
         if n_steps is not None:
             _, *ind_list = args.int
-        print(ind_list)
         use_bat_data, enf_opt = extract_args(args.bool, True, False)
         run_dynamic_model_hyperopt(use_bat_data=use_bat_data,
                                    verbose=verbose,
