@@ -771,6 +771,15 @@ opt_param_l = [
     ("str", str, "additional string parameter(s)"),
     ("bool", str2bool, "additional boolean parameter(s)"),
 ]
+common_params = [
+    # ("arg_name", type, "help string", default_value),
+    ("train_data", str, "Data used for training the models, can be one of"
+                        "'train', 'train_val' or 'all'.", DEFAULT_TRAIN_SET),
+    ("data_end_date", str, "String specifying the date when the data was"
+                           "loaded from NEST database, e.g. 2020-01-21",
+     DEFAULT_END_DATE),
+    ("room_nr", int, "Integer specifying the room number in short.", 43),
+]
 
 
 def def_parser() -> argparse.ArgumentParser:
@@ -791,6 +800,10 @@ def def_parser() -> argparse.ArgumentParser:
     for kw, t, h in opt_param_l:
         short_kw = f"-{kw[0:2]}"
         parser.add_argument(short_kw, f"--{kw}", nargs='+', type=t, help=h)
+
+    # Add parameters used for many tasks
+    for kw, t, h, d in common_params:
+        parser.add_argument(f"--{kw}", type=t, help=h, default=d)
     return parser
 
 
@@ -810,7 +823,8 @@ def main() -> None:
         print("Verbosity turned on.")
 
     # Common arguments
-    date_str, train_data = extract_args(args.str, DEFAULT_END_DATE, "train")
+    train_data, date_str = args.train_data, args.data_end_date
+    room_nr = args.data_end_date
 
     # Run integration tests and optionally the cleanup after.
     if args.test:
