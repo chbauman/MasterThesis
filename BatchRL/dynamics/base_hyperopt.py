@@ -112,7 +112,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         self.param_list = []
 
         # Load the previously optimum if exists
-        save_path = self._get_opt_hp_f_name(self.base_name)
+        save_path = self._get_opt_hp_f_name(self.base_name, ext=data_ext)
         try:
             _, self.curr_val = load_hp(save_path)
             if verbose:
@@ -139,8 +139,6 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             # Save if new skl_mod are better
             if curr_obj < self.curr_val:
                 self.curr_val = curr_obj
-                save_path_2 = self._get_opt_hp_f_name(self.base_name)
-                assert save_path == save_path_2, "WTF"
                 save_hp(save_path, (hp_sample, self.curr_val))
             return curr_obj
 
@@ -157,12 +155,12 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         return best
 
     @classmethod
-    def _get_opt_hp_f_name(cls, b_name: str):
+    def _get_opt_hp_f_name(cls, b_name: str, ext: str = ""):
         """Determines the file path given the model name."""
-        return os.path.join(hop_path, b_name + "_OPT_HP.pkl")
+        return os.path.join(hop_path, f"{b_name}_OPT_HP{ext}.pkl")
 
     @classmethod
-    def from_best_hp(cls, verbose: int = 0, **kwargs):
+    def from_best_hp(cls, verbose: int = 0, ext: str = "", **kwargs):
         """Initialize a model with the best previously found hyperparameters.
 
         Returns:
@@ -170,7 +168,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
              hyperparameters.
         """
         base_name = cls.get_base_name(include_data_name=False, **kwargs)
-        name_hp = cls._get_opt_hp_f_name(base_name)
+        name_hp = cls._get_opt_hp_f_name(base_name, ext=ext)
         try:
             if verbose:
                 print("Loading model from hyperparameters.")
