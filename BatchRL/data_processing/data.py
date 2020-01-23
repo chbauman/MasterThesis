@@ -1221,8 +1221,6 @@ def choose_dataset_and_constraints(seq_len: int = 20,
     and testing. Finally it is returned with the corresponding constraints.
 
     Args:
-        base_ds_name: The name of the base dataset, must be of the form "Model_Room<nr>",
-            with nr = 43 or 53.
         seq_len: The sequence length to use for the RNN training.
         add_battery_data: Whether to add the battery data.
         date_str: Date string specifying which data to use.

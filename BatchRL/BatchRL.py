@@ -289,7 +289,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                     physically_consistent: bool = False,
                     date_str: str = DEFAULT_END_DATE,
                     temp_bds: RangeT = None,
-                    train_data: str = "train") -> None:
+                    train_data: str = DEFAULT_TRAIN_SET,
+                    room_nr: int = DEFAULT_ROOM_NR) -> None:
 
     # Print what the code does
     if verbose:
@@ -309,7 +310,8 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
     with ProgWrap(f"Loading dataset...", verbose > 0):
         ds, rnn_consts = choose_dataset_and_constraints(seq_len=20,
                                                         add_battery_data=include_battery,
-                                                        date_str=date_str)
+                                                        date_str=date_str,
+                                                        room_nr=room_nr)
 
     # Load the model and init env
     with ProgWrap(f"Preparing environment...", verbose > 0):
@@ -824,13 +826,14 @@ def main() -> None:
     if args.verbose:
         print("Verbosity turned on.")
 
-    # Common arguments
+    # Extract arguments
     train_data, date_str = args.train_data, args.data_end_date
-    room_nr = unique_room_nr(args.room_nr)
+    room_nr = args.room_nr
 
     # Check arguments
     check_date_str(date_str)
     check_train_str(train_data)
+    room_nr = unique_room_nr(room_nr)
     if room_nr in [41, 51] and date_str != DEFAULT_END_DATE:
         raise ValueError(f"Room number and data end date combination"
                          f"not supported because of backwards compatibility"
@@ -881,7 +884,8 @@ def main() -> None:
         run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps,
                         include_battery=add_bat, perf_eval=perf_eval,
                         physically_consistent=phys_cons, overwrite=overwrite,
-                        date_str=date_str, temp_bds=temp_bds, train_data=train_data)
+                        date_str=date_str, temp_bds=temp_bds,
+                        train_data=train_data, room_nr=room_nr)
 
     # Overleaf plots
     if args.plot:
