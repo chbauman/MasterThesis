@@ -757,16 +757,16 @@ def curr_tests() -> None:
 
 arg_def_list = [
     # The following arguments can be provided.
-    ("verbose", "output verbosity"),
-    ("mod_eval", "fit and evaluate the room models"),
-    ("optimize", "optimize hyperparameters of models"),
+    ("verbose", "use verbose mode"),
+    ("mod_eval", "fit and evaluate the room ML models"),
+    ("optimize", "optimize hyperparameters of ML models"),
     ("data", "update the data from the nest database"),
-    ("battery", "run the battery model."),
-    ("room", "run the room model"),
-    ("test", "run tests"),
-    ("cleanup", "cleanup test files"),
+    ("battery", "run the battery model"),
+    ("room", "run the room simulation model to train and evaluate a rl agent"),
+    ("test", "run a few integration tests, not running unit tests"),
+    ("cleanup", "cleanup all test files, including ones from unit tests"),
     ("plot", "run overleaf plot creation"),
-    ("ua", "run opcua"),
+    ("ua", "run opcua control"),
 ]
 opt_param_l = [
     ("int", int, "additional integer parameter(s)"),
@@ -784,7 +784,7 @@ common_params = [
     ("data_end_date", str, "String specifying the date when the data was "
                            "loaded from NEST database, e.g. 2020-01-21",
      DEFAULT_END_DATE),
-    ("room_nr", int, "Integer specifying the room number in short.", 43),
+    ("room_nr", int, "Integer specifying the room number.", 43),
 ]
 
 
@@ -802,14 +802,15 @@ def def_parser() -> argparse.ArgumentParser:
         short_kw = f"-{kw[0]}"
         parser.add_argument(short_kw, f"--{kw}", action="store_true", help=h)
 
+    # Add parameters used for many tasks
+    for kw, t, h, d in common_params:
+        parser.add_argument(f"--{kw}", type=t, help=h, default=d)
+
     # Add general optional parameters
     for kw, t, h in opt_param_l:
         short_kw = f"-{kw[0:2]}"
         parser.add_argument(short_kw, f"--{kw}", nargs='+', type=t, help=h)
 
-    # Add parameters used for many tasks
-    for kw, t, h, d in common_params:
-        parser.add_argument(f"--{kw}", type=t, help=h, default=d)
     return parser
 
 
