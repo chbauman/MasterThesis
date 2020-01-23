@@ -5,7 +5,7 @@ it is high-level enough.
 """
 from typing import List
 
-from opcua_empa.controller import ValveToggler, ValveTest2Controller
+from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control
@@ -62,7 +62,7 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
 
     assert room_nr in [41, 43], f"Invalid room number: {room_nr}"
 
-    used_control = [(room_nr, ValveTest2Controller(n_hours=12))]
+    used_control = [(room_nr, FixTimeConstController(val=21.0, max_n_minutes=12 * 60))]
     exp_name = "DefaultExperimentName"
 
     cl_class = OfflineClient if debug else OpcuaClient
