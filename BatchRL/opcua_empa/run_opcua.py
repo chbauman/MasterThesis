@@ -58,7 +58,7 @@ def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True)
 def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                    notify_failure: bool = False,
                    debug: bool = False,
-                   verbose: int = 5):
+                   verbose: int = 1):
 
     assert room_nr in [41, 43], f"Invalid room number: {room_nr}"
 
