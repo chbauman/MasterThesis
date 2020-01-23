@@ -17,7 +17,7 @@ from agents.agents_heuristic import ConstActionAgent, RuleBasedAgent, get_const_
 from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, \
     choose_dataset_and_constraints, update_data, unique_room_nr
-from data_processing.dataset import DatasetConstraints, Dataset
+from data_processing.dataset import DatasetConstraints, Dataset, check_dataset_part
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
 from dynamics.base_model import BaseDynamicsModel, compare_models, check_train_str
 from dynamics.battery_model import BatteryModel
@@ -32,7 +32,7 @@ from rest.client import test_rest_client, DEFAULT_END_DATE, check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args, DEFAULT_TRAIN_SET, \
-    DEFAULT_ROOM_NR
+    DEFAULT_ROOM_NR, DEFAULT_EVAL_SET
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
     plot_heat_cool_rew_det
 
@@ -291,7 +291,6 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                     temp_bds: RangeT = None,
                     train_data: str = DEFAULT_TRAIN_SET,
                     room_nr: int = DEFAULT_ROOM_NR) -> None:
-
     # Print what the code does
     if verbose:
         print("Running RL agents on learned room model.")
@@ -777,9 +776,12 @@ opt_param_l = [
 ]
 common_params = [
     # ("arg_name", type, "help string", default_value),
-    ("train_data", str, "Data used for training the models, can be one of"
+    ("train_data", str, "Data used for training the models, can be one of "
                         "'train', 'train_val' or 'all'.", DEFAULT_TRAIN_SET),
-    ("data_end_date", str, "String specifying the date when the data was"
+    ("eval_data", str, "Data used for evaluation of the models, can be one of "
+                       "'train', 'val', 'train_val', 'test' or 'all'.",
+     DEFAULT_EVAL_SET),
+    ("data_end_date", str, "String specifying the date when the data was "
                            "loaded from NEST database, e.g. 2020-01-21",
      DEFAULT_END_DATE),
     ("room_nr", int, "Integer specifying the room number in short.", 43),
@@ -827,16 +829,17 @@ def main() -> None:
         print("Verbosity turned on.")
 
     # Extract arguments
-    train_data, date_str = args.train_data, args.data_end_date
-    room_nr = args.room_nr
+    train_data, eval_data = args.train_data, args.eval_data
+    room_nr, date_str = args.room_nr, args.data_end_date
 
     # Check arguments
     check_date_str(date_str)
     check_train_str(train_data)
+    check_dataset_part(eval_data)
     room_nr = unique_room_nr(room_nr)
-    if room_nr in [41, 51] and date_str != DEFAULT_END_DATE:
-        raise ValueError(f"Room number and data end date combination"
-                         f"not supported because of backwards compatibility"
+    if room_nr in [41, 51] and date_str == DEFAULT_END_DATE:
+        raise ValueError(f"Room number and data end date combination "
+                         f"not supported because of backwards compatibility "
                          f"reasons :(")
 
     # Run integration tests and optionally the cleanup after.

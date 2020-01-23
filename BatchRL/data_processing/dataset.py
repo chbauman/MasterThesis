@@ -15,7 +15,7 @@ from util.numerics import get_shape1, check_in_range, prepare_supervised_control
     has_duplicates, trf_mean_and_std, cut_data, find_rows_with_nans, find_all_streaks, find_disjoint_streaks, \
     find_longest_streak, int_to_sin_cos, contrary_indices
 from util.util import day_offset_ts, ts_per_day, datetime_to_np_datetime, string_to_dt, create_dir, Arr, \
-    n_mins_to_np_dt, str_to_np_dt, np_dt_to_str, repl
+    n_mins_to_np_dt, str_to_np_dt, np_dt_to_str, repl, yeet
 from util.visualize import PLOT_DIR, plot_all
 
 dataset_data_path = os.path.join(save_dir, "Datasets")  #: Dataset directory
@@ -77,6 +77,12 @@ class SeriesConstraint:
 
 # Define type
 DatasetConstraints = List[SeriesConstraint]
+
+
+def check_dataset_part(part_str: str):
+    allowed = ["train", "val", "test", "train_val", "all"]
+    if part_str not in allowed:
+        yeet(f"Invalid dataset part specification: {part_str}")
 
 
 class Dataset:

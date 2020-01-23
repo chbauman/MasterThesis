@@ -27,6 +27,7 @@ import numpy as np
 EULER: bool = os.name != 'nt'
 
 DEFAULT_TRAIN_SET: str = "train"  #: Default training set
+DEFAULT_EVAL_SET: str = "val"  #: Default evaluation / validation set
 DEFAULT_ROOM_NR: int = 43
 
 
