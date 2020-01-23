@@ -76,7 +76,6 @@ def run_integration_tests(verbose: int = 1) -> None:
     # Do all the tests.
     with ProgWrap(f"Running a few tests...", verbose > 0):
         test_rnn_models()
-        test_rest_client()
 
 
 def test_cleanup(verbose: int = 0):
@@ -161,7 +160,8 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
                                n_fit_calls: int = None,
                                hop_eval_set: str = DEFAULT_EVAL_SET,
                                date_str: str = DEFAULT_END_DATE,
-                               room_nr: int = DEFAULT_ROOM_NR) -> None:
+                               room_nr: int = DEFAULT_ROOM_NR,
+                               model_indices: List[int] = None) -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
     Does not much if not on Euler, except if `enforce_optimize`
@@ -175,11 +175,22 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
         hop_eval_set: Evaluation set for the optimization.
         date_str: End date string specifying data.
         room_nr: Integer specifying the room number.
+        model_indices: Indices of models for hyperparameter tuning referring
+            to the list `base_rnn_models`.
     """
     if verbose:
         print(f"Doing hyperparameter optimization using "
               f"evaluation on {hop_eval_set} set. Using room {room_nr} "
               f"with data up to {date_str}.")
+
+    if model_indices is not None:
+        if len(model_indices) == 0:
+            model_indices = None
+        else:
+            assert max(model_indices) < len(base_rnn_models)
+            assert min(model_indices) >= 0
+            if verbose:
+                print("Not optimizing all models.")
 
     next_verb = prog_verb(verbose)
     assert hop_eval_set in ["val", "test"], f"Fuck: {hop_eval_set}"
@@ -193,7 +204,16 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
 
     # Hyper-optimize model(s)
     with ProgWrap(f"Hyperoptimizing models...", verbose > 0):
-        for name in base_rnn_models:
+        for ct, name in enumerate(base_rnn_models):
+
+            # If indices are specified, only do optimization if
+            # the index is in the list with the indices.
+            if model_indices is not None:
+                if ct not in model_indices:
+                    if verbose:
+                        print(f"Skipping model: {name}")
+                    continue
+
             # Load model
             with ProgWrap(f"Loading model: {name}...", next_verb > 0):
                 mod = get_model(name, ds, rnn_consts, from_hop=False,
@@ -786,34 +806,6 @@ def get_model(name: str,
 
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
-
-    # Load the dataset and setup the model
-    ds_full, rnn_consts_full = choose_dataset_and_constraints(seq_len=20,
-                                                              add_battery_data=True)
-    # mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
-    #                 rnn_consts=rnn_consts_full, fit=True, from_hop=True)
-    mod = get_model("FullState_Comp_Phys", ds_full,
-                    rnn_consts=rnn_consts_full, fit=True, from_hop=True)
-
-    # Setup env
-    assert isinstance(mod, CompositeModel), "Model not suited"
-    full_env = RoomBatteryEnv(mod, max_eps=24)
-
-    # Define agent and fit
-    ac_range_list = full_env.action_range
-    n_steps = get_rl_steps()
-    ddpg_ag = DDPGBaseAgent(full_env,
-                            n_steps=n_steps,
-                            layers=(50, 50),
-                            action_range=ac_range_list)
-    ddpg_ag.fit(verbose=1)
-
-    # Define agents to compare with.
-    ag1 = ConstActionAgent(full_env, np.array([0.0, 0.0], dtype=np.float32))
-
-    # Evaluate
-    full_env.detailed_eval_agents([ddpg_ag, ag1], n_steps=3, use_noise=False)
-
     return
 
 
@@ -922,7 +914,11 @@ def main() -> None:
 
     # Run hyperparameter optimization
     if args.optimize:
-        n_steps = extract_args(args.int, None)[0]
+        n_steps = extract_args(args.int, None, raise_too_many_error=False)[0]
+        ind_list = []
+        if n_steps is not None:
+            _, *ind_list = args.int
+        print(ind_list)
         use_bat_data, enf_opt = extract_args(args.bool, True, False)
         run_dynamic_model_hyperopt(use_bat_data=use_bat_data,
                                    verbose=verbose,
@@ -930,7 +926,8 @@ def main() -> None:
                                    n_fit_calls=n_steps,
                                    hop_eval_set=hop_eval_data,
                                    date_str=date_str,
-                                   room_nr=room_nr)
+                                   room_nr=room_nr,
+                                   model_indices=ind_list)
 
     # Fit and analyze all models
     if args.mod_eval:

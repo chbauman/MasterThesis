@@ -478,7 +478,8 @@ def apply(list_or_el, fun):
         return fun(list_or_el)
 
 
-def extract_args(args: Optional[List], *def_vals) -> List:
+def extract_args(args: Optional[List], *def_vals,
+                 raise_too_many_error: bool = True) -> List:
     """Extracts single arguments from parsed argument list.
 
     Default values need to be specified.
@@ -491,7 +492,10 @@ def extract_args(args: Optional[List], *def_vals) -> List:
             if ct < n:
                 ret[ct] = a
             else:
-                yeet("Too many arguments specified!")
+                if raise_too_many_error:
+                    yeet("Too many arguments specified!")
+                else:
+                    break
     return ret
 
 
