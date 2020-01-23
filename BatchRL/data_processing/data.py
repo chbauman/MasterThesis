@@ -991,7 +991,8 @@ def analyze_room_energy_consumption():
 
 
 def generate_room_datasets(date_str: str = DEFAULT_END_DATE,
-                           verbose: int = 0) -> List[Dataset]:
+                           verbose: int = 0,
+                           use_blinds: bool = False) -> List[Dataset]:
     """Gather the right data and put it all together.
 
     Returns:
@@ -1054,9 +1055,10 @@ def generate_room_datasets(date_str: str = DEFAULT_END_DATE,
         full_ds.descriptions[3] = "Heating Water Temperature (Out) [°C]"
 
         # Add blinds
-        if len(room_ds) == 5:
+        if len(room_ds) == 5 and use_blinds:
             blinds_ds = room_ds[4]
             full_ds = full_ds + blinds_ds
+            full_ds.descriptions[-1] = "Blinds open percentage [100%]"
 
         # Save
         full_ds.name = new_name

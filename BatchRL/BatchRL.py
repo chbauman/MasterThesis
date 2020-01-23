@@ -796,7 +796,7 @@ def def_parser() -> argparse.ArgumentParser:
         short_kw = f"-{kw[0]}"
         parser.add_argument(short_kw, f"--{kw}", action="store_true", help=h)
 
-    # Add more optional parameters
+    # Add general optional parameters
     for kw, t, h in opt_param_l:
         short_kw = f"-{kw[0:2]}"
         parser.add_argument(short_kw, f"--{kw}", nargs='+', type=t, help=h)
