@@ -158,7 +158,10 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
 def run_dynamic_model_hyperopt(use_bat_data: bool = True,
                                verbose: int = 1,
                                enforce_optimize: bool = False,
-                               n_fit_calls: int = None) -> None:
+                               n_fit_calls: int = None,
+                               hop_eval_set: str = DEFAULT_EVAL_SET,
+                               date_str: str = DEFAULT_END_DATE,
+                               room_nr: int = DEFAULT_ROOM_NR) -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
     Does not much if not on Euler, except if `enforce_optimize`
@@ -169,26 +172,35 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
         verbose: Verbosity level.
         enforce_optimize: Whether to enforce the optimization.
         n_fit_calls: Number of fit evaluations, default if None.
+        hop_eval_set: Evaluation set for the optimization.
+        date_str: End date string specifying data.
+        room_nr: Integer specifying the room number.
     """
     next_verb = prog_verb(verbose)
+    assert hop_eval_set in ["val", "test"], f"Fuck: {hop_eval_set}"
 
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
         ds, rnn_consts = choose_dataset_and_constraints(seq_len=20,
-                                                        add_battery_data=use_bat_data)
+                                                        add_battery_data=use_bat_data,
+                                                        date_str=date_str,
+                                                        room_nr=room_nr)
 
     # Hyper-optimize model(s)
     with ProgWrap(f"Hyperoptimizing models...", verbose > 0):
         for name in base_rnn_models:
             # Load model
             with ProgWrap(f"Loading model: {name}...", next_verb > 0):
-                mod = get_model(name, ds, rnn_consts, from_hop=False, fit=False)
+                mod = get_model(name, ds, rnn_consts, from_hop=False,
+                                fit=False)
 
             # Optimize model
             if isinstance(mod, HyperOptimizableModel):
                 if EULER or enforce_optimize:
                     with ProgWrap(f"Optimizing model: {name}...", next_verb > 0):
-                        optimize_model(mod, verbose=next_verb > 0, n_restarts=n_fit_calls)
+                        optimize_model(mod, verbose=next_verb > 0,
+                                       n_restarts=n_fit_calls,
+                                       eval_data=hop_eval_set)
                 else:
                     print("Not optimizing!")
             else:
@@ -516,7 +528,7 @@ def get_model(name: str, ds: Dataset,
         mod = get_model(name, ds, rnn_consts, from_hop, fit=False,
                         verbose=prog_verb(verbose), train_data=train_data)
         mod.fit(verbose=prog_verb(verbose), train_data=train_data)
-        if train_data != "train":
+        if train_data != "train" and verbose:
             print(f"Trained on: {train_data}")
         return mod
 
@@ -781,6 +793,9 @@ common_params = [
     ("eval_data", str, "Data used for evaluation of the models, can be one of "
                        "'train', 'val', 'train_val', 'test' or 'all'.",
      DEFAULT_EVAL_SET),
+    ("hop_eval_data", str, "Data used for evaluation of the models in "
+                           "hyperparameter optimization, can be one either "
+                           "'val' or 'test'.", DEFAULT_EVAL_SET),
     ("data_end_date", str, "String specifying the date when the data was "
                            "loaded from NEST database, e.g. 2020-01-21",
      DEFAULT_END_DATE),
@@ -831,6 +846,7 @@ def main() -> None:
 
     # Extract arguments
     train_data, eval_data = args.train_data, args.eval_data
+    hop_eval_data = args.hop_eval_data
     room_nr, date_str = args.room_nr, args.data_end_date
 
     # Check arguments
@@ -860,7 +876,10 @@ def main() -> None:
         run_dynamic_model_hyperopt(use_bat_data=use_bat_data,
                                    verbose=verbose,
                                    enforce_optimize=enf_opt,
-                                   n_fit_calls=n_steps)
+                                   n_fit_calls=n_steps,
+                                   hop_eval_set=hop_eval_data,
+                                   date_str=date_str,
+                                   room_nr=room_nr)
 
     # Fit and analyze all models
     if args.mod_eval:

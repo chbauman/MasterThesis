@@ -10,7 +10,7 @@ from ml.keras_util import KerasBase
 from ml.time_series import AR_Model
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, \
     save_performance_extended, get_metrics_eval_save_name_list, ErrMetric, MSE, find_inds
-from util.util import create_dir, mins_to_str, Arr, tot_size, yeet, DEFAULT_TRAIN_SET
+from util.util import create_dir, mins_to_str, Arr, tot_size, yeet, DEFAULT_TRAIN_SET, DEFAULT_EVAL_SET
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one
 
 #: Plot title definition
@@ -782,7 +782,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                          title_and_ylab=title_and_ylab,
                          save_name=self.get_plt_path(f"OneWeek_WithNoise_{k}_{ext}"))
 
-    def hyper_obj(self, n_ts: int = 24, series_ind: Arr = None) -> float:
+    def hyper_obj(self, n_ts: int = 24, series_ind: Arr = None,
+                  eval_data: str = DEFAULT_EVAL_SET) -> float:
         """Defines the objective for the hyperparameter optimization.
 
         Uses multistep prediction to define the performance for
@@ -791,6 +792,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         Args:
             n_ts: Number of timesteps to predict.
             series_ind: The indices of the series to predict.
+            eval_data: Evaluation set for the optimization.
 
         Returns:
             The numerical value of the objective.
@@ -802,7 +804,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             series_ind = d.to_prepared(np.array([series_ind]))
         elif series_ind is None:
             series_ind = self.p_out_inds
-        in_d, out_d, _ = d.get_streak('val', use_max_len=True)
+        in_d, out_d, _ = d.get_streak(eval_data, use_max_len=True)
         tr = np.copy(out_d[:, series_ind])
 
         # Predict and compute residuals

@@ -85,6 +85,17 @@ def check_dataset_part(part_str: str):
         yeet(f"Invalid dataset part specification: {part_str}")
 
 
+def check_disjoint(set_1: str, set_2: str):
+    """Checks if the two given sets are disjoint."""
+    is_dis = True
+    if "all" in [set_1, set_2]:
+        is_dis = False
+    if set_1 in set_2 or set_2 in set_1:
+        is_dis = False
+    if not is_dis:
+        yeet(f"Sets: {set_1} and {set_2} are overlapping!")
+
+
 class Dataset:
     """This class contains all infos about a given dataset and
     offers some functionality for manipulating it.

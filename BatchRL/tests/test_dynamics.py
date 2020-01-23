@@ -19,7 +19,7 @@ from dynamics.sin_cos_time import SCTimeModel
 from tests.test_data import get_full_model_dataset, construct_test_ds
 from tests.test_util import TEST_DIR
 from util.numerics import copy_arr_list, MSE, MAE
-from util.util import Num, tot_size
+from util.util import Num, tot_size, DEFAULT_EVAL_SET
 from util.visualize import plot_performance_graph
 
 
@@ -344,7 +344,7 @@ class TestHopTable(HyperOptimizableModel):
         new_mod = TestHopTable(self.data, self.bp, **hp_sample)
         return new_mod
 
-    def hyper_objective(self) -> float:
+    def hyper_objective(self, eval_data: str = DEFAULT_EVAL_SET) -> float:
         x = self.h_param
         return -x * x + 12 * x + 15
 

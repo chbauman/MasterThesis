@@ -280,7 +280,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                                   **init_kwargs)
         return new_mod
 
-    def hyper_objective(self) -> float:
+    def hyper_objective(self, *args, **kwargs) -> float:
         """Defines the objective of the hyperparameter optimization.
 
         Uses the hyperparameter objective from the base class.
@@ -288,7 +288,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         Returns:
             Objective loss.
         """
-        return self.hyper_obj()
+        return self.hyper_obj(*args, **kwargs)
 
     @staticmethod
     def def_name() -> str:

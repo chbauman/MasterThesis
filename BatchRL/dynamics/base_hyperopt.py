@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple
 from hyperopt import fmin, tpe
 
 from dynamics.base_model import BaseDynamicsModel
-from util.util import create_dir, EULER, model_dir
+from util.util import create_dir, EULER, model_dir, DEFAULT_TRAIN_SET, DEFAULT_EVAL_SET
 
 # Define path for optimization results.
 hop_path = os.path.join(model_dir, "Hop")  #: The path to all hyperopt data.
@@ -77,7 +77,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         pass
 
     @abstractmethod
-    def hyper_objective(self) -> float:
+    def hyper_objective(self, eval_data: str = DEFAULT_EVAL_SET) -> float:
         """
         Defines the objective to be used for hyperopt.
         It will be minimized, i.e. it has to be some kind of
@@ -89,7 +89,8 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         """
         pass
 
-    def optimize(self, n: int = 100, verbose: int = 1) -> Dict:
+    def optimize(self, n: int = 100, verbose: int = 1,
+                 eval_data: str = DEFAULT_EVAL_SET) -> Dict:
         """Does the full hyper parameter optimization with
         the given objective and space.
 
@@ -97,10 +98,14 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             n: Number of model initializations, fits and objective
                 computations.
             verbose: The verbosity level for fmin.
+            eval_data: Evaluation set for the optimization.
 
         Returns:
             The optimized hyper parameters.
         """
+
+        fit_data = "train" if eval_data == "val" else "train_val"
+
         hp_space = self.get_space()
         self.param_list = []
 
@@ -122,8 +127,8 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             """
             mod = self.conf_model(hp_sample)
             self.param_list += [hp_sample]
-            mod.fit()
-            curr_obj = mod.hyper_objective()
+            mod.fit(train_data=fit_data)
+            curr_obj = mod.hyper_objective(eval_data=eval_data)
 
             # Save if new skl_mod are better
             if curr_obj < self.curr_val:
@@ -138,7 +143,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             space=hp_space,
             algo=tpe.suggest,
             max_evals=n,
-            verbose=verbose,
+            verbose=verbose > 0,
             show_progressbar=verbose > 0,
         )
 
@@ -184,7 +189,8 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
 
 
 def optimize_model(mod: HyperOptimizableModel, verbose: bool = True,
-                   n_restarts: int = None) -> None:
+                   n_restarts: int = None,
+                   eval_data: str = DEFAULT_EVAL_SET) -> None:
     """Executes the hyperparameter optimization of a model.
 
     Uses `n_restarts` calls to fit, if it is None,
@@ -196,11 +202,12 @@ def optimize_model(mod: HyperOptimizableModel, verbose: bool = True,
         n_restarts: How many models should be fitted during the
             optimization. If None, uses different default values depending
             on whether `EULER` is True or not.
+        eval_data: Evaluation set for the optimization.
     """
     n_opt = 50 if EULER else 2
     if n_restarts is not None:
         n_opt = n_restarts
-    opt_params = mod.optimize(n_opt, verbose=verbose)
+    opt_params = mod.optimize(n_opt, verbose=verbose, eval_data=eval_data)
 
     if verbose:
         print(f"Optimal parameters: {opt_params}.")
