@@ -27,6 +27,7 @@ import numpy as np
 EULER: bool = os.name != 'nt'
 
 DEFAULT_TRAIN_SET: str = "train"  #: Default training set
+DEFAULT_ROOM_NR: int = 43
 
 
 def get_rl_steps(eul: bool = EULER):

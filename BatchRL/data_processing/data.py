@@ -10,7 +10,7 @@ from data_processing.preprocess import clean_data, remove_out_interval, clip_to_
 from rest.client import DataStruct, DEFAULT_END_DATE, check_date_str
 from util.numerics import align_ts, copy_arr_list, solve_ls, \
     find_rows_with_nans
-from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init, ProgWrap, yeet
+from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init, ProgWrap, yeet, DEFAULT_ROOM_NR
 from util.visualize import plot_time_series, plot_all, plot_single, preprocess_plot_path, \
     plot_multiple_time_series, plot_dataset, stack_compare_plot
 
@@ -1133,8 +1133,10 @@ def choose_dataset(base_ds_name: str = "Model_Room43",
     check_date_str(date_str)
 
     # Check `base_ds_name`.
-    if base_ds_name[:10] != "Model_Room" or base_ds_name[-2:] not in ["43", "53"]:
-        raise ValueError(f"Dataset: {base_ds_name} does not exist!")
+    msg = f"Invalid dataset name: {base_ds_name}"
+    assert len(base_ds_name) == 12, msg
+    assert base_ds_name[:10] == "Model_Room", msg
+    assert base_ds_name[-2:] in ["43", "53", "41", "51"], msg
     base_ds_name = full_ds_name(base_ds_name, date_str)
 
     # Load dataset, generate if not found.
@@ -1206,10 +1208,10 @@ def get_constraints(ds: Dataset = None, include_bat: bool = False) -> List[Serie
     return rnn_consts
 
 
-def choose_dataset_and_constraints(base_ds_name: str = "Model_Room43",
-                                   seq_len: int = 20,
+def choose_dataset_and_constraints(seq_len: int = 20,
                                    add_battery_data: bool = False,
-                                   date_str: str = DEFAULT_END_DATE
+                                   date_str: str = DEFAULT_END_DATE,
+                                   room_nr: int = DEFAULT_ROOM_NR,
                                    ) -> Tuple[Dataset, DatasetConstraints]:
     """Let's you choose a dataset.
 
@@ -1224,16 +1226,19 @@ def choose_dataset_and_constraints(base_ds_name: str = "Model_Room43",
         seq_len: The sequence length to use for the RNN training.
         add_battery_data: Whether to add the battery data.
         date_str: Date string specifying which data to use.
+        room_nr: Integer specifying the room number.
 
     Returns:
         The prepared dataset and the corresponding list of constraints.
     """
-
-    ds = choose_dataset(base_ds_name, seq_len, add_battery_data, date_str=date_str)
+    base_ds_name = f"Model_Room{room_nr}"
+    ds = choose_dataset(base_ds_name, seq_len, add_battery_data,
+                        date_str=date_str)
     rnn_consts = get_constraints(ds, add_battery_data)
 
     # Return
     return ds, rnn_consts
+
 
 #######################################################################################################
 # Testing

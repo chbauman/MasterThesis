@@ -31,7 +31,8 @@ from opcua_empa.run_opcua import try_opcua
 from rest.client import test_rest_client, DEFAULT_END_DATE, check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
-from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args, DEFAULT_TRAIN_SET
+from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args, DEFAULT_TRAIN_SET, \
+    DEFAULT_ROOM_NR
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
     plot_heat_cool_rew_det
 
@@ -173,7 +174,7 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
 
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
-        ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20,
+        ds, rnn_consts = choose_dataset_and_constraints(seq_len=20,
                                                         add_battery_data=use_bat_data)
 
     # Hyper-optimize model(s)
@@ -201,7 +202,8 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                    perf_analyze: bool = False,
                                    include_composite: bool = False,
                                    date_str: str = DEFAULT_END_DATE,
-                                   train_data: str = "train") -> None:
+                                   train_data: str = DEFAULT_TRAIN_SET,
+                                   room_nr: int = DEFAULT_ROOM_NR) -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
     Does not much if not on Euler.
@@ -214,16 +216,17 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
         include_composite: Whether to also do all the stuff for the composite models.
         date_str: End date string specifying data.
         train_data: String specifying the part of the data to train the model on.
+        room_nr: Integer specifying the room number.
     """
     check_train_str(train_data)
     next_verb = prog_verb(verbose)
 
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
-        ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
-                                                        seq_len=20,
+        ds, rnn_consts = choose_dataset_and_constraints(seq_len=20,
                                                         add_battery_data=use_bat_data,
-                                                        date_str=date_str)
+                                                        date_str=date_str,
+                                                        room_nr=room_nr)
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
@@ -304,7 +307,7 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
     # Get dataset and constraints
     with ProgWrap(f"Loading dataset...", verbose > 0):
-        ds, rnn_consts = choose_dataset_and_constraints('Model_Room43', seq_len=20,
+        ds, rnn_consts = choose_dataset_and_constraints(seq_len=20,
                                                         add_battery_data=include_battery,
                                                         date_str=date_str)
 
@@ -393,12 +396,10 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
-        ds, rnn_consts = choose_dataset_and_constraints('Model_Room43',
-                                                        seq_len=20,
+        ds, rnn_consts = choose_dataset_and_constraints(seq_len=20,
                                                         add_battery_data=False)
 
-        ds_bat, rnn_consts_bat = choose_dataset_and_constraints('Model_Room43',
-                                                                seq_len=20,
+        ds_bat, rnn_consts_bat = choose_dataset_and_constraints(seq_len=20,
                                                                 add_battery_data=True)
 
     # Weather model
@@ -724,7 +725,8 @@ def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
     # Load the dataset and setup the model
-    ds_full, rnn_consts_full = choose_dataset_and_constraints('Model_Room43', seq_len=20, add_battery_data=True)
+    ds_full, rnn_consts_full = choose_dataset_and_constraints(seq_len=20,
+                                                              add_battery_data=True)
     # mod = get_model("FullState_Comp_ReducedTempConstWaterWeather", ds_full,
     #                 rnn_consts=rnn_consts_full, fit=True, from_hop=True)
     mod = get_model("FullState_Comp_Phys", ds_full,
@@ -859,7 +861,8 @@ def main() -> None:
         run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=perf_analyze,
                                        visual_analyze=visual_analyze,
                                        include_composite=include_composite,
-                                       date_str=date_str, train_data=train_data)
+                                       date_str=date_str, train_data=train_data,
+                                       room_nr=room_nr)
 
     # Train and analyze the battery model
     if args.battery:
