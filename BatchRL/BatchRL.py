@@ -28,11 +28,11 @@ from dynamics.recurrent import RNNDynamicModel, test_rnn_models, RNNDynamicOvers
 from dynamics.sin_cos_time import SCTimeModel
 from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv, LowHighProfile, heat_marker, RangeT
 from opcua_empa.run_opcua import try_opcua
-from rest.client import test_rest_client, DEFAULT_END_DATE, check_date_str
+from rest.client import test_rest_client, check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args, DEFAULT_TRAIN_SET, \
-    DEFAULT_ROOM_NR, DEFAULT_EVAL_SET
+    DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
     plot_heat_cool_rew_det
 
@@ -196,11 +196,15 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
 
             # Optimize model
             if isinstance(mod, HyperOptimizableModel):
+                # Create extension based on room number and data end date
+                full_ext = data_ext(date_str, room_nr)
+
                 if EULER or enforce_optimize:
                     with ProgWrap(f"Optimizing model: {name}...", next_verb > 0):
                         optimize_model(mod, verbose=next_verb > 0,
                                        n_restarts=n_fit_calls,
-                                       eval_data=hop_eval_set)
+                                       eval_data=hop_eval_set,
+                                       data_ext=full_ext)
                 else:
                     print("Not optimizing!")
             else:

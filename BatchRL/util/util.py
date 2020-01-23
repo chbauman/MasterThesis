@@ -26,6 +26,7 @@ import numpy as np
 # Determine platform, assuming we are on Euler if it is not a windows platform.
 EULER: bool = os.name != 'nt'
 
+DEFAULT_END_DATE: str = "2019-12-31"
 DEFAULT_TRAIN_SET: str = "train"  #: Default training set
 DEFAULT_EVAL_SET: str = "val"  #: Default evaluation / validation set
 DEFAULT_ROOM_NR: int = 43
@@ -74,6 +75,13 @@ IndT = Union[Sequence[int], IndArr]
 
 #######################################################################################################
 # Python stuff
+
+def data_ext(date_str: str, room_nr: int) -> str:
+    """Creates an extension string to differentiate different datasets."""
+    data_ext_date = f"_D_{date_str}" if date_str != DEFAULT_END_DATE else ""
+    data_ext_room_nr = f"_RN_{room_nr}" if room_nr != DEFAULT_ROOM_NR else ""
+    return data_ext_date + data_ext_room_nr
+
 
 def stdout_redirection_test():
     """Some experiment with redirecting console output."""

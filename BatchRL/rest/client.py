@@ -40,6 +40,7 @@ import pandas as pd
 import requests
 
 from util.notify import login_from_file
+from util.util import DEFAULT_END_DATE
 
 USE_CL: bool = True  #: Whether to use the command line for the login.
 if not USE_CL:
@@ -53,8 +54,6 @@ login_path = os.path.join(curr_dir.parent.parent, "rest_login.txt")
 
 #: Where to put the local copy of the data.
 save_dir: str = '../Data/'
-
-DEFAULT_END_DATE: str = "2019-12-31"
 
 NestDataT = Tuple[List[Tuple[np.ndarray, np.ndarray]], List[str]]
 

@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple
 from hyperopt import fmin, tpe
 
 from dynamics.base_model import BaseDynamicsModel
-from util.util import create_dir, EULER, model_dir, DEFAULT_TRAIN_SET, DEFAULT_EVAL_SET
+from util.util import create_dir, EULER, model_dir, DEFAULT_EVAL_SET
 
 # Define path for optimization results.
 hop_path = os.path.join(model_dir, "Hop")  #: The path to all hyperopt data.
@@ -90,7 +90,8 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         pass
 
     def optimize(self, n: int = 100, verbose: int = 1,
-                 eval_data: str = DEFAULT_EVAL_SET) -> Dict:
+                 eval_data: str = DEFAULT_EVAL_SET,
+                 data_ext: str = "") -> Dict:
         """Does the full hyper parameter optimization with
         the given objective and space.
 
@@ -99,6 +100,7 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
                 computations.
             verbose: The verbosity level for fmin.
             eval_data: Evaluation set for the optimization.
+            data_ext: Extension to differentiate used data.
 
         Returns:
             The optimized hyper parameters.
@@ -110,10 +112,14 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         self.param_list = []
 
         # Load the previously optimum if exists
+        save_path = self._get_opt_hp_f_name(self.base_name)
         try:
-            _, self.curr_val = load_hp(self.base_name)
+            _, self.curr_val = load_hp(save_path)
+            if verbose:
+                print("Found previous hyperparameters!")
         except FileNotFoundError:
-            pass
+            if verbose:
+                print("No previous hyperparameters found!")
 
         # Define final objective function
         def f(hp_sample: Dict) -> float:
@@ -133,7 +139,8 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
             # Save if new skl_mod are better
             if curr_obj < self.curr_val:
                 self.curr_val = curr_obj
-                save_path = self._get_opt_hp_f_name(self.base_name)
+                save_path_2 = self._get_opt_hp_f_name(self.base_name)
+                assert save_path == save_path_2, "WTF"
                 save_hp(save_path, (hp_sample, self.curr_val))
             return curr_obj
 
@@ -190,7 +197,8 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
 
 def optimize_model(mod: HyperOptimizableModel, verbose: bool = True,
                    n_restarts: int = None,
-                   eval_data: str = DEFAULT_EVAL_SET) -> None:
+                   eval_data: str = DEFAULT_EVAL_SET,
+                   data_ext: str = "") -> None:
     """Executes the hyperparameter optimization of a model.
 
     Uses `n_restarts` calls to fit, if it is None,
@@ -203,11 +211,13 @@ def optimize_model(mod: HyperOptimizableModel, verbose: bool = True,
             optimization. If None, uses different default values depending
             on whether `EULER` is True or not.
         eval_data: Evaluation set for the optimization.
+        data_ext: Extension to differentiate used data.
     """
     n_opt = 50 if EULER else 2
     if n_restarts is not None:
         n_opt = n_restarts
-    opt_params = mod.optimize(n_opt, verbose=verbose, eval_data=eval_data)
+    opt_params = mod.optimize(n_opt, verbose=verbose, eval_data=eval_data,
+                              data_ext=data_ext)
 
     if verbose:
         print(f"Optimal parameters: {opt_params}.")

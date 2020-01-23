@@ -194,7 +194,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                               in_inds: np.ndarray,
                               b_name: str,
                               no_data: bool = False):
-        """Argghhh, duplicate code here. But where is the duplicate part?"""
+        """Argghhh, duplicate code here... But where is the duplicate part?"""
         out_inds, _ = BaseDynamicsModel._get_inds(out_inds, data, False)
         in_inds, _ = BaseDynamicsModel._get_inds(in_inds, data, True)
         ind_str = _get_inds_str(out_inds, "Out") + _get_inds_str(in_inds)
