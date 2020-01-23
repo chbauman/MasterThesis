@@ -11,13 +11,18 @@ from typing import Dict, List, Tuple
 from hyperopt import fmin, tpe
 
 from dynamics.base_model import BaseDynamicsModel
-from util.util import create_dir, EULER, model_dir, DEFAULT_EVAL_SET
+from util.util import create_dir, EULER, model_dir, DEFAULT_EVAL_SET, yeet
 
 # Define path for optimization results.
 hop_path = os.path.join(model_dir, "Hop")  #: The path to all hyperopt data.
 create_dir(hop_path)
 
 OptHP = Tuple[Dict, float]  #: The type of the stored info.
+
+
+def check_eval_data(eval_data: str):
+    if eval_data not in ["test", "val"]:
+        yeet(f"Invalid evaluation set for hyperopt: {eval_data}")
 
 
 def save_hp(name_hp: str, opt_hp: OptHP) -> None:
@@ -105,7 +110,6 @@ class HyperOptimizableModel(BaseDynamicsModel, ABC):
         Returns:
             The optimized hyper parameters.
         """
-
         fit_data = "train" if eval_data == "val" else "train_val"
 
         hp_space = self.get_space()

@@ -18,7 +18,7 @@ from agents.keras_agents import DDPGBaseAgent
 from data_processing.data import get_battery_data, \
     choose_dataset_and_constraints, update_data, unique_room_nr
 from data_processing.dataset import DatasetConstraints, Dataset, check_dataset_part
-from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model
+from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model, check_eval_data
 from dynamics.base_model import BaseDynamicsModel, compare_models, check_train_str
 from dynamics.battery_model import BatteryModel
 from dynamics.classical import SKLearnModel
@@ -176,6 +176,11 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
         date_str: End date string specifying data.
         room_nr: Integer specifying the room number.
     """
+    if verbose:
+        print(f"Doing hyperparameter optimization using "
+              f"evaluation on {hop_eval_set} set. Using room {room_nr} "
+              f"with data up to {date_str}.")
+
     next_verb = prog_verb(verbose)
     assert hop_eval_set in ["val", "test"], f"Fuck: {hop_eval_set}"
 
@@ -193,12 +198,12 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
             with ProgWrap(f"Loading model: {name}...", next_verb > 0):
                 mod = get_model(name, ds, rnn_consts, from_hop=False,
                                 fit=False, date_str=date_str,
-                                room_nr=room_nr)
+                                room_nr=room_nr, hop_eval_set=hop_eval_set)
 
             # Optimize model
             if isinstance(mod, HyperOptimizableModel):
                 # Create extension based on room number and data end date
-                full_ext = data_ext(date_str, room_nr)
+                full_ext = data_ext(date_str, room_nr, hop_eval_set)
 
                 if EULER or enforce_optimize:
                     with ProgWrap(f"Optimizing model: {name}...", next_verb > 0):
@@ -220,7 +225,9 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                    include_composite: bool = False,
                                    date_str: str = DEFAULT_END_DATE,
                                    train_data: str = DEFAULT_TRAIN_SET,
-                                   room_nr: int = DEFAULT_ROOM_NR) -> None:
+                                   room_nr: int = DEFAULT_ROOM_NR,
+                                   hop_eval_set: str = DEFAULT_EVAL_SET,
+                                   ) -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
     Does not much if not on Euler.
@@ -234,7 +241,16 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
         date_str: End date string specifying data.
         train_data: String specifying the part of the data to train the model on.
         room_nr: Integer specifying the room number.
+        hop_eval_set: Evaluation set for the hyperparameter optimization.
     """
+    if verbose:
+        print(f"Fitting dynamics ML models based on parameters "
+              f"optimized by hyperparameter tuning. Using room {room_nr} "
+              f"with data up to {date_str}. The models are fitted "
+              f"using the {train_data} portion of the data. "
+              f"Hyperparameter tuning used evaluation on {hop_eval_set} "
+              f"set.")
+
     check_train_str(train_data)
     next_verb = prog_verb(verbose)
 
@@ -256,6 +272,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                   train_data=train_data,
                                   date_str=date_str,
                                   room_nr=room_nr,
+                                  hop_eval_set=hop_eval_set,
                                   ) for nm in lst}
 
     # Fit or load all initialized models
@@ -310,7 +327,9 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
                     date_str: str = DEFAULT_END_DATE,
                     temp_bds: RangeT = None,
                     train_data: str = DEFAULT_TRAIN_SET,
-                    room_nr: int = DEFAULT_ROOM_NR) -> None:
+                    room_nr: int = DEFAULT_ROOM_NR,
+                    hop_eval_set: str = DEFAULT_EVAL_SET,
+                    ) -> None:
     # Print what the code does
     if verbose:
         print("Running RL agents on learned room model.")
@@ -336,7 +355,7 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
     with ProgWrap(f"Preparing environment...", verbose > 0):
         m = get_model(m_name, ds, rnn_consts, from_hop=True,
                       fit=True, verbose=prog_verb(verbose), train_data=train_data,
-                      date_str=date_str, room_nr=room_nr)
+                      date_str=date_str, room_nr=room_nr, hop_eval_set=hop_eval_set)
         # m.analyze_visually(overwrite=False, plot_acf=False, verbose=prog_verb(verbose) > 0)
         if include_battery:
             c_prof = LowHighProfile(ds.dt)
@@ -517,6 +536,7 @@ def get_model(name: str,
               train_data: str = DEFAULT_TRAIN_SET,
               date_str: str = DEFAULT_END_DATE,
               room_nr: int = DEFAULT_ROOM_NR,
+              hop_eval_set: str = DEFAULT_EVAL_SET,
               ) -> BaseDynamicsModel:
     """Loads and optionally fits a model.
 
@@ -530,6 +550,7 @@ def get_model(name: str,
         train_data: String specifying the part of the data to train the model on.
         date_str: End date string specifying data.
         room_nr: Integer specifying the room number.
+        hop_eval_set: Evaluation set for the hyperparameter optimization.
 
     Returns:
         The requested model.
@@ -546,6 +567,7 @@ def get_model(name: str,
         'train_data': train_data,
         'date_str': date_str,
         'room_nr': room_nr,
+        'hop_eval_set': hop_eval_set,
     }
 
     # Fit if required using one step recursion
@@ -589,7 +611,7 @@ def get_model(name: str,
 
     # Basic parameter set
     hop_kwargs = {
-        'ext': data_ext(date_str, room_nr)
+        'ext': data_ext(date_str, room_nr, hop_eval_set)
     }
     hop_pars = {
         'n_iter_max': 10,
@@ -881,6 +903,7 @@ def main() -> None:
     check_date_str(date_str)
     check_train_str(train_data)
     check_dataset_part(eval_data)
+    check_eval_data(hop_eval_data)
     room_nr = unique_room_nr(room_nr)
     if room_nr in [41, 51] and date_str == DEFAULT_END_DATE:
         raise ValueError(f"Room number and data end date combination "
@@ -916,7 +939,7 @@ def main() -> None:
                                        visual_analyze=visual_analyze,
                                        include_composite=include_composite,
                                        date_str=date_str, train_data=train_data,
-                                       room_nr=room_nr)
+                                       room_nr=room_nr, hop_eval_set=hop_eval_data)
 
     # Train and analyze the battery model
     if args.battery:
@@ -936,7 +959,8 @@ def main() -> None:
                         include_battery=add_bat, perf_eval=perf_eval,
                         physically_consistent=phys_cons, overwrite=overwrite,
                         date_str=date_str, temp_bds=temp_bds,
-                        train_data=train_data, room_nr=room_nr)
+                        train_data=train_data, room_nr=room_nr,
+                        hop_eval_set=hop_eval_data)
 
     # Overleaf plots
     if args.plot:
