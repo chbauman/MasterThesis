@@ -20,7 +20,8 @@ from rl.random import OrnsteinUhlenbeckProcess
 from agents.base_agent import AgentBase, rl_model_dir
 from envs.dynamics_envs import FullRoomEnv, RLDynEnv, RangeListT
 from ml.keras_util import getMLPModel, KerasBase
-from util.util import make_param_ext, train_decorator, DEFAULT_TRAIN_SET, get_rl_steps, prog_verb, ProgWrap
+from util.util import make_param_ext, train_decorator, DEFAULT_TRAIN_SET, get_rl_steps, prog_verb, ProgWrap, \
+    DEFAULT_EVAL_SET
 from util.visualize import plot_rewards
 
 
@@ -228,7 +229,8 @@ class DDPGBaseAgent(KerasBaseAgent):
     def get_info(self) -> Dict:
         return {'action_scaled_01': self.action_range}
 
-    def load_if_exists(self, m, name: str, **kwargs) -> bool:
+    def load_if_exists(self, m, name: str,
+                       train_data: str = DEFAULT_EVAL_SET) -> bool:
         """Loads the keras model if it exists.
 
         Returns true if it could be loaded, else False.
@@ -238,11 +240,13 @@ class DDPGBaseAgent(KerasBaseAgent):
         Args:
             m: Keras-rl agent model to be loaded.
             name: Name of model.
+            train_data: Hyperparameter opt. evaluation set.
 
         Returns:
              True if model could be loaded else False.
         """
-        full_path = self.get_path(name, env=self.env)
+        full_path = self.get_path(name, env=self.env,
+                                  hop_eval_set=train_data)
         path_actor = full_path[:-3] + "_actor.h5"
         path_critic = full_path[:-3] + "_critic.h5"
 
@@ -251,7 +255,7 @@ class DDPGBaseAgent(KerasBaseAgent):
             return True
         return False
 
-    def save_model(self, m, name: str, **kwargs) -> None:
+    def save_model(self, m, name: str, train_data: str = DEFAULT_EVAL_SET) -> None:
         """Saves a keras model.
 
         Needs to be overridden here since the keras-rl
@@ -260,8 +264,10 @@ class DDPGBaseAgent(KerasBaseAgent):
         Args:
             m: Keras-rl agent model.
             name: Name of the model.
+            train_data: Hyperparameter opt. evaluation set.
         """
-        m.save_weights(self.get_path(name, env=self.env))
+        m.save_weights(self.get_path(name, env=self.env,
+                                     hop_eval_set=train_data))
 
     @train_decorator()
     def fit(self, verbose: int = 1, train_data: str = DEFAULT_TRAIN_SET) -> None:
@@ -284,6 +290,7 @@ def default_ddpg_agent(env: RLDynEnv,
                        alpha: float = 50.0,
                        fitted: bool = True,
                        verbose: int = 1,
+                       hop_eval_set: str = DEFAULT_EVAL_SET,
                        include_battery: bool = False,
                        physically_consistent: bool = False) -> DDPGBaseAgent:
     # Choose step number
@@ -303,6 +310,6 @@ def default_ddpg_agent(env: RLDynEnv,
     # Fit if requested
     if fitted:
         with ProgWrap(f"Fitting DDPG agent...", verbose > 0):
-            agent.fit(verbose=prog_verb(verbose))
+            agent.fit(verbose=prog_verb(verbose), train_data=hop_eval_set)
 
     return agent

@@ -7,7 +7,7 @@ from keras.models import Sequential
 from keras.regularizers import l2
 
 from ml.sklearn_util import SKLoader
-from util.util import dynamic_model_dir, create_dir, DEFAULT_TRAIN_SET
+from util.util import dynamic_model_dir, create_dir, DEFAULT_TRAIN_SET, DEFAULT_EVAL_SET
 
 KerasModel = Union[Sequential, Model, SKLoader]
 
@@ -134,7 +134,9 @@ class KerasBase:
             m.load_weights(full_path)
         return found
 
-    def get_path(self, name: str, ext: str = ".h5", env: Any = None) -> str:
+    def get_path(self, name: str, ext: str = ".h5",
+                 env: Any = None,
+                 hop_eval_set: str = DEFAULT_EVAL_SET) -> str:
         """
         Returns the path where the model parameters
         are stored.
@@ -143,13 +145,14 @@ class KerasBase:
             name: Model name.
             ext: Filename extension.
             env: Environment with a name attribute.
+            hop_eval_set: Hyperparameter opt. evaluation set.
 
         Returns:
             Model parameter file path.
         """
         res_folder = self.model_path
         if env is not None and hasattr(env, "name"):
-            res_folder = os.path.join(res_folder, env.name)
+            hop_ext = f"_HEV_{hop_eval_set}" if hop_eval_set != DEFAULT_EVAL_SET else ""
+            res_folder = os.path.join(res_folder, env.name + hop_ext)
             create_dir(res_folder)
-
         return os.path.join(res_folder, name + ext)

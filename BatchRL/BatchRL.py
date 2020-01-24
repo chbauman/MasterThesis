@@ -346,6 +346,7 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
 
         agent = default_ddpg_agent(env, n_steps, alpha, fitted=True,
                                    verbose=next_verbose,
+                                   hop_eval_set=hop_eval_set,
                                    include_battery=include_battery,
                                    physically_consistent=physically_consistent)
 
@@ -650,7 +651,8 @@ def main() -> None:
 
     # Opcua
     if args.ua:
-        debug, notify_failure = extract_args(args.bool, False, False)
+        debug, notify_failure, phys_cons = \
+            extract_args(args.bool, False, False, False)
         run_rl_control(room_nr=room_nr, notify_failure=notify_failure,
                        debug=debug)
 
