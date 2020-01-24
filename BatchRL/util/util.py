@@ -30,6 +30,7 @@ DEFAULT_END_DATE: str = "2019-12-31"
 DEFAULT_TRAIN_SET: str = "train"  #: Default training set
 DEFAULT_EVAL_SET: str = "val"  #: Default evaluation / validation set
 DEFAULT_ROOM_NR: int = 43
+DEFAULT_SEQ_LEN: int = 20
 
 
 def get_rl_steps(eul: bool = EULER):
