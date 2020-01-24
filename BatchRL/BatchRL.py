@@ -13,17 +13,17 @@ from typing import List, Tuple, Sequence, Type
 import numpy as np
 
 from agents.agents_heuristic import RuleBasedAgent, get_const_agents
-from agents.keras_agents import DDPGBaseAgent
+from agents.keras_agents import DDPGBaseAgent, default_ddpg_agent
 from data_processing.data import get_battery_data, \
     choose_dataset_and_constraints, update_data, unique_room_nr
 from data_processing.dataset import Dataset, check_dataset_part
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model, check_eval_data
 from dynamics.base_model import compare_models, check_train_str
 from dynamics.battery_model import BatteryModel
-from dynamics.composite import CompositeModel
-from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models
+from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
+    load_room_env
 from dynamics.recurrent import test_rnn_models
-from envs.dynamics_envs import FullRoomEnv, BatteryEnv, RoomBatteryEnv, LowHighProfile, heat_marker, RangeT
+from envs.dynamics_envs import BatteryEnv, heat_marker, RangeT
 from opcua_empa.run_opcua import try_opcua, run_rl_control
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
@@ -237,26 +237,23 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
     check_train_str(train_data)
     next_verb = prog_verb(verbose)
 
-    # Get data and constraints
-    with ProgWrap(f"Loading data...", verbose > 0):
-        ds, rnn_consts = choose_dataset_and_constraints(seq_len=20,
-                                                        add_battery_data=use_bat_data,
-                                                        date_str=date_str,
-                                                        room_nr=room_nr)
+    # Create model list
+    lst = base_rnn_models[:]
+    if include_composite:
+        lst += full_models
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
-        lst = base_rnn_models[:]
-        if include_composite:
-            lst += full_models
-        all_mods = {nm: get_model(nm, ds, rnn_consts,
-                                  from_hop=True, fit=True,
-                                  verbose=next_verb,
-                                  train_data=train_data,
-                                  date_str=date_str,
-                                  room_nr=room_nr,
-                                  hop_eval_set=hop_eval_set,
-                                  ) for nm in lst}
+        # Load models
+        all_mods = load_room_models(lst,
+                                    use_bat_data,
+                                    from_hop=True,
+                                    fit=True,
+                                    date_str=date_str,
+                                    room_nr=room_nr,
+                                    hop_eval_set=hop_eval_set,
+                                    train_data=train_data,
+                                    verbose=next_verb)
 
     # Fit or load all initialized models
     with ProgWrap(f"Analyzing models...", verbose > 0):
@@ -266,7 +263,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
             # Visual analysis
             if visual_analyze:
                 with ProgWrap(f"Analyzing model visually...", verbose > 0):
-                    m_to_use.analyze_visually(overwrite=False, verbose=next_verb)
+                    m_to_use.analyze_visually(overwrite=False, verbose=next_verb > 0)
 
             # Do the performance analysis
             if perf_analyze:
@@ -318,6 +315,7 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
         print("Running RL agents on learned room model.")
         if include_battery:
             print("Model includes battery.")
+    next_verbose = prog_verb(verbose)
 
     # Select model
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
@@ -327,51 +325,31 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
     if eval_list is None:
         eval_list = [2595, 8221, 0, 2042, 12067, None]
 
-    # Get dataset and constraints
-    with ProgWrap(f"Loading dataset...", verbose > 0):
-        ds, rnn_consts = choose_dataset_and_constraints(seq_len=20,
-                                                        add_battery_data=include_battery,
-                                                        date_str=date_str,
-                                                        room_nr=room_nr)
-
     # Load the model and init env
-    with ProgWrap(f"Preparing environment...", verbose > 0):
-        m = get_model(m_name, ds, rnn_consts, from_hop=True,
-                      fit=True, verbose=prog_verb(verbose), train_data=train_data,
-                      date_str=date_str, room_nr=room_nr, hop_eval_set=hop_eval_set)
-        # m.analyze_visually(overwrite=False, plot_acf=False, verbose=prog_verb(verbose) > 0)
-        if include_battery:
-            c_prof = LowHighProfile(ds.dt)
-            assert isinstance(m, CompositeModel), f"Invalid model: {m}, needs to be composite!"
-            env = RoomBatteryEnv(m, p=c_prof,
-                                 cont_actions=True,
-                                 disturb_fac=0.3, alpha=alpha,
-                                 temp_bounds=temp_bds)
-        else:
-            env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1,
-                              disturb_fac=0.3, alpha=alpha, temp_bounds=temp_bds)
+    with ProgWrap(f"Loading environment...", verbose > 0):
+        env = load_room_env(m_name,
+                            verbose=next_verbose,
+                            alpha=alpha,
+                            include_battery=include_battery,
+                            date_str=date_str,
+                            temp_bds=temp_bds,
+                            train_data=train_data,
+                            room_nr=room_nr,
+                            hop_eval_set=hop_eval_set)
 
     # Define default agents and compare
     with ProgWrap(f"Initializing agents...", verbose > 0):
         closed_agent, open_agent = get_const_agents(env)
         ch_rate = 10.0 if include_battery else None
-        rule_based_agent = RuleBasedAgent(env, env.temp_bounds, const_charge_rate=ch_rate)
+        rule_based_agent = RuleBasedAgent(env, env.temp_bounds,
+                                          const_charge_rate=ch_rate)
 
-        # Choose agent and fit to env.
-        if n_steps is None:
-            n_steps = get_rl_steps(eul=True)
-        agent = DDPGBaseAgent(env,
-                              action_range=env.action_range,
-                              n_steps=n_steps,
-                              gamma=0.99, lr=0.00001)
-        name_ext = "_BAT" if include_battery else ""
-        name_ext += "_PHYS" if physically_consistent else ""
-        agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}{name_ext}"
+        agent = default_ddpg_agent(env, n_steps, alpha, fitted=True,
+                                   verbose=next_verbose,
+                                   include_battery=include_battery,
+                                   physically_consistent=physically_consistent)
 
         agent_list = [open_agent, closed_agent, rule_based_agent, agent]
-
-    with ProgWrap(f"Fitting DDPG agent...", verbose > 0):
-        agent.fit(verbose=prog_verb(verbose))
 
     with ProgWrap(f"Analyzing agents...", verbose > 0):
 

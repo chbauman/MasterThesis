@@ -12,6 +12,7 @@ from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, PhysicallyConsistentRNN, RNNDynamicOvershootModel
 from dynamics.sin_cos_time import SCTimeModel
+from envs.dynamics_envs import RangeT, FullRoomEnv, RoomBatteryEnv, LowHighProfile
 from util.util import DEFAULT_TRAIN_SET, DEFAULT_END_DATE, DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, prog_verb, data_ext, \
     ProgWrap, DEFAULT_SEQ_LEN
 
@@ -39,6 +40,51 @@ full_models_short_names = [
     "Naive",
     "Weather, Constant Water, Consistent Room Temp",
 ]
+
+
+def load_room_env(m_name: str,
+                  verbose: int = 1,
+                  alpha: float = 5.0,
+                  include_battery: bool = False,
+                  date_str: str = DEFAULT_END_DATE,
+                  temp_bds: RangeT = None,
+                  train_data: str = DEFAULT_TRAIN_SET,
+                  room_nr: int = DEFAULT_ROOM_NR,
+                  hop_eval_set: str = DEFAULT_EVAL_SET,
+                  ):
+
+    # Propagate verbosity
+    next_verb = prog_verb(verbose)
+
+    # Get dataset and constraints
+    with ProgWrap(f"Loading model...", verbose > 0):
+        mod_dict = load_room_models([m_name],
+                                    include_battery,
+                                    from_hop=True,
+                                    fit=True,
+                                    date_str=date_str,
+                                    room_nr=room_nr,
+                                    hop_eval_set=hop_eval_set,
+                                    train_data=train_data,
+                                    verbose=next_verb)
+        m = mod_dict[m_name]
+        ds = m.data
+
+    # Load the model and init env
+    with ProgWrap(f"Preparing environment...", verbose > 0):
+        if include_battery:
+            c_prof = LowHighProfile(ds.dt)
+            assert isinstance(m, CompositeModel), \
+                f"Invalid model: {m}, needs to be composite!"
+            env = RoomBatteryEnv(m, p=c_prof,
+                                 cont_actions=True,
+                                 disturb_fac=0.3, alpha=alpha,
+                                 temp_bounds=temp_bds)
+        else:
+            env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1,
+                              disturb_fac=0.3, alpha=alpha, temp_bounds=temp_bds)
+
+    return env
 
 
 def load_room_models(name_list: List[str],

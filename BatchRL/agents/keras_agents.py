@@ -20,7 +20,7 @@ from rl.random import OrnsteinUhlenbeckProcess
 from agents.base_agent import AgentBase, rl_model_dir
 from envs.dynamics_envs import FullRoomEnv, RLDynEnv, RangeListT
 from ml.keras_util import getMLPModel, KerasBase
-from util.util import make_param_ext, train_decorator, DEFAULT_TRAIN_SET
+from util.util import make_param_ext, train_decorator, DEFAULT_TRAIN_SET, get_rl_steps, prog_verb, ProgWrap
 from util.visualize import plot_rewards
 
 
@@ -277,3 +277,32 @@ class DDPGBaseAgent(KerasBaseAgent):
 
     def get_short_name(self):
         return f"DDPG_{self.n_steps}"
+
+
+def default_ddpg_agent(env: RLDynEnv,
+                       n_steps: int = None,
+                       alpha: float = 50.0,
+                       fitted: bool = True,
+                       verbose: int = 1,
+                       include_battery: bool = False,
+                       physically_consistent: bool = False) -> DDPGBaseAgent:
+    # Choose step number
+    if n_steps is None:
+        n_steps = get_rl_steps(eul=True)
+
+    # Initialize agent
+    with ProgWrap(f"Initializing DDPG agent...", verbose > 0):
+        agent = DDPGBaseAgent(env,
+                              action_range=env.action_range,
+                              n_steps=n_steps,
+                              gamma=0.99, lr=0.00001)
+        name_ext = "_BAT" if include_battery else ""
+        name_ext += "_PHYS" if physically_consistent else ""
+        agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}{name_ext}"
+
+    # Fit if requested
+    if fitted:
+        with ProgWrap(f"Fitting DDPG agent...", verbose > 0):
+            agent.fit(verbose=prog_verb(verbose))
+
+    return agent
