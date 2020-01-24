@@ -344,11 +344,9 @@ def run_room_models(verbose: int = 1, put_on_ol: bool = False,
         rule_based_agent = RuleBasedAgent(env, env.temp_bounds,
                                           const_charge_rate=ch_rate)
 
-        agent = default_ddpg_agent(env, n_steps, alpha, fitted=True,
+        agent = default_ddpg_agent(env, n_steps, fitted=True,
                                    verbose=next_verbose,
-                                   hop_eval_set=hop_eval_set,
-                                   include_battery=include_battery,
-                                   physically_consistent=physically_consistent)
+                                   hop_eval_set=hop_eval_set)
 
         agent_list = [open_agent, closed_agent, rule_based_agent, agent]
 

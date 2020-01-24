@@ -287,12 +287,9 @@ class DDPGBaseAgent(KerasBaseAgent):
 
 def default_ddpg_agent(env: RLDynEnv,
                        n_steps: int = None,
-                       alpha: float = 50.0,
                        fitted: bool = True,
                        verbose: int = 1,
-                       hop_eval_set: str = DEFAULT_EVAL_SET,
-                       include_battery: bool = False,
-                       physically_consistent: bool = False) -> DDPGBaseAgent:
+                       hop_eval_set: str = DEFAULT_EVAL_SET) -> DDPGBaseAgent:
     # Choose step number
     if n_steps is None:
         n_steps = get_rl_steps(eul=True)
