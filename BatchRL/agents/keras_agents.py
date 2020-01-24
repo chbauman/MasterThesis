@@ -303,9 +303,7 @@ def default_ddpg_agent(env: RLDynEnv,
                               action_range=env.action_range,
                               n_steps=n_steps,
                               gamma=0.99, lr=0.00001)
-        name_ext = "_BAT" if include_battery else ""
-        name_ext += "_PHYS" if physically_consistent else ""
-        agent.name = f"DDPG_FS_RT_CW_NEP{n_steps}_Al_{alpha}{name_ext}"
+        agent.name = f"DDPG_NEP{n_steps}"
 
     # Fit if requested
     if fitted:
