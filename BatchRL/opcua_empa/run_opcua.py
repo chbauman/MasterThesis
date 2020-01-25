@@ -5,12 +5,15 @@ it is high-level enough.
 """
 from typing import List
 
-from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController
+from agents.keras_agents import default_ddpg_agent
+from dynamics.load_models import load_room_env
+from envs.dynamics_envs import RangeT
+from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController, BaseRLController
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control
 from tests.test_opcua import OfflineClient
-from util.util import prog_verb, ProgWrap, DEFAULT_ROOM_NR
+from util.util import prog_verb, ProgWrap, DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_TRAIN_SET, DEFAULT_END_DATE
 
 
 def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True):
@@ -58,13 +61,51 @@ def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True)
 def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                    notify_failure: bool = False,
                    debug: bool = False,
-                   verbose: int = 1):
+                   verbose: int = 1,
+                   alpha: float = 50.0,
+                   n_steps: int = None,
+                   date_str: str = DEFAULT_END_DATE,
+                   temp_bds: RangeT = None,
+                   train_data: str = DEFAULT_TRAIN_SET,
+                   hop_eval_set: str = DEFAULT_EVAL_SET,
+                   include_battery: bool = False,
+                   ):
 
     assert room_nr in [41, 43], f"Invalid room number: {room_nr}"
 
-    used_control = [(room_nr, FixTimeConstController(val=21.0, max_n_minutes=12 * 60))]
-    exp_name = "DefaultExperimentName"
+    next_verbose = prog_verb(verbose)
+    m_name = "FullState_Comp_ReducedTempConstWaterWeather"
 
+    # Load the model and init env
+    with ProgWrap(f"Loading environment...", verbose > 0):
+        env = load_room_env(m_name,
+                            verbose=next_verbose,
+                            alpha=alpha,
+                            include_battery=include_battery,
+                            date_str=date_str,
+                            temp_bds=temp_bds,
+                            train_data=train_data,
+                            room_nr=room_nr,
+                            hop_eval_set=hop_eval_set)
+
+    # Define default agents and compare
+    with ProgWrap(f"Initializing agents...", verbose > 0):
+        agent = default_ddpg_agent(env, n_steps, fitted=True,
+                                   verbose=next_verbose,
+                                   hop_eval_set=hop_eval_set)
+        if verbose:
+            print(agent)
+
+    # Choose controller
+    rl_cont = BaseRLController(agent, dt=env.m.data, n_steps_max=3600,
+                               verbose=next_verbose)
+    f_cont = FixTimeConstController(val=21.0, max_n_minutes=12 * 60)
+    cont = f_cont if debug else rl_cont
+    used_control = [(room_nr, cont)]
+
+    exp_name = "DefaultExperimentNameFuckImDrunk!!"
+
+    # Run fucking control
     cl_class = OfflineClient if debug else OpcuaClient
     run_control(used_control=used_control,
                 exp_name=exp_name,

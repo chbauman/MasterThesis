@@ -296,10 +296,11 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                    series_mask=orig_mask)
 
 
-def run_room_models(verbose: int = 1, put_on_ol: bool = False,
+def run_room_models(verbose: int = 1,
+                    put_on_ol: bool = False,
                     eval_list: List[int] = None,
                     perf_eval: bool = False,
-                    alpha: float = 5.0,
+                    alpha: float = 50.0,
                     n_steps: int = None,
                     overwrite: bool = False,
                     include_battery: bool = False,
@@ -651,8 +652,15 @@ def main() -> None:
     if args.ua:
         debug, notify_failure, phys_cons = \
             extract_args(args.bool, False, False, False)
+        n_steps = extract_args(args.int, None)[0]
+        alpha, tb_low, tb_high = extract_args(args.float, 50.0, None, None)
+        temp_bds = None if tb_high is None else (tb_low, tb_high)
         run_rl_control(room_nr=room_nr, notify_failure=notify_failure,
-                       debug=debug)
+                       debug=debug, alpha=alpha, n_steps=n_steps,
+                       date_str=date_str, temp_bds=temp_bds,
+                       train_data=train_data,
+                       hop_eval_set=hop_eval_data
+                       )
 
     # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)
