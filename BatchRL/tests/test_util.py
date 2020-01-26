@@ -1,5 +1,6 @@
 import os
 import random
+import time
 from unittest import TestCase
 
 import mock
@@ -740,8 +741,10 @@ class TestNotify(TestCase):
 
     def test_catching(self):
         with self.assertRaises(ValueError):
-            with util.notify.FailureNotifier("test"):
-                print("Sleeping again")
+            with util.notify.FailureNotifier("test", verbose=0):
+                print("Sleeping")
+                time.sleep(30.0)
+                print("Done Sleeping")
                 raise ValueError("Fuck")
 
 

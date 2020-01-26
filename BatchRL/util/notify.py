@@ -9,9 +9,7 @@ import os
 import smtplib
 import ssl
 import sys
-import time
 import traceback
-from contextlib import contextmanager
 from pathlib import Path
 from typing import List
 
@@ -26,8 +24,29 @@ curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
 
 
-class FailureNotifier:
+def set_exit_handler(func):
+    """Catching kill events.
 
+    Should work for windows and linux.
+    From: https://danielkaes.wordpress.com/2009/06/04/how-to-catch-kill-events-with-python/
+    """
+    if os.name == "nt":
+        try:
+            import win32api
+            win32api.SetConsoleCtrlHandler(func, True)
+        except ImportError:
+            version = ".".join(map(str, sys.version_info[:2]))
+            raise Exception("pywin32 not installed for Python " + version)
+    else:
+        import signal
+        signal.signal(signal.SIGTERM, func)
+
+
+class FailureNotifier:
+    """Context manager for failure notifications.
+
+    Sends a mail if an error happens while it is active,
+    sends the stack trace."""
     def __init__(self, name: str, verbose: int = 1,
                  debug: bool = True):
         self.name = name
@@ -37,22 +56,26 @@ class FailureNotifier:
     def __enter__(self):
         if self.verbose:
             print("Entering...")
+
+        # Set the exit handler to the exit function since
+        # e.g. if you press X on the powershell console, this
+        # will not be caught by the context manager.
+        def on_exit(sig, func=None):
+            self._on_exit(msg="It fucking worked!")
+
+        set_exit_handler(on_exit)
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.verbose:
-            print("Exiting...")
-        msg = traceback.format_exc()
+    def _on_exit(self, msg):
         sub = f"Error while executing '{self.name}'."
         send_mail(self.debug, subject=sub,
                   msg=msg)
 
-
-def test_catching():
-
-    with FailureNotifier("test"):
-        print("Sleeping again")
-        raise ValueError("Fuck")
+    def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
+        if self.verbose:
+            print("Exiting...")
+        msg = traceback.format_exc()
+        self._on_exit(msg=msg)
 
 
 def login_from_file(file_name: str) -> List[str]:
