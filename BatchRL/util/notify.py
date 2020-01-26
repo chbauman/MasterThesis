@@ -12,7 +12,7 @@ import sys
 import time
 import traceback
 from pathlib import Path
-from typing import List
+from typing import List, Callable
 
 from util.util import force_decorator_factory
 
@@ -23,7 +23,7 @@ receiver_email: str = "chris.baum.1995@gmail.com"  #: Real receiver address
 curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
 
-
+# Signal codes, valid on Windows at least
 codes = [
     "Close Event",
     "Logoff",
@@ -31,11 +31,14 @@ codes = [
 ]
 
 
-def set_exit_handler(func):
+def set_exit_handler(func: Callable) -> None:
     """Catching kill events.
 
-    Should work for windows and linux.
+    Should work for windows and linux, only tested on windows.
     From: https://danielkaes.wordpress.com/2009/06/04/how-to-catch-kill-events-with-python/
+
+    Args:
+        func: The function to execute when handling the exit.
     """
     if os.name == "nt":
         try:
@@ -43,13 +46,13 @@ def set_exit_handler(func):
             win32api.SetConsoleCtrlHandler(func, True)
         except ImportError:
             version = ".".join(map(str, sys.version_info[:2]))
-            raise Exception("pywin32 not installed for Python " + version)
+            raise Exception(f"pywin32 not installed for Python {version}")
     else:
         import signal
         signal.signal(signal.SIGTERM, func)
 
 
-def test_kill_event():
+def test_kill_event() -> None:
     """Test for catching kill events.
 
     You have 30 seconds to kill the execution and see what
@@ -65,12 +68,14 @@ def test_kill_event():
 class FailureNotifier:
     """Context manager for failure notifications.
 
-    python .\BatchRL.py -v -u -bo t t
+    Sends a mail if an error happens while it is active including
+    the stack trace if available.
 
-    Sends a mail if an error happens while it is active,
-    sends the stack trace."""
+    Uses :func:`util.notify.set_exit_handler` to catch all kinds
+    of interrupts, but will not provide the stacktrace in those cases.
+    """
 
-    sent_mail: bool = False
+    _sent_mail: bool = False
 
     def __init__(self, name: str, verbose: int = 1,
                  debug: bool = False):
@@ -79,6 +84,8 @@ class FailureNotifier:
         self.debug = debug
 
     def __enter__(self):
+        """Enter context, sets exit handler for uncaught interrupts."""
+
         if self.verbose:
             print("Entering FailureNotifier...")
 
@@ -96,15 +103,16 @@ class FailureNotifier:
         set_exit_handler(on_exit)
         return self
 
-    def _on_exit(self, msg):
+    def _on_exit(self, msg: str) -> None:
         """Called when an error happens."""
         sub = f"Error while executing '{self.name}'."
-        if not self.sent_mail:
+        if not self._sent_mail:
             send_mail(self.debug, subject=sub,
                       msg=msg)
-            self.sent_mail = True
+            self._sent_mail = True
 
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
+        """Exits context, sends a mail if Exception happened."""
 
         p_msg = "Exiting FailureNotifier "
         if exc_type is not None:
@@ -140,6 +148,11 @@ def send_mail(debug: bool = True,
               use_ssl: bool = True) -> None:
     """Sends a mail via python.
 
+    Decorated with the force decorator since a connection timeout
+    is likely to happen which will prevent the mail from being sent.
+
+    Not tested for the case `use_ssl` = False.
+
     Args:
         debug: Whether to use debug mode, will send the mail to the
             debug address.
@@ -147,15 +160,20 @@ def send_mail(debug: bool = True,
         msg: Message of the mail.
         use_ssl: Whether to use SSL, use default.
     """
-    rec_mail = debug_email if debug else receiver_email
-
+    # Define message
     message = f"Subject: {subject}\n\n{msg}\n\n" \
               f"This is an automatically generated message, do not reply!"
 
+    # Choose port and smtp client
     port = 465 if use_ssl else 587  #: Port for SSL
     smtp_server = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
-    password = _pw_from_file()
     ssl.create_default_context()
+
+    # Load password and select mail account
+    password = _pw_from_file()
+    rec_mail = debug_email if debug else receiver_email
+
+    # Send the mail
     with smtp_server("smtp.gmail.com", port) as server:
         server.login(sender_email, password)
         send_errs = server.sendmail(sender_email, rec_mail, message)
