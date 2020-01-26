@@ -71,7 +71,6 @@ def example_usage() -> None:
     # Use the opcua client as a context manager, it connects and disconnects
     # automatically.
     with OpcuaClient(user='user', password='password') as opcua_client:
-
         # Subscribe to read nodes and wait a bit before reading
         opcua_client.subscribe(df_read, sleep_after=1.0)
 
@@ -153,11 +152,12 @@ class OpcuaClient(object):
     _sub_init: bool = False  #: Whether a subscription was initialized.
     _pub_init: bool = False  #: Whether publishing was initialized.
 
-    def __init__(self, url='opc.tcp://ehub.nestcollaboration.ch:49320',
-                 application_uri='Researchclient',
-                 product_uri='Researchclient',
-                 user='username',
-                 password='password'):
+    def __init__(self, url: str = 'opc.tcp://ehub.nestcollaboration.ch:49320',
+                 application_uri: str = 'Researchclient',
+                 product_uri: str = 'Researchclient',
+                 user: str = 'username',
+                 password: str = 'password',
+                 force_connect: bool = True):
         """Initialize the opcua client."""
 
         # Setup client
@@ -168,12 +168,13 @@ class OpcuaClient(object):
         c.product_uri = f"{product_uri}:{socket.gethostname()}:{user}"
 
         # Store in class
+        self._force_connect = force_connect
         self.client = c
         self.handler = _SubHandler()
 
     def __enter__(self):
         """Enter method for use as context manager."""
-        suc_connect = self.connect()
+        suc_connect = self.forced_connect() if self._force_connect else self.connect()
         if suc_connect:
             return self
         self.disconnect()
@@ -182,6 +183,16 @@ class OpcuaClient(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit method for use as context manager."""
         self.disconnect()
+
+    def forced_connect(self) -> bool:
+        """Forces a connection by trying until it succeeds."""
+        while not self._connected:
+            suc_con = self.connect()
+            if not suc_con:
+                time.sleep(0.5)
+                if self._connected:
+                    self._connected = False
+        return True
 
     def connect(self) -> bool:
         """Connect the client to the server.

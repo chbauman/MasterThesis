@@ -25,7 +25,7 @@ pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
 
 # Signal codes, valid on Windows at least
 codes = [
-    "Close Event",
+    "Close Event (Probably KeyboardInterrupt)",
     "Logoff",
     "Shutdown,"
 ]
