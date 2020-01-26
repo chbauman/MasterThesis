@@ -14,8 +14,9 @@ import traceback
 from pathlib import Path
 from typing import List
 
+from util.util import force_decorator_factory
+
 PORT = 465  #: Port for SSL
-smtp_server: str = "smtp.gmail.com"
 sender_email: str = "chris.python.notifyer@gmail.com"  #: Sender address
 debug_email: str = "chris.python.debug@gmail.com"  #: Debug receiver address
 receiver_email: str = "chris.baum.1995@gmail.com"  #: Real receiver address
@@ -115,9 +116,11 @@ def _pw_from_file(file_name: str = pw_def_path) -> str:
     return login[0]
 
 
+@force_decorator_factory()
 def send_mail(debug: bool = True,
               subject: str = "Hello there!",
-              msg: str = "General Kenobi") -> None:
+              msg: str = "General Kenobi",
+              use_ssl: bool = True) -> None:
     """Sends a mail via python.
 
     Args:
@@ -125,20 +128,19 @@ def send_mail(debug: bool = True,
             debug address.
         subject: Subject of the mail.
         msg: Message of the mail.
-
-    Returns:
-
+        use_ssl: Whether to use SSL, use default.
     """
     rec_mail = debug_email if debug else receiver_email
 
-    message = f"""Subject: {subject}\n\n\
-    {msg}\n\n
-    This is an automatically generated message, do not reply!"""
+    message = f"Subject: {subject}\n\n{msg}\n\n" \
+              f"This is an automatically generated message, do not reply!"
 
+    port = 465 if use_ssl else 587  #: Port for SSL
+    smtp_server = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
     password = _pw_from_file()
-    context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(smtp_server, PORT, context=context) as server:
+    ssl.create_default_context()
+    with smtp_server("smtp.gmail.com", port) as server:
         server.login(sender_email, password)
         send_errs = server.sendmail(sender_email, rec_mail, message)
         if len(send_errs) > 0:
-            print(f"Errors happened: {send_errs}")
+            print(f"Error(s) happened: {send_errs}")

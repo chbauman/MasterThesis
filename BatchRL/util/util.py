@@ -85,6 +85,38 @@ def data_ext(date_str: str, room_nr: int, eval_set: str = DEFAULT_EVAL_SET) -> s
     return data_ext_date + data_ext_room_nr + data_ext_eval
 
 
+def force_decorator_factory(wait: float = 0.5, verbose: bool = True):
+    """Decorator factory for force executing a function.
+
+    Calls the same function again and again recursively until
+    it terminates without an error. May be used when an error
+    based on the current internet connection might happen. Might lead
+    to stack overflow if the waiting time before calling gain (`wait`)
+    is very small.
+    
+    Args:
+        wait: Waiting time in seconds until next call.
+        verbose: Whether to print the error that happened.
+
+    Returns:
+        The decorator.
+    """
+    def force_decorator(fun):
+
+        def forced_fun(*args, **kwargs):
+            try:
+                fun(*args, **kwargs)
+            except Exception as e:
+                if verbose:
+                    print(f"Exception: {e} happened, retrying...")
+                time.sleep(wait)
+                forced_fun(*args, **kwargs)
+
+        return forced_fun
+
+    return force_decorator
+
+
 def stdout_redirection_test():
     """Some experiment with redirecting console output."""
 
