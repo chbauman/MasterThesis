@@ -16,13 +16,19 @@ from typing import List
 
 from util.util import force_decorator_factory
 
-PORT = 465  #: Port for SSL
 sender_email: str = "chris.python.notifyer@gmail.com"  #: Sender address
 debug_email: str = "chris.python.debug@gmail.com"  #: Debug receiver address
 receiver_email: str = "chris.baum.1995@gmail.com"  #: Real receiver address
 
 curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
+
+
+codes = [
+    "Close Event",
+    "Logoff",
+    "Shutdown,"
+]
 
 
 def set_exit_handler(func):
@@ -59,8 +65,12 @@ def test_kill_event():
 class FailureNotifier:
     """Context manager for failure notifications.
 
+    python .\BatchRL.py -v -u -bo t t
+
     Sends a mail if an error happens while it is active,
     sends the stack trace."""
+
+    sent_mail: bool = False
 
     def __init__(self, name: str, verbose: int = 1,
                  debug: bool = False):
@@ -76,16 +86,23 @@ class FailureNotifier:
         # e.g. if you press X on the powershell console, this
         # will not be caught by the context manager.
         def on_exit(sig, func=None):
-            self._on_exit(msg=f"Program was mysteriously killed by somebody. "
-                              f"Clues are signal: {sig} and func: {func}")
+            sig_desc = codes[sig] if sig < len(codes) else "None"
+            msg = f"Program was mysteriously killed by somebody or something. " \
+                  f"Clues are: {sig_desc} (Code: {sig})"
+            if os.name != "nt":
+                msg += f"Func: {func}"
+            self._on_exit(msg=msg)
 
         set_exit_handler(on_exit)
         return self
 
     def _on_exit(self, msg):
+        """Called when an error happens."""
         sub = f"Error while executing '{self.name}'."
-        send_mail(self.debug, subject=sub,
-                  msg=msg)
+        if not self.sent_mail:
+            send_mail(self.debug, subject=sub,
+                      msg=msg)
+            self.sent_mail = True
 
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
 

@@ -76,42 +76,47 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
     next_verbose = prog_verb(verbose)
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
 
-    # Load the model and init env
-    with ProgWrap(f"Loading environment...", verbose > 0):
-        env = load_room_env(m_name,
-                            verbose=next_verbose,
-                            alpha=alpha,
-                            include_battery=include_battery,
-                            date_str=date_str,
-                            temp_bds=temp_bds,
-                            train_data=train_data,
-                            room_nr=room_nr,
-                            hop_eval_set=hop_eval_set)
+    rl_cont = None
+    if not debug:
+        # Load the model and init env
+        with ProgWrap(f"Loading environment...", verbose > 0):
+            env = load_room_env(m_name,
+                                verbose=next_verbose,
+                                alpha=alpha,
+                                include_battery=include_battery,
+                                date_str=date_str,
+                                temp_bds=temp_bds,
+                                train_data=train_data,
+                                room_nr=room_nr,
+                                hop_eval_set=hop_eval_set)
 
-    # Define default agents and compare
-    with ProgWrap(f"Initializing agents...", verbose > 0):
-        agent = default_ddpg_agent(env, n_steps, fitted=True,
-                                   verbose=next_verbose,
-                                   hop_eval_set=hop_eval_set)
-        if verbose:
-            print(agent)
+        # Define default agents and compare
+        with ProgWrap(f"Initializing agents...", verbose > 0):
+            agent = default_ddpg_agent(env, n_steps, fitted=True,
+                                       verbose=next_verbose,
+                                       hop_eval_set=hop_eval_set)
+            if verbose:
+                print(agent)
 
-    # Choose controller
-    rl_cont = BaseRLController(agent, dt=env.m.data, n_steps_max=3600,
-                               verbose=next_verbose)
+        # Choose controller
+        rl_cont = BaseRLController(agent, dt=env.m.data, n_steps_max=3600,
+                                   verbose=next_verbose)
+
     f_cont = FixTimeConstController(val=21.0, max_n_minutes=12 * 60)
     cont = f_cont if debug else rl_cont
     used_control = [(room_nr, cont)]
 
     exp_name = "DefaultExperimentName"
+    if debug:
+        exp_name += "Debug"
 
     # Run fucking control
-    cl_class = OfflineClient if debug else OpcuaClient
     run_control(used_control=used_control,
                 exp_name=exp_name,
                 user='ChristianBaumannETH2020',
                 password='Christian4_ever',
+                debug=debug,
                 verbose=verbose,
-                _client_class=cl_class,
+                _client_class=OpcuaClient,
                 notify_failures=notify_failure)
     pass
