@@ -93,7 +93,7 @@ def force_decorator_factory(wait: float = 0.5, verbose: bool = True):
     based on the current internet connection might happen. Might lead
     to stack overflow if the waiting time before calling gain (`wait`)
     is very small.
-    
+
     Args:
         wait: Waiting time in seconds until next call.
         verbose: Whether to print the error that happened.
@@ -102,8 +102,10 @@ def force_decorator_factory(wait: float = 0.5, verbose: bool = True):
         The decorator.
     """
     def force_decorator(fun):
+        """The decorator to be returned."""
 
         def forced_fun(*args, **kwargs):
+            """The decorated function."""
             try:
                 fun(*args, **kwargs)
             except Exception as e:
