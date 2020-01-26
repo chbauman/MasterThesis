@@ -103,7 +103,7 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
     cont = f_cont if debug else rl_cont
     used_control = [(room_nr, cont)]
 
-    exp_name = "DefaultExperimentNameFuckImDrunk!!"
+    exp_name = "DefaultExperimentName"
 
     # Run fucking control
     cl_class = OfflineClient if debug else OpcuaClient

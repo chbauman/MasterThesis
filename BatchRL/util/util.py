@@ -643,7 +643,9 @@ class TestDecoratorFactory(object):
 
 
 def train_decorator():
-    """Decorator factory for fit method of ML model.
+    """Decorates trains :)
+
+    Decorator factory for fit method of ML model.
 
     It tries loading the model from disk,
     if that fails the original fitting method is called.

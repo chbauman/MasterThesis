@@ -738,6 +738,12 @@ class TestNotify(TestCase):
         self.assertEqual(pw, "test_pw")
         self.assertEqual(user, "test_user")
 
+    def test_catching(self):
+        with self.assertRaises(ValueError):
+            with util.notify.FailureNotifier("test"):
+                print("Sleeping again")
+                raise ValueError("Fuck")
+
 
 def cleanup_test_data(verbose: int = 0):
     """Removes all test folders and files."""

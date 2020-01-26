@@ -8,6 +8,10 @@ account settings.
 import os
 import smtplib
 import ssl
+import sys
+import time
+import traceback
+from contextlib import contextmanager
 from pathlib import Path
 from typing import List
 
@@ -20,6 +24,35 @@ receiver_email: str = "chris.baum.1995@gmail.com"  #: Real receiver address
 
 curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
+
+
+class FailureNotifier:
+
+    def __init__(self, name: str, verbose: int = 1,
+                 debug: bool = True):
+        self.name = name
+        self.verbose = verbose
+        self.debug = debug
+
+    def __enter__(self):
+        if self.verbose:
+            print("Entering...")
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.verbose:
+            print("Exiting...")
+        msg = traceback.format_exc()
+        sub = f"Error while executing '{self.name}'."
+        send_mail(self.debug, subject=sub,
+                  msg=msg)
+
+
+def test_catching():
+
+    with FailureNotifier("test"):
+        print("Sleeping again")
+        raise ValueError("Fuck")
 
 
 def login_from_file(file_name: str) -> List[str]:
