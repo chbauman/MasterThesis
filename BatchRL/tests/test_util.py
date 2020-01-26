@@ -726,7 +726,7 @@ class TestNotify(TestCase):
 
     @skip_if_no_internet
     def test_send_mail(self):
-        send_mail(subject="Running Tests", msg="Sali")
+        send_mail(subject="Running Tests", msg="Sali", debug=True)
 
     def test_load_pw(self):
         test_pw_file = os.path.join(TEST_DATA_DIR, "test_pw.txt")

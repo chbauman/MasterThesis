@@ -144,6 +144,7 @@ class TestOpcua(TestCase):
                     exp_name="OfflineValveTogglerTest",
                     verbose=0,
                     no_data_saving=True,
+                    debug=True,
                     _client_class=OCToggle)
 
     def test_control_client(self):
@@ -160,6 +161,7 @@ class TestOpcua(TestCase):
                     exp_name="OfflineRunControlTest",
                     verbose=0,
                     no_data_saving=True,
+                    debug=True,
                     _client_class=OfflineClient)
 
     def test_node_and_val_saving(self):

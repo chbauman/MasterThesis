@@ -69,7 +69,7 @@ class FailureNotifier:
 
     def __enter__(self):
         if self.verbose:
-            print("Entering...")
+            print("Entering FailureNotifier...")
 
         # Set the exit handler to the exit function since
         # e.g. if you press X on the powershell console, this
@@ -87,10 +87,18 @@ class FailureNotifier:
                   msg=msg)
 
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
+
+        p_msg = "Exiting FailureNotifier "
+        if exc_type is not None:
+            # Unhandled exception happened, notify owner.
+            msg = traceback.format_exc()
+            self._on_exit(msg=msg)
+            p_msg += "with unhandled Error."
+        else:
+            p_msg += "successfully."
+
         if self.verbose:
-            print("Exiting...")
-        msg = traceback.format_exc()
-        self._on_exit(msg=msg)
+            print(p_msg)
 
 
 def login_from_file(file_name: str) -> List[str]:

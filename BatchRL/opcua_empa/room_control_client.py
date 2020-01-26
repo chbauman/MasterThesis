@@ -16,23 +16,28 @@ import numpy as np
 from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.controller import ControlT
 from opcua_empa.opcuaclient_subscription import OpcuaClient
-from util.notify import send_mail
+from util.notify import send_mail, FailureNotifier
 from util.numerics import check_in_range
-
 
 print_fun = logging.warning
 
 
-def run_control(*args, **kwargs):
+def run_control(used_control: ControlT,
+                exp_name: str = None,
+                *args, verbose: int = 0,
+                debug: bool = False,
+                **kwargs):
     """Runs the controller until termination.
 
-    Takes the same arguments as :func:`ControlClient.__init__`.
+    Takes the same arguments as :func:`ControlClient.__init__`, except
+    for an additional one, `debug` which decides where to send the mail to.
     """
-    with ControlClient(*args, **kwargs) as client:
-
-        cont = True
-        while cont:
-            cont = client.read_publish_wait_check()
+    with FailureNotifier(exp_name, verbose=verbose, debug=debug):
+        with ControlClient(used_control, exp_name, *args,
+                           verbose=verbose, **kwargs) as client:
+            cont = True
+            while cont:
+                cont = client.read_publish_wait_check()
 
 
 class ControlClient:
@@ -57,7 +62,7 @@ class ControlClient:
                  used_control: ControlT,
                  exp_name: str = None,
                  user: str = 'ChristianBaumannETH2020',
-                 password: str = 'Christian4_ever',
+                 password: str = 'Christian4_ever', *,
                  verbose: int = 1,
                  no_data_saving: bool = False,
                  notify_failures: bool = False,
@@ -118,25 +123,31 @@ class ControlClient:
         elif self.verbose > 1:
             print_fun(f"{msg}: {val}")
 
-    def notify_me(self, res_ack_true: bool, temps_in_bound: bool) -> None:
+    def notify_me(self, res_ack_true: bool, temps_in_bound: bool,
+                  terminate_now: bool) -> None:
         """Sends a notification mail with the reason of termination.
 
         Does nothing if `self.notify_failures` is False.
         """
         if self.notify_failures:
-            if not res_ack_true or not temps_in_bound:
-
+            cont = res_ack_true and temps_in_bound and not terminate_now
+            if not cont:
                 # Set subject
-                sub = "Experiment aborted"
-                msg = "Bounds reached!" if not temps_in_bound \
-                    else "Research confirmation lost"
+                sub = "Experiment finished" if terminate_now else "Experiment aborted"
+
+                # Set message
+                if not res_ack_true or not temps_in_bound:
+                    msg = "Bounds reached!" if not temps_in_bound \
+                        else "Research confirmation lost!"
+                else:
+                    msg = "Experiment time is over."
 
                 # Add some more information
                 msg += f"\n\nExperiment name: {self.node_gen.experiment_name}"
                 msg += f"\n\nStarting date and time: {self._start_time}"
 
                 # Send mail
-                send_mail(subject=sub, msg=msg)
+                send_mail(subject=sub, msg=msg, debug=False)
 
     def read_publish_wait_check(self) -> bool:
         """Read and publish values, wait, and check if termination is reached.
@@ -175,7 +186,8 @@ class ControlClient:
         cont = res_ack_true and temps_in_bound and not terminate_now
 
         # Notify if failure happens
-        self.notify_me(res_ack_true, temps_in_bound=temps_in_bound)
+        self.notify_me(res_ack_true, temps_in_bound=temps_in_bound,
+                       terminate_now=terminate_now)
 
         # Print the reason of termination.
         if self.verbose > 0:
