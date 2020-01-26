@@ -240,8 +240,8 @@ class OpcuaClient(object):
         If client hasn't been connected, does nothing.
         """
         # If it wasn't connected, do nothing
-        if not self._connected:
-            return
+        # if not self._connected:
+        #     return
         try:
             # Need to delete the subscription first before disconnecting
             if self._sub is not None:
@@ -305,7 +305,7 @@ class OpcuaClient(object):
         Args:
             df_write: The dataframe with the write nodes and values.
             log_time: Whether to log the time it took to publish.
-            sleep_after: Number of seconds to sleep after publishing.
+            sleep_after: Time in seconds to sleep after publishing.
 
         Raises:
             UaStatusCodeError: If initialization of publishing fails.
