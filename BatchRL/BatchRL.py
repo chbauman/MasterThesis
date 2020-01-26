@@ -650,8 +650,8 @@ def main() -> None:
 
     # Opcua
     if args.ua:
-        debug, notify_failure, phys_cons = \
-            extract_args(args.bool, False, False, False)
+        debug, notify_failure, phys_cons, notify_debug = \
+            extract_args(args.bool, False, False, False, None)
         n_steps = extract_args(args.int, None)[0]
         alpha, tb_low, tb_high = extract_args(args.float, 50.0, None, None)
         temp_bds = None if tb_high is None else (tb_low, tb_high)
@@ -659,7 +659,7 @@ def main() -> None:
                        debug=debug, alpha=alpha, n_steps=n_steps,
                        date_str=date_str, temp_bds=temp_bds,
                        train_data=train_data,
-                       hop_eval_set=hop_eval_data
+                       hop_eval_set=hop_eval_data, notify_debug=notify_debug
                        )
 
     # Check if any flag is set, if not, do current experiments.

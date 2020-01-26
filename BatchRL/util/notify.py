@@ -25,9 +25,9 @@ pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
 
 # Signal codes, valid on Windows at least
 codes = [
-    "Close Event (Probably KeyboardInterrupt)",
-    "Logoff",
-    "Shutdown,"
+    "Close Event (e.g. KeyboardInterrupt)",
+    "Logoff (e.g. Ctrl + Pause / Break or Ctrl + Fn + B)",
+    "Shutdown (e.g. X in Powershell),"
 ]
 
 
@@ -99,6 +99,9 @@ class FailureNotifier:
             if os.name != "nt":
                 msg += f"Func: {func}"
             self._on_exit(msg=msg)
+
+            if self.verbose:
+                print("Exiting because of interrupt.")
 
         set_exit_handler(on_exit)
         return self

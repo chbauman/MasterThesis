@@ -1,6 +1,5 @@
 import os
 import random
-import time
 from unittest import TestCase
 
 import mock

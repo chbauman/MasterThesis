@@ -69,9 +69,13 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                    train_data: str = DEFAULT_TRAIN_SET,
                    hop_eval_set: str = DEFAULT_EVAL_SET,
                    include_battery: bool = False,
+                   notify_debug: bool = None
                    ):
 
     assert room_nr in [41, 43], f"Invalid room number: {room_nr}"
+
+    if notify_debug is None:
+        notify_debug = debug
 
     next_verbose = prog_verb(verbose)
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
@@ -115,7 +119,7 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                 exp_name=exp_name,
                 user='ChristianBaumannETH2020',
                 password='Christian4_ever',
-                debug=debug,
+                debug=notify_debug,
                 verbose=verbose,
                 _client_class=OpcuaClient,
                 notify_failures=notify_failure)
