@@ -147,6 +147,7 @@ class OpcuaClient(object):
     _ua_values: List
 
     _connected: bool = False  #: Bool specifying successful connection.
+    _force_connect: bool
     _type_defs = None
     _sub: Subscription = None  #: The subscription object.
     _sub_init: bool = False  #: Whether a subscription was initialized.

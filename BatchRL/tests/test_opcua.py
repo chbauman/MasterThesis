@@ -31,14 +31,13 @@ class OfflineClient(OpcuaClient):
 
     _step_ind: int = 0
 
-    connected: bool = False
     subscribed: bool = False
 
     node_strs: List[str]
     n_read_vals: int
 
     def connect(self) -> bool:
-        self.connected = True
+        self._connected = True
         return True
 
     def disconnect(self) -> None:
@@ -72,7 +71,7 @@ class OfflineClient(OpcuaClient):
         assert self.n_read_vals == 11, f"Wrong number of read nodes: {self.n_read_vals}"
 
     def assert_connected(self):
-        assert self.connected, "Not connected!"
+        assert self._connected, "Not connected!"
 
     pass
 
