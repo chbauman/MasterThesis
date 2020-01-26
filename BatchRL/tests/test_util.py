@@ -741,10 +741,7 @@ class TestNotify(TestCase):
 
     def test_catching(self):
         with self.assertRaises(ValueError):
-            with util.notify.FailureNotifier("test", verbose=0):
-                print("Sleeping")
-                time.sleep(30.0)
-                print("Done Sleeping")
+            with util.notify.FailureNotifier("test", verbose=0, debug=True):
                 raise ValueError("Fuck")
 
 

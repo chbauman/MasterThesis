@@ -9,6 +9,7 @@ import os
 import smtplib
 import ssl
 import sys
+import time
 import traceback
 from pathlib import Path
 from typing import List
@@ -18,7 +19,6 @@ smtp_server: str = "smtp.gmail.com"
 sender_email: str = "chris.python.notifyer@gmail.com"  #: Sender address
 debug_email: str = "chris.python.debug@gmail.com"  #: Debug receiver address
 receiver_email: str = "chris.baum.1995@gmail.com"  #: Real receiver address
-
 
 curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
@@ -42,13 +42,27 @@ def set_exit_handler(func):
         signal.signal(signal.SIGTERM, func)
 
 
+def test_kill_event():
+    """Test for catching kill events.
+
+    You have 30 seconds to kill the execution and see what
+    happens, then check your mail. :)
+    """
+    with FailureNotifier("test", verbose=0, debug=True):
+        print("Sleeping...")
+        time.sleep(30.0)
+        print("Done Sleeping, you were too late!")
+        raise ValueError("Fuck")
+
+
 class FailureNotifier:
     """Context manager for failure notifications.
 
     Sends a mail if an error happens while it is active,
     sends the stack trace."""
+
     def __init__(self, name: str, verbose: int = 1,
-                 debug: bool = True):
+                 debug: bool = False):
         self.name = name
         self.verbose = verbose
         self.debug = debug
@@ -61,7 +75,8 @@ class FailureNotifier:
         # e.g. if you press X on the powershell console, this
         # will not be caught by the context manager.
         def on_exit(sig, func=None):
-            self._on_exit(msg="It fucking worked!")
+            self._on_exit(msg=f"Program was mysteriously killed by somebody. "
+                              f"Clues are signal: {sig} and func: {func}")
 
         set_exit_handler(on_exit)
         return self

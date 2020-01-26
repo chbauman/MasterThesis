@@ -16,6 +16,9 @@
     Set if you want to activate the python environment.
 .PARAMETER docs
     Set if you want to build the documentation.
+.PARAMETER test
+    Run the unit tests. Activates the python env if it has not
+    yet been done.
 
 .EXAMPLE
     If you want to do everything, run:
@@ -33,6 +36,7 @@ param(
 [switch]$cp_data = $false,
 [switch]$cp_hop = $false,
 [switch]$act = $false,
+[switch]$test = $false,
 [switch]$docs = $false)
 
 # Copy plots from Euler
@@ -46,6 +50,12 @@ if ($cp_data){
 # Copy hyperoptimization data from Euler
 if ($cp_hop){
     scp -rp chbauman@euler.ethz.ch:MT/MasterThesis/Models/Hop/ ./Models/
+}
+
+# Run tests
+if ($test){
+    Invoke-Expression "$($PSScriptRoot)/venv/Scripts/Activate.ps1"
+    Invoke-Expression "cd $($PSScriptRoot)/BatchRL; ./run_tests.ps1"
 }
 
 # Activate python env
