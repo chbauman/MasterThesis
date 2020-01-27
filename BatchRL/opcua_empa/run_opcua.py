@@ -73,6 +73,8 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                    dummy_env_mode: bool = True,
                    ):
 
+    full_debug: bool = False
+
     assert room_nr in [41, 43], f"Invalid room number: {room_nr}"
 
     if dummy_env_mode and verbose:
@@ -90,7 +92,7 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
 
     rl_cont = None
-    if not debug:
+    if not full_debug:
         # Load the model and init env
         with ProgWrap(f"Loading environment...", verbose > 0):
             env = load_room_env(m_name,
@@ -113,11 +115,15 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                 print(agent)
 
         # Choose controller
-        rl_cont = BaseRLController(agent, dt=env.m.data.dt, n_steps_max=3600,
+        rl_cont = BaseRLController(agent, dt=env.m.data.dt, n_steps_max=3600 * 2,
+                                   const_debug=debug,
                                    verbose=next_verbose)
+    else:
+        if verbose:
+            print("Using constant model without an agent.")
 
     f_cont = FixTimeConstController(val=21.0, max_n_minutes=12 * 60)
-    cont = f_cont if debug else rl_cont
+    cont = f_cont if full_debug else rl_cont
     used_control = [(room_nr, cont)]
 
     exp_name = "DefaultExperimentName"

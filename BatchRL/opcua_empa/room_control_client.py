@@ -42,13 +42,11 @@ def run_control(used_control: ControlT,
                        verbose=1 if verbose > 0 else 0,
                        debug_mail=debug, **kwargs) as client:
         cont = True
-        c = 1
         while cont:
-            if not client._exited:
+            if not client.is_disconnected:
                 cont = client.read_publish_wait_check()
             else:
-                c += 1
-                # time.sleep(0.5)
+                time.sleep(0.5)
 
 
 class ControlClient:
@@ -111,6 +109,10 @@ class ControlClient:
         if self.verbose or verbose:
             print("Not saving data...")
 
+    @property
+    def is_disconnected(self):
+        return self._exited
+
     def __enter__(self):
         """Setup the ControlClient.
 
@@ -146,26 +148,23 @@ class ControlClient:
 
         if self.verbose:
             print("Exiting...")
-            print("Thread:")
-            print(threading.currentThread().name)
+            print(f"Thread: {threading.currentThread().name}")
 
         self.exit_lock.acquire()
         if not self._exited:
             self._exited = True
             self.exit_lock.release()
-            print("Actually exiting :)")
-            print(threading.enumerate())
+
+            if self.verbose:
+                print("Actually exiting :)")
+                print(threading.enumerate())
 
             self.client.__exit__(exc_type, exc_val, exc_tb)
-
-            print(threading.enumerate())
             self.node_gen.save_cached_data(self.verbose)
 
             # Notify reason of termination
             with ProgWrap(f"Sending notification...", self.verbose > 0):
                 self.notify_me()
-
-            print(threading.enumerate())
 
         else:
             self.exit_lock.release()
@@ -251,8 +250,6 @@ class ControlClient:
 
         if not cont and self.verbose > 0:
             print_fun(self.termination_reason)
-
-        raise ValueError("Fuck")
 
         # Increment publishing counter and return termination criterion.
         self._n_pub += 1

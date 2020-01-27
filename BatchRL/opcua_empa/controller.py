@@ -243,6 +243,7 @@ class BaseRLController(FixTimeController):
     valve_delays: Tuple[float, float] = (0.5, 0.5)
 
     verbose: int
+    const_debug: bool  #: Whether to output a constant value
 
     # Protected member variables
     _step_start_state: bool = None  #: Open: True, closed: False
@@ -252,12 +253,15 @@ class BaseRLController(FixTimeController):
 
     _curr_ts_ind: int
 
-    def __init__(self, rl_agent: AbstractAgent, dt: int, n_steps_max: int = 60 * 60,
+    def __init__(self, rl_agent: AbstractAgent, dt: int,
+                 n_steps_max: int = 60 * 60,
+                 const_debug: bool = False,
                  verbose: int = 3):
         super().__init__(n_steps_max)
         self.agent = rl_agent
         self.dt = dt
         self.verbose = verbose
+        self.const_debug = const_debug
 
         self._curr_ts_ind = self.get_dt_ind()
 
@@ -269,7 +273,7 @@ class BaseRLController(FixTimeController):
     def prepared_state(self, next_ts_ind: int = None):
         return self.state
 
-    def __call__(self, values=None):
+    def __call__(self, values=None) -> float:
 
         if self._step_start_state is None:
             # __call__ is called for the first time,
@@ -303,6 +307,9 @@ class BaseRLController(FixTimeController):
                                            self._step_start_state,
                                            self._next_start_state,
                                            self.dt)
+
+        if self.const_debug:
+            return 21.0
         return MAX_TEMP if tog_state else MIN_TEMP
 
 
@@ -319,7 +326,7 @@ class RLController(BaseRLController):
 
         self.data_ref = rl_agent.env.m.data
         dt = self.data_ref.dt
-        super().__init__(rl_agent, dt, n_steps_max, verbose)
+        super().__init__(rl_agent, dt, n_steps_max, verbose > 0)
 
         assert isinstance(self.agent, AgentBase)
         env = self.agent.env
