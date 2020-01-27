@@ -20,6 +20,7 @@ from util.numerics import has_duplicates, split_arr, move_inds_to_back, find_row
     num_nans, find_longest_streak, mse, mae, max_abs_err, check_shape, save_performance_extended, \
     get_metrics_eval_save_name_list, load_performance, MSE, find_inds, nan_avg_between, int_to_sin_cos, \
     find_sequence_inds, remove_nan_rows, contrary_indices
+from util.share_data import upload_file
 from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, make_param_ext, CacheDecoratorFactory, \
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, \
     yeet, \
@@ -742,6 +743,17 @@ class TestNotify(TestCase):
         with self.assertRaises(ValueError):
             with util.notify.FailureNotifier("test", verbose=0, debug=True):
                 raise ValueError("Fuck")
+
+
+class TestDataSharing(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.local_test_file = os.path.join(TEST_DATA_DIR, "test_upload_file.txt")
+
+    def test_data_upload(self):
+        upload_file(self.local_test_file)
 
 
 def cleanup_test_data(verbose: int = 0):

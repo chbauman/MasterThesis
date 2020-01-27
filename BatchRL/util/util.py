@@ -20,6 +20,8 @@ from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable, O
 
 import numpy as np
 
+TEMP_DIR = "../Temp"
+
 #######################################################################################################
 # Platform specific stuff
 

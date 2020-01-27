@@ -202,8 +202,6 @@ class ControlClient:
         send_mail(subject=sub, msg=msg, debug=self.deb_mail,
                   password=self._pw)
 
-        print("Hoi2")
-
     def read_publish_wait_check(self) -> bool:
         """Read and publish values, wait, and check if termination is reached.
 

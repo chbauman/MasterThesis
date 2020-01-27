@@ -11,6 +11,7 @@ from typing import Dict, List, Tuple
 from hyperopt import fmin, tpe
 
 from dynamics.base_model import BaseDynamicsModel
+from util.share_data import upload_folder_zipped, download_and_extract_zipped_folder
 from util.util import create_dir, EULER, model_dir, DEFAULT_EVAL_SET, yeet
 
 # Define path for optimization results.
@@ -18,6 +19,16 @@ hop_path = os.path.join(model_dir, "Hop")  #: The path to all hyperopt data.
 create_dir(hop_path)
 
 OptHP = Tuple[Dict, float]  #: The type of the stored info.
+
+
+def upload_hop_pars():
+    print("Uploading hyperopt parameters to Google Drive.")
+    upload_folder_zipped(hop_path)
+
+
+def download_hop_pars():
+    print("Downloading hyperopt parameters from Google Drive.")
+    download_and_extract_zipped_folder("Hop", hop_path)
 
 
 def check_eval_data(eval_data: str):

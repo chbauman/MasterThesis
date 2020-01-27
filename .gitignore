@@ -26,3 +26,7 @@ BatchRL/test.pdf
 
 python_notifyer.txt
 rest_login.txt
+
+*client_secrets.json
+BatchRL/settings.yaml
+BatchRL/credentials.json

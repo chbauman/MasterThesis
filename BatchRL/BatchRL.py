@@ -17,7 +17,8 @@ from agents.keras_agents import DDPGBaseAgent, default_ddpg_agent
 from data_processing.data import get_battery_data, \
     choose_dataset_and_constraints, update_data, unique_room_nr
 from data_processing.dataset import Dataset, check_dataset_part
-from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model, check_eval_data
+from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model, check_eval_data, upload_hop_pars, \
+    download_hop_pars
 from dynamics.base_model import compare_models, check_train_str
 from dynamics.battery_model import BatteryModel
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
@@ -651,6 +652,9 @@ def main() -> None:
 
     # Opcua
     if args.ua:
+        download_hop_pars()
+        return
+
         debug, notify_failure, phys_cons, notify_debug, dummy_env_mode = \
             extract_args(args.bool, False, False, False, None, True)
         n_steps = extract_args(args.int, None)[0]
