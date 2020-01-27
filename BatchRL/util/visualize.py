@@ -12,7 +12,7 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from opcua_empa.controller import MIN_TEMP, MAX_TEMP
 from util.numerics import fit_linear_1d, load_performance, check_shape, ErrMetric, MaxAbsEer, MAE
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
-    create_dir, Num, yeet, tot_size, mins_to_str, IndT
+    create_dir, Num, yeet, tot_size, mins_to_str, IndT, BASE_DIR
 
 if EULER:
     # Do not use GUI based backend.
@@ -57,12 +57,12 @@ styles = [
 joint_styles = [j + i for i, j in styles]
 
 # Saving
-PLOT_DIR = '../Plots'  #: Base plot folder.
+PLOT_DIR = os.path.join(BASE_DIR, "Plots")  #: Base plot folder.
 preprocess_plot_path = os.path.join(PLOT_DIR, "Preprocessing")  #: Data processing plot folder.
 model_plot_path = os.path.join(PLOT_DIR, "Models")  #: Dynamics modeling plot folder.
 rl_plot_path = os.path.join(PLOT_DIR, "RL")
 EVAL_MODEL_PLOT_DIR = os.path.join(model_plot_path, "EvalTables")
-OVERLEAF_DIR = '../Overleaf'  #: Overleaf base folder.
+OVERLEAF_DIR = os.path.join(BASE_DIR, "Overleaf")  #: Overleaf base folder.
 OVERLEAF_IMG_DIR = os.path.join(OVERLEAF_DIR, "Imgs")
 
 # Create folders if they do not exist
