@@ -6,6 +6,7 @@ from typing import Dict, TYPE_CHECKING, Callable
 import numpy as np
 
 from util.numerics import npf32
+from util.share_data import upload_folder_zipped, download_and_extract_zipped_folder
 from util.util import Arr, fix_seed, model_dir, create_dir
 
 if TYPE_CHECKING:
@@ -14,6 +15,16 @@ if TYPE_CHECKING:
 # Define directory for agent models
 rl_model_dir = os.path.join(model_dir, "RL")
 create_dir(rl_model_dir)
+
+
+def upload_trained_agents():
+    print("Uploading agent neural network parameters to Google Drive.")
+    upload_folder_zipped(rl_model_dir)
+
+
+def download_trained_agents():
+    print("Downloading agent neural network parameters from Google Drive.")
+    download_and_extract_zipped_folder("RL", rl_model_dir)
 
 
 class AbstractAgent(ABC):

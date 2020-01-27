@@ -13,6 +13,7 @@ from typing import List, Tuple, Sequence, Type
 import numpy as np
 
 from agents.agents_heuristic import RuleBasedAgent, get_const_agents
+from agents.base_agent import upload_trained_agents, download_trained_agents
 from agents.keras_agents import DDPGBaseAgent, default_ddpg_agent
 from data_processing.data import get_battery_data, \
     choose_dataset_and_constraints, update_data, unique_room_nr
@@ -499,6 +500,7 @@ def curr_tests() -> None:
 arg_def_list = [
     # The following arguments can be provided.
     ("verbose", "use verbose mode"),
+    ("transfer", "transfer data"),
     ("mod_eval", "fit and evaluate the room ML models"),
     ("optimize", "optimize hyperparameters of ML models"),
     ("data", "update the data from the nest database"),
@@ -558,6 +560,29 @@ def def_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def transfer_data(upload: bool, data_to_euler: bool,
+                  models_from_euler: bool, verbose: int = 5):
+    next_verb = prog_verb(verbose)
+
+    # Upload to / download from Google Drive
+    if upload:
+        with ProgWrap("Uploading data to Google Drive", verbose > 0):
+            upload_trained_agents()
+            upload_hop_pars()
+    else:
+        with ProgWrap("Downloading data from Google Drive", verbose > 0):
+            download_trained_agents()
+            download_hop_pars()
+
+    # Upload to / download from Euler
+    if data_to_euler:
+        assert not EULER, "Cannot be executed on Euler"
+        pass
+
+    if models_from_euler:
+        assert not EULER, "Cannot be executed on Euler"
+
+
 def main() -> None:
     """The main function, here all the important, high-level stuff happens.
 
@@ -599,6 +624,13 @@ def main() -> None:
     # Update stored data
     if args.data:
         update_data(date_str=date_str)
+
+    # Transfer data
+    if args.transfer:
+        upload, data_to_euler, models_from_euler = \
+            extract_args(args.bool, True, False, False)
+        transfer_data(upload=upload, data_to_euler=data_to_euler,
+                      models_from_euler=models_from_euler)
 
     # Run hyperparameter optimization
     if args.optimize:
@@ -653,9 +685,6 @@ def main() -> None:
 
     # Opcua
     if args.ua:
-        test_folder_zip()
-        return
-
         debug, notify_failure, phys_cons, notify_debug, dummy_env_mode = \
             extract_args(args.bool, False, False, False, None, True)
         n_steps = extract_args(args.int, None)[0]
