@@ -113,7 +113,7 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                 print(agent)
 
         # Choose controller
-        rl_cont = BaseRLController(agent, dt=env.m.data, n_steps_max=3600,
+        rl_cont = BaseRLController(agent, dt=env.m.data.dt, n_steps_max=3600,
                                    verbose=next_verbose)
 
     f_cont = FixTimeConstController(val=21.0, max_n_minutes=12 * 60)
