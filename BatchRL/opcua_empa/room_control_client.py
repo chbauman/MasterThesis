@@ -7,7 +7,9 @@ and :class:`opcua_empa.opcuaclient_subscription.OpcuaClient`.
 .. moduleauthor:: Christian Baumann
 """
 import logging
+import threading
 import time
+import traceback
 from datetime import datetime
 from threading import Lock
 from typing import List, Callable, Tuple
@@ -40,11 +42,13 @@ def run_control(used_control: ControlT,
                        verbose=1 if verbose > 0 else 0,
                        debug_mail=debug, **kwargs) as client:
         cont = True
+        c = 1
         while cont:
             if not client._exited:
                 cont = client.read_publish_wait_check()
             else:
-                time.sleep(0.5)
+                c += 1
+                # time.sleep(0.5)
 
 
 class ControlClient:
@@ -135,24 +139,33 @@ class ControlClient:
 
         return self
 
-    def __exit__(self, *args, **kwargs):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         """Save data and exit client."""
+        if exc_type is not None:
+            self._add_msg = traceback.format_exc()
+
         if self.verbose:
             print("Exiting...")
+            print("Thread:")
+            print(threading.currentThread().name)
 
         self.exit_lock.acquire()
         if not self._exited:
             self._exited = True
             self.exit_lock.release()
             print("Actually exiting :)")
+            print(threading.enumerate())
 
-            self.client.__exit__(*args, **kwargs)
+            self.client.__exit__(exc_type, exc_val, exc_tb)
+
+            print(threading.enumerate())
             self.node_gen.save_cached_data(self.verbose)
 
             # Notify reason of termination
-            time.sleep(0.5)
             with ProgWrap(f"Sending notification...", self.verbose > 0):
                 self.notify_me()
+
+            print(threading.enumerate())
 
         else:
             self.exit_lock.release()
@@ -187,7 +200,6 @@ class ControlClient:
         msg += f"\n\nStarting date and time: {self._start_time}"
 
         # Send mail
-        print("Hoi")
         send_mail(subject=sub, msg=msg, debug=self.deb_mail,
                   password=self._pw)
 
@@ -240,7 +252,7 @@ class ControlClient:
         if not cont and self.verbose > 0:
             print_fun(self.termination_reason)
 
-        raise Exception("Fuck")
+        raise ValueError("Fuck")
 
         # Increment publishing counter and return termination criterion.
         self._n_pub += 1

@@ -165,8 +165,9 @@ class OpcuaClient(object):
         c = Client(url=url, timeout=4)
         c.set_user(user)
         c.set_password(password)
-        c.application_uri = f"{application_uri}:{socket.gethostname()}:{user}"
-        c.product_uri = f"{product_uri}:{socket.gethostname()}:{user}"
+        host_name = socket.gethostname()
+        c.application_uri = f"{application_uri}:{host_name}:{user}"
+        c.product_uri = f"{product_uri}:{host_name}:{user}"
 
         # Store in class
         self._force_connect = force_connect
@@ -245,6 +246,10 @@ class OpcuaClient(object):
         """
         # If it wasn't connected, do nothing
         if not self._connected:
+            try:
+                self.client.disconnect()
+            except Exception as e:
+                print(f"Exception {e} while disconnecting..")
             return
         try:
             # Need to delete the subscription first before disconnecting
