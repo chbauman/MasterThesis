@@ -290,6 +290,8 @@ class BaseRLController(FixTimeController):
 
             prepared_state = self.prepared_state(next_ts_ind)
             ac = self.agent.get_action(prepared_state)
+            if self.verbose:
+                print(f"Step {next_ts_ind}, Action: {ac}")
 
             # Compute toggle point
             tog_frac, next_state = setpoint_toggle_frac(self._step_start_state,
