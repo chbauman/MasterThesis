@@ -525,7 +525,7 @@ common_params = [
                            "'val' or 'test'.", DEFAULT_EVAL_SET),
     ("data_end_date", str, "String specifying the date when the data was "
                            "loaded from NEST database, e.g. 2020-01-21",
-     DEFAULT_END_DATE),
+     "2020-01-21"),
     ("room_nr", int, "Integer specifying the room number.", 43),
 ]
 
@@ -564,6 +564,7 @@ def main() -> None:
     experiments (defined in the function `curr_tests`) are run, especially
     this is the default in PyCharm.
     """
+
     # Parse arguments
     parser = def_parser()
     args = parser.parse_args()
@@ -666,6 +667,8 @@ def main() -> None:
 
     # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)
+    var_dict = {k: val for k, val in var_dict.items() if k != "verbose"}
+    print(var_dict)
     any_flag_set = reduce(lambda x, k: x or var_dict[k] is True, var_dict, 0)
     if not any_flag_set:
         print("No flags set")

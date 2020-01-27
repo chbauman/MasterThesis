@@ -34,7 +34,7 @@ def run_control(used_control: ControlT,
     """
     with FailureNotifier(exp_name, verbose=verbose, debug=debug):
         with ControlClient(used_control, exp_name, *args,
-                           verbose=verbose, **kwargs) as client:
+                           verbose=1 if verbose > 0 else 0, **kwargs) as client:
             cont = True
             while cont:
                 cont = client.read_publish_wait_check()

@@ -27,7 +27,7 @@ pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
 codes = [
     "Close Event (e.g. KeyboardInterrupt)",
     "Logoff (e.g. Ctrl + Pause / Break or Ctrl + Fn + B)",
-    "Shutdown (e.g. X in Powershell),"
+    "Shutdown (e.g. X in Powershell, or disconnected in PyCharm),"
 ]
 
 
@@ -35,6 +35,14 @@ def set_exit_handler(func: Callable) -> None:
     """Catching kill events.
 
     Should work for windows and linux, only tested on windows.
+
+    Not working in Powershell:
+        If process is killed via task manager :(
+        If PC is shutdown.
+    Not working in PyCharm:
+        If exited and process is terminated. (Works for exiting and disconnecting
+            or killing PyCharm via task manager.)
+
     From: https://danielkaes.wordpress.com/2009/06/04/how-to-catch-kill-events-with-python/
 
     Args:
@@ -93,6 +101,9 @@ class FailureNotifier:
         # e.g. if you press X on the powershell console, this
         # will not be caught by the context manager.
         def on_exit(sig, func=None):
+            # Skip sig == 0 cases?
+            if self.verbose:
+                print("Exiting because of interrupt, sending notification...")
             sig_desc = codes[sig] if sig < len(codes) else "None"
             msg = f"Program was mysteriously killed by somebody or something. " \
                   f"Clues are: {sig_desc} (Code: {sig})"
@@ -101,7 +112,7 @@ class FailureNotifier:
             self._on_exit(msg=msg)
 
             if self.verbose:
-                print("Exiting because of interrupt.")
+                print("Notification sent.")
 
         set_exit_handler(on_exit)
         return self
@@ -116,8 +127,10 @@ class FailureNotifier:
 
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
         """Exits context, sends a mail if Exception happened."""
+        if self.verbose:
+            print("Exiting FailureNotifier..")
 
-        p_msg = "Exiting FailureNotifier "
+        p_msg = "Exited FailureNotifier "
         if exc_type is not None:
             # Unhandled exception happened, notify owner.
             msg = traceback.format_exc()
@@ -168,7 +181,7 @@ def send_mail(debug: bool = True,
               f"This is an automatically generated message, do not reply!"
 
     # Choose port and smtp client
-    port = 465 if use_ssl else 587  #: Port for SSL
+    port = 465 if use_ssl else 587  # Port for SSL
     smtp_server = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
     ssl.create_default_context()
 

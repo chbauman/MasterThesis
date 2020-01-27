@@ -61,7 +61,7 @@ def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True)
 def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                    notify_failure: bool = False,
                    debug: bool = False,
-                   verbose: int = 1,
+                   verbose: int = 5,
                    alpha: float = 50.0,
                    n_steps: int = None,
                    date_str: str = DEFAULT_END_DATE,
@@ -76,7 +76,7 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
     assert room_nr in [41, 43], f"Invalid room number: {room_nr}"
 
     if dummy_env_mode and verbose:
-        print("Using dummy environment, will raise an error if there"
+        print("Using dummy environment, will raise an error if there "
               "is no fitted agent available!")
 
     if notify_debug is None:
