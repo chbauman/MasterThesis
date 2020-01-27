@@ -129,3 +129,11 @@ def test_file_upload():
     TEST_DATA_DIR = "./tests/data"
     local_test_file = os.path.join(TEST_DATA_DIR, "test_upload_file.txt")
     upload_file(local_test_file, folder="test")
+
+
+def test_folder_zip():
+    """This is slow and requires user interaction."""
+    TEST_DATA_DIR = "./tests/data"
+    local_test_file = os.path.join(TEST_DATA_DIR, "TestUploadFolder")
+    upload_folder_zipped(local_test_file)
+    download_and_extract_zipped_folder("TestUploadFolder", local_test_file)

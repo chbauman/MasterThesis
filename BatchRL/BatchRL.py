@@ -29,6 +29,7 @@ from opcua_empa.run_opcua import try_opcua, run_rl_control
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
+from util.share_data import test_folder_zip
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args, DEFAULT_TRAIN_SET, \
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
@@ -652,7 +653,7 @@ def main() -> None:
 
     # Opcua
     if args.ua:
-        download_hop_pars()
+        test_folder_zip()
         return
 
         debug, notify_failure, phys_cons, notify_debug, dummy_env_mode = \
