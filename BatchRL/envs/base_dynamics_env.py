@@ -65,15 +65,21 @@ class DynEnv(ABC, gym.Env):
     default_state_mask: np.ndarray = None
     default_series_merging: MergeListT = None
 
+    _dummy_use: bool
+
     def __init__(self, m: BaseDynamicsModel, name: str = None, max_eps: int = None,
-                 disturb_fac: float = 1.0, init_res: bool = True):
+                 disturb_fac: float = 1.0,
+                 init_res: bool = True,
+                 dummy_use: bool = False):
         """Initialize the environment.
 
         Args:
             m: Full model predicting all the non-control features.
             max_eps: Number of continuous predictions in an episode.
         """
-        m.model_disturbance()
+        self._dummy_use = dummy_use
+        if not self._dummy_use:
+            m.model_disturbance()
         self.m = m
         if name is not None:
             dist_ex = make_param_ext([("DF", disturb_fac)])
@@ -198,6 +204,10 @@ class DynEnv(ABC, gym.Env):
         """
         return action
 
+    @property
+    def dummy_use(self):
+        return self._dummy_use
+
     def step(self, action: Arr) -> Tuple[np.ndarray, float, bool, Dict]:
         """Evolve the model with the given control input `action`.
 
@@ -212,6 +222,9 @@ class DynEnv(ABC, gym.Env):
             The next state, the reward of having chosen that action and a bool
             determining if the episode is over. (And an empty dict)
         """
+        if self._dummy_use:
+            raise ValueError("Stepping not supported for dummy usage!")
+
         # Scale the action
         action = self.scale_action_for_step(action)
 

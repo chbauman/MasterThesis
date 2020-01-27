@@ -51,7 +51,26 @@ def load_room_env(m_name: str,
                   train_data: str = DEFAULT_TRAIN_SET,
                   room_nr: int = DEFAULT_ROOM_NR,
                   hop_eval_set: str = DEFAULT_EVAL_SET,
+                  dummy_use: bool = False,
                   ):
+    """
+
+    Args:
+        m_name:
+        verbose:
+        alpha:
+        include_battery:
+        date_str:
+        temp_bds:
+        train_data:
+        room_nr:
+        hop_eval_set:
+        dummy_use: If True, the underlying model is not fitted. To be
+            used if agents are only needed for prediction / evaluation.
+
+    Returns:
+
+    """
 
     # Propagate verbosity
     next_verb = prog_verb(verbose)
@@ -61,7 +80,7 @@ def load_room_env(m_name: str,
         mod_dict = load_room_models([m_name],
                                     include_battery,
                                     from_hop=True,
-                                    fit=True,
+                                    fit=not dummy_use,
                                     date_str=date_str,
                                     room_nr=room_nr,
                                     hop_eval_set=hop_eval_set,
@@ -72,17 +91,22 @@ def load_room_env(m_name: str,
 
     # Load the model and init env
     with ProgWrap(f"Preparing environment...", verbose > 0):
+        general_kwargs = {
+            'cont_actions': True,
+            'alpha': alpha,
+            'temp_bounds': temp_bds,
+            'disturb_fac': 0.3,
+            'dummy_use': dummy_use,
+        }
         if include_battery:
             c_prof = LowHighProfile(ds.dt)
             assert isinstance(m, CompositeModel), \
                 f"Invalid model: {m}, needs to be composite!"
             env = RoomBatteryEnv(m, p=c_prof,
-                                 cont_actions=True,
-                                 disturb_fac=0.3, alpha=alpha,
-                                 temp_bounds=temp_bds)
+                                 **general_kwargs)
         else:
-            env = FullRoomEnv(m, cont_actions=True, n_cont_actions=1,
-                              disturb_fac=0.3, alpha=alpha, temp_bounds=temp_bds)
+            env = FullRoomEnv(m, n_cont_actions=1,
+                              **general_kwargs)
 
     return env
 

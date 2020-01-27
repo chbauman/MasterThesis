@@ -92,7 +92,8 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                                 temp_bds=temp_bds,
                                 train_data=train_data,
                                 room_nr=room_nr,
-                                hop_eval_set=hop_eval_set)
+                                hop_eval_set=hop_eval_set,
+                                dummy_use=True)
 
         # Define default agents and compare
         with ProgWrap(f"Initializing agents...", verbose > 0):

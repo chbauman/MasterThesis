@@ -253,6 +253,9 @@ class DDPGBaseAgent(KerasBaseAgent):
         if os.path.isfile(path_actor) and os.path.isfile(path_critic):
             m.load_weights(full_path)
             return True
+
+        if self.env.dummy_use:
+            raise ValueError(f"No trained model {full_path[:-3]} found!")
         return False
 
     def save_model(self, m, name: str, train_data: str = DEFAULT_EVAL_SET) -> None:

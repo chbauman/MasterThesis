@@ -562,6 +562,16 @@ class BatteryEnv(RLDynEnv):
         return np.copy(self.hist[-1, :-self.act_dim])
 
 
+def room_bat_name(p: CProf = None,
+                  max_eps: int = 48,
+                  temp_bounds: RangeT = None,
+                  alpha: float = 2.5) -> str:
+
+    ext = make_param_ext([("NEP", max_eps), ("AL", alpha),
+                          ("TBD", temp_bounds), ("P", p)])
+    return "RoomBattery" + ext
+
+
 class RoomBatteryEnv(RLDynEnv):
     """The joint environment for the room model and the battery model.
 
@@ -586,6 +596,16 @@ class RoomBatteryEnv(RLDynEnv):
     default_series_merging = [((0, 1), "Weather")]
 
     @staticmethod
+    def room_bat_name(p: CProf = None,
+                      max_eps: int = 48,
+                      temp_bounds: RangeT = None,
+                      alpha: float = 2.5) -> str:
+
+        ext = make_param_ext([("NEP", max_eps), ("AL", alpha),
+                              ("TBD", temp_bounds), ("P", p)])
+        return "RoomBattery" + ext
+
+    @staticmethod
     def returning_soc() -> Num:
         """Defines the SoC of the EV when returning.
 
@@ -606,8 +626,7 @@ class RoomBatteryEnv(RLDynEnv):
                  **kwargs):
 
         # Define name
-        ext = make_param_ext([("NEP", max_eps), ("AL", alpha), ("TBD", temp_bounds), ("P", p)])
-        name = "RoomBattery" + ext
+        name = self.room_bat_name(p, max_eps, temp_bounds, alpha)
 
         # Set prepared indices
         d = m.data
