@@ -193,6 +193,9 @@ class DDPGBaseAgent(KerasBaseAgent):
         # Build the model.
         self._build_agent_model()
 
+    def __str__(self) -> str:
+        return f"DDPG Agent with layers {self.layers}."
+
     def _build_agent_model(self) -> None:
         """Builds the Keras model of the agent."""
         # Build actor model
