@@ -84,12 +84,16 @@ class FailureNotifier:
     """
 
     _sent_mail: bool = False
+    _pw: str = None
 
     def __init__(self, name: str, verbose: int = 1,
-                 debug: bool = False):
+                 debug: bool = False, exit_fun: Callable = None):
         self.name = name
         self.verbose = verbose
         self.debug = debug
+        self.exit_fun = exit_fun
+
+        self._pw = read_pw_from_file()
 
     def __enter__(self):
         """Enter context, sets exit handler for uncaught interrupts."""
@@ -119,10 +123,12 @@ class FailureNotifier:
 
     def _on_exit(self, msg: str) -> None:
         """Called when an error happens."""
+        if self.exit_fun is not None:
+            self.exit_fun(None, None, None)
         sub = f"Error while executing '{self.name}'."
         if not self._sent_mail:
             send_mail(self.debug, subject=sub,
-                      msg=msg)
+                      msg=msg, password=self._pw)
             self._sent_mail = True
 
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
@@ -150,7 +156,7 @@ def login_from_file(file_name: str) -> List[str]:
         return [l.rstrip() for l in f if l.rstrip() != ""]
 
 
-def _pw_from_file(file_name: str = pw_def_path) -> str:
+def read_pw_from_file(file_name: str = pw_def_path) -> str:
     """Reads the password in the file given."""
     login = login_from_file(file_name)
     assert len(login) == 1, f"Invalid password: {login}"
@@ -161,7 +167,8 @@ def _pw_from_file(file_name: str = pw_def_path) -> str:
 def send_mail(debug: bool = True,
               subject: str = "Hello there!",
               msg: str = "General Kenobi",
-              use_ssl: bool = True) -> None:
+              use_ssl: bool = True,
+              password: str = None) -> None:
     """Sends a mail via python.
 
     Decorated with the force decorator since a connection timeout
@@ -175,6 +182,7 @@ def send_mail(debug: bool = True,
         subject: Subject of the mail.
         msg: Message of the mail.
         use_ssl: Whether to use SSL, use default.
+        password: If None, will be loaded from file.
     """
     # Define message
     message = f"Subject: {subject}\n\n{msg}\n\n" \
@@ -186,7 +194,8 @@ def send_mail(debug: bool = True,
     ssl.create_default_context()
 
     # Load password and select mail account
-    password = _pw_from_file()
+    if password is None:
+        password = read_pw_from_file()
     rec_mail = debug_email if debug else receiver_email
 
     # Send the mail

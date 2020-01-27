@@ -223,6 +223,10 @@ class OpcuaClient(object):
 
     def read_values(self) -> pd.DataFrame:
         """Returns the read values in the dataframe."""
+        if not self._connected:
+            logging.warning("Client not connected for reading.")
+            return self.handler.df_Read
+
         if not self._sub_init:
             logging.warning("You need to subscribe first!")
 
@@ -240,14 +244,14 @@ class OpcuaClient(object):
         If client hasn't been connected, does nothing.
         """
         # If it wasn't connected, do nothing
-        # if not self._connected:
-        #     return
+        if not self._connected:
+            return
         try:
             # Need to delete the subscription first before disconnecting
+            self._connected = False
             if self._sub is not None:
                 self._sub.delete()
             self.client.disconnect()
-            self._connected = False
             logging.warning("Server disconnected.")
         except UaStatusCodeError as e:
             logging.warning(f"Server disconnected with error: {e}")
@@ -310,6 +314,13 @@ class OpcuaClient(object):
         Raises:
             UaStatusCodeError: If initialization of publishing fails.
         """
+        if not self._connected:
+            logging.warning("Client not connected for publishing.")
+            # Sleep
+            if sleep_after is not None:
+                time.sleep(sleep_after)
+            return
+
         # Remember current time
         t0 = datetime.datetime.now()
         self.df_write = df_write

@@ -668,7 +668,6 @@ def main() -> None:
     # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)
     var_dict = {k: val for k, val in var_dict.items() if k != "verbose"}
-    print(var_dict)
     any_flag_set = reduce(lambda x, k: x or var_dict[k] is True, var_dict, 0)
     if not any_flag_set:
         print("No flags set")

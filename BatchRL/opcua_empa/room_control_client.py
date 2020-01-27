@@ -6,18 +6,21 @@ and :class:`opcua_empa.opcuaclient_subscription.OpcuaClient`.
 
 .. moduleauthor:: Christian Baumann
 """
-from datetime import datetime
 import logging
+import time
+from datetime import datetime
+from threading import Lock
 from typing import List, Callable, Tuple
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.controller import ControlT
+from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.opcuaclient_subscription import OpcuaClient
-from util.notify import send_mail, FailureNotifier
+from util.notify import send_mail, set_exit_handler, read_pw_from_file
 from util.numerics import check_in_range
+from util.util import ProgWrap
 
 print_fun = logging.warning
 
@@ -32,12 +35,16 @@ def run_control(used_control: ControlT,
     Takes the same arguments as :func:`ControlClient.__init__`, except
     for an additional one, `debug` which decides where to send the mail to.
     """
-    with FailureNotifier(exp_name, verbose=verbose, debug=debug):
-        with ControlClient(used_control, exp_name, *args,
-                           verbose=1 if verbose > 0 else 0, **kwargs) as client:
-            cont = True
-            while cont:
+
+    with ControlClient(used_control, exp_name, *args,
+                       verbose=1 if verbose > 0 else 0,
+                       debug_mail=debug, **kwargs) as client:
+        cont = True
+        while cont:
+            if not client._exited:
                 cont = client.read_publish_wait_check()
+            else:
+                time.sleep(0.5)
 
 
 class ControlClient:
@@ -51,12 +58,19 @@ class ControlClient:
     write_nodes: List[str]  #: List with the read nodes as strings.
     read_nodes: List[str]  #: List with the write nodes as strings.
 
+    termination_reason: str = None
+
     _n_pub: int = 0
 
     _curr_ex_vals: Tuple = None
     _curr_temp_sp: float = None
     _curr_valves: Tuple = None
     _start_time: datetime = None
+
+    _started_exiting: bool = False
+    _exited: bool = False
+    exit_lock = Lock()
+    _add_msg: str = None
 
     def __init__(self,
                  used_control: ControlT,
@@ -66,6 +80,7 @@ class ControlClient:
                  verbose: int = 1,
                  no_data_saving: bool = False,
                  notify_failures: bool = False,
+                 debug_mail: bool = True,
                  _client_class: Callable = OpcuaClient):
         """Initializer.
 
@@ -80,6 +95,9 @@ class ControlClient:
         self._start_time = datetime.now()
         self.client = _client_class(user=user, password=password)
         self.node_gen = NodeAndValues(used_control, exp_name=exp_name)
+
+        self._pw = read_pw_from_file()
+        self.deb_mail = debug_mail
 
         if no_data_saving:
             self.node_gen.save_cached_data = self._no_save
@@ -107,12 +125,37 @@ class ControlClient:
         self.client.__enter__()
         self.client.subscribe(self.df_read, sleep_after=1.0)
 
+        # Set exit handler
+        def on_exit(sig, func=None):
+            add_msg = f"Program was mysteriously killed by somebody or something. "
+            self._add_msg = add_msg
+            self.__exit__(None, None, None)
+
+        set_exit_handler(on_exit)
+
         return self
 
     def __exit__(self, *args, **kwargs):
         """Save data and exit client."""
-        self.node_gen.save_cached_data(self.verbose)
-        self.client.__exit__(*args, **kwargs)
+        if self.verbose:
+            print("Exiting...")
+
+        self.exit_lock.acquire()
+        if not self._exited:
+            self._exited = True
+            self.exit_lock.release()
+            print("Actually exiting :)")
+
+            self.client.__exit__(*args, **kwargs)
+            self.node_gen.save_cached_data(self.verbose)
+
+            # Notify reason of termination
+            time.sleep(0.5)
+            with ProgWrap(f"Sending notification...", self.verbose > 0):
+                self.notify_me()
+
+        else:
+            self.exit_lock.release()
 
     def _print_set_on_change(self, attr_name: str, val, msg: str) -> None:
         curr_val = getattr(self, attr_name)
@@ -123,31 +166,32 @@ class ControlClient:
         elif self.verbose > 1:
             print_fun(f"{msg}: {val}")
 
-    def notify_me(self, res_ack_true: bool, temps_in_bound: bool,
-                  terminate_now: bool) -> None:
+    def notify_me(self) -> None:
         """Sends a notification mail with the reason of termination.
 
         Does nothing if `self.notify_failures` is False.
         """
-        if self.notify_failures:
-            cont = res_ack_true and temps_in_bound and not terminate_now
-            if not cont:
-                # Set subject
-                sub = "Experiment finished" if terminate_now else "Experiment aborted"
+        # Set subject
+        sub = "Experiment Termination Notification"
 
-                # Set message
-                if not res_ack_true or not temps_in_bound:
-                    msg = "Bounds reached!" if not temps_in_bound \
-                        else "Research confirmation lost!"
-                else:
-                    msg = "Experiment time is over."
+        # Set message
+        msg = self.termination_reason
+        if msg is None:
+            msg = "Unknown termination reason :("
 
-                # Add some more information
-                msg += f"\n\nExperiment name: {self.node_gen.experiment_name}"
-                msg += f"\n\nStarting date and time: {self._start_time}"
+        if self._add_msg is not None:
+            msg += f"\n\n{self._add_msg}"
 
-                # Send mail
-                send_mail(subject=sub, msg=msg, debug=False)
+        # Add some more information
+        msg += f"\n\nExperiment name: {self.node_gen.experiment_name}"
+        msg += f"\n\nStarting date and time: {self._start_time}"
+
+        # Send mail
+        print("Hoi")
+        send_mail(subject=sub, msg=msg, debug=self.deb_mail,
+                  password=self._pw)
+
+        print("Hoi2")
 
     def read_publish_wait_check(self) -> bool:
         """Read and publish values, wait, and check if termination is reached.
@@ -185,18 +229,18 @@ class ControlClient:
         terminate_now = self.node_gen.control[0][1].terminate()
         cont = res_ack_true and temps_in_bound and not terminate_now
 
-        # Notify if failure happens
-        self.notify_me(res_ack_true, temps_in_bound=temps_in_bound,
-                       terminate_now=terminate_now)
-
         # Print the reason of termination.
-        if self.verbose > 0:
-            if not temps_in_bound:
-                print_fun("Temperature bounds reached, aborting experiment.")
-            if not res_ack_true:
-                print_fun("Research mode confirmation lost :(")
-            if terminate_now:
-                print_fun("Experiment time over!")
+        if not temps_in_bound:
+            self.termination_reason = "Temperature bounds reached, aborting experiment."
+        if not res_ack_true:
+            self.termination_reason = "Research mode confirmation lost :("
+        if terminate_now:
+            self.termination_reason = "Experiment time over!"
+
+        if not cont and self.verbose > 0:
+            print_fun(self.termination_reason)
+
+        raise Exception("Fuck")
 
         # Increment publishing counter and return termination criterion.
         self._n_pub += 1

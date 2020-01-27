@@ -729,7 +729,7 @@ class TestNotify(TestCase):
 
     def test_load_pw(self):
         test_pw_file = os.path.join(TEST_DATA_DIR, "test_pw.txt")
-        pw = util.notify._pw_from_file(test_pw_file)
+        pw = util.notify.read_pw_from_file(test_pw_file)
         self.assertEqual(pw, "test_pw")
 
     def test_load_login(self):
