@@ -17,13 +17,15 @@ rl_model_dir = os.path.join(MODEL_DIR, "RL")
 create_dir(rl_model_dir)
 
 
-def upload_trained_agents():
-    print("Uploading agent neural network parameters to Google Drive.")
+def upload_trained_agents(verbose: int = 1):
+    if verbose:
+        print("Uploading agent neural network parameters to Google Drive.")
     upload_folder_zipped(rl_model_dir)
 
 
-def download_trained_agents():
-    print("Downloading agent neural network parameters from Google Drive.")
+def download_trained_agents(verbose: int = 1):
+    if verbose:
+        print("Downloading agent neural network parameters from Google Drive.")
     download_and_extract_zipped_folder("RL", rl_model_dir)
 
 

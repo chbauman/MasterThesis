@@ -30,7 +30,6 @@ from opcua_empa.run_opcua import try_opcua, run_rl_control
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
-from util.share_data import test_folder_zip
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args, DEFAULT_TRAIN_SET, \
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
@@ -561,17 +560,26 @@ def def_parser() -> argparse.ArgumentParser:
 
 
 def transfer_data(gd_upload: bool, gd_download: bool, data_to_euler: bool,
-                  models_from_euler: bool, verbose: int = 5):
+                  models_from_euler: bool, verbose: int = 5) -> None:
+    """Transfers data to different computers.
+
+    Args:
+        gd_upload: Whether to upload files to Google Drive.
+        gd_download: Whether to download files from Google Drive.
+        data_to_euler:
+        models_from_euler:
+        verbose:
+    """
     next_verb = prog_verb(verbose)
 
     # Upload to / download from Google Drive
     if gd_upload:
         with ProgWrap("Uploading data to Google Drive", verbose > 0):
-            upload_trained_agents()
+            upload_trained_agents(verbose=next_verb)
             upload_hop_pars()
     if gd_download:
         with ProgWrap("Downloading data from Google Drive", verbose > 0):
-            download_trained_agents()
+            download_trained_agents(verbose=next_verb)
             download_hop_pars()
 
     # Upload to / download from Euler
