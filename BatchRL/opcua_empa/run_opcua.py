@@ -69,13 +69,22 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                    train_data: str = DEFAULT_TRAIN_SET,
                    hop_eval_set: str = DEFAULT_EVAL_SET,
                    include_battery: bool = False,
-                   notify_debug: bool = None
+                   notify_debug: bool = None,
+                   dummy_env_mode: bool = True,
                    ):
 
     assert room_nr in [41, 43], f"Invalid room number: {room_nr}"
 
+    if dummy_env_mode and verbose:
+        print("Using dummy environment, will raise an error if there"
+              "is no fitted agent available!")
+
     if notify_debug is None:
         notify_debug = debug
+        msg = f"Using {'debug' if debug else 'original'} " \
+              f"mail address for notifications."
+        if verbose:
+            print(msg)
 
     next_verbose = prog_verb(verbose)
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
@@ -93,7 +102,7 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                                 train_data=train_data,
                                 room_nr=room_nr,
                                 hop_eval_set=hop_eval_set,
-                                dummy_use=True)
+                                dummy_use=dummy_env_mode)
 
         # Define default agents and compare
         with ProgWrap(f"Initializing agents...", verbose > 0):
