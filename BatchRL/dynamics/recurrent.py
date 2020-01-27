@@ -461,7 +461,10 @@ class RNNDynamicModel(HyperOptimizableModel):
         if self.verbose:
             self.m.summary()
         if not EULER:
-            self._plot_model(self.m)
+            try:
+                self._plot_model(self.m)
+            except OSError:
+                print("Cannot create model plot, GraphViz not installed!")
 
         # Prepare the data
         monitor_val_loss = train_data != "all"

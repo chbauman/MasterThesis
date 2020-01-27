@@ -83,13 +83,14 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
 
     if notify_debug is None:
         notify_debug = debug
-        msg = f"Using {'debug' if debug else 'original'} " \
-              f"mail address for notifications."
-        if verbose:
-            print(msg)
+    msg = f"Using {'debug' if notify_debug else 'original'} " \
+          f"mail address for notifications."
+    if verbose:
+        print(msg)
 
     next_verbose = prog_verb(verbose)
     m_name = "FullState_Comp_ReducedTempConstWaterWeather"
+    n_hours = 24 * 3 if not debug else 3
 
     rl_cont = None
     if not full_debug:
@@ -115,18 +116,18 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                 print(agent)
 
         # Choose controller
-        rl_cont = RLController(agent, n_steps_max=3600 * 2,
+        rl_cont = RLController(agent, n_steps_max=3600 * n_hours,
                                const_debug=debug,
                                verbose=next_verbose)
     else:
         if verbose:
             print("Using constant model without an agent.")
 
-    f_cont = FixTimeConstController(val=21.0, max_n_minutes=12 * 60)
+    f_cont = FixTimeConstController(val=21.0, max_n_minutes=n_hours * 60)
     cont = f_cont if full_debug else rl_cont
     used_control = [(room_nr, cont)]
 
-    exp_name = "DefaultExperimentName"
+    exp_name = "DefaultExperiment"
     if debug:
         exp_name += "Debug"
 
