@@ -253,7 +253,8 @@ class BaseRLController(FixTimeController):
 
     _curr_ts_ind: int
 
-    def __init__(self, rl_agent: AbstractAgent, dt: int,
+    def __init__(self, rl_agent: AbstractAgent,
+                 dt: int,
                  n_steps_max: int = 60 * 60,
                  const_debug: bool = False,
                  verbose: int = 3):
@@ -322,11 +323,13 @@ class RLController(BaseRLController):
     _scaling: np.ndarray = None
 
     def __init__(self, rl_agent: AgentBase, n_steps_max: int = 60 * 60,
+                 const_debug: bool = False,
                  verbose: int = 3):
 
         self.data_ref = rl_agent.env.m.data
         dt = self.data_ref.dt
-        super().__init__(rl_agent, dt, n_steps_max, verbose > 0)
+        super().__init__(rl_agent, dt, n_steps_max, verbose=verbose > 0,
+                         const_debug=const_debug)
 
         assert isinstance(self.agent, AgentBase)
         env = self.agent.env
@@ -355,7 +358,7 @@ class RLController(BaseRLController):
             # TODO: Implement this case
             raise NotImplementedError("Fuck")
         scaled_state = self.scale_for_agent(time_state)
-        return scaled_state
+        return scaled_state[self.data_ref.non_c_inds]
 
     def scale_for_agent(self, curr_state, remove_mean: bool = True) -> np.ndarray:
         assert len(curr_state) == 8 + 2 * self.battery, "Shape mismatch!"

@@ -8,7 +8,8 @@ from typing import List
 from agents.keras_agents import default_ddpg_agent
 from dynamics.load_models import load_room_env
 from envs.dynamics_envs import RangeT
-from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController, BaseRLController
+from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController, BaseRLController, \
+    RLController
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control
@@ -72,7 +73,6 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                    notify_debug: bool = None,
                    dummy_env_mode: bool = True,
                    ):
-
     full_debug: bool = False
 
     assert room_nr in [41, 43], f"Invalid room number: {room_nr}"
@@ -115,9 +115,9 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                 print(agent)
 
         # Choose controller
-        rl_cont = BaseRLController(agent, dt=env.m.data.dt, n_steps_max=3600 * 2,
-                                   const_debug=debug,
-                                   verbose=next_verbose)
+        rl_cont = RLController(agent, n_steps_max=3600 * 2,
+                               const_debug=debug,
+                               verbose=next_verbose)
     else:
         if verbose:
             print("Using constant model without an agent.")
