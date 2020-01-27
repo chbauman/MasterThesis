@@ -11,6 +11,7 @@ import os
 import random
 import shutil
 import socket
+import subprocess
 import sys
 import time
 import warnings
@@ -20,7 +21,8 @@ from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable, O
 
 import numpy as np
 
-TEMP_DIR = "../Temp"
+BASE_DIR = ".."
+TEMP_DIR = os.path.join(BASE_DIR, "Temp")
 
 #######################################################################################################
 # Platform specific stuff
@@ -43,8 +45,8 @@ def get_rl_steps(eul: bool = EULER):
 # Relative paths, relative to folder "BatchRL"
 
 # Define paths
-model_dir = "../Models"
-dynamic_model_dir = os.path.join(model_dir, "Dynamics")
+MODEL_DIR = os.path.join(BASE_DIR, "Models")
+dynamic_model_dir = os.path.join(MODEL_DIR, "Dynamics")
 
 #######################################################################################################
 # Random seed
@@ -78,6 +80,13 @@ IndT = Union[Sequence[int], IndArr]
 
 #######################################################################################################
 # Python stuff
+
+def execute_powershell(script_path: str, args: str):
+    """Executes a powershell script."""
+    p = subprocess.Popen(f"powershell.exe {script_path} {args}",
+                         stdout=sys.stdout)
+    p.communicate()
+
 
 def data_ext(date_str: str, room_nr: int, eval_set: str = DEFAULT_EVAL_SET) -> str:
     """Creates an extension string to differentiate different datasets."""
@@ -1013,7 +1022,7 @@ def get_min_diff(t1: datetime, t2: datetime = None) -> float:
 
 
 # Create paths
-create_dir(model_dir)
+create_dir(MODEL_DIR)
 create_dir(dynamic_model_dir)
 
 

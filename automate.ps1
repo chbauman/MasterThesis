@@ -35,6 +35,7 @@ param(
 [switch]$cp_plots = $false,
 [switch]$cp_data = $false,
 [switch]$cp_hop = $false,
+[switch]$cp_rl = $false,
 [switch]$act = $false,
 [switch]$test = $false,
 [switch]$docs = $false)
@@ -45,11 +46,15 @@ if ($cp_plots){
 }
 # Copy data to Euler
 if ($cp_data){
-    scp -rp ./Data/Datasets/ chbauman@euler.ethz.ch:MT/MasterThesis/Data/
+    Invoke-Expression "scp -rp $($PSScriptRoot)/Data/Datasets/ chbauman@euler.ethz.ch:MT/MasterThesis/Data/"
 }
 # Copy hyperoptimization data from Euler
 if ($cp_hop){
-    scp -rp chbauman@euler.ethz.ch:MT/MasterThesis/Models/Hop/ ./Models/
+    Invoke-Expression "scp -rp chbauman@euler.ethz.ch:MT/MasterThesis/Models/Hop/ $($PSScriptRoot)/Models/"
+}
+# Copy RL agents from Euler
+if ($cp_rl){
+    Invoke-Expression "scp -rp chbauman@euler.ethz.ch:MT/MasterThesis/Models/RL/ $($PSScriptRoot)/Models/"
 }
 
 # Run tests
@@ -65,5 +70,6 @@ if ($act){
 
 # Build the docs
 if ($docs){
+    Invoke-Expression "$($PSScriptRoot)/venv/Scripts/Activate.ps1"
     Invoke-Expression "cd $PSScriptRoot; ./make_doc.ps1"
 }

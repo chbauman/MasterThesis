@@ -32,7 +32,7 @@ from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.share_data import test_folder_zip
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args, DEFAULT_TRAIN_SET, \
-    DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext
+    DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
     plot_heat_cool_rew_det
 
@@ -500,7 +500,7 @@ def curr_tests() -> None:
 arg_def_list = [
     # The following arguments can be provided.
     ("verbose", "use verbose mode"),
-    ("transfer", "transfer data"),
+    ("file_transfer", "transfer data"),
     ("mod_eval", "fit and evaluate the room ML models"),
     ("optimize", "optimize hyperparameters of ML models"),
     ("data", "update the data from the nest database"),
@@ -560,27 +560,32 @@ def def_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def transfer_data(upload: bool, data_to_euler: bool,
+def transfer_data(gd_upload: bool, gd_download: bool, data_to_euler: bool,
                   models_from_euler: bool, verbose: int = 5):
     next_verb = prog_verb(verbose)
 
     # Upload to / download from Google Drive
-    if upload:
+    if gd_upload:
         with ProgWrap("Uploading data to Google Drive", verbose > 0):
             upload_trained_agents()
             upload_hop_pars()
-    else:
+    if gd_download:
         with ProgWrap("Downloading data from Google Drive", verbose > 0):
             download_trained_agents()
             download_hop_pars()
 
     # Upload to / download from Euler
-    if data_to_euler:
+    auto_script_path = os.path.join(BASE_DIR, "automate.ps1")
+    if data_to_euler or models_from_euler:
         assert not EULER, "Cannot be executed on Euler"
-        pass
+        print("Make sure you have an active VPN connection to ETH.")
+
+    if data_to_euler:
+        execute_powershell(auto_script_path, "-cp_data")
 
     if models_from_euler:
-        assert not EULER, "Cannot be executed on Euler"
+        execute_powershell(auto_script_path, "-cp_hop")
+        execute_powershell(auto_script_path, "-cp_rl")
 
 
 def main() -> None:
@@ -626,11 +631,13 @@ def main() -> None:
         update_data(date_str=date_str)
 
     # Transfer data
-    if args.transfer:
-        upload, data_to_euler, models_from_euler = \
-            extract_args(args.bool, True, False, False)
-        transfer_data(upload=upload, data_to_euler=data_to_euler,
-                      models_from_euler=models_from_euler)
+    if args.file_transfer:
+        gd_upload, gd_download, data_to_euler, models_from_euler = \
+            extract_args(args.bool, False, False, False, False)
+        transfer_data(gd_upload=gd_upload, gd_download=gd_download,
+                      data_to_euler=data_to_euler,
+                      models_from_euler=models_from_euler,
+                      verbose=verbose)
 
     # Run hyperparameter optimization
     if args.optimize:

@@ -7,13 +7,13 @@ import numpy as np
 
 from util.numerics import npf32
 from util.share_data import upload_folder_zipped, download_and_extract_zipped_folder
-from util.util import Arr, fix_seed, model_dir, create_dir
+from util.util import Arr, fix_seed, MODEL_DIR, create_dir
 
 if TYPE_CHECKING:
     from envs.base_dynamics_env import DynEnv
 
 # Define directory for agent models
-rl_model_dir = os.path.join(model_dir, "RL")
+rl_model_dir = os.path.join(MODEL_DIR, "RL")
 create_dir(rl_model_dir)
 
 
