@@ -37,10 +37,10 @@ class Controller(ABC):
         """Returns the current control input."""
         pass
 
-    def terminate(self):
+    def terminate(self) -> bool:
         return False
 
-    def set_state(self, curr_state: np.ndarray):
+    def set_state(self, curr_state: np.ndarray) -> None:
         self.state = curr_state
 
 
@@ -267,12 +267,12 @@ class BaseRLController(FixTimeController):
 
         self._curr_ts_ind = self.get_dt_ind()
 
-    def get_dt_ind(self):
+    def get_dt_ind(self) -> int:
         """Computes the index of the current timestep."""
         t_now = np.datetime64('now')
         return day_offset_ts(t_now, mins=self.dt, remaining=False) - 1
 
-    def prepared_state(self, next_ts_ind: int = None):
+    def prepared_state(self, next_ts_ind: int = None) -> np.ndarray:
         return self.state
 
     def __call__(self, values=None) -> float:
@@ -283,6 +283,7 @@ class BaseRLController(FixTimeController):
             valve_state = self.state[4]
             self._step_start_state = valve_state > 0.5
 
+        # If next timestep started, compute next control input
         next_ts_ind = self.get_dt_ind()
         if next_ts_ind != self._curr_ts_ind:
             self._init_phase = False
@@ -354,8 +355,8 @@ class RLController(BaseRLController):
         if self.data_ref.fully_scaled:
             self._scaling = self.data_ref.scaling
 
-    def prepared_state(self, next_ts_ind: int = None):
-        # Next step, get new control
+    def prepared_state(self, next_ts_ind: int = None) -> np.ndarray:
+        """Prepares the current state to be fed to the agent."""
         time_state = self.add_time_to_state(self.state, next_ts_ind)
         if self.battery:
             # TODO: Implement this case
@@ -364,6 +365,7 @@ class RLController(BaseRLController):
         return scaled_state[self.data_ref.non_c_inds]
 
     def scale_for_agent(self, curr_state, remove_mean: bool = True) -> np.ndarray:
+        """Scales the given state."""
         assert len(curr_state) == 8 + 2 * self.battery, "Shape mismatch!"
         if remove_mean:
             return (curr_state - self._scaling[:, 0]) / self._scaling[:, 1]
@@ -390,7 +392,10 @@ class ValveTest2Controller(BaseRLController):
     """
 
     class RandomAgent(AbstractAgent):
+        """Helper agent class.
 
+        Returns a random action in each step.
+        """
         def __init__(self, verbose):
             self.verbose = verbose
 

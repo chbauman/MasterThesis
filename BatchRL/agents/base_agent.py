@@ -97,6 +97,7 @@ def remove_agents(min_steps: int = 1000, verbose: int = 5) -> None:
 
 class AbstractAgent(ABC):
     """Base class for all agents."""
+
     @abstractmethod
     def get_action(self, state) -> Arr:
         """Defines the control strategy.
