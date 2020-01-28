@@ -55,7 +55,7 @@ def load_room_env(m_name: str,
                   dummy_use: bool = False,
                   sample_from: str = DEFAULT_ENV_SAMPLE_DATA,
                   ):
-    """
+    """Loads the complete room environment.
 
     Args:
         m_name:
@@ -72,7 +72,7 @@ def load_room_env(m_name: str,
         sample_from: Sampling portion of data when resetting env.
 
     Returns:
-
+        The loaded env.
     """
 
     # Propagate verbosity
