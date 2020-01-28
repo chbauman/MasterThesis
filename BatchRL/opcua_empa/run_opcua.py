@@ -8,8 +8,7 @@ from typing import List
 from agents.keras_agents import default_ddpg_agent
 from dynamics.load_models import load_room_env
 from envs.dynamics_envs import RangeT
-from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController, BaseRLController, \
-    RLController
+from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController, RLController
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control

@@ -1,3 +1,15 @@
+"""Module for sharing data via Google Drive.
+
+Based on the `pydrive` library. It can be pretty
+slow though, especially if you want to upload multiple files.
+Therefore you should prefer zipping multiple files and then
+only uploading the zip file, as does
+:func:`util.share_data.upload_folder_zipped`.
+
+If you just cloned from Github, you will need to setup
+the Google Drive API and create a `settings.yaml` file
+in the `BatchRL` folder for the authentication.
+"""
 import os
 import shutil
 import zipfile

@@ -5,6 +5,11 @@ from the NEST database. Returns the values and the
 timesteps in numpy format for each defined data series.
 The following example shows how to use this module.
 
+If you set `pw_from_cl` of :class:`rest.client._Client` to
+True, then the login data can be input via command line.
+Otherwise it is read from the file `rest_login.txt` located
+in the root directory of the repository.
+
 Example usage::
 
     # Define data.
@@ -27,7 +32,6 @@ Example usage::
 
 Written by Christian Baumann and Ralf Knechtle @ Empa, 2019
 """
-
 import os
 import shutil
 import time
@@ -49,12 +53,14 @@ else:
     from .pw_cl import get_pw
 
 
+# Find login file
 curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 login_path = os.path.join(curr_dir.parent.parent, "rest_login.txt")
 
 #: Where to put the local copy of the data.
 save_dir: str = '../Data/'
 
+#: Data type for data returned by reading from database
 NestDataT = Tuple[List[Tuple[np.ndarray, np.ndarray]], List[str]]
 
 

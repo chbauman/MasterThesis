@@ -3,8 +3,12 @@
 Can be used to send mails from your gmail account.
 You need to allow unsave apps access under your
 account settings.
-"""
 
+It is assumed that the `debug_email` and the normal email (`receiver_email`)
+do have the same password, stored in the file `python_notifyer.txt`.
+For obvious reasons, this file is not on Github, it should be placed
+in the root folder of the Github repository.
+"""
 import os
 import smtplib
 import ssl
