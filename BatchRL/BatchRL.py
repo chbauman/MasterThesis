@@ -285,6 +285,9 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                     m_to_use.analyze_performance(N_PERFORMANCE_STEPS, verbose=next_verb,
                                                  overwrite=False,
                                                  metrics=METRICS)
+                    plot_performance_graph([m_to_use], PARTS, METRICS, "Ind_Mods",
+                                           short_mod_names=[m_to_use.name],
+                                           scale_back=True, remove_units=False)
 
     # Create the performance table
     if include_composite:

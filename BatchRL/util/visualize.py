@@ -12,7 +12,7 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from opcua_empa.controller import MIN_TEMP, MAX_TEMP
 from util.numerics import fit_linear_1d, load_performance, check_shape, ErrMetric, MaxAbsEer, MAE
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
-    create_dir, Num, yeet, tot_size, mins_to_str, IndT, BASE_DIR
+    create_dir, Num, yeet, tot_size, mins_to_str, IndT, BASE_DIR, DEFAULT_TRAIN_SET
 
 if EULER:
     # Do not use GUI based backend.
@@ -1028,7 +1028,8 @@ def plot_reward_details(labels: Sequence[str],
 def _load_all_model_data(model_list: List,
                          parts: List[str],
                          metric_list: List[str],
-                         series_mask=None) -> Tuple[np.ndarray, np.ndarray]:
+                         series_mask=None,
+                         fit_data: str = DEFAULT_TRAIN_SET) -> Tuple[np.ndarray, np.ndarray]:
     """Helper function for `plot_performance_table` to load the performance data of all models.
 
     Args:
@@ -1054,7 +1055,8 @@ def _load_all_model_data(model_list: List,
         #     return m.get_plt_path(name)
 
         # Load data of current model and check shape
-        data, inds_curr = load_performance(m.get_plt_path, parts, dt, n_metrics)
+        data, inds_curr = load_performance(m.get_plt_path, parts, dt, n_metrics,
+                                           fit_data=fit_data)
         if ct == 0:
             inds = inds_curr
         else:
@@ -1194,7 +1196,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
                            put_on_ol: bool = False,
                            compare_models: bool = False,
                            overwrite: bool = True,
-                           scale_over_series: bool = False) -> None:
+                           scale_over_series: bool = False,
+                           fit_data: str = DEFAULT_TRAIN_SET) -> None:
     """Plots the evaluated performance for multiple models.
 
     `series_mask` can be used to select subset of series.
@@ -1215,6 +1218,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
         overwrite: Whether to overwrite an existing file.
         scale_over_series: Scale the errors to have a similar maximum. Especially
             useful if `scale_back` is True.
+        fit_data: The portion of the data the models were fit on.
     """
     metric_names = [m.name for m in metric_list]
 
@@ -1229,7 +1233,9 @@ def plot_performance_graph(model_list: List, parts: List[str],
                                                   series_mask, short_mod_names)
 
     # Load data
-    data_array, inds = _load_all_model_data(model_list, parts, metric_names, series_mask)
+    data_array, inds = _load_all_model_data(model_list,
+                                            parts, metric_names,
+                                            series_mask, fit_data=fit_data)
     n_models, n_parts, n_series, n_metrics, n_steps = data_array.shape
 
     # Switch lists
