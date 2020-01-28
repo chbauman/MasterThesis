@@ -23,7 +23,7 @@ base_rnn_models = [
     "Apartment_RNN",
     "RoomTempFromReduced_RNN",
     "RoomTemp_RNN",
-    "WeatherFromWeatherTime_Linear",
+    # "WeatherFromWeatherTime_Linear",
     "PhysConsModel",
     # "Full_RNN",
 ]

@@ -482,7 +482,7 @@ class RNNDynamicModel(HyperOptimizableModel):
                        verbose=self.verbose)
 
         # Add extension specifying training set
-        ext = "" if train_data == DEFAULT_TRAIN_SET else f"_Data{train_data}"
+        ext = "" if train_data == DEFAULT_TRAIN_SET else f"_Data_{train_data}"
         pth = self.get_plt_path(f"TrainHist{ext}")
         plot_train_history(h, pth, val=monitor_val_loss)
         create_dir(self.model_path)
