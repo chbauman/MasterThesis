@@ -768,6 +768,7 @@ def cleanup_test_data(verbose: int = 0):
     rem_files_and_dirs(model_plot_path, SYNTH_DATA_NAME)
     rem_files_and_dirs(model_plot_path, RNN_TEST_DATA_NAME)
     rem_files_and_dirs(eval_tab_path, "Test")
+    rem_files_and_dirs(model_plot_path, "_basicRNN_", anywhere=True)
 
     # Cleanup models
     rem_files_and_dirs(dynamic_model_dir, RNN_TEST_DATA_NAME)

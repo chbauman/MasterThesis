@@ -221,6 +221,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                    train_data: str = DEFAULT_TRAIN_SET,
                                    room_nr: int = DEFAULT_ROOM_NR,
                                    hop_eval_set: str = DEFAULT_EVAL_SET,
+                                   eval_data: str = DEFAULT_EVAL_SET,
                                    ) -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
@@ -236,6 +237,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
         train_data: String specifying the part of the data to train the model on.
         room_nr: Integer specifying the room number.
         hop_eval_set: Evaluation set for the hyperparameter optimization.
+        eval_data: Set for model evaluation.
     """
     if verbose:
         print(f"Fitting dynamics ML models based on parameters "
@@ -274,7 +276,8 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
             # Visual analysis
             if visual_analyze:
                 with ProgWrap(f"Analyzing model visually...", verbose > 0):
-                    m_to_use.analyze_visually(overwrite=False, verbose=next_verb > 0)
+                    m_to_use.analyze_visually(overwrite=False,
+                                              verbose=next_verb > 0)
 
             # Do the performance analysis
             if perf_analyze:
@@ -627,7 +630,7 @@ def main() -> None:
 
     # Extract arguments
     train_data, eval_data = args.train_data, args.eval_data
-    hop_eval_data, sample_from = args.hop_eval_data, args.rl_sampling
+    hop_eval_data, rl_sampling = args.hop_eval_data, args.rl_sampling
     room_nr, date_str = args.room_nr, args.data_end_date
 
     # Check arguments
@@ -683,7 +686,8 @@ def main() -> None:
                                        visual_analyze=visual_analyze,
                                        include_composite=include_composite,
                                        date_str=date_str, train_data=train_data,
-                                       room_nr=room_nr, hop_eval_set=hop_eval_data)
+                                       room_nr=room_nr, hop_eval_set=hop_eval_data,
+                                       eval_data=eval_data)
 
     # Train and analyze the battery model
     if args.battery:
@@ -705,7 +709,7 @@ def main() -> None:
                         date_str=date_str, temp_bds=temp_bds,
                         train_data=train_data, room_nr=room_nr,
                         hop_eval_set=hop_eval_data,
-                        sample_from=sample_from)
+                        sample_from=rl_sampling)
 
     # Overleaf plots
     if args.plot:
@@ -726,7 +730,7 @@ def main() -> None:
                        hop_eval_set=hop_eval_data,
                        notify_debug=notify_debug,
                        dummy_env_mode=dummy_env_mode,
-                       sample_from=sample_from,
+                       sample_from=rl_sampling,
                        )
 
     # Check if any flag is set, if not, do current experiments.

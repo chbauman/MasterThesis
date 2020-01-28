@@ -461,6 +461,7 @@ class RNNDynamicModel(HyperOptimizableModel):
         if self.verbose:
             self.m.summary()
         if not EULER:
+            # No model plot without GraphViz
             try:
                 self._plot_model(self.m)
             except OSError:
@@ -479,7 +480,10 @@ class RNNDynamicModel(HyperOptimizableModel):
                        batch_size=128,
                        validation_split=val_per,
                        verbose=self.verbose)
-        pth = self.get_plt_path("TrainHist")
+
+        # Add extension specifying training set
+        ext = "" if train_data == DEFAULT_TRAIN_SET else f"_Data{train_data}"
+        pth = self.get_plt_path(f"TrainHist{ext}")
         plot_train_history(h, pth, val=monitor_val_loss)
         create_dir(self.model_path)
 
