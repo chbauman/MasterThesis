@@ -597,7 +597,8 @@ class BaseDynamicsModel(KerasBase, ABC):
         d = self.data
 
         # Check fitted
-        assert self.fit_data is not None, "Model was not fitted or loaded!!!"
+        data_str = self.fit_data
+        assert data_str is not None, "Model was not fitted or loaded!!!"
 
         # Check input
         assert np.all(np.array(n_steps) >= 0), f"Negative timestep found in: {n_steps}"
@@ -608,19 +609,20 @@ class BaseDynamicsModel(KerasBase, ABC):
             first_acf_name = self._acf_plot_path()
 
             if overwrite or not os.path.isfile(first_acf_name):
-                res = self.get_residuals(self.fit_data)
+                res = self.get_residuals(data_str)
                 for k in range(get_shape1(res)):
                     acf_name = self._acf_plot_path(i=k, add_ext=False)
                     plot_residuals_acf(res[:, k], name=acf_name)
                     pacf_name = self._acf_plot_path(i=k, add_ext=False, partial=True)
                     plot_residuals_acf(res[:, k], name=pacf_name, partial=True)
 
-        # Define the string lists
-        parts = ["train", "val"]
-        ext_list = [e.capitalize() for e in parts]
+        # Define the extension string lists for naming
+        dat_ext = f"_{data_str}" if data_str != DEFAULT_TRAIN_SET else ""
+        eval_parts = ["train", "val"]
+        ext_list = [e.capitalize() + dat_ext for e in eval_parts]
 
         # Do the same for train and validation set
-        for ct, p_str in enumerate(parts):
+        for ct, p_str in enumerate(eval_parts):
             dat_1, dat_2, n = d.get_streak(p_str)
             dat = [dat_1, dat_2]
             dat_copy = copy_arr_list(dat)
