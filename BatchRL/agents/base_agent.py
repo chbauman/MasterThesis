@@ -37,8 +37,9 @@ def remove_agents(min_steps: int = 1000, verbose: int = 5) -> None:
             deleted.
         verbose: Whether to print infos.
     """
-    for sub_dirs in os.listdir(RL_MODEL_DIR):
-        full_sub_path = os.path.join(RL_MODEL_DIR, sub_dirs)
+    for sub_dir in os.listdir(RL_MODEL_DIR):
+        # Get full path
+        full_sub_path = os.path.join(RL_MODEL_DIR, sub_dir)
 
         # Check if it is a file instead of a folder
         if os.path.isfile(full_sub_path):
@@ -46,8 +47,16 @@ def remove_agents(min_steps: int = 1000, verbose: int = 5) -> None:
                 print(f"Found unexpected file: {full_sub_path}")
             continue
 
+        # Find sub files (and folders)
+        sub_files = os.listdir(full_sub_path)
+
+        # Delete folder if empty
+        if len(sub_files) == 0:
+            print(f"Removing folder: {sub_dir}")
+            os.rmdir(full_sub_path)
+
         # Iterate over files in sub-folder
-        for f in os.listdir(full_sub_path):
+        for f in sub_files:
             f_path = os.path.join(full_sub_path, f)
 
             # Check if it is actually a folder
