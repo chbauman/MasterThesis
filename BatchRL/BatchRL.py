@@ -285,9 +285,18 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                     m_to_use.analyze_performance(N_PERFORMANCE_STEPS, verbose=next_verb,
                                                  overwrite=False,
                                                  metrics=METRICS)
-                    plot_performance_graph([m_to_use], PARTS, METRICS, "Ind_Mods",
-                                           short_mod_names=[m_to_use.name],
-                                           scale_back=True, remove_units=False)
+                    n_series = len(m_to_use.out_inds)
+                    for s_ind in range(n_series):
+                        curr_name = f"Series_{s_ind}_{m_to_use.get_fit_data_ext()}"
+                        series_mask = [s_ind]
+                        plt_dir = m_to_use.get_plt_path("")[:-1]
+                        plot_performance_graph([m_to_use], PARTS, METRICS, "",
+                                               short_mod_names=[curr_name],
+                                               scale_back=True, remove_units=False,
+                                               fit_data=train_data,
+                                               series_mask=series_mask,
+                                               titles=[""],
+                                               plot_folder=plt_dir)
 
     # Create the performance table
     if include_composite:

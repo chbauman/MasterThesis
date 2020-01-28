@@ -1197,7 +1197,9 @@ def plot_performance_graph(model_list: List, parts: List[str],
                            compare_models: bool = False,
                            overwrite: bool = True,
                            scale_over_series: bool = False,
-                           fit_data: str = DEFAULT_TRAIN_SET) -> None:
+                           fit_data: str = DEFAULT_TRAIN_SET,
+                           titles: List = None,
+                           plot_folder: str = None) -> None:
     """Plots the evaluated performance for multiple models.
 
     `series_mask` can be used to select subset of series.
@@ -1219,6 +1221,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
         scale_over_series: Scale the errors to have a similar maximum. Especially
             useful if `scale_back` is True.
         fit_data: The portion of the data the models were fit on.
+        titles: List with titles for the plots.
+
     """
     metric_names = [m.name for m in metric_list]
 
@@ -1264,8 +1268,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
                 inv_scaling_fac = max_arr[k, i] / min_arr[i]
                 scaling_fac_arr[k, i] = inv_scaling_fac
                 data_array[:, :, k, i, :] = data_array[:, :, k, i, :] / inv_scaling_fac
-
-    plot_folder = OVERLEAF_IMG_DIR if put_on_ol else EVAL_MODEL_PLOT_DIR
+    if plot_folder is None:
+        plot_folder = OVERLEAF_IMG_DIR if put_on_ol else EVAL_MODEL_PLOT_DIR
     for model_ind, m_name in enumerate(mod_names):
 
         # Skip loop if file exists
@@ -1317,7 +1321,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
             # Add title, legend and x-label
             if ct_m == 0 or scale_back:
                 if ct_m == 0:
-                    plt.title(m_name)
+                    t = titles[model_ind] if titles is not None else m_name
+                    plt.title(t)
                 plt.legend()
             # if ct_m == len(metric_names) - 1:
             #     plt.xlabel(f"Steps [{mins_to_str(dt)}]")

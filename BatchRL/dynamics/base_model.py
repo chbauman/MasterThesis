@@ -557,14 +557,15 @@ class BaseDynamicsModel(KerasBase, ABC):
         exists = os.path.isfile(curr_name + ".pdf")
         return curr_name, exists
 
+    def get_fit_data_ext(self):
+        data_str = self._get_fit_data_set()
+        return f"_TS_{data_str}" if data_str != DEFAULT_TRAIN_SET else ""
+
     def _acf_plot_path(self, i: int = 0, data_str: str = None,
                        add_ext: bool = True, partial: bool = False):
         """Creates the plot path for the acf plot file."""
         p = "P" if partial else ""
-        if data_str is None:
-            data_str = self.fit_data
-            assert data_str is not None
-        dat_ext = f"_{data_str}" if data_str != DEFAULT_TRAIN_SET else ""
+        dat_ext = self.get_fit_data_ext()
         ext = ".pdf" if add_ext else ""
         res_str = f"Res{p}ACF_{i}{dat_ext}{ext}"
         return self.get_plt_path(res_str)
@@ -620,7 +621,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                     plot_residuals_acf(res[:, k], name=pacf_name, partial=True)
 
         # Define the extension string lists for naming
-        dat_ext = f"_TS_{data_str}" if data_str != DEFAULT_TRAIN_SET else ""
+        dat_ext = self.get_fit_data_ext()
         eval_parts = ["train", "val"]
         ext_list = [f"EV_" + e.capitalize() + dat_ext for e in eval_parts]
 
