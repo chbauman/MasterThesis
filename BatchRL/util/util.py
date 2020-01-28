@@ -701,13 +701,15 @@ def train_decorator():
     variable and a name `name`, further the methods
     `self.load_if_exists(self.m, self.name, train_data=train_data)`
     and `self.save_model(self.m, self.name, train_data=train_data)` that
-    load and save the model respectively.
+    load and save the model respectively need to be implemented.
     """
     def decorator(fit):
+        """The actual decorator."""
 
         @wraps(fit)
         def decorated(self, verbose: int = 0,
                       train_data: str = DEFAULT_TRAIN_SET, **kwargs):
+            """The decorated function."""
 
             loaded = self.load_if_exists(self.m, self.name, train_data=train_data)
             if not loaded:

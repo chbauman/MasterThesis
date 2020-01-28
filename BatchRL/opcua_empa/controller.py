@@ -234,12 +234,13 @@ def setpoint_from_fraction(setpoint_frac: float, prev_state: bool,
 
 
 class BaseRLController(FixTimeController):
-    """Controller uses a RL agent to do control."""
+    """Controller that uses a RL agent to do control."""
 
     default_val: Num = 21.0
     agent: AbstractAgent = None  #: RL agent
     dt: int = None
 
+    #: The valve opening and closing delays in minutes.
     valve_delays: Tuple[float, float] = (0.5, 0.5)
 
     verbose: int

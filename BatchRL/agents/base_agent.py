@@ -19,7 +19,7 @@ create_dir(RL_MODEL_DIR)
 
 def upload_trained_agents(verbose: int = 1):
     """Uploads all RL models to Google Drive.
-    
+
     Uploads all data in folder `RL_MODEL_DIR`.
     """
     if verbose:
