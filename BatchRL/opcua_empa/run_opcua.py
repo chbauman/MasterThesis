@@ -7,6 +7,7 @@ from typing import List
 
 from agents.keras_agents import default_ddpg_agent
 from dynamics.load_models import load_room_env
+from envs.base_dynamics_env import DEFAULT_ENV_SAMPLE_DATA
 from envs.dynamics_envs import RangeT
 from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController, RLController
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
@@ -71,6 +72,7 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                    include_battery: bool = False,
                    notify_debug: bool = None,
                    dummy_env_mode: bool = True,
+                   sample_from: str = DEFAULT_ENV_SAMPLE_DATA,
                    ):
     full_debug: bool = False
 
@@ -104,7 +106,8 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                                 train_data=train_data,
                                 room_nr=room_nr,
                                 hop_eval_set=hop_eval_set,
-                                dummy_use=dummy_env_mode)
+                                dummy_use=dummy_env_mode,
+                                sample_from=sample_from)
 
         # Define default agents and compare
         with ProgWrap(f"Initializing agents...", verbose > 0):

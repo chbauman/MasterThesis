@@ -25,6 +25,7 @@ from dynamics.battery_model import BatteryModel
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
     load_room_env
 from dynamics.recurrent import test_rnn_models
+from envs.base_dynamics_env import DEFAULT_ENV_SAMPLE_DATA
 from envs.dynamics_envs import BatteryEnv, heat_marker, RangeT
 from opcua_empa.run_opcua import try_opcua, run_rl_control
 from rest.client import check_date_str
@@ -312,6 +313,7 @@ def run_room_models(verbose: int = 1,
                     train_data: str = DEFAULT_TRAIN_SET,
                     room_nr: int = DEFAULT_ROOM_NR,
                     hop_eval_set: str = DEFAULT_EVAL_SET,
+                    sample_from: str = DEFAULT_ENV_SAMPLE_DATA,
                     ) -> None:
     # Print what the code does
     if verbose:
@@ -338,7 +340,8 @@ def run_room_models(verbose: int = 1,
                             temp_bds=temp_bds,
                             train_data=train_data,
                             room_nr=room_nr,
-                            hop_eval_set=hop_eval_set)
+                            hop_eval_set=hop_eval_set,
+                            sample_from=sample_from)
 
     # Define default agents and compare
     with ProgWrap(f"Initializing agents...", verbose > 0):
@@ -529,6 +532,8 @@ common_params = [
     ("data_end_date", str, "String specifying the date when the data was "
                            "loaded from NEST database, e.g. 2020-01-21",
      "2020-01-21"),
+    ("rl_sampling", str, "Sampling portion of data when resetting env.",
+     DEFAULT_ENV_SAMPLE_DATA),
     ("room_nr", int, "Integer specifying the room number.", 43),
 ]
 
@@ -614,7 +619,7 @@ def main() -> None:
 
     # Extract arguments
     train_data, eval_data = args.train_data, args.eval_data
-    hop_eval_data = args.hop_eval_data
+    hop_eval_data, sample_from = args.hop_eval_data, args.rl_sampling
     room_nr, date_str = args.room_nr, args.data_end_date
 
     # Check arguments
@@ -691,7 +696,8 @@ def main() -> None:
                         physically_consistent=phys_cons, overwrite=overwrite,
                         date_str=date_str, temp_bds=temp_bds,
                         train_data=train_data, room_nr=room_nr,
-                        hop_eval_set=hop_eval_data)
+                        hop_eval_set=hop_eval_data,
+                        sample_from=sample_from)
 
     # Overleaf plots
     if args.plot:
@@ -712,6 +718,7 @@ def main() -> None:
                        hop_eval_set=hop_eval_data,
                        notify_debug=notify_debug,
                        dummy_env_mode=dummy_env_mode,
+                       sample_from=sample_from,
                        )
 
     # Check if any flag is set, if not, do current experiments.
