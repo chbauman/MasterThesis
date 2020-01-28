@@ -1222,7 +1222,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
             useful if `scale_back` is True.
         fit_data: The portion of the data the models were fit on.
         titles: List with titles for the plots.
-
+        plot_folder: The folder to put the plot into. Overwrites `put_on_ol`!
     """
     metric_names = [m.name for m in metric_list]
 
@@ -1273,7 +1273,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
     for model_ind, m_name in enumerate(mod_names):
 
         # Skip loop if file exists
-        plot_path = os.path.join(plot_folder, f"{name}_{m_name}")
+        f_name = f"{name}_{m_name}" if name != "" else m_name
+        plot_path = os.path.join(plot_folder, f_name)
         if os.path.isfile(plot_path + ".pdf") and not overwrite:
             continue
 
