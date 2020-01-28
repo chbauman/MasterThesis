@@ -782,6 +782,7 @@ def cleanup_test_data(verbose: int = 0):
             rem_files_and_dirs(RL_MODEL_DIR, s, anywhere=True)
 
         remove_agents()
+        remove_agents()
 
     # Cleanup other test data
     rem_files_and_dirs(dataset_data_path, "Test", anywhere=True)

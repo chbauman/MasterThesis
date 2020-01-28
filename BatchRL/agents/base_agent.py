@@ -13,17 +13,26 @@ if TYPE_CHECKING:
     from envs.base_dynamics_env import DynEnv
 
 # Define directory for agent models
-RL_MODEL_DIR = os.path.join(MODEL_DIR, "RL")
+RL_MODEL_DIR = os.path.join(MODEL_DIR, "RL")  #: Folder for RL models.
 create_dir(RL_MODEL_DIR)
 
 
 def upload_trained_agents(verbose: int = 1):
+    """Uploads all RL models to Google Drive.
+    
+    Uploads all data in folder `RL_MODEL_DIR`.
+    """
     if verbose:
         print("Uploading agent neural network parameters to Google Drive.")
     upload_folder_zipped(RL_MODEL_DIR)
 
 
 def download_trained_agents(verbose: int = 1):
+    """Download trained agents from Google Drive.
+
+    They need to be in a folder named `RL` and will
+    be put into the folder `RL_MODEL_DIR`.
+    """
     if verbose:
         print("Downloading agent neural network parameters from Google Drive.")
     download_and_extract_zipped_folder("RL", RL_MODEL_DIR)
@@ -31,6 +40,11 @@ def download_trained_agents(verbose: int = 1):
 
 def remove_agents(min_steps: int = 1000, verbose: int = 5) -> None:
     """Removes all agents that were trained for less than `min_steps` steps.
+
+    For cleaning up agents that were produced when testing
+    something or debugging. Also deletes empty folders, but not
+    if the folder is empty only after removing the agents, so you may
+    want to run it twice.
 
     Args:
         min_steps: Minimum number of training steps for an agent not to be
@@ -82,6 +96,7 @@ def remove_agents(min_steps: int = 1000, verbose: int = 5) -> None:
 
 
 class AbstractAgent(ABC):
+    """Base class for all agents."""
     @abstractmethod
     def get_action(self, state) -> Arr:
         """Defines the control strategy.
