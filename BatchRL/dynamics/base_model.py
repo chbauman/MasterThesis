@@ -551,7 +551,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
     def _get_one_week_plot_name(self, base: str, ext: str = None,
                                 ind: int = None, put_on_ol: bool = False):
-        ext = "_" if ext is None else "_" + ext
+        ext = "" if ext is None else ext
         full_b_name = f"{base}_{ind}_{ext}"
         curr_name = self._get_plt_or_ol_path(full_b_name, put_on_ol)
         exists = os.path.isfile(curr_name + ".pdf")
@@ -570,7 +570,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         return self.get_plt_path(res_str)
 
     def analyze_visually(self, plot_acf: bool = True,
-                         n_steps: Sequence = (1, 4, 20),
+                         n_steps: Sequence = (1, 24),
                          overwrite: bool = False,
                          verbose: bool = True,
                          base_name: str = None,
@@ -617,9 +617,9 @@ class BaseDynamicsModel(KerasBase, ABC):
                     plot_residuals_acf(res[:, k], name=pacf_name, partial=True)
 
         # Define the extension string lists for naming
-        dat_ext = f"_{data_str}" if data_str != DEFAULT_TRAIN_SET else ""
+        dat_ext = f"_TS_{data_str}" if data_str != DEFAULT_TRAIN_SET else ""
         eval_parts = ["train", "val"]
-        ext_list = [e.capitalize() + dat_ext for e in eval_parts]
+        ext_list = [f"EV_" + e.capitalize() + dat_ext for e in eval_parts]
 
         # Do the same for train and validation set
         for ct, p_str in enumerate(eval_parts):

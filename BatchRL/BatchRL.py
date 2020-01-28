@@ -268,7 +268,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                     train_data=train_data,
                                     verbose=next_verb)
 
-    # Fit or load all initialized models
+    # Analyze all initialized models
     with ProgWrap(f"Analyzing models...", verbose > 0):
         for name, m_to_use in all_mods.items():
             if verbose:
