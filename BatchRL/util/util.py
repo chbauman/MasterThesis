@@ -548,7 +548,7 @@ def extract_args(args: Optional[List], *def_vals,
 def remove_files_in_sub_folders(base_dir: str, bool_fun: Callable,
                                 remove_empty_dirs: bool = True,
                                 verbose: bool = True) -> None:
-    """
+    """Removes files in sub-folder according to a pattern.
 
     Args:
         base_dir:

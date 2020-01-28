@@ -337,6 +337,7 @@ def run_room_models(verbose: int = 1,
                     room_nr: int = DEFAULT_ROOM_NR,
                     hop_eval_set: str = DEFAULT_EVAL_SET,
                     sample_from: str = DEFAULT_ENV_SAMPLE_DATA,
+                    visual_analysis: bool = True
                     ) -> None:
     # Print what the code does
     if verbose:
@@ -379,27 +380,27 @@ def run_room_models(verbose: int = 1,
 
         agent_list = [open_agent, closed_agent, rule_based_agent, agent]
 
-    with ProgWrap(f"Analyzing agents...", verbose > 0):
+    if visual_analysis:
+        with ProgWrap(f"Analyzing agents...", verbose > 0):
+            b_ind = -2 if include_battery else -1
+            bounds = [(b_ind, (22.0, 26.0))]
 
-        b_ind = -2 if include_battery else -1
-        bounds = [(b_ind, (22.0, 26.0))]
+            for s in eval_list:
+                if s is None:
+                    s = np.random.randint(0, env.n_start_data)
 
-        for s in eval_list:
-            if s is None:
-                s = np.random.randint(0, env.n_start_data)
+                # Find the current heating water temperatures
+                heat_inds = np.array([2, 3])
+                h_in_and_out = env.get_scaled_init_state(s, heat_inds)
+                title_ext = w_temp_str(h_in_and_out)
 
-            # Find the current heating water temperatures
-            heat_inds = np.array([2, 3])
-            h_in_and_out = env.get_scaled_init_state(s, heat_inds)
-            title_ext = w_temp_str(h_in_and_out)
-
-            # Plot
-            env.analyze_agents_visually(agent_list, state_mask=None, start_ind=s,
-                                        plot_constrain_actions=False,
-                                        show_rewards=True, series_merging_list=None,
-                                        bounds=bounds, title_ext=title_ext,
-                                        put_on_ol=put_on_ol, plot_rewards=True,
-                                        overwrite=overwrite)
+                # Plot
+                env.analyze_agents_visually(agent_list, state_mask=None, start_ind=s,
+                                            plot_constrain_actions=False,
+                                            show_rewards=True, series_merging_list=None,
+                                            bounds=bounds, title_ext=title_ext,
+                                            put_on_ol=put_on_ol, plot_rewards=True,
+                                            overwrite=overwrite)
 
     # Do performance evaluation
     if perf_eval:
@@ -712,8 +713,8 @@ def main() -> None:
     if args.room:
         alpha, tb_low, tb_high = extract_args(args.float, 50.0, None, None)
         n_steps = extract_args(args.int, None)[0]
-        ext_args = extract_args(args.bool, False, False, False, False)
-        add_bat, perf_eval, phys_cons, overwrite = ext_args
+        ext_args = extract_args(args.bool, False, False, False, True, False)
+        add_bat, perf_eval, phys_cons, visual_analysis, overwrite = ext_args
         temp_bds = None if tb_high is None else (tb_low, tb_high)
         run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps,
                         include_battery=add_bat, perf_eval=perf_eval,
@@ -721,7 +722,8 @@ def main() -> None:
                         date_str=date_str, temp_bds=temp_bds,
                         train_data=train_data, room_nr=room_nr,
                         hop_eval_set=hop_eval_data,
-                        sample_from=rl_sampling)
+                        sample_from=rl_sampling,
+                        visual_analysis=visual_analysis)
 
     # Overleaf plots
     if args.plot:
