@@ -120,6 +120,8 @@ class BaseDynamicsModel(KerasBase, ABC):
     n_pred_full: int  #: Number of non-control variables in dataset.
     n_pred: int  #: Number of dimensions of the prediction
 
+    fit_data: str = None  #: Subset of data the model was trained on, set by fit()
+
     # Disturbance variables
     modeled_disturbance: bool = False
     res_std: Arr = None
@@ -555,6 +557,18 @@ class BaseDynamicsModel(KerasBase, ABC):
         exists = os.path.isfile(curr_name + ".pdf")
         return curr_name, exists
 
+    def _acf_plot_path(self, i: int = 0, data_str: str = None,
+                       add_ext: bool = True, partial: bool = False):
+        """Creates the plot path for the acf plot file."""
+        p = "P" if partial else ""
+        if data_str is None:
+            data_str = self.fit_data
+            assert data_str is not None
+        dat_ext = f"_{data_str}" if data_str != DEFAULT_TRAIN_SET else ""
+        ext = ".pdf" if add_ext else ""
+        res_str = f"Res{p}ACF_{i}{dat_ext}{ext}"
+        return self.get_plt_path(res_str)
+
     def analyze_visually(self, plot_acf: bool = True,
                          n_steps: Sequence = (1, 4, 20),
                          overwrite: bool = False,
@@ -582,18 +596,24 @@ class BaseDynamicsModel(KerasBase, ABC):
             print(f"Analyzing model {self.name}")
         d = self.data
 
+        # Check fitted
+        assert self.fit_data is not None, "Model was not fitted or loaded!!!"
+
         # Check input
         assert np.all(np.array(n_steps) >= 0), f"Negative timestep found in: {n_steps}"
 
         # Get residuals and plot autocorrelation
         if plot_acf:
             # Check if file already exist.
-            first_acf_name = self.get_plt_path(f'ResACF_0.pdf')
+            first_acf_name = self._acf_plot_path()
+
             if overwrite or not os.path.isfile(first_acf_name):
-                res = self.get_residuals("train")
+                res = self.get_residuals(self.fit_data)
                 for k in range(get_shape1(res)):
-                    plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResACF_{k}'))
-                    plot_residuals_acf(res[:, k], name=self.get_plt_path(f'ResPACF_{k}'), partial=True)
+                    acf_name = self._acf_plot_path(i=k, add_ext=False)
+                    plot_residuals_acf(res[:, k], name=acf_name)
+                    pacf_name = self._acf_plot_path(i=k, add_ext=False, partial=True)
+                    plot_residuals_acf(res[:, k], name=pacf_name, partial=True)
 
         # Define the string lists
         parts = ["train", "val"]

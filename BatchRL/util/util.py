@@ -710,6 +710,7 @@ def train_decorator():
         def decorated(self, verbose: int = 0,
                       train_data: str = DEFAULT_TRAIN_SET, **kwargs):
             """The decorated function."""
+            self.fit_data = train_data
 
             loaded = self.load_if_exists(self.m, self.name, train_data=train_data)
             if not loaded:
