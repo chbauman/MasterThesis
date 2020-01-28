@@ -13,20 +13,63 @@ if TYPE_CHECKING:
     from envs.base_dynamics_env import DynEnv
 
 # Define directory for agent models
-rl_model_dir = os.path.join(MODEL_DIR, "RL")
-create_dir(rl_model_dir)
+RL_MODEL_DIR = os.path.join(MODEL_DIR, "RL")
+create_dir(RL_MODEL_DIR)
 
 
 def upload_trained_agents(verbose: int = 1):
     if verbose:
         print("Uploading agent neural network parameters to Google Drive.")
-    upload_folder_zipped(rl_model_dir)
+    upload_folder_zipped(RL_MODEL_DIR)
 
 
 def download_trained_agents(verbose: int = 1):
     if verbose:
         print("Downloading agent neural network parameters from Google Drive.")
-    download_and_extract_zipped_folder("RL", rl_model_dir)
+    download_and_extract_zipped_folder("RL", RL_MODEL_DIR)
+
+
+def remove_agents(min_steps: int = 1000, verbose: int = 5) -> None:
+    """Removes all agents that were trained for less than `min_steps` steps.
+
+    Args:
+        min_steps: Minimum number of training steps for an agent not to be
+            deleted.
+        verbose: Whether to print infos.
+    """
+    for sub_dirs in os.listdir(RL_MODEL_DIR):
+        full_sub_path = os.path.join(RL_MODEL_DIR, sub_dirs)
+
+        # Check if it is a file instead of a folder
+        if os.path.isfile(full_sub_path):
+            if verbose:
+                print(f"Found unexpected file: {full_sub_path}")
+            continue
+
+        # Iterate over files in sub-folder
+        for f in os.listdir(full_sub_path):
+            f_path = os.path.join(full_sub_path, f)
+
+            # Check if it is actually a folder
+            if os.path.isdir(f):
+                if verbose:
+                    print(f"Found unexpected folder: {f} in {full_sub_path}")
+                continue
+
+            # Decide if it will be removed
+            rem_file = False
+            try:
+                n_ep = int(f.split("_")[1][3:])
+                rem_file = n_ep < min_steps
+            except (IndexError, ValueError):
+                if verbose:
+                    print(f"Invalid file name: {f}")
+
+            # Remove
+            if rem_file:
+                if verbose:
+                    print(f"Removing file: {f}")
+                os.remove(f_path)
 
 
 class AbstractAgent(ABC):

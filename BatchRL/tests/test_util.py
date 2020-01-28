@@ -8,7 +8,7 @@ from mock import call
 
 import util.notify
 from agents.agents_heuristic import ConstActionAgent
-from agents.base_agent import rl_model_dir
+from agents.base_agent import RL_MODEL_DIR, remove_agents
 from data_processing.dataset import dataset_data_path
 from dynamics.base_hyperopt import hop_path
 from dynamics.recurrent import RNN_TEST_DATA_NAME
@@ -24,7 +24,7 @@ from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, m
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, \
     yeet, \
     dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str, floor_datetime_to_min, extract_args, fun_to_class, \
-    skip_if_no_internet
+    skip_if_no_internet, ProgWrap
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
     _trf_desc_units, plot_env_evaluation, plot_valve_opening
 
@@ -776,9 +776,12 @@ def cleanup_test_data(verbose: int = 0):
     rem_files_and_dirs(hop_path, "TestHop", anywhere=True)
 
     # Cleanup environments
-    for s in ["TestEnv", "BatteryTest", "FullTest"]:
-        rem_files_and_dirs(rl_plot_path, s, anywhere=True)
-        rem_files_and_dirs(rl_model_dir, s, anywhere=True)
+    with ProgWrap(f"Cleaning up RL envs...", verbose > 0):
+        for s in ["TestEnv", "BatteryTest", "FullTest"]:
+            rem_files_and_dirs(rl_plot_path, s, anywhere=True)
+            rem_files_and_dirs(RL_MODEL_DIR, s, anywhere=True)
+
+        remove_agents()
 
     # Cleanup other test data
     rem_files_and_dirs(dataset_data_path, "Test", anywhere=True)
