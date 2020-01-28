@@ -20,7 +20,9 @@ sys.path.insert(0, 'C:\\Users\\Chrigi\\Documents\\MasterThesis\\MasterThesis\\Ba
 project = 'BatchRL'
 copyright = '2019, Christian Baumann'
 author = 'Christian Baumann'
-version = '1.1.4'
+version = '1.2.4'
+
+show_authors = True
 
 # -- General configuration ---------------------------------------------------
 
@@ -29,13 +31,17 @@ version = '1.1.4'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'sphinx.ext.todo',
     'sphinx_autodoc_typehints',
     'sphinx_rtd_theme',
     'sphinxarg.ext',
-    'sphinx.ext.napoleon',
 ]
+
+# Type checking options
+# set_type_checking_flag = True
+always_document_param_types = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
