@@ -545,6 +545,53 @@ def extract_args(args: Optional[List], *def_vals,
     return ret
 
 
+def remove_files_in_sub_folders(base_dir: str, bool_fun: Callable,
+                                remove_empty_dirs: bool = True,
+                                verbose: bool = True) -> None:
+    """
+
+    Args:
+        base_dir:
+        bool_fun: Function taking filename and returning bool deciding
+            whether to delete file.
+        remove_empty_dirs:
+        verbose: Verbosity.
+    """
+    for sub_dir in os.listdir(base_dir):
+        # Get full path
+        full_sub_path = os.path.join(base_dir, sub_dir)
+
+        # Check if it is a file instead of a folder
+        if os.path.isfile(full_sub_path):
+            if verbose:
+                print(f"Found unexpected file: {full_sub_path}")
+            continue
+
+        # Find sub files (and folders)
+        sub_files = os.listdir(full_sub_path)
+
+        # Delete folder if empty
+        if len(sub_files) == 0 and remove_empty_dirs:
+            print(f"Removing folder: {sub_dir}")
+            os.rmdir(full_sub_path)
+
+        # Iterate over files in sub-folder
+        for f in sub_files:
+            f_path = os.path.join(full_sub_path, f)
+
+            # Check if it is actually a folder
+            if os.path.isdir(f):
+                if verbose:
+                    print(f"Found unexpected folder: {f} in {full_sub_path}")
+                continue
+
+            # Remove
+            if bool_fun(f):
+                if verbose:
+                    print(f"Removing file: {f}")
+                os.remove(f_path)
+
+
 def repl(el, n: int) -> List:
     """Constructs a list with `n` equal elements 'el'.
 

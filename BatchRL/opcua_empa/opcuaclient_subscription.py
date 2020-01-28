@@ -31,6 +31,10 @@ logging.basicConfig(format='%(asctime)s - OPC UA %(message)s', level=logging.WAR
 logger = logging.getLogger('opc ua client')
 
 
+MAX_TEMP: int = 28  #: Them maximum temperature to set.
+MIN_TEMP: int = 10  #: Them minimum temperature to set.
+
+
 def example_usage() -> None:
     """Example usage of the :class:`OpcuaClient` class defined below.
 

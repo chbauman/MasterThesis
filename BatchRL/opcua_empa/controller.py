@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from agents.base_agent import AgentBase, AbstractAgent
+from opcua_empa.opcuaclient_subscription import MAX_TEMP, MIN_TEMP
 from util.numerics import int_to_sin_cos
 from util.util import Num, get_min_diff, day_offset_ts, print_if_verb, ts_per_day, floor_datetime_to_min
 
@@ -18,9 +19,6 @@ if TYPE_CHECKING:
     # Avoiding cyclic imports for type checking
     from data_processing.dataset import Dataset
     from envs.dynamics_envs import RLDynEnv
-
-MAX_TEMP: int = 28  #: Them maximum temperature to set.
-MIN_TEMP: int = 10  #: Them minimum temperature to set.
 
 
 class Controller(ABC):

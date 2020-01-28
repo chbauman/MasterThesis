@@ -9,7 +9,7 @@ from mpl_toolkits.axes_grid1 import host_subplot
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from opcua_empa.controller import MIN_TEMP, MAX_TEMP
+from opcua_empa.opcuaclient_subscription import MAX_TEMP, MIN_TEMP
 from util.numerics import fit_linear_1d, load_performance, check_shape, ErrMetric, MaxAbsEer, MAE
 from util.util import EULER, datetime_to_np_datetime, string_to_dt, get_if_not_none, clean_desc, split_desc_units, \
     create_dir, Num, yeet, tot_size, mins_to_str, IndT, BASE_DIR, DEFAULT_TRAIN_SET

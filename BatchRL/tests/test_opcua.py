@@ -8,10 +8,10 @@ import numpy as np
 import opcua_empa.opcua_util
 from dynamics.composite import CompositeModel
 from envs.dynamics_envs import RoomBatteryEnv, PWProfile, FullRoomEnv
-from opcua_empa.controller import FixTimeConstController, ValveToggler, MIN_TEMP, MAX_TEMP, RLController, \
+from opcua_empa.controller import FixTimeConstController, ValveToggler, RLController, \
     setpoint_toggle_frac, setpoint_from_fraction
 from opcua_empa.opcua_util import NodeAndValues, read_experiment_data
-from opcua_empa.opcuaclient_subscription import OpcuaClient
+from opcua_empa.opcuaclient_subscription import OpcuaClient, MAX_TEMP, MIN_TEMP
 from opcua_empa.room_control_client import ControlClient, run_control
 from tests.test_dynamics import get_full_composite_model
 from tests.test_rl import KerasDDPGTest

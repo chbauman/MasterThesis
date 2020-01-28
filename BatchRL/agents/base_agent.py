@@ -7,7 +7,8 @@ import numpy as np
 
 from util.numerics import npf32
 from util.share_data import upload_folder_zipped, download_and_extract_zipped_folder
-from util.util import Arr, fix_seed, MODEL_DIR, create_dir
+from util.util import Arr, fix_seed, MODEL_DIR, create_dir, remove_files_in_sub_folders
+from util.visualize import rl_plot_path
 
 if TYPE_CHECKING:
     from envs.base_dynamics_env import DynEnv
@@ -38,7 +39,7 @@ def download_trained_agents(verbose: int = 1):
     download_and_extract_zipped_folder("RL", RL_MODEL_DIR)
 
 
-def remove_agents(min_steps: int = 1000, verbose: int = 5) -> None:
+def remove_agents(min_steps: int = 10000, verbose: int = 5) -> None:
     """Removes all agents that were trained for less than `min_steps` steps.
 
     For cleaning up agents that were produced when testing
@@ -51,48 +52,43 @@ def remove_agents(min_steps: int = 1000, verbose: int = 5) -> None:
             deleted.
         verbose: Whether to print infos.
     """
-    for sub_dir in os.listdir(RL_MODEL_DIR):
-        # Get full path
-        full_sub_path = os.path.join(RL_MODEL_DIR, sub_dir)
-
-        # Check if it is a file instead of a folder
-        if os.path.isfile(full_sub_path):
+    def remove_f(f):
+        rem_file = False
+        try:
+            n_ep = int(f.split("_")[1][3:])
+            rem_file = n_ep < min_steps
+        except (IndexError, ValueError):
             if verbose:
-                print(f"Found unexpected file: {full_sub_path}")
-            continue
+                print(f"Invalid file name: {f}")
+        return rem_file
 
-        # Find sub files (and folders)
-        sub_files = os.listdir(full_sub_path)
+    remove_files_in_sub_folders(RL_MODEL_DIR, remove_f,
+                                True, verbose=verbose > 0)
 
-        # Delete folder if empty
-        if len(sub_files) == 0:
-            print(f"Removing folder: {sub_dir}")
-            os.rmdir(full_sub_path)
+    def remove_agent_eval(f):
+        rem_file = False
 
-        # Iterate over files in sub-folder
-        for f in sub_files:
-            f_path = os.path.join(full_sub_path, f)
+        # Remove analysis plots
+        try:
+            i = f.find("_DDPG_")
+            if i >= 0:
+                n_eps = int(f[(i + 6):].split(".")[0])
+                rem_file = n_eps < min_steps
+        except ValueError as e:
+            print(f"{e} happened.")
 
-            # Check if it is actually a folder
-            if os.path.isdir(f):
-                if verbose:
-                    print(f"Found unexpected folder: {f} in {full_sub_path}")
-                continue
+        # Remove train rewards plots
+        try:
+            if f.find("DDPG_NEP") >= 0:
+                n_eps = int(f[8:].split("_")[0])
+                rem_file = n_eps < min_steps
+        except ValueError as e:
+            print(f"{e} happened.")
 
-            # Decide if it will be removed
-            rem_file = False
-            try:
-                n_ep = int(f.split("_")[1][3:])
-                rem_file = n_ep < min_steps
-            except (IndexError, ValueError):
-                if verbose:
-                    print(f"Invalid file name: {f}")
+        return rem_file
 
-            # Remove
-            if rem_file:
-                if verbose:
-                    print(f"Removing file: {f}")
-                os.remove(f_path)
+    remove_files_in_sub_folders(rl_plot_path, remove_agent_eval,
+                                True, verbose=verbose > 0)
 
 
 class AbstractAgent(ABC):
