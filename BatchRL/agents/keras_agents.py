@@ -25,6 +25,10 @@ from util.util import make_param_ext, train_decorator, DEFAULT_TRAIN_SET, get_rl
 from util.visualize import plot_rewards
 
 
+def ddpg_agent_name(n_steps: int) -> str:
+    return f"DDPG_NEP{n_steps}"
+
+
 class KerasBaseAgent(AgentBase, KerasBase):
     """The interface for all keras-rl agent wrappers."""
 
@@ -285,6 +289,14 @@ class DDPGBaseAgent(KerasBaseAgent):
         hist = self.m.fit(self.env, nb_steps=self.n_steps,
                           visualize=False, verbose=min(verbose, 1), nb_max_episode_steps=200)
         train_plot = self.env.get_plt_path(self.name + "_train_rewards")
+        n_steps_trained = hist.history['nb_steps'][-1]
+        if n_steps_trained <= self.n_steps - self.env.n_ts_per_eps:
+            if verbose:
+                print(f"Training aborted after {n_steps_trained} steps, "
+                      f"saving parameters anyway...")
+            # Rename for parameter saving
+            self.name = ddpg_agent_name(n_steps_trained)
+
         plot_rewards(hist, train_plot)
 
     def get_short_name(self):
@@ -306,7 +318,7 @@ def default_ddpg_agent(env: RLDynEnv,
                               action_range=env.action_range,
                               n_steps=n_steps,
                               gamma=0.99, lr=0.00001)
-        agent.name = f"DDPG_NEP{n_steps}"
+        agent.name = ddpg_agent_name(n_steps)
 
     # Fit if requested
     if fitted:
