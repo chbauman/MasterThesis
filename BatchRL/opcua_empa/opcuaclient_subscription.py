@@ -6,6 +6,8 @@ See the function `example_usage` for an example how to use the `OpcuaClient`.
 Original implementation by Ralf Knechtle, modified by me.
 Main changes: Added context manager functionality, more docstrings,
 more specific error handling, type hints and an example.
+
+.. moduleauthor:: Christian Baumann and Ralf Knechtle
 """
 import datetime
 import logging

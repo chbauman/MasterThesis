@@ -30,7 +30,7 @@ Example usage::
     # Add your code here...
     print(values, timestamps)
 
-Written by Christian Baumann and Ralf Knechtle @ Empa, 2019
+.. moduleauthor:: Christian Baumann and Ralf Knechtle
 """
 import os
 import shutil
