@@ -1,4 +1,10 @@
-"""The main script of this project.
+"""
+.. argparse::
+   :filename: ../MasterThesis/BatchRL/BatchRL.py
+   :func: def_parser
+   :prog: BatchRL.py
+
+The main script of this project.
 
 The `main` function runs all the necessary high-level
 functions. The complicated stuff is hidden in the other

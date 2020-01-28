@@ -134,7 +134,8 @@ class AgentBase(AbstractAgent, ABC):
     def get_info(self) -> Dict:
         return {}
 
-    def eval(self, n_steps: int = 100, reset_seed: bool = False, detailed: bool = False,
+    def eval(self, n_steps: int = 100, reset_seed: bool = False,
+             detailed: bool = False,
              use_noise: bool = False, scale_states: bool = False,
              episode_marker: Callable = None):
         """Evaluates the agent for a given number of steps.

@@ -12,8 +12,8 @@
 #
 # import os
 import sys
-sys.path.insert(0, 'C:\\Users\\Chrigi\\Documents\\MasterThesis\\MasterThesis\\BatchRL')
 
+sys.path.insert(0, 'C:\\Users\\Chrigi\\Documents\\MasterThesis\\MasterThesis\\BatchRL')
 
 # -- Project information -----------------------------------------------------
 
@@ -21,7 +21,6 @@ project = 'BatchRL'
 copyright = '2019, Christian Baumann'
 author = 'Christian Baumann'
 version = '1.1.4'
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -32,9 +31,10 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.todo',
-    'sphinx_autodoc_typehints'
+    'sphinx_autodoc_typehints',
     'sphinx_rtd_theme',
     'sphinxarg.ext',
+    'sphinx.ext.napoleon',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -52,7 +52,6 @@ language = 'en'
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -65,21 +64,18 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-
-# -- Extension configuration -------------------------------------------------
-
-extensions = ['sphinx.ext.napoleon']
-
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
 
 # Not skipping __init__
 def skip(app, what, name, obj, would_skip, options):
     if name in ["__init__", "__len__", "__str__", "__add__", "__getitem__"]:
         return False
     return would_skip
+
 
 def setup(app):
     app.connect("autodoc-skip-member", skip)

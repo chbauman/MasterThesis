@@ -1,4 +1,9 @@
-"""Controller interface for opcua client.
+"""
+.. module:: controller
+   :platform: Unix, Windows
+   :synopsis: Controller interface for opcua client.
+
+.. moduleauthor:: Christian Baumann
 
 Defines controllers that can be used to
 do control on the real system using the opcua client.
