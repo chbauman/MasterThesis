@@ -4,7 +4,7 @@ from typing import Tuple, Sequence, Any, List, Callable, Union
 import numpy as np
 import scipy.optimize
 
-from util.util import datetime_to_np_datetime, string_to_dt, Arr, Num, tot_size
+from util.util import datetime_to_np_datetime, string_to_dt, Arr, Num, tot_size, DEFAULT_TRAIN_SET
 
 
 def _return_or_error(cond: bool, err_msg: str = None) -> bool:
@@ -149,18 +149,21 @@ class MaxAbsEer(ErrMetric):
     err_fun = max_abs_err
 
 
-def get_metrics_eval_save_name_list(parts: List[str], dt: int) -> List[str]:
+def get_metrics_eval_save_name_list(parts: List[str], dt: int,
+                                    train_set: str = DEFAULT_TRAIN_SET) -> List[str]:
     """Defines the filenames for performance evaluation.
 
     Args:
         parts: The list with the strings specifying the parts of the dataset.
         dt: The number of minutes in a timestep.
+        train_set: The part of the data the model was trained on.
 
     Returns:
         A list with the filenames.
     """
+    train_set_ext = "" if train_set == DEFAULT_TRAIN_SET else f"_TS_{train_set}"
     ext_list = ["Inds"] + [s.capitalize() for s in parts]
-    save_names = [f"Perf_{e}_dt_{dt}.txt" for e in ext_list]
+    save_names = [f"Perf_{e}{train_set_ext}_dt_{dt}.txt" for e in ext_list]
     return save_names
 
 

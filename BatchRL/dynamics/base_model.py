@@ -569,6 +569,12 @@ class BaseDynamicsModel(KerasBase, ABC):
         res_str = f"Res{p}ACF_{i}{dat_ext}{ext}"
         return self.get_plt_path(res_str)
 
+    def _get_fit_data_set(self, assert_set: bool = True) -> str:
+        f_dat = self.fit_data
+        if assert_set:
+            assert f_dat is not None, "Not yet fitted!"
+        return f_dat
+
     def analyze_visually(self, plot_acf: bool = True,
                          n_steps: Sequence = (1, 24),
                          overwrite: bool = False,
@@ -595,10 +601,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         if verbose:
             print(f"Analyzing model {self.name}")
         d = self.data
-
-        # Check fitted
-        data_str = self.fit_data
-        assert data_str is not None, "Model was not fitted or loaded!!!"
+        data_str = self._get_fit_data_set()
 
         # Check input
         assert np.all(np.array(n_steps) >= 0), f"Negative timestep found in: {n_steps}"
@@ -674,9 +677,10 @@ class BaseDynamicsModel(KerasBase, ABC):
 
         # Get the data
         d = self.data
+        data_str = self._get_fit_data_set()
 
         # Create file names
-        save_names = get_metrics_eval_save_name_list(parts, d.dt)
+        save_names = get_metrics_eval_save_name_list(parts, d.dt, data_str)
         save_names = [self.get_plt_path(s) for s in save_names]
 
         # Check if file already exists

@@ -20,11 +20,11 @@ from util.util import DEFAULT_TRAIN_SET, DEFAULT_END_DATE, DEFAULT_ROOM_NR, DEFA
 # Define the models by name
 base_rnn_models = [
     "WeatherFromWeatherTime_RNN",
-    "Apartment_RNN",
+    # "Apartment_RNN",
     "RoomTempFromReduced_RNN",
-    "RoomTemp_RNN",
+    # "RoomTemp_RNN",
     # "WeatherFromWeatherTime_Linear",
-    "PhysConsModel",
+    # "PhysConsModel",
     # "Full_RNN",
 ]
 full_models = [
