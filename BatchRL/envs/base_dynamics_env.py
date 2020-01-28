@@ -19,6 +19,9 @@ from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_detail
 Agents = Union[List[base_agent.AgentBase], base_agent.AgentBase]
 
 
+DEFAULT_ENV_SAMPLE_DATA: str = "train"
+
+
 class DynEnv(ABC, gym.Env):
     """The environment wrapper class for `BaseDynamicsModel`.
 
@@ -70,7 +73,8 @@ class DynEnv(ABC, gym.Env):
     def __init__(self, m: BaseDynamicsModel, name: str = None, max_eps: int = None,
                  disturb_fac: float = 1.0,
                  init_res: bool = True,
-                 dummy_use: bool = False):
+                 dummy_use: bool = False,
+                 sample_from: str = DEFAULT_ENV_SAMPLE_DATA):
         """Initialize the environment.
 
         Args:
@@ -81,9 +85,10 @@ class DynEnv(ABC, gym.Env):
         if not self._dummy_use:
             m.model_disturbance()
         self.m = m
+        sam_ext = f"_SAM_{sample_from}" if sample_from != DEFAULT_ENV_SAMPLE_DATA else ""
         if name is not None:
             dist_ex = make_param_ext([("DF", disturb_fac)])
-            self.name = f"{name}{dist_ex}_DATA_{m.name}"
+            self.name = f"{name}{dist_ex}{sam_ext}_DATA_{m.name}"
         else:
             self.name = f"RLEnv_{m.name}"
         self.plot_path = os.path.join(rl_plot_path, self.name)
@@ -101,7 +106,7 @@ class DynEnv(ABC, gym.Env):
         self.n_ts_per_day = ts_per_day(dat.dt)
 
         # Set data and initialize env.
-        self._set_data("train")
+        self._set_data(sample_from)
         if init_res:
             self.reset()
 

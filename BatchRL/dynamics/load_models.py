@@ -12,6 +12,7 @@ from dynamics.composite import CompositeModel
 from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, PhysicallyConsistentRNN, RNNDynamicOvershootModel
 from dynamics.sin_cos_time import SCTimeModel
+from envs.base_dynamics_env import DEFAULT_ENV_SAMPLE_DATA
 from envs.dynamics_envs import RangeT, FullRoomEnv, RoomBatteryEnv, LowHighProfile
 from util.util import DEFAULT_TRAIN_SET, DEFAULT_END_DATE, DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, prog_verb, data_ext, \
     ProgWrap, DEFAULT_SEQ_LEN
@@ -52,6 +53,7 @@ def load_room_env(m_name: str,
                   room_nr: int = DEFAULT_ROOM_NR,
                   hop_eval_set: str = DEFAULT_EVAL_SET,
                   dummy_use: bool = False,
+                  sample_from: str = DEFAULT_ENV_SAMPLE_DATA,
                   ):
     """
 
@@ -67,6 +69,7 @@ def load_room_env(m_name: str,
         hop_eval_set:
         dummy_use: If True, the underlying model is not fitted. To be
             used if agents are only needed for prediction / evaluation.
+        sample_from: Sampling portion of data when resetting env.
 
     Returns:
 
@@ -97,6 +100,7 @@ def load_room_env(m_name: str,
             'temp_bounds': temp_bds,
             'disturb_fac': 0.3,
             'dummy_use': dummy_use,
+            'sample_from': sample_from,
         }
         if include_battery:
             c_prof = LowHighProfile(ds.dt)
