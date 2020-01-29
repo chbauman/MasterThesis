@@ -772,13 +772,20 @@ def plot_env_evaluation(actions: np.ndarray,
     # Extract and check shapes
     n_agents, episode_len, n_feats = states.shape
     check_shape(actions, (n_agents, episode_len, -1))
-    check_shape(rewards, (n_agents, episode_len))
+    n_rewards = 1
+    if len(rewards.shape) == 2:
+        check_shape(rewards, (n_agents, episode_len))
+        rewards = np.expand_dims(rewards, axis=-1)
+    else:
+        check_shape(rewards, (n_agents, episode_len, -1))
+        n_rewards = rewards.shape[2]
     n_feats, series_mask = _handle_merging(n_feats, series_mask, series_merging_list)
     if series_merging_list is None:
         series_merging_list = []
     n_merged_series = len(series_merging_list)
     n_actions = actions.shape[-1]
-    tot_n_plots = n_actions + n_feats + n_merged_series + show_rewards + plot_extra * n_actions
+    tot_n_plots = n_actions + n_feats + n_merged_series + \
+                  n_rewards * show_rewards + plot_extra * n_actions
 
     # We'll use a separate GridSpecs for controls, states and rewards
     fig = plt.figure()
@@ -794,9 +801,11 @@ def plot_env_evaluation(actions: np.ndarray,
     # Define axes
     n_act_plots = n_actions * (1 + plot_extra)
     rew_ax = fig.add_subplot(gs_rew[-1, :])
+    rew_axs = [fig.add_subplot(gs_rew[(-n_rewards + i), :], sharex=rew_ax) for i in range(n_rewards - 1)]
+    rew_axs += [rew_ax]
     con_axs = [fig.add_subplot(gs_con[i, :], sharex=rew_ax) for i in range(n_actions)]
     state_axs = [fig.add_subplot(gs_state[i, :], sharex=rew_ax)
-                 for i in range(n_act_plots + n_merged_series, tot_n_plots - 1)]
+                 for i in range(n_act_plots + n_merged_series, tot_n_plots - n_rewards)]
     state_mrg_axs = [fig.add_subplot(gs_state_merged[i, :], sharex=rew_ax)
                      for i in range(n_act_plots, n_act_plots + n_merged_series)]
     con_fb_axs = [fig.add_subplot(gs_con_fb[i, :], sharex=rew_ax) for i in range(n_actions, n_act_plots)]
@@ -810,7 +819,8 @@ def plot_env_evaluation(actions: np.ndarray,
 
     # Set titles and setup axes
     if show_rewards:
-        rew_ax.set_title("Rewards")
+        [r_ax.set_title(f"Rewards {ct}") for ct, r_ax in enumerate(rew_axs)]
+
     c_title = "Control Inputs"
     _full_setup_axis(con_axs, control_descs, "Original " + c_title if plot_extra else c_title)
     if plot_extra:
@@ -850,7 +860,7 @@ def plot_env_evaluation(actions: np.ndarray,
     if plot_extra:
         _plot_helper_helper(extra_actions, con_fb_axs, agent_names, steps=True)
     _plot_helper_helper(states, state_axs, agent_names, steps=False)
-    _plot_helper_helper(np.expand_dims(rewards, axis=-1), [rew_ax], agent_names, steps=False)
+    _plot_helper_helper(rewards, rew_axs, agent_names, steps=False)
     for ct, m in enumerate(series_merging_list):
         if len(m) == 2:
             # Add left and right y-label
@@ -882,8 +892,8 @@ def plot_env_evaluation(actions: np.ndarray,
     state_axs[0].legend(**leg_kwargs)
     x_label = "Time" if use_time else f"Timestep [{ds.dt}min]"
     if show_rewards:
-        rew_ax.set_xlabel(x_label)
-        rew_ax.legend(**leg_kwargs)
+        rew_axs[-1].set_xlabel(x_label)
+        rew_axs[-1].legend(**leg_kwargs)
     else:
         state_axs[-1].set_xlabel()
 

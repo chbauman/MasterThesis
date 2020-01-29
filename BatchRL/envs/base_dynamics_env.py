@@ -345,7 +345,8 @@ class DynEnv(ABC, gym.Env):
                                 plot_rewards: bool = False,
                                 bounds: List[Tuple[int, Tuple[Num, Num]]] = None,
                                 series_merging_list: MergeListT = None,
-                                overwrite: bool = False) -> None:
+                                overwrite: bool = False,
+                                plot_all_rewards: bool = True) -> None:
         """Analyzes and compares a set of agents / control strategies.
 
         Uses the same initial condition of the environment and evaluates
@@ -369,6 +370,7 @@ class DynEnv(ABC, gym.Env):
             series_merging_list: Defines series that will be merged. Should be
                 independent of agent's actions.
             overwrite: Whether to overwrite existing plot files.
+            plot_all_rewards:
 
         Raises:
             ValueError: If `start_ind` is too large or if an agent is not suited
@@ -468,7 +470,8 @@ class DynEnv(ABC, gym.Env):
         name_list = [a.get_short_name() for a in agents]
         add_pth = self._construct_plot_name("AgentAnalysisReward", start_ind, agents, put_on_ol)
         add_pth = add_pth if plot_rewards else None
-        plot_env_evaluation(action_sequences, trajectories, rewards, self.m.data,
+        rewards_for_eval = all_rewards if plot_all_rewards else rewards
+        plot_env_evaluation(action_sequences, trajectories, rewards_for_eval, self.m.data,
                             name_list, analysis_plot_path, clipped_action_sequences,
                             state_mask, show_rewards=show_rewards, title_ext=title_ext,
                             np_dt_init=np_st_init, rew_save_path=add_pth, bounds=bounds,

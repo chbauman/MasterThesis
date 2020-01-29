@@ -734,7 +734,7 @@ class RoomBatteryEnv(RLDynEnv):
         all_rew = [temp_pen, room_eng, bat_eng]
         if self.p is not None:
             curr_n_ts = self.get_curr_day_n()
-            all_rew += [(room_eng * ROOM_ENG_FAC + bat_eng) * self.p(curr_n_ts)]
+            all_rew += [(room_eng + bat_eng) * self.p(curr_n_ts)]
         return np.array(all_rew, dtype=np.float32)
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:

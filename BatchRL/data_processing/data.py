@@ -1240,7 +1240,6 @@ def choose_dataset_and_constraints(seq_len: int = 20,
     base_ds_name = f"Model_Room{room_nr}"
     ds = choose_dataset(base_ds_name, seq_len, add_battery_data,
                         date_str=date_str)
-    print(ds.scaling)
     rnn_consts = get_constraints(ds, add_battery_data)
 
     # Return
