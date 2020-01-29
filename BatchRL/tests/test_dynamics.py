@@ -244,6 +244,7 @@ class TestBaseDynamics(TestCase):
         # Test model analysis
         base_data = np.copy(self.ds_1.data)
         streak = copy_arr_list(self.ds_1.get_streak("train"))
+        assert self.test_model_2.fit_data is not None, "Fuuuuck"
         self.test_model_2.analyze_visually(plot_acf=False, n_steps=(2,),
                                            verbose=False, add_errors=True)
         streak_after = self.ds_1.get_streak("train")
@@ -264,6 +265,7 @@ class TestBaseDynamics(TestCase):
         self.test_mod.analyze_performance(n_steps=(1, 3), overwrite=True,
                                           verbose=0, metrics=met_list, n_days=7)
         test_model_4 = ConstSeriesTestModel(self.ds, pred_val_list=[0.0, 2.0, 3.0])
+        test_model_4.fit(verbose=0)
         test_model_4.analyze_performance(n_steps=(1, 3), overwrite=True,
                                          verbose=0, metrics=met_list, n_days=7)
         plot_name = "TestEvalPlot"
@@ -354,6 +356,7 @@ class TestHopTable(HyperOptimizableModel):
         return -x * x + 12 * x + 15
 
     def fit(self, verbose: int = 0, train_data: str = "train") -> None:
+        self.fit_data = train_data
         if verbose:
             print(f"Not fitting anything, data part: '{train_data}'!")
 
@@ -546,6 +549,7 @@ class TestComposite(TestCase):
                                    out_inds=np.array([0, 3], dtype=np.int32),
                                    in_inds=self.inds_123)
         mc5 = CompositeModel(self.ds_1, [m9, m10], new_name="CompositeTest4")
+        mc5.fit(verbose=0)
         mc5.analyze_visually(plot_acf=False, verbose=False, n_steps=(2,))
 
     def test_full_composite(self):
