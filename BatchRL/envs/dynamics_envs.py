@@ -349,8 +349,8 @@ class LowHighProfile(CProf):
                  low_start: int = 20):
 
         n_ts_per_h = int(60 / dt)
-        self.low_start_ind = low_start * n_ts_per_h
-        self.high_start_ind = high_start * n_ts_per_h
+        self.low_start_ind = low_start * n_ts_per_h + 1
+        self.high_start_ind = high_start * n_ts_per_h + 1
 
     def __call__(self, t: int) -> float:
         if self.high_start_ind < t < self.low_start_ind:
@@ -714,6 +714,10 @@ class RoomBatteryEnv(RLDynEnv):
         else:
             return disc_ind + self.n_ts_per_day - curr_ind
 
+    def _disc_since(self) -> int:
+        disc_ind, con_ind = self.connect_inds
+        return self.get_curr_day_n() - disc_ind
+
     def get_water_temp(self, ind_pos: int, curr_pred: np.ndarray):
         """Retrieves the scaled and the original water temperatures."""
         pos_inds = [ind_pos, ind_pos + 1]
@@ -764,7 +768,7 @@ class RoomBatteryEnv(RLDynEnv):
         bat_eng = orig_actions[1]
 
         # Check if the EV is connected, if not, no energy is used.
-        ev_connected = self.n_remain_connect() >= 0
+        ev_connected = self.n_remain_connect() > 0 and self._disc_since() > 1
         if not ev_connected:
             bat_eng = 0
         bat_eng *= BAT_SCALING
@@ -783,7 +787,7 @@ class RoomBatteryEnv(RLDynEnv):
         """
         det_rew = self.detailed_reward(curr_pred, action)
         if self.p is not None:
-            return -det_rew[-1] * self.alpha - det_rew[0]
+            return -det_rew[-1] - det_rew[0] * self.alpha
 
         # Return minus the energy used minus the temperature penalty.
         energy = det_rew[1] + det_rew[2]
@@ -809,8 +813,8 @@ class RoomBatteryEnv(RLDynEnv):
                                                  self.bat_mod.params,
                                                  True,
                                                  self.min_goal_soc_scaled,
-                                                 self.n_ts,
-                                                 self.n_ts_per_eps)
+                                                 self.n_ts_per_eps - self.n_remain_connect(),
+                                                 max_steps=self.n_ts_per_eps + 1)
 
         return np.array([room_action_clipped, bat_action_clipped])
 
