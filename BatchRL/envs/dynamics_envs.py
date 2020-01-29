@@ -230,6 +230,24 @@ class FullRoomEnv(RLDynEnv):
 
     reward_descs = [ROOM_ENERGY, TEMP_BOUND_PEN]
 
+    def do_checks(self, verbose: int = 1):
+        """Check a few properties."""
+
+        # Check if room energy is 0 if valves closed.
+        n_s = 7
+        zero_ac = np.array([0.0])
+        heat_ac = self._to_scaled(zero_ac, False)
+        d_r = self.detailed_reward(np.ones((n_s,)), heat_ac)
+        assert np.allclose(d_r[0], 0.0), f"Room energy computation incorrect: {d_r[0]}!"
+
+        # Check same with scale_action_for_step
+        h_ac2 = self.scale_action_for_step(zero_ac)
+        d_r = self.detailed_reward(np.ones((n_s,)), h_ac2)
+        assert np.allclose(d_r[0], 0.0), f"Second room energy computation incorrect: {d_r[0]}!"
+
+        if verbose:
+            print("Checks passed :)")
+
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
 
         # Compute energy used
@@ -707,13 +725,23 @@ class RoomBatteryEnv(RLDynEnv):
                                                   remove_mean=False).item()
         return scaled_water, orig_water
 
-    def do_checks(self):
+    def do_checks(self, verbose: int = 1):
         """Check a few properties."""
 
         # Check if room energy is 0 if valves closed.
         n_s = 8
-        d_r = self.detailed_reward(np.ones((n_s,)), np.array([0.0, 0.0]))
-        assert np.allclose(d_r[1], 0.0), "Room energy computation incorrect!"
+        zero_ac = np.array([0.0, 0.0])
+        heat_ac = self._to_scaled(zero_ac, False)
+        d_r = self.detailed_reward(np.ones((n_s,)), heat_ac)
+        assert np.allclose(d_r[1], 0.0), f"Room energy computation incorrect: {d_r[1]}!"
+
+        # Check same with scale_action_for_step
+        h_ac2 = self.scale_action_for_step(zero_ac)
+        d_r = self.detailed_reward(np.ones((n_s,)), h_ac2)
+        assert np.allclose(d_r[1], 0.0), f"Second room energy computation incorrect: {d_r[1]}!"
+
+        if verbose:
+            print("Checks passed :)")
 
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
         # Compute original actions
