@@ -246,9 +246,6 @@ class FullRoomEnv(RLDynEnv):
         d_r = self.detailed_reward(np.ones((n_s,)), h_ac2)
         assert np.allclose(d_r[0], 0.0), f"Second room energy computation incorrect: {d_r[0]}!"
 
-        print(heat_ac)
-        print(h_ac2)
-
         if verbose:
             print("Checks passed :)")
 
@@ -742,10 +739,6 @@ class RoomBatteryEnv(RLDynEnv):
         # Check same with scale_action_for_step
         h_ac2 = self.scale_action_for_step(zero_ac)
         d_r = self.detailed_reward(np.ones((n_s,)), h_ac2)
-
-        print(heat_ac)
-        print(h_ac2)
-
         assert np.allclose(d_r[1], 0.0), f"Second room energy computation incorrect: {d_r[1]}!"
 
         if verbose:
