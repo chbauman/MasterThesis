@@ -114,6 +114,7 @@ class BatteryModel(BaseDynamicsModel):
             print(f"Ignoring argument: train_data = {train_data}")
 
         # Get data
+        self.fit_data = "train_val"
         d = self.data
         dat = d.split_dict["train_val"].get_rel_data()
 

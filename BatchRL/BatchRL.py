@@ -77,6 +77,7 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
     battery model and evaluates some agents.
     """
     # Print info to console
+    next_verb = prog_verb(verbose)
     if verbose:
         print("Running battery modeling...")
         if put_on_ol:
@@ -98,7 +99,27 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
         bat_mod.fit(verbose=prog_verb(verbose))
         bat_mod.analyze_bat_model(put_on_ol=put_on_ol, overwrite=overwrite)
         bat_mod.analyze_visually(save_to_ol=put_on_ol, base_name="Bat",
-                                 overwrite=overwrite, n_steps=steps, verbose=verbose > 0)
+                                 overwrite=overwrite, n_steps=steps,
+                                 verbose=verbose > 0)
+
+        with ProgWrap(f"Analyzing model performance...", verbose > 0):
+            parts = ["val", "test"]
+            bat_mod.analyze_performance(N_PERFORMANCE_STEPS, verbose=next_verb,
+                                        overwrite=False,
+                                        metrics=METRICS,
+                                        parts=parts)
+            n_series = len(bat_mod.out_inds)
+            for s_ind in range(n_series):
+                curr_name = f"Series_{s_ind}{bat_mod.get_fit_data_ext()}"
+                series_mask = [s_ind]
+                plt_dir = bat_mod.get_plt_path("")[:-1]
+                plot_performance_graph([bat_mod], parts, METRICS, "",
+                                       short_mod_names=[curr_name],
+                                       scale_back=True, remove_units=False,
+                                       fit_data="train_val",
+                                       series_mask=series_mask,
+                                       titles=[""],
+                                       plot_folder=plt_dir)
 
     if not do_rl:
         if verbose:
@@ -401,11 +422,13 @@ def run_room_models(verbose: int = 1,
                                             bounds=bounds, title_ext=title_ext,
                                             put_on_ol=put_on_ol, plot_rewards=True,
                                             overwrite=overwrite)
+    elif verbose > 0:
+        print("No visual analysis!")
 
     # Do performance evaluation
     if perf_eval:
         with ProgWrap(f"Evaluating agents...", verbose > 0):
-            n_eval_steps = 10000  # n_steps // 100
+            n_eval_steps = 100  # n_steps // 100
             env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps,
                                      put_on_ol=put_on_ol, overwrite=overwrite,
                                      verbose=prog_verb(verbose),

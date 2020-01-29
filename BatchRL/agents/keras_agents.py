@@ -286,6 +286,8 @@ class DDPGBaseAgent(KerasBaseAgent):
         Makes a plot of the rewards received during the training.
         """
         # Fit and plot rewards
+        if verbose:
+            print("Actually fitting...")
         hist = self.m.fit(self.env, nb_steps=self.n_steps,
                           visualize=False, verbose=min(verbose, 1), nb_max_episode_steps=200)
         train_plot = self.env.get_plt_path(self.name + "_train_rewards")

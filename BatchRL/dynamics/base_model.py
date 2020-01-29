@@ -656,7 +656,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                             verbose: int = 0,
                             overwrite: bool = False,
                             metrics: Sequence[Type[ErrMetric]] = (MSE,),
-                            n_days: int = 14) -> None:
+                            n_days: int = 14,
+                            parts: List = None) -> None:
         """Analyzes the multistep prediction performance of the model.
 
         Uses the metrics provided by `metrics`.
@@ -668,13 +669,15 @@ class BaseDynamicsModel(KerasBase, ABC):
             overwrite: Whether to overwrite existing files.
             metrics: A sequence of metric functions that can be applied to two arrays.
             n_days: Length of sequence to perform analysis.
+            parts:
         """
         # Print to console
         if verbose:
             print(f"Analyzing performance of model {self.name}.")
 
         # Specify the parts of the data to use
-        parts = ["train", "val"]
+        if parts is None:
+            parts = ["train", "val"]
 
         # Get the data
         d = self.data

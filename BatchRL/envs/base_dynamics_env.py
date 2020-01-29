@@ -18,7 +18,6 @@ from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_detail
 
 Agents = Union[List[base_agent.AgentBase], base_agent.AgentBase]
 
-
 DEFAULT_ENV_SAMPLE_DATA: str = "train"
 
 
@@ -556,16 +555,21 @@ class DynEnv(ABC, gym.Env):
             self.set_agent(a)
 
             # Fit agent if not already fitted
-            a.fit()
+            if verbose:
+                print(f"Fitting agent: {a}")
+            a.fit(verbose=verbose, train_data=a.fit_data)
 
             # Check that agent references this environment
             if not a.env == self:
                 raise ValueError(f"Agent {a_id} was not assigned to this env!")
 
             # Evaluate agent.
+            if verbose:
+                print(f"Evaluating agent: {a}")
             rew, ex_rew, states, ep_marks = a.eval(n_steps, reset_seed=True, detailed=True,
                                                    use_noise=use_noise, scale_states=do_scaling,
-                                                   episode_marker=episode_marker)
+                                                   episode_marker=episode_marker,
+                                                   verbose=verbose)
             all_rewards[a_id, :, 0] = rew
             all_rewards[a_id, :, 1:] = ex_rew
             all_states[a_id] = states

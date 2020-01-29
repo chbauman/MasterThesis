@@ -115,12 +115,13 @@ class AgentBase(AbstractAgent, ABC):
     """
     env: 'DynEnv'  #: The corresponding environment
     name: str  #: The name of the Agent / control strategy
+    fit_data: str = None
 
     def __init__(self, env: 'DynEnv', name: str = "Abstract Agent"):
         self.env = env
         self.name = name
 
-    def fit(self, verbose: int = 0) -> None:
+    def fit(self, verbose: int = 0, train_data: str = "") -> None:
         """No fitting needed."""
         pass
 
@@ -133,7 +134,8 @@ class AgentBase(AbstractAgent, ABC):
     def eval(self, n_steps: int = 100, reset_seed: bool = False,
              detailed: bool = False,
              use_noise: bool = False, scale_states: bool = False,
-             episode_marker: Callable = None):
+             episode_marker: Callable = None,
+             verbose: int = 0):
         """Evaluates the agent for a given number of steps.
 
         If the number is greater than the number of steps in an episode, the
@@ -147,6 +149,7 @@ class AgentBase(AbstractAgent, ABC):
             scale_states: Whether to scale the state trajectory to
                 original values, only used if `detailed` is True.
             episode_marker: Function mapping from state to natural numbers.
+            verbose:
 
         Returns:
             The mean received reward if `detailed` is False, else
