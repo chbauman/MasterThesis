@@ -746,7 +746,8 @@ def plot_env_evaluation(actions: np.ndarray,
                         np_dt_init: Any = None,
                         rew_save_path: str = None,
                         series_merging_list: MergeListT = None,
-                        bounds: List[Tuple[int, Tuple[Num, Num]]] = None) -> None:
+                        bounds: List[Tuple[int, Tuple[Num, Num]]] = None,
+                        reward_descs: List[str] = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Refactor this shit more!
@@ -779,6 +780,9 @@ def plot_env_evaluation(actions: np.ndarray,
     else:
         check_shape(rewards, (n_agents, episode_len, -1))
         n_rewards = rewards.shape[2]
+        if reward_descs is not None:
+            reward_descs = ["Total Reward"] + reward_descs
+            assert n_rewards == len(reward_descs), f"Fuck this: {reward_descs}"
     n_feats, series_mask = _handle_merging(n_feats, series_mask, series_merging_list)
     if series_merging_list is None:
         series_merging_list = []
@@ -819,7 +823,14 @@ def plot_env_evaluation(actions: np.ndarray,
 
     # Set titles and setup axes
     if show_rewards:
-        [r_ax.set_title(f"Rewards {ct}") for ct, r_ax in enumerate(rew_axs)]
+        if reward_descs is None:
+            if n_rewards == 1:
+                reward_descs = [f"Rewards"]
+            else:
+                reward_descs = [f"Rewards {ct}" for ct, r_ax in enumerate(rew_axs)]
+        [r_ax.set_title(reward_descs[ct]) for ct, r_ax in enumerate(rew_axs)]
+
+    _full_setup_axis(rew_axs[:-1], reward_descs[:-1], "Reward")
 
     c_title = "Control Inputs"
     _full_setup_axis(con_axs, control_descs, "Original " + c_title if plot_extra else c_title)
@@ -911,11 +922,12 @@ def plot_env_evaluation(actions: np.ndarray,
         save_figure(save_path, size=s)
 
     # Make a plot of the rewards
-    if rew_save_path is not None:
-        n_rewards = rewards.shape[1]
-        r_res = rewards.reshape((n_agents, n_rewards, 1))
-        plot_reward_details(agent_names, r_res, rew_save_path, [],
-                            dt=ds.dt, n_eval_steps=n_rewards)
+    if n_rewards == 1:
+        if rew_save_path is not None:
+            n_rewards = rewards.shape[1]
+            r_res = rewards.reshape((n_agents, n_rewards, 1))
+            plot_reward_details(agent_names, r_res, rew_save_path, [],
+                                dt=ds.dt, n_eval_steps=n_rewards)
 
 
 def plot_heat_cool_rew_det(*args, **kwargs):

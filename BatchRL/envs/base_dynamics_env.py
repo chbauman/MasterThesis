@@ -475,7 +475,8 @@ class DynEnv(ABC, gym.Env):
                             name_list, analysis_plot_path, clipped_action_sequences,
                             state_mask, show_rewards=show_rewards, title_ext=title_ext,
                             np_dt_init=np_st_init, rew_save_path=add_pth, bounds=bounds,
-                            series_merging_list=series_merging_list)
+                            series_merging_list=series_merging_list,
+                            reward_descs=self.reward_descs)
 
         # Plot the rewards for this episode
         add_pth = self._construct_plot_name("AgentAnalysisRewardDetailed", start_ind, agents, put_on_ol)
