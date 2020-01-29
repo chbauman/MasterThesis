@@ -618,6 +618,14 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
 #######################################################################################################
 # Full Data Retrieval and Pre-processing
 
+def _data_process_plot_path(dat_struct: DataStruct, date_str: str) -> str:
+    name = dat_struct.name
+    plot_name = name + ("" if date_str == DEFAULT_END_DATE else f"_{date_str}")
+    dir_name = os.path.join(preprocess_plot_path, plot_name)
+    create_dir(dir_name)
+    return dir_name
+
+
 def get_battery_data(analyze: bool = False, date_str: str = DEFAULT_END_DATE) -> 'Dataset':
     """Loads the battery dataset if existing.
 
@@ -638,8 +646,7 @@ def get_battery_data(analyze: bool = False, date_str: str = DEFAULT_END_DATE) ->
 
     dat_struct.set_end(date_str)
     name = dat_struct.name
-    bat_plot_path = os.path.join(preprocess_plot_path, name)
-    create_dir(bat_plot_path)
+    bat_plot_path = _data_process_plot_path(dat_struct, date_str)
     n_feats = len(inds)
 
     # Define arguments
@@ -713,8 +720,7 @@ def get_weather_data(date_str: str = DEFAULT_END_DATE) -> 'Dataset':
     kws = [p_kwargs_temp, p_kwargs_irr]
 
     # Plot files
-    prep_plot_dir = os.path.join(preprocess_plot_path, name)
-    create_dir(prep_plot_dir)
+    prep_plot_dir = _data_process_plot_path(dat_struct, date_str)
 
     # Get the data
     custom_descs = np.array(["Outside Temperature [°C]", "Irradiance [W/m^2]"])
@@ -767,8 +773,6 @@ def get_DFAB_heating_data(date_str: str = DEFAULT_END_DATE) -> List['Dataset']:
     """
     data_list = []
     dt_mins = 15
-    dfab_rooms_plot_path = os.path.join(preprocess_plot_path, "DFAB")
-    create_dir(dfab_rooms_plot_path)
 
     # Single Rooms
     for e in dfab_rooms:
@@ -787,6 +791,7 @@ def get_DFAB_heating_data(date_str: str = DEFAULT_END_DATE) -> List['Dataset']:
             prep_kwargs += [blinds_kwargs]
         else:
             assert len(prep_kwargs) == n_cols == 4, f"Invalid data with {n_cols} series!"
+        dfab_rooms_plot_path = _data_process_plot_path(e, date_str)
         data_list += [convert_data_struct(e, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
 
     # General Heating Data
@@ -794,12 +799,14 @@ def get_DFAB_heating_data(date_str: str = DEFAULT_END_DATE) -> List['Dataset']:
     prep_kwargs = [temp_kwargs, temp_kwargs, {}, {}, {}, {}]
     data_struct = DFAB_AddData
     data_struct.set_end(date_str)
+    dfab_rooms_plot_path = _data_process_plot_path(data_struct, date_str)
     data_list += [convert_data_struct(data_struct, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
 
     # All Valves Together
     prep_kwargs = {'clean_args': [([], 30 * 24 * 60, [])]}
     data_struct = DFAB_AllValves
     data_struct.set_end(date_str)
+    dfab_rooms_plot_path = _data_process_plot_path(data_struct, date_str)
     data_list += [convert_data_struct(DFAB_AllValves, dfab_rooms_plot_path, dt_mins, prep_kwargs)]
     return data_list
 
@@ -1233,6 +1240,7 @@ def choose_dataset_and_constraints(seq_len: int = 20,
     base_ds_name = f"Model_Room{room_nr}"
     ds = choose_dataset(base_ds_name, seq_len, add_battery_data,
                         date_str=date_str)
+    print(ds.scaling)
     rnn_consts = get_constraints(ds, add_battery_data)
 
     # Return
