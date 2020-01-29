@@ -60,7 +60,7 @@ class RuleBasedAgent(AgentBase):
             strict: Whether to apply strict heating / cooling, start as soon as the
                 room temperature deviates from the midpoint of the temperature bounds.
         """
-        name = "RuleBasedHeating"
+        name = "RuleBasedControl"
         super().__init__(env, name=name)
 
         # Check input
@@ -78,6 +78,9 @@ class RuleBasedAgent(AgentBase):
             self.bounds = (mid, mid)
         else:
             self.bounds = rule
+
+    def __str__(self):
+        return f"Rule-Based Agent with bounds {self.bounds}"
 
     def get_action(self, state) -> Arr:
         """Defines the control strategy.
@@ -130,6 +133,9 @@ class ConstActionAgent(AgentBase):
                 assert r_s == (n_out,), f"Rule shape: {r_s} incompatible!"
             else:
                 assert r_s == (n_out,) or r_s == (), f"Rule shape: {r_s} incompatible!"
+
+    def __str__(self):
+        return f"Constant Agent with value {self.rule}"
 
     def get_action(self, state) -> Arr:
         """Defines the control strategy.
