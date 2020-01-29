@@ -428,7 +428,7 @@ def run_room_models(verbose: int = 1,
     # Do performance evaluation
     if perf_eval:
         with ProgWrap(f"Evaluating agents...", verbose > 0):
-            n_eval_steps = 100  # n_steps // 100
+            n_eval_steps = 10000  # n_steps // 100
             env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps,
                                      put_on_ol=put_on_ol, overwrite=overwrite,
                                      verbose=prog_verb(verbose),
