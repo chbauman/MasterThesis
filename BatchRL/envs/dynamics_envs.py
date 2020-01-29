@@ -73,10 +73,6 @@ class RLDynEnv(DynEnv, ABC):
         self.action_range = to_list(action_range)
         assert len(self.action_range) == n_cont_actions, "False amount of action ranges!"
         action_range_scaled = npf32((n_cont_actions, 2))
-        for k in range(2):
-            action_bd = np.array([ac[k] for ac in self.action_range])
-            action_range_scaled[:, k] = self._to_scaled(action_bd, to_original=False)
-        self.action_range_scaled = action_range_scaled
 
         # Initialize fallback actions
         self.fb_actions = np.empty((max_eps, n_cont_actions), dtype=np.float32)
@@ -86,6 +82,11 @@ class RLDynEnv(DynEnv, ABC):
         self.c_ind = d.c_inds
         if np.all(d.is_scaled):
             self.scaling = d.scaling
+
+        for k in range(2):
+            action_bd = np.array([ac[k] for ac in self.action_range])
+            action_range_scaled[:, k] = self._to_scaled(action_bd, to_original=False)
+        self.action_range_scaled = action_range_scaled
 
     def _to_scaled(self, action: Arr, to_original: bool = False,
                    extra_scaling: bool = False) -> np.ndarray:
@@ -244,6 +245,9 @@ class FullRoomEnv(RLDynEnv):
         h_ac2 = self.scale_action_for_step(zero_ac)
         d_r = self.detailed_reward(np.ones((n_s,)), h_ac2)
         assert np.allclose(d_r[0], 0.0), f"Second room energy computation incorrect: {d_r[0]}!"
+
+        print(heat_ac)
+        print(h_ac2)
 
         if verbose:
             print("Checks passed :)")
@@ -738,6 +742,10 @@ class RoomBatteryEnv(RLDynEnv):
         # Check same with scale_action_for_step
         h_ac2 = self.scale_action_for_step(zero_ac)
         d_r = self.detailed_reward(np.ones((n_s,)), h_ac2)
+
+        print(heat_ac)
+        print(h_ac2)
+
         assert np.allclose(d_r[1], 0.0), f"Second room energy computation incorrect: {d_r[1]}!"
 
         if verbose:
