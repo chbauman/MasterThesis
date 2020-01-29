@@ -21,6 +21,7 @@ RangeListT = List[RangeT]
 TEMP_BOUNDS: RangeT = (22.0, 26.0)  #: The requested temperature range.
 HEAT_ACTION_BOUNDS: RangeT = (0.0, 1.0)  #: The action range for the valve opening time.
 ROOM_ENG_FAC: float = 65.37 * 4.18 / 3.6
+BAT_SCALING: float = 1000.0 / ROOM_ENG_FAC / 200
 
 # For the battery environment:
 BATTERY_ACTION_BOUNDS: RangeT = (-100.0, 100.0)  #: The action range for the active power.
@@ -28,7 +29,7 @@ SOC_BOUND: RangeT = (20.0, 80.0)  #: The desired state-of-charge range.
 SOC_GOAL: Num = 60.0  #: Desired SoC at end of episode.
 
 # Reward parts descriptions
-BAT_ENERGY: str = "Battery Energy Consumption [kWh]"
+BAT_ENERGY: str = f"Battery Energy Consumption [{ROOM_ENG_FAC:.4g} Wh]"
 ROOM_ENERGY: str = f"Room Energy Consumption [{ROOM_ENG_FAC:.4g} Wh]"
 TEMP_BOUND_PEN: str = "Temperature Bound Violation [Kh]"
 ENG_COST: str = "Energy Costs []"
@@ -726,9 +727,10 @@ class RoomBatteryEnv(RLDynEnv):
         bat_eng = orig_actions[1]
 
         # Check if the EV is connected, if not, no energy is used.
-        ev_connected = self.n_remain_connect() > 0
+        ev_connected = self.n_remain_connect() >= 0
         if not ev_connected:
             bat_eng = 0
+        bat_eng *= BAT_SCALING
 
         # Return all parts
         all_rew = [temp_pen, room_eng, bat_eng]
@@ -748,7 +750,7 @@ class RoomBatteryEnv(RLDynEnv):
 
         # Return minus the energy used minus the temperature penalty.
         energy = det_rew[1] + det_rew[2]
-        return -energy * self.alpha - det_rew[0]
+        return -energy - det_rew[0] * self.alpha
 
     def scale_action_for_step(self, action: Arr):
         # Clips the fucking actions!
