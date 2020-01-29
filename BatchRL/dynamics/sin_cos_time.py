@@ -45,6 +45,7 @@ class SCTimeModel(BaseDynamicsModel):
 
     def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         """No need to fit anything, model is deterministic."""
+        self.fit_data = train_data
         if verbose > 0:
             print(f"Exact model, nothing to fit on part: '{train_data}'!")
         return

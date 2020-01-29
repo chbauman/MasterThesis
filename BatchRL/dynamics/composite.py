@@ -70,6 +70,7 @@ class CompositeModel(BaseDynamicsModel):
 
     def fit(self, verbose: int = 0, train_data: str = "train") -> None:
         """Fits all the models."""
+        self.fit_data = train_data
         with ProgWrap(f"Fitting sub-models on part: '{train_data}'...", verbose > 0):
             for ct, m in enumerate(self.model_list):
                 print(f"Fitting model {ct}: {m.name}")

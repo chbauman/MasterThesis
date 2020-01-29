@@ -104,6 +104,7 @@ class BatteryModel(BaseDynamicsModel):
             verbose: Verbosity, 0: silent.
             train_data: Ignored.
         """
+        self.fit_data = train_data
         if self.params is not None:
             print_if_verb(verbose, "Battery model already fitted!")
             return

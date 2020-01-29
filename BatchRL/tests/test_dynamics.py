@@ -87,6 +87,7 @@ class TestModel(BaseDynamicsModel):
             raise ValueError("Dataset needs exactly 3 non-controllable state variables!")
 
     def fit(self, verbose: int = 0, train_data: str = "train") -> None:
+        self.fit_data = train_data
         if verbose:
             print(f"Not fitting anything, data part: '{train_data}'!")
 
@@ -133,6 +134,7 @@ class ConstSeriesTestModel(NoDisturbanceModel):
         self.use_AR = False
 
     def fit(self, verbose: int = 0, train_data: str = "train") -> None:
+        self.fit_data = train_data
         if verbose:
             print(f"Not fitting anything, data part: '{train_data}'!")
 
@@ -183,11 +185,14 @@ class TestBaseDynamics(TestCase):
         # Define models
         from dynamics.const import ConstModel
         self.test_mod = TestModel(self.ds)
+        self.test_mod.fit()
         self.test_model_2 = ConstSeriesTestModel(self.ds_1,
                                                  pred_val_list=[0.0, 2.0],
                                                  out_inds=np.array([0, 2], dtype=np.int32),
                                                  in_inds=np.array([1, 2, 3], dtype=np.int32))
+        self.test_model_2.fit()
         self.test_model_3 = ConstModel(self.ds_1)
+        self.test_model_3.fit()
 
         # Compute sizes
         self.n_val = self.n - int((1.0 - self.ds.val_percent) * self.n)

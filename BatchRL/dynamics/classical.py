@@ -51,10 +51,11 @@ class SKLearnModel(BaseDynamicsModel):
         """Fit linear model."""
 
         # Check if already fitted
-        if self.is_fitted:
+        if self.is_fitted and train_data == self.fit_data:
             if verbose:
                 print("Already fitted!")
             return
+        self.fit_data = train_data
 
         # Prepare the data
         input_data, output_data = self.get_fit_data(train_data,

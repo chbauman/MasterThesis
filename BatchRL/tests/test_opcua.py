@@ -144,14 +144,16 @@ class TestOpcua(TestCase):
                     verbose=0,
                     no_data_saving=True,
                     debug=True,
-                    _client_class=OCToggle)
+                    _client_class=OCToggle,
+                    notify_failures=False)
 
     def test_control_client(self):
         with ControlClient(self.cont,
                            exp_name="OfflineTest",
                            verbose=0,
                            no_data_saving=True,
-                           _client_class=OfflineClient) as cc:
+                           _client_class=OfflineClient,
+                           notify_failures=False) as cc:
             cc.read_publish_wait_check()
         pass
 
@@ -241,7 +243,8 @@ class TestOpcuaRL(TestCase):
                            exp_name="OfflineRLControllerTest",
                            verbose=0,
                            no_data_saving=True,
-                           _client_class=OfflineClient) as cc:
+                           _client_class=OfflineClient,
+                           notify_failures=False) as cc:
             cc.read_publish_wait_check()
 
     def test_rl_controller_room_only(self):
@@ -249,7 +252,8 @@ class TestOpcuaRL(TestCase):
                            exp_name="OfflineRoomRLControllerTest",
                            verbose=0,
                            no_data_saving=True,
-                           _client_class=OfflineClient) as cc:
+                           _client_class=OfflineClient,
+                           notify_failures=False) as cc:
             cc.read_publish_wait_check()
 
     def test_controller_scaling(self):
@@ -277,7 +281,9 @@ class TestOpcuaRL(TestCase):
                            exp_name="OfflineRLControllerCallTest",
                            verbose=0,
                            no_data_saving=True,
-                           _client_class=OfflineClient) as cc:
+                           _client_class=OfflineClient,
+                           notify_failures=False,
+                           ) as cc:
             cont = self.rl_cont_room[0][1]
             cont._curr_ts_ind = 0
             cc.read_publish_wait_check()

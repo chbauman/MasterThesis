@@ -454,6 +454,7 @@ class RNNDynamicModel(HyperOptimizableModel):
 
         TODO: Compute more accurate val_percent for fit method!
         """
+        self.fit_data = train_data
 
         # Define optimizer and compile
         opt = Adam(lr=self.lr)
@@ -682,6 +683,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
         Returns:
             None
         """
+        self.fit_data = train_data
         if train_data != "train":
             raise NotImplementedError("Fuck")
 

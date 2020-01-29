@@ -573,7 +573,8 @@ class BaseDynamicsModel(KerasBase, ABC):
     def _get_fit_data_set(self, assert_set: bool = True) -> str:
         f_dat = self.fit_data
         if assert_set:
-            assert f_dat is not None, "Not yet fitted!"
+            assert f_dat is not None, f"Model {self.name} of class " \
+                                      f"{self.__class__.__name__} not yet fitted!"
         return f_dat
 
     def analyze_visually(self, plot_acf: bool = True,
