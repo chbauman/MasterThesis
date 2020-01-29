@@ -388,6 +388,10 @@ def run_room_models(verbose: int = 1,
                             hop_eval_set=hop_eval_set,
                             sample_from=sample_from)
 
+        if include_battery:
+            # Run checks
+            env.do_checks()
+
     # Define default agents and compare
     with ProgWrap(f"Initializing agents...", verbose > 0):
         closed_agent, open_agent = get_const_agents(env)

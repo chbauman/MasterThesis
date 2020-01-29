@@ -220,7 +220,8 @@ class DynEnv(ABC, gym.Env):
         point in the overriding method.
 
         Args:
-            action: The control input (action).
+            action: The control input (action), will be scaled for the underlying model
+                of the environment.
 
         Returns:
             The next state, the reward of having chosen that action and a bool

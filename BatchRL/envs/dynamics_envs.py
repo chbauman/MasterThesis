@@ -707,6 +707,14 @@ class RoomBatteryEnv(RLDynEnv):
                                                   remove_mean=False).item()
         return scaled_water, orig_water
 
+    def do_checks(self):
+        """Check a few properties."""
+
+        # Check if room energy is 0 if valves closed.
+        n_s = 8
+        d_r = self.detailed_reward(np.ones((n_s,)), np.array([0.0, 0.0]))
+        assert np.allclose(d_r[1], 0.0), "Room energy computation incorrect!"
+
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
         # Compute original actions
         orig_actions = self._to_scaled(action, True)
