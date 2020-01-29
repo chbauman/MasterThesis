@@ -768,9 +768,10 @@ class RoomBatteryEnv(RLDynEnv):
         bat_eng = orig_actions[1]
 
         # Check if the EV is connected, if not, no energy is used.
-        ev_connected = self.n_remain_connect() > 0 and self._disc_since() > 1
+        ev_connected = self.n_remain_connect() > 0
         if not ev_connected:
-            bat_eng = 0
+            if self._disc_since() > 1:
+                bat_eng = 0
         bat_eng *= BAT_SCALING
 
         # Return all parts
