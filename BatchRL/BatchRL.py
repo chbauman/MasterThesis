@@ -53,6 +53,9 @@ PARTS = ["Val", "Train"]
 def run_integration_tests(verbose: int = 1) -> None:
     """Runs a few rather time consuming tests.
 
+    Args:
+        verbose: Verbosity.
+
     Raises:
         AssertionError: If a test fails.
     """
@@ -61,8 +64,12 @@ def run_integration_tests(verbose: int = 1) -> None:
         test_rnn_models()
 
 
-def test_cleanup(verbose: int = 0):
-    """Cleans the data that was generated for the tests."""
+def test_cleanup(verbose: int = 0) -> None:
+    """Cleans the data that was generated for the tests.
+
+    Args:
+        verbose: Verbosity.
+    """
     # Do some cleanup.
     with ProgWrap("Cleanup...", verbose=verbose > 0):
         cleanup_test_data(verbose=prog_verb(verbose))
@@ -75,6 +82,13 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
 
     Loads and prepares the battery data, fits the
     battery model and evaluates some agents.
+
+    Args:
+        do_rl:
+        overwrite:
+        verbose: Verbosity.
+        steps: Sequence of number of evaluation steps for analysis.
+        put_on_ol:
     """
     # Print info to console
     next_verb = prog_verb(verbose)
@@ -204,7 +218,7 @@ def run_dynamic_model_hyperopt(use_bat_data: bool = True,
 
     # Load models
     model_dict = load_room_models(model_list,
-                                  use_bat_data,
+                                  use_bat_data=use_bat_data,
                                   from_hop=False,
                                   fit=False,
                                   date_str=date_str,
@@ -246,8 +260,6 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                    ) -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
-    Does not much if not on Euler.
-
     Args:
         use_bat_data: Whether to include the battery data.
         verbose: Verbosity level.
@@ -280,7 +292,7 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
     with ProgWrap(f"Loading models...", verbose > 0):
         # Load models
         all_mods = load_room_models(lst,
-                                    use_bat_data,
+                                    use_bat_data=use_bat_data,
                                     from_hop=True,
                                     fit=True,
                                     date_str=date_str,
@@ -572,12 +584,14 @@ arg_def_list = [
     ("ua", "run opcua control"),
 ]
 opt_param_l = [
+    # Additional parameters, arbitrary number of them
     ("int", int, "additional integer parameter(s)"),
     ("float", float, "additional floating point parameter(s)"),
     ("str", str, "additional string parameter(s)"),
     ("bool", str2bool, "additional boolean parameter(s)"),
 ]
 common_params = [
+    # Parameters used for multiple tasks, format:
     # ("arg_name", type, "help string", default_value),
     ("train_data", str, "Data used for training the models, can be one of "
                         "'train', 'train_val' or 'all'.", DEFAULT_TRAIN_SET),
@@ -598,6 +612,9 @@ common_params = [
 
 def def_parser() -> argparse.ArgumentParser:
     """The argument parser factory.
+
+    Defines the argument parser based on the lists defined
+    above: `arg_def_list`, `opt_param_l` and `common_params`.
 
     Returns:
         An argument parser.
@@ -790,5 +807,6 @@ def main() -> None:
         curr_tests()
 
 
+# Execute main function
 if __name__ == '__main__':
     main()
