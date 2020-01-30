@@ -94,13 +94,13 @@ def load_room_env(m_name: str,
 
     # Construct string with most important parameters
     p_list = [
-        ("R", room_nr),
-        ("DD", date_str),
-        ("HD", hop_eval_set),
-        ("MD", train_data),
-        ("A", alpha),
-        ("TBD", temp_bds),
-        ("RLD", sample_from),
+        ("R-", room_nr),
+        ("DD-", date_str),
+        ("HD-", hop_eval_set),
+        ("MD-", train_data),
+        ("A-", alpha),
+        ("TBD-", temp_bds),
+        ("RLD-", sample_from),
     ]
     short_param_ext = make_param_ext(p_list)
 

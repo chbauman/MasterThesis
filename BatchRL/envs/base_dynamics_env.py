@@ -113,6 +113,11 @@ class DynEnv(ABC, gym.Env):
         if init_res:
             self.reset()
 
+    def __str__(self):
+        """Generic string conversion."""
+        n = self.short_name if self.short_name is not None else self.name
+        return f"RL env of class {self.__class__.__name__} with name {n}"
+
     @property
     def plot_path(self) -> str:
         """Returns the path of the plot folder."""

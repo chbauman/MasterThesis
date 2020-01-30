@@ -131,6 +131,10 @@ class AgentBase(AbstractAgent, ABC):
     def get_info(self) -> Dict:
         return {}
 
+    def __str__(self):
+        """Generic string conversion."""
+        return f"Agent of class {self.__class__.__name__} with name {self.name}"
+
     def eval(self, n_steps: int = 100, reset_seed: bool = False,
              detailed: bool = False,
              use_noise: bool = False, scale_states: bool = False,
