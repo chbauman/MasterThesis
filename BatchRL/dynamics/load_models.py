@@ -18,6 +18,7 @@ from util.util import DEFAULT_TRAIN_SET, DEFAULT_END_DATE, DEFAULT_ROOM_NR, DEFA
     ProgWrap, DEFAULT_SEQ_LEN, make_param_ext
 
 # Define the models by name
+#: List of partial models need to be combined to create complete model.
 base_rnn_models = [
     "WeatherFromWeatherTime_RNN",
     # "Apartment_RNN",
@@ -27,6 +28,7 @@ base_rnn_models = [
     # "PhysConsModel",
     # "Full_RNN",
 ]
+#: List of complete models that can be used for the RL env.
 full_models = [
     "FullState_Comp_ReducedTempConstWaterWeather",
     "FullState_Comp_TempConstWaterWeather",
@@ -34,6 +36,7 @@ full_models = [
     "FullState_Naive",
     "FullState_Comp_Phys",
 ]
+#: Short names for the models above.
 full_models_short_names = [
     "Weather, Constant Water, Reduced Room Temp",
     "Weather, Constant Water, Room Temp.",
@@ -58,15 +61,15 @@ def load_room_env(m_name: str,
     """Loads the complete room environment.
 
     Args:
-        m_name:
-        verbose:
-        alpha:
-        include_battery:
-        date_str:
-        temp_bds:
-        train_data:
-        room_nr:
-        hop_eval_set:
+        m_name: Name of the underlying (complete) model.
+        verbose: Verbosity.
+        alpha: Temperature bound violation weighting factor.
+        include_battery: See :func:`get_model`.
+        date_str: See :func:`get_model`.
+        temp_bds: Temperature comfort bounds.
+        train_data: See :func:`get_model`.
+        room_nr: See :func:`get_model`.
+        hop_eval_set: See :func:`get_model`.
         dummy_use: If True, the underlying model is not fitted. To be
             used if agents are only needed for prediction / evaluation and
             were already fitted.
@@ -152,7 +155,7 @@ def load_room_models(name_list: List[str], *,
         room_nr: See :func:`get_model`.
         verbose: Verbosity.
         seq_len: See :func:`data_processing.data.choose_dataset_and_constraints`.
-        **model_kwargs: Kwargs for model loading with `get_model`.
+        **model_kwargs: Kwargs for model loading, passed to :func:`get_model`.
 
     Returns:
         Dictionary mapping name to model.
