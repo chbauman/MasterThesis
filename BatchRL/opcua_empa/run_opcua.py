@@ -7,14 +7,12 @@ from typing import List
 
 from agents.keras_agents import default_ddpg_agent
 from dynamics.load_models import load_room_env
-from envs.base_dynamics_env import DEFAULT_ENV_SAMPLE_DATA
-from envs.dynamics_envs import RangeT
 from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController, RLController
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control
 from tests.test_opcua import OfflineClient
-from util.util import prog_verb, ProgWrap, DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_TRAIN_SET, DEFAULT_END_DATE
+from util.util import prog_verb, ProgWrap, DEFAULT_ROOM_NR, DEFAULT_EVAL_SET
 
 
 def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True):
@@ -63,24 +61,26 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                    notify_failure: bool = False,
                    debug: bool = False,
                    verbose: int = 5,
-                   alpha: float = 50.0,
                    n_steps: int = None,
-                   date_str: str = DEFAULT_END_DATE,
-                   temp_bds: RangeT = None,
-                   train_data: str = DEFAULT_TRAIN_SET,
                    hop_eval_set: str = DEFAULT_EVAL_SET,
-                   include_battery: bool = False,
                    notify_debug: bool = None,
-                   dummy_env_mode: bool = True,
-                   sample_from: str = DEFAULT_ENV_SAMPLE_DATA,
+                   **env_kwargs,
                    ):
+    """Runs the RL agent via the opcua client.
+
+    Args:
+        room_nr:
+        notify_failure: Whether to send a mail upon failure.
+        debug:
+        verbose:
+        n_steps:
+        hop_eval_set:
+        notify_debug: Whether to use debug mail address to send notifications.
+        **env_kwargs: Keyword arguments for environment.
+    """
     full_debug: bool = False
 
     assert room_nr in [41, 43], f"Invalid room number: {room_nr}"
-
-    if dummy_env_mode and verbose:
-        print("Using dummy environment, will raise an error if there "
-              "is no fitted agent available!")
 
     if notify_debug is None:
         notify_debug = debug
@@ -99,15 +99,9 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
         with ProgWrap(f"Loading environment...", verbose > 0):
             env = load_room_env(m_name,
                                 verbose=next_verbose,
-                                alpha=alpha,
-                                include_battery=include_battery,
-                                date_str=date_str,
-                                temp_bds=temp_bds,
-                                train_data=train_data,
                                 room_nr=room_nr,
                                 hop_eval_set=hop_eval_set,
-                                dummy_use=dummy_env_mode,
-                                sample_from=sample_from)
+                                **env_kwargs)
 
         # Define default agents and compare
         with ProgWrap(f"Initializing agents...", verbose > 0):
@@ -133,7 +127,7 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
     if debug:
         exp_name += "Debug"
 
-    # Run fucking control
+    # Run control
     run_control(used_control=used_control,
                 exp_name=exp_name,
                 user='ChristianBaumannETH2020',
@@ -142,4 +136,3 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                 verbose=verbose,
                 _client_class=OpcuaClient,
                 notify_failures=notify_failure)
-    pass

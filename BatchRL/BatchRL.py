@@ -34,7 +34,7 @@ from dynamics.load_models import base_rnn_models, full_models, full_models_short
     load_room_env
 from dynamics.recurrent import test_rnn_models
 from envs.base_dynamics_env import DEFAULT_ENV_SAMPLE_DATA
-from envs.dynamics_envs import BatteryEnv, heat_marker, RangeT
+from envs.dynamics_envs import BatteryEnv, heat_marker
 from opcua_empa.run_opcua import try_opcua, run_rl_control
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
@@ -347,19 +347,32 @@ def run_room_models(verbose: int = 1,
                     put_on_ol: bool = False,
                     eval_list: List[int] = None,
                     perf_eval: bool = False,
-                    alpha: float = 50.0,
                     n_steps: int = None,
                     overwrite: bool = False,
                     include_battery: bool = False,
                     physically_consistent: bool = False,
-                    date_str: str = DEFAULT_END_DATE,
-                    temp_bds: RangeT = None,
-                    train_data: str = DEFAULT_TRAIN_SET,
-                    room_nr: int = DEFAULT_ROOM_NR,
                     hop_eval_set: str = DEFAULT_EVAL_SET,
-                    sample_from: str = DEFAULT_ENV_SAMPLE_DATA,
-                    visual_analysis: bool = True
+                    visual_analysis: bool = True,
+                    n_eval_steps: int = 10000,
+                    **env_kwargs
                     ) -> None:
+    """Trains and evaluates the RL agent.
+
+    Args:
+        verbose:
+        put_on_ol:
+        eval_list:
+        perf_eval:
+        n_steps: Number of steps to train the agent.
+        overwrite:
+        include_battery: Whether to use the combined env, room and battery.
+        physically_consistent:
+        hop_eval_set:
+        visual_analysis: Whether to do the visual analysis.
+        n_eval_steps: n_eval_steps: Total number of environment steps to perform
+            for agent analysis.
+        env_kwargs: Keyword arguments for environment.
+    """
     # Print what the code does
     if verbose:
         print("Running RL agents on learned room model.")
@@ -379,14 +392,9 @@ def run_room_models(verbose: int = 1,
     with ProgWrap(f"Loading environment...", verbose > 0):
         env = load_room_env(m_name,
                             verbose=next_verbose,
-                            alpha=alpha,
                             include_battery=include_battery,
-                            date_str=date_str,
-                            temp_bds=temp_bds,
-                            train_data=train_data,
-                            room_nr=room_nr,
                             hop_eval_set=hop_eval_set,
-                            sample_from=sample_from)
+                            **env_kwargs)
 
         # Run checks
         env.do_checks()
@@ -407,7 +415,8 @@ def run_room_models(verbose: int = 1,
     if visual_analysis:
         with ProgWrap(f"Analyzing agents...", verbose > 0):
             b_ind = -2 if include_battery else -1
-            bounds = [(b_ind, (22.0, 26.0))]
+            bds = env.temp_bounds
+            bounds = [(b_ind, bds)]
 
             for s in eval_list:
                 if s is None:
@@ -431,7 +440,6 @@ def run_room_models(verbose: int = 1,
     # Do performance evaluation
     if perf_eval:
         with ProgWrap(f"Evaluating agents...", verbose > 0):
-            n_eval_steps = 10000  # n_steps // 100
             env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps,
                                      put_on_ol=put_on_ol, overwrite=overwrite,
                                      verbose=prog_verb(verbose),

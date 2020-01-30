@@ -68,12 +68,18 @@ def load_room_env(m_name: str,
         room_nr:
         hop_eval_set:
         dummy_use: If True, the underlying model is not fitted. To be
-            used if agents are only needed for prediction / evaluation.
+            used if agents are only needed for prediction / evaluation and
+            were already fitted.
         sample_from: Sampling portion of data when resetting env.
+
 
     Returns:
         The loaded env.
     """
+    # Print warning
+    if dummy_use and verbose:
+        print("Using dummy environment, will raise an error if there "
+              "is no fitted agent available!")
 
     # Propagate verbosity
     next_verb = prog_verb(verbose)
@@ -131,15 +137,26 @@ def load_room_env(m_name: str,
 
 def load_room_models(name_list: List[str],
                      use_bat_data: bool = False,
-                     from_hop: bool = True,
-                     fit: bool = True,
                      date_str: str = DEFAULT_END_DATE,
-                     train_data: str = DEFAULT_TRAIN_SET,
                      room_nr: int = DEFAULT_ROOM_NR,
-                     hop_eval_set: str = DEFAULT_EVAL_SET,
                      verbose: int = 1,
                      seq_len=DEFAULT_SEQ_LEN,
+                     **model_kwargs,
                      ) -> Dict[str, BaseDynamicsModel]:
+    """Loads the models specified by name in `name_list`.
+
+    Args:
+        name_list: List with names of models to be loaded.
+        use_bat_data:
+        date_str:
+        room_nr:
+        verbose:
+        seq_len:
+        **model_kwargs: Kwargs for model loading with `get_model`.
+
+    Returns:
+        Dictionary mapping name to model.
+    """
     # Propagate verbosity
     next_verb = prog_verb(verbose)
 
@@ -153,13 +170,10 @@ def load_room_models(name_list: List[str],
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
         all_mods = {nm: get_model(nm, ds, rnn_consts,
-                                  from_hop=from_hop,
-                                  fit=fit,
                                   verbose=next_verb,
-                                  train_data=train_data,
                                   date_str=date_str,
                                   room_nr=room_nr,
-                                  hop_eval_set=hop_eval_set,
+                                  **model_kwargs
                                   ) for nm in name_list}
 
     return all_mods
@@ -168,8 +182,8 @@ def load_room_models(name_list: List[str],
 def get_model(name: str,
               ds: Dataset,
               rnn_consts: DatasetConstraints = None,
-              from_hop: bool = False,
-              fit: bool = False,
+              from_hop: bool = True,
+              fit: bool = True,
               verbose: int = 0,
               train_data: str = DEFAULT_TRAIN_SET,
               date_str: str = DEFAULT_END_DATE,
