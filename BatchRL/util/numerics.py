@@ -1,4 +1,5 @@
 from abc import ABC
+from functools import wraps
 from typing import Tuple, Sequence, Any, List, Callable, Union
 
 import numpy as np
@@ -95,23 +96,27 @@ UnitTrafo = Callable[[str], str]
 ErrScaling = Callable[[Arr, float], Arr]
 
 
-def lin_scaling(errs: Arr, std: float):
+def lin_scaling(errs: Arr, std: float) -> Arr:
     return std * errs
 
 
 def pow_scaling(power: int = 2) -> ErrScaling:
-    def scaling(errs: Arr, std: float):
+
+    @wraps(ErrMetric.scaling_fun)
+    def scaling(errs: Arr, std: float) -> Arr:
         return (std ** power) * errs
 
     return scaling
 
 
-def unit_trf_id(unit: str):
+def unit_trf_id(unit: str) -> str:
     return unit
 
 
 def unit_trf_pow(p: int = 2) -> UnitTrafo:
-    def unit_trf(unit: str):
+
+    @wraps(ErrMetric.unit_trf)
+    def unit_trf(unit: str) -> str:
         return f"({unit})^{p}"
 
     return unit_trf
