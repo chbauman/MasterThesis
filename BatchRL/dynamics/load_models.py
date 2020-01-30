@@ -15,7 +15,7 @@ from dynamics.sin_cos_time import SCTimeModel
 from envs.base_dynamics_env import DEFAULT_ENV_SAMPLE_DATA
 from envs.dynamics_envs import RangeT, FullRoomEnv, RoomBatteryEnv, LowHighProfile
 from util.util import DEFAULT_TRAIN_SET, DEFAULT_END_DATE, DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, prog_verb, data_ext, \
-    ProgWrap, DEFAULT_SEQ_LEN
+    ProgWrap, DEFAULT_SEQ_LEN, make_param_ext
 
 # Define the models by name
 base_rnn_models = [
@@ -92,6 +92,18 @@ def load_room_env(m_name: str,
         m = mod_dict[m_name]
         ds = m.data
 
+    # Construct string with most important parameters
+    p_list = [
+        ("R", room_nr),
+        ("DD", date_str),
+        ("HD", hop_eval_set),
+        ("MD", train_data),
+        ("A", alpha),
+        ("TBD", temp_bds),
+        ("RLD", sample_from),
+    ]
+    short_param_ext = make_param_ext(p_list)
+
     # Load the model and init env
     with ProgWrap(f"Preparing environment...", verbose > 0):
         general_kwargs = {
@@ -108,9 +120,11 @@ def load_room_env(m_name: str,
                 f"Invalid model: {m}, needs to be composite!"
             env = RoomBatteryEnv(m, p=c_prof,
                                  **general_kwargs)
+            env.short_name = "RoomBattery" + short_param_ext
         else:
             env = FullRoomEnv(m, n_cont_actions=1,
                               **general_kwargs)
+            env.short_name = "Room" + short_param_ext
 
     return env
 

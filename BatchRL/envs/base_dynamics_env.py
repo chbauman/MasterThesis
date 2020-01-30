@@ -36,6 +36,8 @@ class DynEnv(ABC, gym.Env):
     n_ts_per_day: int  #: Number of time steps in a day.
     t_init_n: int  #: The index of the initial timestep in the dataset.
 
+    short_name: str = None
+
     # State data, might change if `step` is called.
     n_ts: int = 0  #: The current number of timesteps.
     hist: np.ndarray  #: 2D array with current state.
@@ -68,6 +70,7 @@ class DynEnv(ABC, gym.Env):
     default_series_merging: MergeListT = None
 
     _dummy_use: bool
+    _plot_path: str
 
     def __init__(self, m: BaseDynamicsModel, name: str = None, max_eps: int = None,
                  disturb_fac: float = 1.0,
@@ -90,7 +93,8 @@ class DynEnv(ABC, gym.Env):
             self.name = f"{name}{dist_ex}{sam_ext}_DATA_{m.name}"
         else:
             self.name = f"RLEnv_{m.name}"
-        self.plot_path = os.path.join(rl_plot_path, self.name)
+        # self.plot_path = os.path.join(rl_plot_path, self.name)
+        self._plot_path = os.path.join(rl_plot_path, self.name)
 
         # Set attributes.
         dat = m.data
@@ -108,6 +112,13 @@ class DynEnv(ABC, gym.Env):
         self._set_data(sample_from)
         if init_res:
             self.reset()
+
+    @property
+    def plot_path(self) -> str:
+        """Returns the path of the plot folder."""
+        if self.short_name is not None:
+            return os.path.join(rl_plot_path, self.short_name)
+        return self._plot_path
 
     def set_agent(self, a: base_agent.AgentBase) -> None:
         """Sets the given agent to the environment.
