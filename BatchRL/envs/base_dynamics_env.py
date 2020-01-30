@@ -109,10 +109,11 @@ class DynEnv(ABC, gym.Env):
         if not self._dummy_use:
             m.model_disturbance()
         self.m = m
+        self.rej_sampler = rejection_sampler
 
         # Define name extensions
         sam_ext = f"_SAM_{sample_from}" if sample_from != DEFAULT_ENV_SAMPLE_DATA else ""
-        h_sam_ext = f"_RejS_{self.rej_sampler.name}" if self.rej_sampler is not None else ""
+        h_sam_ext = f"_RejS_{rejection_sampler.name}" if rejection_sampler is not None else ""
 
         if name is not None:
             dist_ex = make_param_ext([("DF", disturb_fac)])
@@ -127,7 +128,6 @@ class DynEnv(ABC, gym.Env):
         self.disturb_fac = disturb_fac
         self.act_dim = dat.n_c
         self.state_dim = dat.d
-        self.rej_sampler = rejection_sampler
 
         # Time indices
         self.n_ts_per_eps = 100 if max_eps is None else max_eps
@@ -340,9 +340,10 @@ class DynEnv(ABC, gym.Env):
         self.orig_actions = np.empty((self.n_ts_per_eps, self.act_dim), dtype=np.float32)
 
         accepted, ret_val = False, None
+        ct = 0
         while not accepted:
             # Select new start data
-            if start_ind is None:
+            if start_ind is None or self.rej_sampler is not None:
                 start_ind = np.random.randint(self.n_start_data)
             else:
                 if self.n_start_data <= start_ind:
@@ -356,6 +357,10 @@ class DynEnv(ABC, gym.Env):
             if self.rej_sampler is not None:
                 accepted = self.rej_sampler(ret_val)
 
+            if not accepted:
+                ct += 1
+
+        print(f"Chose start ind: {start_ind}, rejected: {ct}")
         return ret_val
 
     def get_scaled_init_state(self, init_ind: int, heat_inds) -> np.ndarray:

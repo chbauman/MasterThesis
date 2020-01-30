@@ -571,17 +571,19 @@ def curr_tests() -> None:
 
 arg_def_list = [
     # The following arguments can be provided.
-    ("verbose", "use verbose mode"),
+    ("battery", "run the battery model"),
+    ("cleanup", "cleanup all test files, including ones from unit tests"),
+    ("data", "update the data from the nest database"),
     ("file_transfer", "transfer data"),
     ("mod_eval", "fit and evaluate the room ML models"),
     ("optimize", "optimize hyperparameters of ML models"),
-    ("data", "update the data from the nest database"),
-    ("battery", "run the battery model"),
-    ("room", "run the room simulation model to train and evaluate a rl agent"),
-    ("test", "run a few integration tests, not running unit tests"),
-    ("cleanup", "cleanup all test files, including ones from unit tests"),
     ("plot", "run overleaf plot creation"),
+    ("room", "run the room simulation model to train and evaluate a rl agent"),
+    ("sam_heat", "use heat sampling in RL environment"),
+    ("test", "run a few integration tests, not running unit tests"),
     ("ua", "run opcua control"),
+    ("verbose", "use verbose mode"),
+    ("write_forced", "overwrite existing files"),
 ]
 opt_param_l = [
     # Additional parameters, arbitrary number of them
@@ -688,7 +690,12 @@ def main() -> None:
     # Parse arguments
     parser = def_parser()
     args = parser.parse_args()
+
+    # Extract common bool args
     verbose = 5 if args.verbose else 0
+    overwrite = args.write_forced
+    heat_sam = args.sam_heat
+
     if args.verbose:
         print("Verbosity turned on.")
 
@@ -755,8 +762,8 @@ def main() -> None:
 
     # Train and analyze the battery model
     if args.battery:
-        ext_args = extract_args(args.bool, False, False, False)
-        do_rl, put_on_ol, overwrite = ext_args
+        ext_args = extract_args(args.bool, False, False)
+        do_rl, put_on_ol = ext_args
         run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=put_on_ol,
                     overwrite=overwrite)
 
@@ -764,8 +771,8 @@ def main() -> None:
     if args.room:
         alpha, tb_low, tb_high = extract_args(args.float, 50.0, None, None)
         n_steps, n_eval_steps = extract_args(args.int, None, 10000)
-        ext_args = extract_args(args.bool, False, False, False, True, False)
-        add_bat, perf_eval, phys_cons, visual_analysis, overwrite = ext_args
+        ext_args = extract_args(args.bool, False, False, False, True)
+        add_bat, perf_eval, phys_cons, visual_analysis = ext_args
         temp_bds = None if tb_high is None else (tb_low, tb_high)
         run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps,
                         include_battery=add_bat, perf_eval=perf_eval,
@@ -775,11 +782,12 @@ def main() -> None:
                         hop_eval_set=hop_eval_data,
                         sample_from=rl_sampling,
                         visual_analysis=visual_analysis,
-                        n_eval_steps=n_eval_steps)
+                        n_eval_steps=n_eval_steps,
+                        use_heat_sampler=heat_sam)
 
     # Overleaf plots
     if args.plot:
-        debug, overwrite = extract_args(args.bool, False, False)
+        debug = extract_args(args.bool, False)[0]
         update_overleaf_plots(verbose, overwrite=overwrite, debug=debug)
 
     # Opcua
@@ -797,11 +805,12 @@ def main() -> None:
                        notify_debug=notify_debug,
                        dummy_env_mode=dummy_env_mode,
                        sample_from=rl_sampling,
-                       )
+                       use_heat_sampler=heat_sam)
 
     # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)
-    var_dict = {k: val for k, val in var_dict.items() if k != "verbose"}
+    excluded = ["verbose"]
+    var_dict = {k: val for k, val in var_dict.items() if k not in excluded}
     any_flag_set = reduce(lambda x, k: x or var_dict[k] is True, var_dict, 0)
     if not any_flag_set:
         print("No flags set")
