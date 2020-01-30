@@ -33,10 +33,13 @@ class RejSampler:
     """
 
     name: str = "Rej"
+    max_rej: int = 1
 
-    def __init__(self, name: str, fun: RejSamplerFun = lambda x: True):
-        self.name = name
+    def __init__(self, name: str, fun: RejSamplerFun = lambda x: True,
+                 max_rej: int = 1):
+        self.name = f"{name}{max_rej}"
         self.fun = fun
+        self.max_rej = max_rej
 
     def __call__(self, hist: np.ndarray):
         return self.fun(hist)
@@ -356,11 +359,13 @@ class DynEnv(ABC, gym.Env):
 
             if self.rej_sampler is not None:
                 accepted = self.rej_sampler(ret_val)
+                if ct >= self.rej_sampler.max_rej:
+                    accepted = True
 
             if not accepted:
                 ct += 1
 
-        print(f"Chose start ind: {start_ind}, rejected: {ct}")
+        # print(f"Chose start ind: {start_ind}, rejected: {ct}")
         return ret_val
 
     def get_scaled_init_state(self, init_ind: int, heat_inds) -> np.ndarray:
