@@ -121,7 +121,11 @@ class ConstActionAgent(AgentBase):
     out_num: int  #: The dimensionality of the action space.
 
     def __init__(self, env, rule: Arr):
-        super().__init__(env, name=f"Const_{rule}")
+        if hasattr(rule, "__len__"):
+            name = f"Const_{'_'.join(str(e) for e in rule)}"
+        else:
+            name = f"Const_{rule}"
+        super().__init__(env, name=name)
 
         self.out_num = env.nb_actions
         self.rule = rule
