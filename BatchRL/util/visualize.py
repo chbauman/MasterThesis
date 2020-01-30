@@ -931,25 +931,39 @@ def plot_env_evaluation(actions: np.ndarray,
 
 
 def plot_heat_cool_rew_det(*args, **kwargs):
-    """Plotting reward details separately for heating and cooling."""
-    plot_reward_details(*args, **kwargs)
+    """Plotting reward details separately for heating and cooling.
 
+    Args:
+        args: Args for :func:`plot_reward_details`.
+        kwargs: Kwargs for :func:`plot_reward_details`.
+    """
     # Extract states and rewards
     ep_marks = kwargs['ep_marks']
     labels, rewards, path_name = args[:3]
+    reward_copy = np.copy(rewards)
+
+    plot_reward_details(*args, **kwargs)
+    n_eval_steps = kwargs["n_eval_steps"]
 
     assert np.allclose(np.max(ep_marks, axis=0), np.min(ep_marks, axis=0))
     ep_marks = ep_marks[0]
 
-    heat_rewards = rewards[:, ep_marks]
-    cool_rewards = rewards[:, np.logical_not(ep_marks)]
+    assert reward_copy.shape[1] == n_eval_steps, "WTF?"
+    ep_marks = np.array(ep_marks, dtype=np.bool)
+    heat_rewards = np.copy(reward_copy[:, ep_marks])
+    cool_rewards = np.copy(reward_copy[:, np.logical_not(ep_marks)])
+    n_eval_heat = heat_rewards.shape[1]
+    n_eval_cool = cool_rewards.shape[1]
 
     heat_path = f"{path_name}_Heat"
     cool_path = f"{path_name}_Cool"
+    assert n_eval_heat + n_eval_cool == n_eval_steps, "Hmm, fuck!"
 
     if heat_rewards.size != 0:
+        kwargs["n_eval_steps"] = n_eval_heat
         plot_reward_details(labels, heat_rewards, heat_path, *args[3:], **kwargs)
     if cool_rewards.size != 0:
+        kwargs["n_eval_steps"] = n_eval_cool
         plot_reward_details(labels, cool_rewards, cool_path, *args[3:], **kwargs)
 
 
