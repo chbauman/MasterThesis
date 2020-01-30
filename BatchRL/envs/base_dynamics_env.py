@@ -326,6 +326,11 @@ class DynEnv(ABC, gym.Env):
         """Returns the current timestep index."""
         return (self.curr_n + self.n_ts) % self.n_ts_per_day
 
+    def _model_disturbance(self):
+        with ProgWrap("Modeling disturbance...", self.verbose > 0):
+            self.m.model_disturbance()
+            self._disturbance_is_modelled = True
+
     def reset(self, start_ind: int = None, use_noise: bool = True) -> np.ndarray:
         """Resets the environment.
 
@@ -345,11 +350,9 @@ class DynEnv(ABC, gym.Env):
         self.m.reset_disturbance()
 
         # Model disturbance if not yet done
-        if use_noise:
+        if use_noise and not self._disturbance_is_modelled:
             if not self._dummy_use:
-                with ProgWrap("Modeling disturbance...", self.verbose > 0):
-                    self.m.model_disturbance()
-                    self._disturbance_is_modelled = True
+                self._model_disturbance()
 
         # Reset original actions (necessary?)
         self.orig_actions = np.empty((self.n_ts_per_eps, self.act_dim), dtype=np.float32)
