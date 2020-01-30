@@ -327,6 +327,7 @@ class DynEnv(ABC, gym.Env):
         return (self.curr_n + self.n_ts) % self.n_ts_per_day
 
     def _model_disturbance(self):
+        """Models the disturbance of the underlying model."""
         with ProgWrap("Modeling disturbance...", self.verbose > 0):
             self.m.model_disturbance()
             self._disturbance_is_modelled = True
@@ -336,6 +337,8 @@ class DynEnv(ABC, gym.Env):
 
         Always needs to be called if the episode is over.
         Initializes the environment with a new initial state.
+        Uses rejection sampling to favor some initial conditions over
+        others, as defined by `self.rej_sampler`.
 
         Args:
             start_ind: The index specifying the initial condition.
