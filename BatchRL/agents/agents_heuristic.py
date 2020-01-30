@@ -121,9 +121,12 @@ class ConstActionAgent(AgentBase):
     out_num: int  #: The dimensionality of the action space.
 
     def __init__(self, env, rule: Arr):
-        if hasattr(rule, "__len__"):
-            name = f"Const_{'_'.join(str(e) for e in rule)}"
-        else:
+        try:
+            if len(rule) > 0:
+                name = f"Const_{'_'.join(str(e) for e in rule)}"
+            else:
+                raise TypeError
+        except TypeError:
             name = f"Const_{rule}"
         super().__init__(env, name=name)
 
