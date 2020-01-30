@@ -13,7 +13,7 @@ import numpy as np
 from agents import base_agent
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import npf32
-from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts, ts_per_day
+from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts, ts_per_day, ProgWrap
 from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR, MergeListT
 
 Agents = Union[List[base_agent.AgentBase], base_agent.AgentBase]
@@ -72,7 +72,7 @@ class DynEnv(ABC, gym.Env):
     n_start_data: int  #: The number of possible initializations using the training data.
 
     # Info about the current episode.
-    use_noise: bool = True  #: Whether to add noise when simulating.
+    use_noise: bool = False  #: Whether to add noise when simulating.
     curr_ind: int = None
     curr_n: int = None
 
@@ -95,13 +95,15 @@ class DynEnv(ABC, gym.Env):
 
     _dummy_use: bool
     _plot_path: str
+    _disturbance_is_modelled: bool = False
 
     def __init__(self, m: BaseDynamicsModel, name: str = None, max_eps: int = None,
                  disturb_fac: float = 1.0,
                  init_res: bool = True,
                  dummy_use: bool = False,
                  sample_from: str = DEFAULT_ENV_SAMPLE_DATA,
-                 rejection_sampler: RejSampler = None):
+                 rejection_sampler: RejSampler = None,
+                 verbose: int = 0):
         """Initialize the environment.
 
         Args:
@@ -109,8 +111,10 @@ class DynEnv(ABC, gym.Env):
             max_eps: Number of continuous predictions in an episode.
         """
         self._dummy_use = dummy_use
+        self.verbose = verbose
         if not self._dummy_use:
-            m.model_disturbance()
+            # m.model_disturbance()
+            pass
         self.m = m
         self.rej_sampler = rejection_sampler
 
@@ -141,7 +145,7 @@ class DynEnv(ABC, gym.Env):
         # Set data and initialize env.
         self._set_data(sample_from)
         if init_res:
-            self.reset()
+            self.reset(use_noise=False)
 
     def __str__(self):
         """Generic string conversion."""
@@ -288,6 +292,7 @@ class DynEnv(ABC, gym.Env):
 
         # Add noise
         if self.use_noise:
+            assert self._disturbance_is_modelled, "Need to model disturbance first!"
             curr_pred += self.disturb_fac * self.m.disturb()
 
         # Save the chosen action
@@ -338,6 +343,13 @@ class DynEnv(ABC, gym.Env):
         self.use_noise = use_noise
         self.n_ts = 0
         self.m.reset_disturbance()
+
+        # Model disturbance if not yet done
+        if use_noise:
+            if not self._dummy_use:
+                with ProgWrap("Modeling disturbance...", self.verbose > 0):
+                    self.m.model_disturbance()
+                    self._disturbance_is_modelled = True
 
         # Reset original actions (necessary?)
         self.orig_actions = np.empty((self.n_ts_per_eps, self.act_dim), dtype=np.float32)

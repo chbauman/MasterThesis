@@ -292,6 +292,8 @@ class DDPGBaseAgent(KerasBaseAgent):
         # Fit
         if verbose:
             print("Actually fitting...")
+
+        self.env.use_noise = True
         hist = self.m.fit(self.env, nb_steps=self.n_steps,
                           visualize=False, verbose=min(verbose, 1), nb_max_episode_steps=200)
 

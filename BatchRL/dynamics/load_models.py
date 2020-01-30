@@ -125,6 +125,7 @@ def load_room_env(m_name: str,
             'disturb_fac': 0.3,
             'dummy_use': dummy_use,
             'sample_from': sample_from,
+            'verbose': verbose,
         }
         if use_heat_sampler:
             general_kwargs["rejection_sampler"] = HeatSampler
