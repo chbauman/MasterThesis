@@ -87,7 +87,7 @@ def load_room_env(m_name: str,
     # Get dataset and constraints
     with ProgWrap(f"Loading model...", verbose > 0):
         mod_dict = load_room_models([m_name],
-                                    include_battery,
+                                    use_bat_data=include_battery,
                                     from_hop=True,
                                     fit=not dummy_use,
                                     date_str=date_str,
@@ -136,6 +136,7 @@ def load_room_env(m_name: str,
 
 
 def load_room_models(name_list: List[str],
+                     *,
                      use_bat_data: bool = False,
                      date_str: str = DEFAULT_END_DATE,
                      room_nr: int = DEFAULT_ROOM_NR,
@@ -182,6 +183,7 @@ def load_room_models(name_list: List[str],
 def get_model(name: str,
               ds: Dataset,
               rnn_consts: DatasetConstraints = None,
+              *,
               from_hop: bool = True,
               fit: bool = True,
               verbose: int = 0,
@@ -225,7 +227,7 @@ def get_model(name: str,
 
     # Fit if required using one step recursion
     if fit:
-        mod = get_model(name, ds, rnn_consts, from_hop, fit=False,
+        mod = get_model(name, ds, rnn_consts, from_hop=from_hop, fit=False,
                         verbose=prog_verb(verbose), train_data=train_data)
         mod.fit(verbose=prog_verb(verbose), train_data=train_data)
         if train_data != "train" and verbose:
