@@ -13,7 +13,7 @@ from dynamics.const import ConstModel
 from dynamics.recurrent import RNNDynamicModel, PhysicallyConsistentRNN, RNNDynamicOvershootModel
 from dynamics.sin_cos_time import SCTimeModel
 from envs.base_dynamics_env import DEFAULT_ENV_SAMPLE_DATA
-from envs.dynamics_envs import RangeT, FullRoomEnv, RoomBatteryEnv, LowHighProfile
+from envs.dynamics_envs import RangeT, FullRoomEnv, RoomBatteryEnv, LowHighProfile, HeatSampler
 from util.util import DEFAULT_TRAIN_SET, DEFAULT_END_DATE, DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, prog_verb, data_ext, \
     ProgWrap, DEFAULT_SEQ_LEN, make_param_ext
 
@@ -57,6 +57,7 @@ def load_room_env(m_name: str,
                   hop_eval_set: str = DEFAULT_EVAL_SET,
                   dummy_use: bool = False,
                   sample_from: str = DEFAULT_ENV_SAMPLE_DATA,
+                  use_heat_sampler: bool = False,
                   ):
     """Loads the complete room environment.
 
@@ -74,7 +75,8 @@ def load_room_env(m_name: str,
             used if agents are only needed for prediction / evaluation and
             were already fitted.
         sample_from: Sampling portion of data when resetting env.
-
+        use_heat_sampler: Whether to use a heating sampler to increase
+            number of heating cases.
 
     Returns:
         The loaded env.
@@ -110,6 +112,7 @@ def load_room_env(m_name: str,
         ("A-", alpha),
         ("TBD-", temp_bds),
         ("RLD-", sample_from),
+        ("RS-", HeatSampler if use_heat_sampler else None),
     ]
     short_param_ext = make_param_ext(p_list)
 
@@ -123,6 +126,9 @@ def load_room_env(m_name: str,
             'dummy_use': dummy_use,
             'sample_from': sample_from,
         }
+        if use_heat_sampler:
+            general_kwargs["rejection_sampler"] = HeatSampler
+
         if include_battery:
             c_prof = LowHighProfile(ds.dt)
             assert isinstance(m, CompositeModel), \

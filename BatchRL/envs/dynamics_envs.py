@@ -7,7 +7,7 @@ import numpy as np
 from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
 from dynamics.composite import CompositeModel
-from envs.base_dynamics_env import DynEnv
+from envs.base_dynamics_env import DynEnv, RejSampler
 from util.numerics import trf_mean_and_std, rem_mean_and_std, npf32
 from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list, yeet
 
@@ -38,6 +38,9 @@ ENG_COST: str = "Energy Costs []"
 def heat_marker(state: np.ndarray) -> bool:
     """Determines whether it is a heating case or not."""
     return state[2] > state[4]
+
+
+HeatSampler = RejSampler("HeatSam", heat_marker)
 
 
 class RLDynEnv(DynEnv, ABC):

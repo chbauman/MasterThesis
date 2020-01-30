@@ -26,7 +26,7 @@ RejSamplerFun = Callable[[np.ndarray], bool]
 
 class RejSampler:
     """Rejection sampling class.
-    
+
     Can be used for unbalanced environment resets by
     rejecting unwanted states. Will impact performance if
     a lot are rejected.
@@ -34,7 +34,7 @@ class RejSampler:
 
     name: str = "Rej"
 
-    def __init__(self, name, fun: RejSamplerFun = lambda x: True):
+    def __init__(self, name: str, fun: RejSamplerFun = lambda x: True):
         self.name = name
         self.fun = fun
 
@@ -109,10 +109,14 @@ class DynEnv(ABC, gym.Env):
         if not self._dummy_use:
             m.model_disturbance()
         self.m = m
+
+        # Define name extensions
         sam_ext = f"_SAM_{sample_from}" if sample_from != DEFAULT_ENV_SAMPLE_DATA else ""
+        h_sam_ext = f"_RejS_{self.rej_sampler.name}" if self.rej_sampler is not None else ""
+
         if name is not None:
             dist_ex = make_param_ext([("DF", disturb_fac)])
-            self.name = f"{name}{dist_ex}{sam_ext}_DATA_{m.name}"
+            self.name = f"{name}{dist_ex}{sam_ext}{h_sam_ext}_DATA_{m.name}"
         else:
             self.name = f"RLEnv_{m.name}"
         # self.plot_path = os.path.join(rl_plot_path, self.name)
