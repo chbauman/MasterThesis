@@ -763,7 +763,7 @@ def main() -> None:
     # Evaluate room model
     if args.room:
         alpha, tb_low, tb_high = extract_args(args.float, 50.0, None, None)
-        n_steps = extract_args(args.int, None)[0]
+        n_steps, n_eval_steps = extract_args(args.int, None, 10000)
         ext_args = extract_args(args.bool, False, False, False, True, False)
         add_bat, perf_eval, phys_cons, visual_analysis, overwrite = ext_args
         temp_bds = None if tb_high is None else (tb_low, tb_high)
@@ -774,7 +774,8 @@ def main() -> None:
                         train_data=train_data, room_nr=room_nr,
                         hop_eval_set=hop_eval_data,
                         sample_from=rl_sampling,
-                        visual_analysis=visual_analysis)
+                        visual_analysis=visual_analysis,
+                        n_eval_steps=n_eval_steps)
 
     # Overleaf plots
     if args.plot:
