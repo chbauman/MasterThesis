@@ -21,6 +21,27 @@ Agents = Union[List[base_agent.AgentBase], base_agent.AgentBase]
 DEFAULT_ENV_SAMPLE_DATA: str = "train"
 
 
+RejSamplerFun = Callable[[np.ndarray], bool]
+
+
+class RejSampler:
+    """Rejection sampling class.
+    
+    Can be used for unbalanced environment resets by
+    rejecting unwanted states. Will impact performance if
+    a lot are rejected.
+    """
+
+    name: str = "Rej"
+
+    def __init__(self, name, fun: RejSamplerFun = lambda x: True):
+        self.name = name
+        self.fun = fun
+
+    def __call__(self, hist: np.ndarray):
+        return self.fun(hist)
+
+
 class DynEnv(ABC, gym.Env):
     """The environment wrapper class for `BaseDynamicsModel`.
 
@@ -76,7 +97,8 @@ class DynEnv(ABC, gym.Env):
                  disturb_fac: float = 1.0,
                  init_res: bool = True,
                  dummy_use: bool = False,
-                 sample_from: str = DEFAULT_ENV_SAMPLE_DATA):
+                 sample_from: str = DEFAULT_ENV_SAMPLE_DATA,
+                 rejection_sampler: RejSampler = None):
         """Initialize the environment.
 
         Args:
@@ -101,6 +123,7 @@ class DynEnv(ABC, gym.Env):
         self.disturb_fac = disturb_fac
         self.act_dim = dat.n_c
         self.state_dim = dat.d
+        self.rej_sampler = rejection_sampler
 
         # Time indices
         self.n_ts_per_eps = 100 if max_eps is None else max_eps
@@ -312,17 +335,24 @@ class DynEnv(ABC, gym.Env):
         # Reset original actions (necessary?)
         self.orig_actions = np.empty((self.n_ts_per_eps, self.act_dim), dtype=np.float32)
 
-        # Select new start data
-        if start_ind is None:
-            start_ind = np.random.randint(self.n_start_data)
-        else:
-            if self.n_start_data <= start_ind:
-                raise ValueError("start_ind is too fucking large!")
+        accepted, ret_val = False, None
+        while not accepted:
+            # Select new start data
+            if start_ind is None:
+                start_ind = np.random.randint(self.n_start_data)
+            else:
+                if self.n_start_data <= start_ind:
+                    raise ValueError("start_ind is too fucking large!")
 
-        self.hist = np.copy(self.train_data[start_ind])
-        self.curr_ind = self.train_indices[start_ind] + self.m.data.seq_len - 1
-        self.curr_n = (self.t_init_n + self.curr_ind) % self.n_ts_per_day
-        return np.copy(self.hist[-1, :-self.act_dim])
+            self.hist = np.copy(self.train_data[start_ind])
+            self.curr_ind = self.train_indices[start_ind] + self.m.data.seq_len - 1
+            self.curr_n = (self.t_init_n + self.curr_ind) % self.n_ts_per_day
+            ret_val = np.copy(self.hist[-1, :-self.act_dim])
+
+            if self.rej_sampler is not None:
+                accepted = self.rej_sampler(ret_val)
+
+        return ret_val
 
     def get_scaled_init_state(self, init_ind: int, heat_inds) -> np.ndarray:
         """Returns the initial states when reset with `init_ind`.
