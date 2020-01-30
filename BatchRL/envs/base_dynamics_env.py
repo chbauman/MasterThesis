@@ -409,7 +409,7 @@ class DynEnv(ABC, gym.Env):
 
         Needs to be overridden by subclasses.
         """
-        raise NotImplementedError("Implement this!")
+        raise NotImplementedError("Implement this shit!")
 
     def analyze_agents_visually(self, agents: Agents,
                                 fitted: bool = True,

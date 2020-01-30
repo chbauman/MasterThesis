@@ -444,6 +444,7 @@ class TestUtil(TestCase):
 
     class Dummy:
         def __init__(self):
+            # This would actually work, but I don't like it :(
             # self.mutable_fun = CacheDecoratorFactory()(self.mutable_fun)
             pass
 
