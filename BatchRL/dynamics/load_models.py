@@ -135,8 +135,7 @@ def load_room_env(m_name: str,
     return env
 
 
-def load_room_models(name_list: List[str],
-                     *,
+def load_room_models(name_list: List[str], *,
                      use_bat_data: bool = False,
                      date_str: str = DEFAULT_END_DATE,
                      room_nr: int = DEFAULT_ROOM_NR,
@@ -148,11 +147,11 @@ def load_room_models(name_list: List[str],
 
     Args:
         name_list: List with names of models to be loaded.
-        use_bat_data:
-        date_str:
-        room_nr:
-        verbose:
-        seq_len:
+        use_bat_data: See :func:`data_processing.data.choose_dataset_and_constraints`.
+        date_str: See :func:`get_model`.
+        room_nr: See :func:`get_model`.
+        verbose: Verbosity.
+        seq_len: See :func:`data_processing.data.choose_dataset_and_constraints`.
         **model_kwargs: Kwargs for model loading with `get_model`.
 
     Returns:
@@ -182,8 +181,7 @@ def load_room_models(name_list: List[str],
 
 def get_model(name: str,
               ds: Dataset,
-              rnn_consts: DatasetConstraints = None,
-              *,
+              rnn_consts: DatasetConstraints = None, *,
               from_hop: bool = True,
               fit: bool = True,
               verbose: int = 0,
