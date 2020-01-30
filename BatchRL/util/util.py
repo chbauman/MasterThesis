@@ -115,6 +115,7 @@ def force_decorator_factory(wait: float = 0.5, verbose: bool = True):
     def force_decorator(fun):
         """The decorator to be returned."""
 
+        @wraps(fun)
         def forced_fun(*args, **kwargs):
             """The decorated function."""
             try:
@@ -667,7 +668,7 @@ class CacheDecoratorFactory(object):
         Returns:
             The decorated function.
         """
-
+        @wraps(f)
         def decorated(s, n: Union[Tuple, int], *args, **kwargs):
             """The actual decorator.
 
