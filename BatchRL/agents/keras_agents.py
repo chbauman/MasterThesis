@@ -77,6 +77,8 @@ class DQNBaseAgent(KerasBaseAgent):
                           target_model_update=500)
         self.m.compile(Adam(lr=1e-5), metrics=['mae'])
 
+        raise NotImplementedError("Deprecated!")
+
     @train_decorator()
     def fit(self) -> None:
         # Fit and plot rewards
@@ -132,7 +134,9 @@ class NAFBaseAgent(KerasBaseAgent):
                           gamma=.99, target_model_update=1e-3)
         self.m.compile(Adam(lr=.001, clipnorm=1.), metrics=['mae'])
 
-    def fit(self, verbose: int = 0) -> None:
+        raise NotImplementedError("Deprecated!")
+
+    def fit(self, verbose: int = 0, **kwargs) -> None:
         # Fit and plot rewards
         hist = self.m.fit(self.env, nb_steps=100000, visualize=False, verbose=1)
         train_plot = self.env.get_plt_path("test")
@@ -285,12 +289,13 @@ class DDPGBaseAgent(KerasBaseAgent):
 
         Makes a plot of the rewards received during the training.
         """
-        # Fit and plot rewards
+        # Fit
         if verbose:
             print("Actually fitting...")
         hist = self.m.fit(self.env, nb_steps=self.n_steps,
                           visualize=False, verbose=min(verbose, 1), nb_max_episode_steps=200)
-        train_plot = self.env.get_plt_path(self.name + "_train_rewards")
+
+        # Check if fully trained
         n_steps_trained = hist.history['nb_steps'][-1]
         if n_steps_trained <= self.n_steps - self.env.n_ts_per_eps:
             if verbose:
@@ -299,6 +304,8 @@ class DDPGBaseAgent(KerasBaseAgent):
             # Rename for parameter saving
             self.name = ddpg_agent_name(n_steps_trained)
 
+        # Plot rewards
+        train_plot = self.env.get_plt_path(self.name + "_train_rewards")
         plot_rewards(hist, train_plot)
 
     def get_short_name(self):
