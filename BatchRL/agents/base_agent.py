@@ -69,18 +69,29 @@ def remove_agents(min_steps: int = 10000, verbose: int = 5) -> None:
         rem_file = False
 
         # Remove analysis plots
-        try:
-            i = f.find("_DDPG_")
-            if i >= 0:
-                n_eps = int(f[(i + 6):].split(".")[0])
+
+        i = f.find("_DDPG_")
+        if i >= 0:
+            num = f[(i + 6):].split(".")[0]
+            try:
+                n_eps = int(num)
                 rem_file = n_eps < min_steps
-        except ValueError as e:
-            print(f"{e} happened.")
+            except ValueError:
+                n_eps = int(num.split("_")[0])
+                rem_file = n_eps < min_steps
 
         # Remove train rewards plots
         try:
             if f.find("DDPG_NEP") >= 0:
                 n_eps = int(f[8:].split("_")[0])
+                rem_file = n_eps < min_steps
+        except ValueError as e:
+            print(f"{e} happened.")
+
+        # Remove evaluation plot
+        try:
+            if f.find("DetailAnalysis") >= 0:
+                n_eps = int(f.split("_")[1])
                 rem_file = n_eps < min_steps
         except ValueError as e:
             print(f"{e} happened.")
