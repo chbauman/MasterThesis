@@ -154,6 +154,7 @@ class ControlClient:
 
         if self.verbose:
             print("Exiting...")
+            print("AddMessage: ", self._add_msg)
             print(f"Thread: {threading.currentThread().name}")
 
         self.exit_lock.acquire()
@@ -167,6 +168,19 @@ class ControlClient:
 
             self.client.__exit__(exc_type, exc_val, exc_tb)
             self.node_gen.save_cached_data(self.verbose)
+
+            # Kill threads
+            for t in threading.enumerate():
+                if "MainThread" not in t.name:
+                    print(f"Joining thread: {t.name}")
+                    if hasattr(t, "stop"):
+                        t.stop()
+                    if not isinstance(t, threading._DummyThread):
+                        t.join()
+
+            if self.verbose:
+                print("Joined threads.")
+                print(threading.enumerate())
 
             # Notify reason of termination
             with ProgWrap(f"Sending notification...", self.verbose > 0):
@@ -225,6 +239,9 @@ class ControlClient:
         """
         # Read and extract values
         read_vals = self.client.read_values()
+        if read_vals is None:
+            print("No values returned")
+
         ext_values = self.node_gen.extract_values(read_vals, return_temp_setp=True)
         self._print_set_on_change("_curr_meas_temp_sp", ext_values[2][0],
                                   msg="Measured Temp. Setpoint")
@@ -235,11 +252,11 @@ class ControlClient:
         valve_tuple = tuple(self.node_gen.get_valve_values()[0])
         self._print_set_on_change("_curr_valves", valve_tuple,
                                   msg="Valves")
+        print(ext_values[0][0])
 
         # Compute and publish current control input
         self.df_write["value"] = self.node_gen.compute_current_values()
         self.client.publish(self.df_write, log_time=self.verbose > 1, sleep_after=1.0)
-
         self._print_set_on_change("_curr_temp_sp", self.df_write['value'][0],
                                   msg="Written temperature setpoint")
 
@@ -253,6 +270,7 @@ class ControlClient:
         # Stop if (first) controller gives termination signal.
         terminate_now = self.node_gen.control[0][1].terminate()
         cont = res_ack_true and temps_in_bound and not terminate_now
+        cont = temps_in_bound and not terminate_now
 
         # Print the reason of termination.
         if not temps_in_bound:

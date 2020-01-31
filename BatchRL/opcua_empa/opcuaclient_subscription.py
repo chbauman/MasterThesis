@@ -14,7 +14,8 @@ import logging
 import socket
 import time
 import warnings
-from typing import List
+from asyncio.base_futures import CancelledError
+from typing import List, Optional
 
 import pandas as pd
 from opcua import Client, Subscription
@@ -152,6 +153,8 @@ class OpcuaClient(object):
     _data_types: List
     _ua_values: List
 
+    _nodelist_read: List
+
     _connected: bool = False  #: Bool specifying successful connection.
     _force_connect: bool
     _type_defs = None
@@ -202,6 +205,11 @@ class OpcuaClient(object):
                     self._connected = False
         return True
 
+    def _connect_and_renew_sub(self):
+        if self.connect():
+            self._sub = self.client.create_subscription(period=0, handler=self.handler)
+            self._sub.subscribe_data_change(self._nodelist_read)
+
     def connect(self) -> bool:
         """Connect the client to the server.
 
@@ -223,16 +231,23 @@ class OpcuaClient(object):
             print(f"I don't know why this keeps happening, "
                   f"try waiting a bit and rerun it!")
             return False
+        except socket.gaierror:
+            logging.warning(f"Gaierror happened while connecting, "
+                            f"check your internet connection!")
+            return False
         except Exception as e:
-            logging.warning(f"Exception: {e} happened while connecting!")
-            print(f"Check your internet connection!")
+            print(f"Unexpected exception of type {type(e)} happened: {e}")
             return False
 
-    def read_values(self) -> pd.DataFrame:
-        """Returns the read values in the dataframe."""
+    def read_values(self) -> Optional[pd.DataFrame]:
+        """Returns the read values in the dataframe.
+
+        If something fails, returns None.
+        """
         if not self._connected:
-            logging.warning("Client not connected for reading.")
-            return self.handler.df_Read
+            logging.warning("Not connected, connecting...")
+            self._connect_and_renew_sub()
+            return
 
         if not self._sub_init:
             logging.warning("You need to subscribe first!")
@@ -242,7 +257,6 @@ class OpcuaClient(object):
             return self.handler.df_Read
         except ValueError as e:
             logging.warning(f"Exception: {e} while reading values")
-        return self.handler.df_Read
 
     def disconnect(self) -> None:
         """Disconnect the client.
@@ -266,6 +280,9 @@ class OpcuaClient(object):
             logging.warning("Server disconnected.")
         except UaStatusCodeError as e:
             logging.warning(f"Server disconnected with error: {e}")
+        except Exception as e:
+            print(type(e))
+            print(f"{e} happened while disconnecting...")
 
     def subscribe(self, df_read: pd.DataFrame, sleep_after: float = None) -> None:
         """Subscribe all values you want to read.
@@ -286,6 +303,7 @@ class OpcuaClient(object):
         self.df_read = df_read
         nodelist_read = [self.client.get_node(row['node'])
                          for i, row in self.df_read.iterrows()]
+        self._nodelist_read = nodelist_read
 
         # Try subscribing to the nodes in the list.
         try:
@@ -326,7 +344,8 @@ class OpcuaClient(object):
             UaStatusCodeError: If initialization of publishing fails.
         """
         if not self._connected:
-            logging.warning("Client not connected for publishing.")
+            logging.warning("Not connected for publishing, connecting...")
+            self._connect_and_renew_sub()
             # Sleep
             if sleep_after is not None:
                 time.sleep(sleep_after)
@@ -358,6 +377,11 @@ class OpcuaClient(object):
                 logger.info('write %s %s' % (n, val))
         except UaStatusCodeError as e:
             logging.warning(f"UaStatusCodeError: {e} happened while publishing!")
+        except (ConnectionError, AttributeError, CancelledError, TimeoutError) as e:
+            # Try reconnecting including renewing the subscription.
+            logging.warning(f"Lost connection, trying to reconnect...")
+            self._connected = False
+            self._connect_and_renew_sub()
 
         # Log the time used for publishing
         if log_time:
