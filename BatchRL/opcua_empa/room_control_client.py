@@ -67,6 +67,8 @@ class ControlClient:
     _curr_ex_vals: Tuple = None
     _curr_temp_sp: float = None
     _curr_valves: Tuple = None
+    _curr_meas_temp_sp: float = None
+
     _start_time: datetime = None
 
     _started_exiting: bool = False
@@ -212,10 +214,12 @@ class ControlClient:
         """
         # Read and extract values
         read_vals = self.client.read_values()
-        ext_values = self.node_gen.extract_values(read_vals)
+        ext_values = self.node_gen.extract_values(read_vals, return_temp_setp=True)
         ex_vals = (ext_values[0][0], ext_values[1][0])
+        self._print_set_on_change("_curr_ex_vals", ext_values[2][0],
+                                  msg="Extracted Measured Temp. Setpoint")
         self._print_set_on_change("_curr_ex_vals", ex_vals,
-                                  msg="Extracted")
+                                  msg="Extracted (Res. Ack. and Written Temp. SP)")
         valve_tuple = tuple(self.node_gen.get_valve_values()[0])
         self._print_set_on_change("_curr_valves", valve_tuple,
                                   msg="Valves")

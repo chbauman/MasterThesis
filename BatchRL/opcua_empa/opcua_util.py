@@ -500,7 +500,8 @@ class NodeAndValues:
                     for i in range(self.n_rooms)]
         return val_vals
 
-    def extract_values(self, read_df: pd.DataFrame) -> Tuple[List, List]:
+    def extract_values(self, read_df: pd.DataFrame,
+                       return_temp_setp: bool = False) -> List[List]:
 
         # Save current time and set values to nan
         self.read_timestamps[self._curr_read_n] = np.datetime64('now')
@@ -518,11 +519,12 @@ class NodeAndValues:
 
         # Extract research acknowledgement and current room temp
         inds = [0, 1]
-        res_ack = [self.read_values[self._curr_read_n, i + inds[0]]
-                   for i in self.room_inds]
-        temps = [self.read_values[self._curr_read_n, i + inds[1]]
-                 for i in self.room_inds]
+        if return_temp_setp:
+            inds = inds + [2]
+
+        ret_list = [[self.read_values[self._curr_read_n, i + inds[k]]
+                     for i in self.room_inds] for k in inds]
 
         # Increment counter and return values
         self._inc("_curr_read_n")
-        return res_ack, temps
+        return ret_list
