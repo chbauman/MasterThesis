@@ -49,7 +49,6 @@ full_models_short_names = [
 
 
 def _convert_to_short(name: str):
-    new_name = None
     try:
         # Get env name
         env_name = name.split("_")[0]
@@ -106,8 +105,15 @@ def _convert_to_short(name: str):
         else:
             rl_dat = name[(ind + 5):].split("_")[0]
 
+        # Heat sampling
+        ind = name.find("_RejS_")
+        if ind == -1:
+            sam_ext = ""
+        else:
+            sam_ext = "_RS-" + name[(ind + 6):].split("_")[0]
+
         # Make new name
-        new_name = f"{env_name}_R-{r_num}_DD-{data_date}_HD-{h_set}_MD-{m_dat}_A-{al}_TBD-{tbd}_RLD-{rl_dat}"
+        new_name = f"{env_name}_R-{r_num}_DD-{data_date}_HD-{h_set}_MD-{m_dat}_A-{al}_TBD-{tbd}_RLD-{rl_dat}{sam_ext}"
     except Exception as e:
         print(f"Invalid fucking name: {name}!!! Generated exception: {e}")
         raise
@@ -121,7 +127,7 @@ def rename_rl_folder():
         m_path = os.path.join(RL_MODEL_DIR, m)
         m_short = _convert_to_short(m)
         m_path_ren = os.path.join(RL_MODEL_DIR, m_short)
-        # os.rename(m_path, m_path_ren)
+        os.rename(m_path, m_path_ren)
         print(m_short)
 
 
