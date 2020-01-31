@@ -205,12 +205,12 @@ class OpcuaClient(object):
                     self._connected = False
         return True
 
-    def _connect_and_renew_sub(self):
-        if self.connect():
+    def _connect_and_renew_sub(self, silent: bool = True):
+        if self.connect(silent=silent):
             self._sub = self.client.create_subscription(period=0, handler=self.handler)
             self._sub.subscribe_data_change(self._nodelist_read)
 
-    def connect(self) -> bool:
+    def connect(self, silent: bool = False) -> bool:
         """Connect the client to the server.
 
         If connection fails, prints a possible solution.
@@ -218,26 +218,28 @@ class OpcuaClient(object):
         Returns:
             True if connection successful, else False.
         """
+        msg, ret_val = None, True
         try:
             self.client.connect()
             self._connected = True
             self._type_defs = self.client.load_type_definitions()
-            logging.warning("Connection to server established.")
-            return True
+            msg = "Connection to server established."
         except UaStatusCodeError as e:
-            logging.warning(f"Exception: {e} happened while connecting!")
+            msg = f"Exception: {e} happened while connecting, " \
+                  f"try waiting a bit and rerun it!"
             if self._type_defs is None and self._connected:
-                print("Fucking type definition loading failed!!")
-            print(f"I don't know why this keeps happening, "
-                  f"try waiting a bit and rerun it!")
-            return False
+                msg += " Type definition loading failed!"
+            ret_val = False
         except socket.gaierror:
-            logging.warning(f"Gaierror happened while connecting, "
-                            f"check your internet connection!")
-            return False
+            msg = f"Gaierror happened while connecting, "\
+                  f"check your internet connection!"
+            ret_val = False
         except Exception as e:
-            print(f"Unexpected exception of type {type(e)} happened: {e}")
-            return False
+            msg = f"Unexpected exception of type {type(e)} happened: {e}"
+            ret_val = False
+        if not silent:
+            logging.warning(msg)
+        return ret_val
 
     def read_values(self) -> Optional[pd.DataFrame]:
         """Returns the read values in the dataframe.
@@ -245,12 +247,13 @@ class OpcuaClient(object):
         If something fails, returns None.
         """
         if not self._connected:
-            logging.warning("Not connected, connecting...")
+            logging.warning("Not connected for reading, connecting...")
             self._connect_and_renew_sub()
             return
 
         if not self._sub_init:
             logging.warning("You need to subscribe first!")
+            return
 
         try:
             self.handler.df_Read.set_index('node', drop=True)
@@ -269,7 +272,7 @@ class OpcuaClient(object):
             try:
                 self.client.disconnect()
             except Exception as e:
-                print(f"Exception {e} while disconnecting..")
+                logging.warning(f"Exception {e} while disconnecting..")
             return
         try:
             # Need to delete the subscription first before disconnecting
@@ -281,8 +284,8 @@ class OpcuaClient(object):
         except UaStatusCodeError as e:
             logging.warning(f"Server disconnected with error: {e}")
         except Exception as e:
-            print(type(e))
-            print(f"{e} happened while disconnecting...")
+            logging.warning(f"Unexpected exception of type {type(e)}: "
+                            f"{e} happened while disconnecting...")
 
     def subscribe(self, df_read: pd.DataFrame, sleep_after: float = None) -> None:
         """Subscribe all values you want to read.
@@ -344,8 +347,10 @@ class OpcuaClient(object):
             UaStatusCodeError: If initialization of publishing fails.
         """
         if not self._connected:
-            logging.warning("Not connected for publishing, connecting...")
+            if log_time:
+                logging.warning("Not connected for publishing, connecting...")
             self._connect_and_renew_sub()
+
             # Sleep
             if sleep_after is not None:
                 time.sleep(sleep_after)
@@ -365,7 +370,7 @@ class OpcuaClient(object):
                 self._pub_init = True
                 logging.warning("Publishing initialized.")
             except UaStatusCodeError as e:
-                print(f"UaStatusCodeError while initializing publishing!: {e}")
+                logging.warning(f"UaStatusCodeError while initializing publishing!: {e}")
                 raise e
 
         # Publish values, failures to publish will not raise an exception.
@@ -377,11 +382,13 @@ class OpcuaClient(object):
                 logger.info('write %s %s' % (n, val))
         except UaStatusCodeError as e:
             logging.warning(f"UaStatusCodeError: {e} happened while publishing!")
-        except (ConnectionError, AttributeError, CancelledError, TimeoutError) as e:
+        except (ConnectionError, AttributeError, CancelledError, TimeoutError):
             # Try reconnecting including renewing the subscription.
             logging.warning(f"Lost connection, trying to reconnect...")
             self._connected = False
             self._connect_and_renew_sub()
+        except Exception as e:
+            logging.warning(f"Unexpected exception of type {type(e)} happened: {e}")
 
         # Log the time used for publishing
         if log_time:

@@ -251,6 +251,9 @@ class ControlClient:
         cont = True
         if read_vals is None:
             self._n_bad_res += 1
+            if self._n_bad_res > self.n_bad_res_max:
+                self.termination_reason = "Internet connection lost :("
+                cont = False
         else:
             ext_values = self.node_gen.extract_values(read_vals, return_temp_setp=True)
             self._print_set_on_change("_curr_meas_temp_sp", ext_values[2][0],
@@ -293,7 +296,7 @@ class ControlClient:
         # Print Info
         if self.verbose > 0:
             if self._n_bad_res != 0:
-                print_fun(f"Aborting experiment in: {self.n_bad_res_max - self._n_bad_res} steps.")
+                print_fun(f"Aborting experiment in: {self.n_bad_res_max - self._n_bad_res + 1} steps.")
             if not cont:
                 print_fun(self.termination_reason)
 
