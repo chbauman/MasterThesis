@@ -31,7 +31,7 @@ from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model, check_
 from dynamics.base_model import compare_models, check_train_str
 from dynamics.battery_model import BatteryModel
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
-    load_room_env
+    load_room_env, rename_rl_folder
 from dynamics.recurrent import test_rnn_models
 from envs.base_dynamics_env import DEFAULT_ENV_SAMPLE_DATA
 from envs.dynamics_envs import BatteryEnv, heat_marker
@@ -565,7 +565,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
-    try_opcua()
+    rename_rl_folder()
+    # try_opcua()
     return
 
 

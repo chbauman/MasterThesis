@@ -54,7 +54,7 @@ if ($cp_hop){
 }
 # Copy RL agents from Euler
 if ($cp_rl){
-    Invoke-Expression "scp -rp chbauman@euler.ethz.ch:MT/MasterThesis/Models/RL/ $($PSScriptRoot)/Models/"
+    Invoke-Expression "scp -rp chbauman@euler.ethz.ch:MT/MasterThesis/Models/RL/ $($PSScriptRoot)/Models"
 }
 
 # Run tests

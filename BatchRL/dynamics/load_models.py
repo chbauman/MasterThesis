@@ -1,8 +1,10 @@
+import os
 from typing import List, Dict
 
 import numpy as np
 from sklearn.linear_model import MultiTaskLassoCV
 
+from agents.base_agent import RL_MODEL_DIR
 from data_processing.data import choose_dataset_and_constraints
 from data_processing.dataset import Dataset, DatasetConstraints
 from dynamics.base_model import BaseDynamicsModel
@@ -44,6 +46,83 @@ full_models_short_names = [
     "Naive",
     "Weather, Constant Water, Consistent Room Temp",
 ]
+
+
+def _convert_to_short(name: str):
+    new_name = None
+    try:
+        # Get env name
+        env_name = name.split("_")[0]
+        if env_name == "FullRoom":
+            env_name = "Room"
+        else:
+            assert env_name == "RoomBattery"
+
+        # Get room number
+        r_ind = name.find("_Room")
+        if r_ind == -1:
+            r_num = DEFAULT_ROOM_NR
+        else:
+            r_num = int(name[(r_ind + 5):].split("_")[0])
+
+        # Get date
+        req_date = "2020-01-21"
+        assert name.find(req_date) != -1, "Fuck"
+        data_date = req_date
+
+        # Get Hop Eval set
+        h_ind = name.find("_HEV_")
+        if h_ind == -1:
+            h_set = DEFAULT_EVAL_SET
+        else:
+            h_set = name[(h_ind + 5):]
+
+        # Find model data
+        ind = name.find("_CON_")
+        ext = name[(ind + 5):]
+        if ext[0] != "H":
+            m_dat = ext.split("_")[0]
+        else:
+            m_dat = DEFAULT_TRAIN_SET
+
+        # Find alpha
+        ind = name.find("_AL")
+        if ind == -1:
+            assert False, "Fuck"
+        else:
+            al = int(name[(ind + 3):].split("_")[0])
+
+        # Temp bounds
+        ind = name.find("_TBD")
+        if ind == -1:
+            tbd = "22.0-26.0"
+        else:
+            tbd = name[(ind + 4):].split("_")[0]
+
+        # RL data
+        ind = name.find("_SAM_")
+        if ind == -1:
+            rl_dat = DEFAULT_ENV_SAMPLE_DATA
+        else:
+            rl_dat = name[(ind + 5):].split("_")[0]
+
+        # Make new name
+        new_name = f"{env_name}_R-{r_num}_DD-{data_date}_HD-{h_set}_MD-{m_dat}_A-{al}_TBD-{tbd}_RLD-{rl_dat}"
+    except Exception as e:
+        print(f"Invalid fucking name: {name}!!! Generated exception: {e}")
+        raise
+
+    print(new_name)
+    return new_name
+
+
+def rename_rl_folder():
+    for m in os.listdir(RL_MODEL_DIR):
+        m_path = os.path.join(RL_MODEL_DIR, m)
+        m_short = _convert_to_short(m)
+        m_path_ren = os.path.join(RL_MODEL_DIR, m_short)
+        # os.rename(m_path, m_path_ren)
+        print(m_short)
 
 
 def load_room_env(m_name: str,
