@@ -20,6 +20,10 @@ if not EULER:
     from pydrive.auth import GoogleAuth
     from pydrive.drive import GoogleDrive
     from pydrive.files import GoogleDriveFile
+else:
+    GoogleAuth = None
+    GoogleDrive = None
+    GoogleDriveFile = None
 
 
 FOLDER_MIME_TYPE = "application/vnd.google-apps.folder"
