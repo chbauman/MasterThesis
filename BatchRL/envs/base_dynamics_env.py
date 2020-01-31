@@ -367,7 +367,6 @@ class DynEnv(ABC, gym.Env):
 
         # Model disturbance if not yet done
         if use_noise and not self._disturbance_is_modelled:
-            print("Using noise!")
             if not self._dummy_use:
                 self._model_disturbance()
 
