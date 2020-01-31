@@ -792,7 +792,7 @@ def main() -> None:
 
     # Opcua
     if args.ua:
-        debug, notify_failure, phys_cons, notify_debug, dummy_env_mode = \
+        debug, notify_failure, phys_cons, notify_debug, dummy_use = \
             extract_args(args.bool, False, False, False, None, True)
         n_steps = extract_args(args.int, None)[0]
         alpha, tb_low, tb_high = extract_args(args.float, 50.0, None, None)
@@ -803,7 +803,7 @@ def main() -> None:
                        train_data=train_data,
                        hop_eval_set=hop_eval_data,
                        notify_debug=notify_debug,
-                       dummy_env_mode=dummy_env_mode,
+                       dummy_use=dummy_use,
                        sample_from=rl_sampling,
                        use_heat_sampler=sam_heat)
 

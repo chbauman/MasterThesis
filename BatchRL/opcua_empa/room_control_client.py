@@ -185,6 +185,10 @@ class ControlClient:
 
         Does nothing if `self.notify_failures` is False.
         """
+        # Check if notifications are enabled...
+        if not self.notify_failures:
+            return
+
         # Set subject
         sub = "Experiment Termination Notification"
 

@@ -542,7 +542,7 @@ def extract_args(args: Optional[List], *def_vals,
                 if raise_too_many_error:
                     yeet("Too many arguments specified!")
                 else:
-                    warnings.warn(f"Ignored argument: {a} and following...")
+                    warnings.warn(f"Ignored argument: {args[ct:]} and following...")
                     break
     return ret
 
