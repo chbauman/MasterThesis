@@ -75,8 +75,9 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
         verbose:
         n_steps:
         hop_eval_set:
-        notify_debug: Whether to use debug mail address to send notifications.
-        **env_kwargs: Keyword arguments for environment.
+        notify_debug: Whether to use debug mail address to send notifications,
+            Ignored, if `notify_failure` is False.
+        **env_kwargs: Keyword arguments for environment, see :func:`load_room_env`.
     """
     full_debug: bool = False
 

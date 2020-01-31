@@ -172,8 +172,9 @@ class ControlClient:
             self.exit_lock.release()
 
     def _print_set_on_change(self, attr_name: str, val, msg: str) -> None:
+        """Sets and prints attribute with name `attr_name` if its value changed."""
         curr_val = getattr(self, attr_name)
-        if curr_val != val:
+        if curr_val is not None and curr_val != val:
             setattr(self, attr_name, val)
             if self.verbose > 0:
                 print_fun(f"{msg}: {val}")
@@ -187,6 +188,8 @@ class ControlClient:
         """
         # Check if notifications are enabled...
         if not self.notify_failures:
+            if self.verbose:
+                print("Not sending email notification!")
             return
 
         # Set subject
