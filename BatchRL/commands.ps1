@@ -8,7 +8,7 @@ python .\BatchRL.py -v -r --train_data all --fl 50.0 --rl_sampling all --hop_eva
 
 # Run Opcua controller
 # Test controller
-
+ python BatchRL.py -v -u -bo f t f t f --data_end_date 2020-01-21 --hop_eval_data test --train_data all -fl 50.0 21.0 26.0 --room_nr 41 --rl_sampling all -in 100
 
 # Euler Jobs
 # Jobs submitted on Euler (31.01.20)

@@ -64,10 +64,14 @@ class ControlClient:
 
     _n_pub: int = 0
 
-    _curr_ex_vals: Tuple = None
+    # Current write values
     _curr_temp_sp: float = None
+
+    # Current measured values
     _curr_valves: Tuple = None
     _curr_meas_temp_sp: float = None
+    _curr_meas_temp: float = None
+    _curr_meas_res_ack: float = None
 
     _start_time: datetime = None
 
@@ -174,7 +178,7 @@ class ControlClient:
     def _print_set_on_change(self, attr_name: str, val, msg: str) -> None:
         """Sets and prints attribute with name `attr_name` if its value changed."""
         curr_val = getattr(self, attr_name)
-        if curr_val is not None and curr_val != val:
+        if curr_val is None or curr_val != val:
             setattr(self, attr_name, val)
             if self.verbose > 0:
                 print_fun(f"{msg}: {val}")
@@ -222,11 +226,12 @@ class ControlClient:
         # Read and extract values
         read_vals = self.client.read_values()
         ext_values = self.node_gen.extract_values(read_vals, return_temp_setp=True)
-        ex_vals = (ext_values[0][0], ext_values[1][0])
-        self._print_set_on_change("_curr_ex_vals", ext_values[2][0],
-                                  msg="Extracted Measured Temp. Setpoint")
-        self._print_set_on_change("_curr_ex_vals", ex_vals,
-                                  msg="Extracted (Res. Ack. and Written Temp. SP)")
+        self._print_set_on_change("_curr_meas_temp_sp", ext_values[2][0],
+                                  msg="Measured Temp. Setpoint")
+        self._print_set_on_change("_curr_meas_temp", ext_values[1][0],
+                                  msg="Measured Room Temp.")
+        self._print_set_on_change("_curr_meas_res_ack", ext_values[0][0],
+                                  msg="Research Acknowledgement")
         valve_tuple = tuple(self.node_gen.get_valve_values()[0])
         self._print_set_on_change("_curr_valves", valve_tuple,
                                   msg="Valves")
@@ -236,7 +241,7 @@ class ControlClient:
         self.client.publish(self.df_write, log_time=self.verbose > 1, sleep_after=1.0)
 
         self._print_set_on_change("_curr_temp_sp", self.df_write['value'][0],
-                                  msg="Temperature setpoint")
+                                  msg="Written temperature setpoint")
 
         # Check that the research acknowledgement is true.
         # Wait for at least 20s before requiring to be true, takes some time.
