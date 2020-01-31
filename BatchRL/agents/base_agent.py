@@ -210,7 +210,7 @@ class AgentBase(AbstractAgent, ABC):
 
             # Reset env if episode is over.
             if fin:
-                s_curr = self.env.reset()
+                s_curr = self.env.reset(use_noise=use_noise)
                 ep_mark = 0 if episode_marker is None else episode_marker(s_curr)
 
         # Return all rewards
