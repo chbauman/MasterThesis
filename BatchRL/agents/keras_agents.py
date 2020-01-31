@@ -256,8 +256,9 @@ class DDPGBaseAgent(KerasBaseAgent):
         Returns:
              True if model could be loaded else False.
         """
-        full_path = self.get_path(name, env=self.env,
-                                  hop_eval_set=train_data)
+        full_path = self._save_path()
+        # full_path = self.get_path(name, env=self.env,
+        #                           hop_eval_set=train_data)
         path_actor = full_path[:-3] + "_actor.h5"
         path_critic = full_path[:-3] + "_critic.h5"
 
@@ -268,6 +269,9 @@ class DDPGBaseAgent(KerasBaseAgent):
         if self.env.dummy_use:
             raise ValueError(f"No trained model {full_path[:-3]} found!")
         return False
+
+    def _save_path(self):
+        return self.env.get_model_path(self.name + ".h5")
 
     def save_model(self, m, name: str, train_data: str = DEFAULT_EVAL_SET) -> None:
         """Saves a keras model.
@@ -280,8 +284,10 @@ class DDPGBaseAgent(KerasBaseAgent):
             name: Name of the model.
             train_data: Hyperparameter opt. evaluation set.
         """
-        m.save_weights(self.get_path(name, env=self.env,
-                                     hop_eval_set=train_data))
+        w_path = self._save_path()
+        m.save_weights(w_path)
+        # m.save_weights(self.get_path(name, env=self.env,
+        #                              hop_eval_set=train_data))
 
     @train_decorator()
     def fit(self, verbose: int = 1, train_data: str = DEFAULT_TRAIN_SET) -> None:

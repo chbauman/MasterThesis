@@ -11,6 +11,7 @@ import gym
 import numpy as np
 
 from agents import base_agent
+from agents.base_agent import RL_MODEL_DIR
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import npf32
 from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts, ts_per_day, ProgWrap
@@ -159,6 +160,12 @@ class DynEnv(ABC, gym.Env):
             return os.path.join(rl_plot_path, self.short_name)
         return self._plot_path
 
+    @property
+    def model_path(self) -> str:
+        """Returns the path of the model folder."""
+        if self.short_name is not None:
+            return os.path.join(RL_MODEL_DIR, self.short_name)
+
     def set_agent(self, a: base_agent.AgentBase) -> None:
         """Sets the given agent to the environment.
 
@@ -205,6 +212,12 @@ class DynEnv(ABC, gym.Env):
         dir_name = self.plot_path
         create_dir(dir_name)
         return os.path.join(dir_name, name)
+
+    def get_model_path(self, mod_name: str) -> str:
+        """Returns the model path."""
+        dir_name = self.model_path
+        create_dir(dir_name)
+        return os.path.join(dir_name, mod_name)
 
     reward_descs: List = []  #: The description of the detailed reward.
 
