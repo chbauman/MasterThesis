@@ -14,11 +14,13 @@ import os
 import shutil
 import zipfile
 
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-from pydrive.files import GoogleDriveFile
+from util.util import TEMP_DIR, EULER
 
-from util.util import TEMP_DIR
+if not EULER:
+    from pydrive.auth import GoogleAuth
+    from pydrive.drive import GoogleDrive
+    from pydrive.files import GoogleDriveFile
+
 
 FOLDER_MIME_TYPE = "application/vnd.google-apps.folder"
 

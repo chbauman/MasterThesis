@@ -9,3 +9,6 @@ python .\BatchRL.py -v -r --train_data all --fl 50.0 --rl_sampling all --hop_eva
 
 # Cleanup
 python .\BatchRL.py -v -c
+
+# Jobs submitted on Euler
+bsub -n 4 -W 24:00 python BatchRL.py -r -v -bo f f f --data_end_date 2020-01-21 --hop_eval_data test --train_data all -fl 50.0 21.0 26.0 --room_nr 43 --rl_sampling all
