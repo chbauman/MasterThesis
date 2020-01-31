@@ -379,6 +379,8 @@ class DynEnv(ABC, gym.Env):
                 accepted = self.rej_sampler(ret_val)
                 if ct >= self.rej_sampler.max_rej:
                     accepted = True
+            else:
+                accepted = True
 
             if not accepted:
                 ct += 1
