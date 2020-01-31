@@ -14,3 +14,4 @@ python .\BatchRL.py -v -c
 bsub -n 4 -W 24:00 python BatchRL.py -r -v -bo f f f f --data_end_date 2020-01-21 --hop_eval_data test --train_data all -fl 50.0 21.0 26.0 --room_nr 43 --rl_sampling all
 bsub -n 4 -W 24:00 python BatchRL.py -r -v -bo f f f f --data_end_date 2020-01-21 --hop_eval_data test --train_data all -fl 50.0 21.0 26.0 --room_nr 41 --rl_sampling all --sam_heat
 bsub -n 4 -W 24:00 python BatchRL.py -r -v -bo f f f f --data_end_date 2020-01-21 --hop_eval_data test --train_data all -fl 50.0 21.0 26.0 --room_nr 43 --rl_sampling all --sam_heat
+bsub -n 4 -W 24:00 python BatchRL.py -r -v -bo f f f f --data_end_date 2020-01-21 --hop_eval_data test --train_data all -fl 50.0 21.0 26.0 --room_nr 41 --rl_sampling all
