@@ -80,6 +80,10 @@ class ControlClient:
     exit_lock = Lock()
     _add_msg: str = None
 
+    # Fail count
+    n_bad_res_max: int = 60  #: Experiment will be aborted if there are more consecutive failures.
+    _n_bad_res: int = 0
+
     def __init__(self,
                  used_control: ControlT,
                  exp_name: str = None,
@@ -153,9 +157,8 @@ class ControlClient:
             self._add_msg = traceback.format_exc()
 
         if self.verbose:
-            print("Exiting...")
+            print(f"Thread: {threading.currentThread().name} in __exit__().")
             print("AddMessage: ", self._add_msg)
-            print(f"Thread: {threading.currentThread().name}")
 
         self.exit_lock.acquire()
         if not self._exited:
@@ -164,23 +167,22 @@ class ControlClient:
 
             if self.verbose:
                 print("Actually exiting :)")
-                print(threading.enumerate())
 
+            # Exit client and save data
             self.client.__exit__(exc_type, exc_val, exc_tb)
             self.node_gen.save_cached_data(self.verbose)
 
             # Kill threads
             for t in threading.enumerate():
                 if "MainThread" not in t.name:
-                    print(f"Joining thread: {t.name}")
                     if hasattr(t, "stop"):
                         t.stop()
                     if not isinstance(t, threading._DummyThread):
+                        print(f"Joining thread: {t.name}")
                         t.join()
 
             if self.verbose:
                 print("Joined threads.")
-                print(threading.enumerate())
 
             # Notify reason of termination
             with ProgWrap(f"Sending notification...", self.verbose > 0):
@@ -229,6 +231,13 @@ class ControlClient:
         send_mail(subject=sub, msg=msg, debug=self.deb_mail,
                   password=self._pw)
 
+    def _write_values(self):
+        # Compute and publish current control input
+        self.df_write["value"] = self.node_gen.compute_current_values()
+        self.client.publish(self.df_write, log_time=self.verbose > 1, sleep_after=1.0)
+        self._print_set_on_change("_curr_temp_sp", self.df_write['value'][0],
+                                  msg="Written temperature setpoint")
+
     def read_publish_wait_check(self) -> bool:
         """Read and publish values, wait, and check if termination is reached.
 
@@ -239,49 +248,54 @@ class ControlClient:
         """
         # Read and extract values
         read_vals = self.client.read_values()
+        cont = True
         if read_vals is None:
-            print("No values returned")
+            self._n_bad_res += 1
+        else:
+            ext_values = self.node_gen.extract_values(read_vals, return_temp_setp=True)
+            self._print_set_on_change("_curr_meas_temp_sp", ext_values[2][0],
+                                      msg="Measured Temp. Setpoint")
+            self._print_set_on_change("_curr_meas_temp", ext_values[1][0],
+                                      msg="Measured Room Temp.")
+            self._print_set_on_change("_curr_meas_res_ack", ext_values[0][0],
+                                      msg="Research Acknowledgement")
+            valve_tuple = tuple(self.node_gen.get_valve_values()[0])
+            self._print_set_on_change("_curr_valves", valve_tuple,
+                                      msg="Valves")
 
-        ext_values = self.node_gen.extract_values(read_vals, return_temp_setp=True)
-        self._print_set_on_change("_curr_meas_temp_sp", ext_values[2][0],
-                                  msg="Measured Temp. Setpoint")
-        self._print_set_on_change("_curr_meas_temp", ext_values[1][0],
-                                  msg="Measured Room Temp.")
-        self._print_set_on_change("_curr_meas_res_ack", ext_values[0][0],
-                                  msg="Research Acknowledgement")
-        valve_tuple = tuple(self.node_gen.get_valve_values()[0])
-        self._print_set_on_change("_curr_valves", valve_tuple,
-                                  msg="Valves")
-        print(ext_values[0][0])
+            # Check that the research acknowledgement is true.
+            # Wait for at least 20s before requiring to be true, takes some time.
+            res_ack_true = np.all(ext_values[0]) or self._n_pub < 20
+            if res_ack_true:
+                self._n_bad_res = 0
+            else:
+                self._n_bad_res += 1
+            res_ack_true = self._n_bad_res < self.n_bad_res_max
+
+            # Check measured temperatures, stop if too low or high.
+            temps_in_bound = check_in_range(np.array(ext_values[1]), *self.TEMP_MIN_MAX)
+
+            # Stop if (first) controller gives termination signal.
+            terminate_now = self.node_gen.control[0][1].terminate()
+            cont = res_ack_true and temps_in_bound and not terminate_now
+
+            # Print the reason of termination.
+            if not temps_in_bound:
+                self.termination_reason = "Temperature bounds reached, aborting experiment."
+            if not res_ack_true:
+                self.termination_reason = "Research mode confirmation lost :("
+            if terminate_now:
+                self.termination_reason = "Experiment time over!"
 
         # Compute and publish current control input
-        self.df_write["value"] = self.node_gen.compute_current_values()
-        self.client.publish(self.df_write, log_time=self.verbose > 1, sleep_after=1.0)
-        self._print_set_on_change("_curr_temp_sp", self.df_write['value'][0],
-                                  msg="Written temperature setpoint")
+        self._write_values()
 
-        # Check that the research acknowledgement is true.
-        # Wait for at least 20s before requiring to be true, takes some time.
-        res_ack_true = np.all(ext_values[0]) or self._n_pub < 20
-
-        # Check measured temperatures, stop if too low or high.
-        temps_in_bound = check_in_range(np.array(ext_values[1]), *self.TEMP_MIN_MAX)
-
-        # Stop if (first) controller gives termination signal.
-        terminate_now = self.node_gen.control[0][1].terminate()
-        cont = res_ack_true and temps_in_bound and not terminate_now
-        cont = temps_in_bound and not terminate_now
-
-        # Print the reason of termination.
-        if not temps_in_bound:
-            self.termination_reason = "Temperature bounds reached, aborting experiment."
-        if not res_ack_true:
-            self.termination_reason = "Research mode confirmation lost :("
-        if terminate_now:
-            self.termination_reason = "Experiment time over!"
-
-        if not cont and self.verbose > 0:
-            print_fun(self.termination_reason)
+        # Print Info
+        if self.verbose > 0:
+            if self._n_bad_res != 0:
+                print_fun(f"Aborting experiment in: {self.n_bad_res_max - self._n_bad_res} steps.")
+            if not cont:
+                print_fun(self.termination_reason)
 
         # Increment publishing counter and return termination criterion.
         self._n_pub += 1
