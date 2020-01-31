@@ -694,7 +694,7 @@ def main() -> None:
     # Extract common bool args
     verbose = 5 if args.verbose else 0
     overwrite = args.write_forced
-    heat_sam = args.sam_heat
+    sam_heat = args.sam_heat
 
     if args.verbose:
         print("Verbosity turned on.")
@@ -783,7 +783,7 @@ def main() -> None:
                         sample_from=rl_sampling,
                         visual_analysis=visual_analysis,
                         n_eval_steps=n_eval_steps,
-                        use_heat_sampler=heat_sam)
+                        use_heat_sampler=sam_heat)
 
     # Overleaf plots
     if args.plot:
@@ -805,7 +805,7 @@ def main() -> None:
                        notify_debug=notify_debug,
                        dummy_env_mode=dummy_env_mode,
                        sample_from=rl_sampling,
-                       use_heat_sampler=heat_sam)
+                       use_heat_sampler=sam_heat)
 
     # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)
