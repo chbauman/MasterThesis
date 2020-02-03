@@ -54,8 +54,8 @@ def _convert_to_short(name: str):
         env_name = name.split("_")[0]
         if env_name == "FullRoom":
             env_name = "Room"
-        else:
-            assert env_name == "RoomBattery"
+        elif env_name != "RoomBattery":
+            return None
 
         # Get room number
         r_ind = name.find("_Room")
@@ -87,7 +87,7 @@ def _convert_to_short(name: str):
         # Find alpha
         ind = name.find("_AL")
         if ind == -1:
-            assert False, "Fuck"
+            return None
         else:
             al = int(name[(ind + 3):].split("_")[0])
 
@@ -126,9 +126,10 @@ def rename_rl_folder():
     for m in os.listdir(RL_MODEL_DIR):
         m_path = os.path.join(RL_MODEL_DIR, m)
         m_short = _convert_to_short(m)
-        m_path_ren = os.path.join(RL_MODEL_DIR, m_short)
-        os.rename(m_path, m_path_ren)
-        print(m_short)
+        if m_short is not None:
+            m_path_ren = os.path.join(RL_MODEL_DIR, m_short)
+            os.rename(m_path, m_path_ren)
+            print(m_short)
 
 
 def load_room_env(m_name: str,
