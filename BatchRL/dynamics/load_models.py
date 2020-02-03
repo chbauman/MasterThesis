@@ -47,6 +47,9 @@ full_models_short_names = [
     "Weather, Constant Water, Consistent Room Temp",
 ]
 
+DEFAULT_D_FAC = 0.3
+used_d_fac = DEFAULT_D_FAC
+
 
 def _convert_to_short(name: str):
     try:
@@ -190,7 +193,7 @@ def load_room_env(m_name: str,
         ds = m.data
 
     # Construct string with most important parameters
-    d_fac = 0.3
+    d_fac = used_d_fac
     p_list = [
         ("R-", room_nr),
         ("DD-", date_str),
@@ -200,7 +203,7 @@ def load_room_env(m_name: str,
         ("TBD-", temp_bds),
         ("RLD-", sample_from),
         ("RS-", HeatSampler if use_heat_sampler else None),
-        ("NF-", d_fac if d_fac != 0.3 else None),
+        ("NF-", d_fac if d_fac != DEFAULT_D_FAC else None),
     ]
     short_param_ext = make_param_ext(p_list)
 

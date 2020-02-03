@@ -25,8 +25,13 @@ from util.util import make_param_ext, train_decorator, DEFAULT_TRAIN_SET, get_rl
 from util.visualize import plot_rewards
 
 
+# Constants, do not change!
 DEF_RL_LR = 0.00001
 DEF_GAMMA = 0.99
+
+# Change values here
+used_lr = 0.001
+used_gamma = DEF_GAMMA
 
 
 def ddpg_agent_name(n_steps: int, lr: float = DEF_RL_LR,
@@ -336,8 +341,8 @@ def default_ddpg_agent(env: RLDynEnv,
     if n_steps is None:
         n_steps = get_rl_steps(eul=True)
 
-    lr = 0.001  # DEF_RL_LR
-    gam = DEF_GAMMA
+    lr = used_lr
+    gam = used_gamma
 
     # Initialize agent
     with ProgWrap(f"Initializing DDPG agent...", verbose > 0):
