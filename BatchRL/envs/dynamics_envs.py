@@ -40,7 +40,7 @@ def heat_marker(state: np.ndarray) -> bool:
     return state[2] > state[4]
 
 
-HeatSampler = RejSampler("HeatSam", heat_marker, 3)
+HeatSampler = RejSampler("HeatSam", heat_marker, 1)
 
 
 class RLDynEnv(DynEnv, ABC):

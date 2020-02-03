@@ -25,8 +25,15 @@ from util.util import make_param_ext, train_decorator, DEFAULT_TRAIN_SET, get_rl
 from util.visualize import plot_rewards
 
 
-def ddpg_agent_name(n_steps: int) -> str:
-    return f"DDPG_NEP{n_steps}"
+DEF_RL_LR = 0.00001
+DEF_GAMMA = 0.99
+
+
+def ddpg_agent_name(n_steps: int, lr: float = DEF_RL_LR,
+                    gam: float = DEF_GAMMA) -> str:
+    lr_ext = "" if lr == DEF_RL_LR else f"_LR{lr}"
+    g_ext = "" if gam == DEF_GAMMA else f"_G{gam}"
+    return f"DDPG_NEP{n_steps}{lr_ext}{g_ext}"
 
 
 class KerasBaseAgent(AgentBase, KerasBase):
@@ -229,7 +236,7 @@ class DDPGBaseAgent(KerasBaseAgent):
         critic = Model(inputs=[action_input, observation_input], outputs=x)
 
         # Configure and compile the agent.
-        memory = SequentialMemory(limit=100000, window_length=1)
+        memory = SequentialMemory(limit=500000, window_length=1)
         random_process = OrnsteinUhlenbeckProcess(size=self.nb_actions, theta=.15, mu=0., sigma=.05)
         self.m = DDPGAgent(nb_actions=self.nb_actions, actor=actor, critic=critic, critic_action_input=action_input,
                            memory=memory, nb_steps_warmup_critic=100, nb_steps_warmup_actor=100,
@@ -317,7 +324,7 @@ class DDPGBaseAgent(KerasBaseAgent):
         plot_rewards(hist, train_plot)
 
     def get_short_name(self):
-        return f"DDPG_{self.n_steps}"
+        return ddpg_agent_name(self.n_steps, self.lr, self.gamma)
 
 
 def default_ddpg_agent(env: RLDynEnv,
@@ -329,13 +336,18 @@ def default_ddpg_agent(env: RLDynEnv,
     if n_steps is None:
         n_steps = get_rl_steps(eul=True)
 
+    lr = 0.001  # DEF_RL_LR
+    gam = DEF_GAMMA
+
     # Initialize agent
     with ProgWrap(f"Initializing DDPG agent...", verbose > 0):
         agent = DDPGBaseAgent(env,
                               action_range=env.action_range,
                               n_steps=n_steps,
-                              gamma=0.99, lr=0.00001)
-        agent.name = ddpg_agent_name(n_steps)
+                              gamma=gam,
+                              lr=lr)
+        agent.name = agent.get_short_name()
+        # agent.name = ddpg_agent_name(n_steps, lr=lr, gam=gam)
 
     # Fit if requested
     if fitted:
