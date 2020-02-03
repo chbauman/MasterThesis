@@ -32,7 +32,7 @@ SOC_GOAL: Num = 60.0  #: Desired SoC at end of episode.
 BAT_ENERGY: str = f"Battery Energy Consumption [{ROOM_ENG_FAC:.4g} Wh]"
 ROOM_ENERGY: str = f"Room Energy Consumption [{ROOM_ENG_FAC:.4g} Wh]"
 TEMP_BOUND_PEN: str = "Temperature Bound Violation [Kh]"
-ENG_COST: str = "Energy Costs []"
+ENG_COST: str = "Energy Costs"
 
 
 def heat_marker(state: np.ndarray) -> bool:
