@@ -189,7 +189,7 @@ def load_room_env(m_name: str,
         ds = m.data
 
     # Construct string with most important parameters
-    d_fac = 0.001
+    d_fac = 0.3
     p_list = [
         ("R-", room_nr),
         ("DD-", date_str),
@@ -209,7 +209,7 @@ def load_room_env(m_name: str,
             'cont_actions': True,
             'alpha': alpha,
             'temp_bounds': temp_bds,
-            'disturb_fac': 0.001,
+            'disturb_fac': d_fac,
             'dummy_use': dummy_use,
             'sample_from': sample_from,
             'verbose': verbose,
