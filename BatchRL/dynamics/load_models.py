@@ -189,6 +189,7 @@ def load_room_env(m_name: str,
         ds = m.data
 
     # Construct string with most important parameters
+    d_fac = 0.001
     p_list = [
         ("R-", room_nr),
         ("DD-", date_str),
@@ -198,6 +199,7 @@ def load_room_env(m_name: str,
         ("TBD-", temp_bds),
         ("RLD-", sample_from),
         ("RS-", HeatSampler if use_heat_sampler else None),
+        ("NF-", d_fac if d_fac != 0.3 else None),
     ]
     short_param_ext = make_param_ext(p_list)
 
@@ -207,7 +209,7 @@ def load_room_env(m_name: str,
             'cont_actions': True,
             'alpha': alpha,
             'temp_bounds': temp_bds,
-            'disturb_fac': 0.3,
+            'disturb_fac': 0.001,
             'dummy_use': dummy_use,
             'sample_from': sample_from,
             'verbose': verbose,
