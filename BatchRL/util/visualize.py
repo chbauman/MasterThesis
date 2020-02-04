@@ -109,7 +109,11 @@ class ModifyDir:
         Args:
             new_dir: The new directory.
         """
-        self.ret_dir = self.ol_dir if new_dir is None else os.path.join(self.ol_dir, new_dir)
+        if new_dir is None:
+            self.ret_dir = self.ol_dir
+        else:
+            self.ret_dir = os.path.join(self.ol_dir, new_dir)
+            create_dir(self.ret_dir)
 
     def __str__(self):
         return self.ret_dir
