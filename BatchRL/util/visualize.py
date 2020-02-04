@@ -1,3 +1,13 @@
+"""This file contains all plotting stuff.
+
+Plotting is based on matplotlib.
+If we are not on a Windows platform, the backend 'Agg' is
+used, since this works also on Euler.
+
+Most functions plot some kind of time series, but there
+are also more specialized plot functions. E.g. plotting
+the training of a keras neural network.
+"""
 import os
 import warnings
 from typing import Dict, Sequence, Tuple, List, Any, Type
@@ -21,16 +31,6 @@ if EULER:
 import matplotlib.pyplot as plt
 import matplotlib.colors as mpl_colors
 
-"""This file contains all plotting stuff.
-
-Plotting is based on matplotlib. 
-If we are not on a Windows platform, the backend 'Agg' is
-used, since this works also on Euler.
-
-Most functions plot some kind of time series, but there
-are also more specialized plot functions. E.g. plotting 
-the training of a keras neural network.
-"""
 
 register_matplotlib_converters()
 
@@ -88,10 +88,11 @@ class ModifyDir:
     Which allows you to modify it:
 
     >>> CONST_DIR.set_folder("New")
-    >>> CONST_DIR  # Now: "Some/Constant/Path/New"
+    >>> CONST_DIR
+    "Some/Constant/Path/New"
 
-    And now this can be seen from all modules! The `__str__`, `__repr__`
-    and the `__fspath__` still allow the usage as string / path.
+    And now this can be seen from all modules! The :func:`__str__`, :func:`__repr__`
+    and the :func:`__fspath__` still allow the usage as string / path.
     """
     def __init__(self, orig_dir: str):
         """Initializer
