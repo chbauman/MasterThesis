@@ -457,8 +457,7 @@ def scatter_plot(x, y, *,
                  custom_line=None,
                  custom_label=None,
                  save_name=None):
-    """
-    Scatter Plot. 
+    """Scatter Plot.
     """
 
     plt.subplots()
@@ -494,7 +493,8 @@ def scatter_plot(x, y, *,
 
     # Add Labels
     if lab_dict is not None:
-        plt.title(lab_dict['title'])
+        if lab_dict.get("title") is not None:
+            plt.title(lab_dict['title'])
         plt.ylabel(lab_dict['ylab'])
         plt.xlabel(lab_dict['xlab'])
     plt.legend()

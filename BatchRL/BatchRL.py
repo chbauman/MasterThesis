@@ -29,7 +29,7 @@ from data_processing.dataset import Dataset, check_dataset_part
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model, check_eval_data, upload_hop_pars, \
     download_hop_pars
 from dynamics.base_model import compare_models, check_train_str
-from dynamics.battery_model import BatteryModel
+from dynamics.battery_model import BatteryModel, clean_battery_dataset
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
     load_room_env, rename_rl_folder, DEFAULT_D_FAC
 from dynamics.recurrent import test_rnn_models
@@ -76,7 +76,8 @@ def test_cleanup(verbose: int = 0) -> None:
 
 def run_battery(do_rl: bool = True, overwrite: bool = False,
                 verbose: int = 0, steps: Sequence = (24,),
-                put_on_ol: bool = False) -> None:
+                put_on_ol: bool = False,
+                train_set: str = "train_val") -> None:
     """Runs all battery related stuff.
 
     Loads and prepares the battery data, fits the
@@ -88,7 +89,9 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
         verbose: Verbosity.
         steps: Sequence of number of evaluation steps for analysis.
         put_on_ol:
+        train_set: Set of data to train model on.
     """
+
     # Print info to console
     next_verb = prog_verb(verbose)
     if verbose:
@@ -103,22 +106,29 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
         bat_name = "Battery"
         get_battery_data()
         bat_ds = Dataset.loadDataset(bat_name)
+        bat_ds_ugly = Dataset.copy(bat_ds)
+        clean_battery_dataset(bat_ds)
         bat_ds.standardize()
         bat_ds.split_data()
+        bat_ds_ugly.standardize()
+        bat_ds_ugly.split_data()
 
     # Initialize and fit battery model.
     with ProgWrap(f"Fitting and analyzing battery...", verbose > 0):
         bat_mod = BatteryModel(bat_ds)
-        bat_mod.fit(verbose=prog_verb(verbose))
+        bat_mod.fit(verbose=prog_verb(verbose), train_data=train_set)
+        bat_mod_bad = BatteryModel(bat_ds_ugly)
+        bat_mod_bad.fit(verbose=prog_verb(verbose), train_data=train_set)
+        bat_mod_bad.plot_all_data(put_on_ol=put_on_ol, overwrite=overwrite)
         bat_mod.analyze_bat_model(put_on_ol=put_on_ol, overwrite=overwrite)
         bat_mod.analyze_visually(save_to_ol=put_on_ol, base_name="Bat",
                                  overwrite=overwrite, n_steps=steps,
                                  verbose=verbose > 0)
 
         with ProgWrap(f"Analyzing model performance...", verbose > 0):
-            parts = ["val", "test"]
+            parts = ["train", "val", "test"]
             bat_mod.analyze_performance(N_PERFORMANCE_STEPS, verbose=next_verb,
-                                        overwrite=False,
+                                        overwrite=overwrite,
                                         metrics=METRICS,
                                         parts=parts)
             n_series = len(bat_mod.out_inds)
@@ -129,7 +139,8 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
                 plot_performance_graph([bat_mod], parts, METRICS, "",
                                        short_mod_names=[curr_name],
                                        scale_back=True, remove_units=False,
-                                       fit_data="train_val",
+                                       put_on_ol=put_on_ol,
+                                       fit_data=train_set,
                                        series_mask=series_mask,
                                        titles=[""],
                                        plot_folder=plt_dir)
@@ -620,8 +631,7 @@ common_params = [
     ("data_end_date", str, "String specifying the date when the data was "
                            "loaded from NEST database, e.g. 2020-01-21",
      "2020-01-21"),
-    ("rl_sampling", str, "Sampling portion of data when resetting env.",
-     "all"),
+    ("rl_sampling", str, "Sampling portion of data when resetting env.", "all"),
     ("room_nr", int, "Integer specifying the room number.", 43),
     ("agent_lr", float, "Learning rate of the DDPG agent.", DEF_RL_LR),
     ("env_noise", float, "Noise level of the RL environment.", DEFAULT_D_FAC),

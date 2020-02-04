@@ -10,6 +10,18 @@ from util.util import print_if_verb, yeet, Num
 from util.visualize import scatter_plot, OVERLEAF_IMG_DIR, basic_plot
 
 
+def clean_battery_dataset(ds: Dataset) -> None:
+    """Removes the ugly data in the battery dataset.
+
+    TODO: Do this by considering the data specifying when
+        the experiments were...
+    """
+    n = ds.data.shape[0]
+    up_lim = int(0.6 * n)
+    low_lim = int(0.3 * n)
+    ds.data[low_lim: up_lim] = np.nan
+
+
 # Fit pw. linear model: $y = \alpha_1 + \alpha_2 * x * \alpha_3 * max(0, x)$
 def pw_lin_fun_factory(cont_at_zero: bool = True, through_zero: bool = False) -> Callable:
     fun_list = [
@@ -102,7 +114,7 @@ class BatteryModel(BaseDynamicsModel):
 
         Args:
             verbose: Verbosity, 0: silent.
-            train_data: Ignored.
+            train_data: Training data set.
         """
         self.fit_data = train_data
         if self.params is not None:
@@ -111,13 +123,9 @@ class BatteryModel(BaseDynamicsModel):
         else:
             print_if_verb(verbose, "Fitting battery model...")
 
-        if train_data != "train" and verbose:
-            print(f"Ignoring argument: train_data = {train_data}")
-
         # Get data
-        self.fit_data = "train_val"
         d = self.data
-        dat = d.split_dict["train_val"].get_rel_data()
+        dat = d.data  # split_dict[train_data].get_rel_data()
 
         # Extract data
         s_ind, p_ind = self.in_inds
@@ -133,14 +141,19 @@ class BatteryModel(BaseDynamicsModel):
         self.p, self.ds, self.soc = p, ds, soc
 
         # Reduce data to exclude strange part
-        n_p = len(p)
-        n = n_p // 3
-        m = np.zeros((n_p,), dtype=np.bool)
-        m[:n] = True
-        m[-n:] = True
-        self.masked_p, self.masked_ds = p[m], ds[m]
-        self.masked_soc = soc[m]
-        self.exp_mask = m
+        exclude: bool = False
+        if exclude:
+            n_p = len(p)
+            n = n_p // 3
+            m = np.zeros((n_p,), dtype=np.bool)
+            m[:n] = True
+            m[-n:] = True
+            self.masked_p, self.masked_ds = p[m], ds[m]
+            self.masked_soc = soc[m]
+            self.exp_mask = m
+        else:
+            self.masked_p, self.masked_ds = p, ds
+            self.masked_soc, self.exp_mask = soc, np.ones(self.masked_p.shape, dtype=np.bool)
 
         # Fit parameters
         params = fit_linear_bf_1d(self.masked_p, self.masked_ds, self._feat_fun)
@@ -152,6 +165,15 @@ class BatteryModel(BaseDynamicsModel):
         thresh = np.max(errs) / 3.4  # This is heuristic
         self.masked_p = self.masked_p[errs < thresh]
         self.masked_ds = self.masked_ds[errs < thresh]
+
+        # Filter the full data
+        full_p = self.data.data[1:, 1]
+        full_ds = self.data.data[1:, 0] - self.data.data[:-1, 0]
+        errs = np.abs(self._eval_at(full_p) - full_ds)
+        data_m1 = self.data.data[:-1, :]
+        data_m1[errs > thresh] = np.nan
+        self.data.data = data_m1
+        self.data.split_data()
 
         # Update params
         params = fit_linear_bf_1d(self.masked_p, self.masked_ds, self._feat_fun)
@@ -193,21 +215,22 @@ class BatteryModel(BaseDynamicsModel):
         ol_name = os.path.join(OVERLEAF_IMG_DIR, base)
         return ol_name if put_on_ol else self.get_plt_path(base)
 
-    def analyze_bat_model(self, put_on_ol: bool = False, overwrite: bool = False) -> None:
-        """This is basically the fit method, but it also
-        does some data analysis and makes some battery data specific plots.
-        """
-        self.fit()
+    @staticmethod
+    def _get_labs(set_title: bool = False):
+        return {'title': 'Battery Model' if set_title else None,
+                'xlab': 'Active Power [kW]',
+                'ylab': r'$\Delta$ SoC [%]'}
+
+    def plot_all_data(self, put_on_ol: bool = False,
+                      overwrite: bool = False, set_title: bool = False):
+        """Plots all the data."""
+        # Define plot labels
+        labs = self._get_labs(set_title)
 
         # Get scaling
         d = self.data
         scale = np.copy(d.scaling[self.in_inds])
         scale[0, 0] = 0.0
-
-        # Define plot labels
-        labs = {'title': 'Battery Model',
-                'xlab': 'Active Power [kW]',
-                'ylab': r'$\Delta$ SoC [%]'}
 
         # Check if file exists
         before_plt_path = self._get_plot_name("WithOutliers", put_on_ol)
@@ -219,6 +242,24 @@ class BatteryModel(BaseDynamicsModel):
                          m_and_std_y=scale[0],
                          add_line=True,
                          save_name=before_plt_path)
+
+    def analyze_bat_model(self, put_on_ol: bool = False,
+                          overwrite: bool = False) -> None:
+        """This is basically the fit method, but it also
+        does some data analysis and makes some battery data specific plots.
+        """
+        if self.fit_data is None:
+            self.fit()
+
+        # Get scaling
+        d = self.data
+        scale = np.copy(d.scaling[self.in_inds])
+        scale[0, 0] = 0.0
+
+        # Define plot labels
+        labs = {'title': 'Battery Model',
+                'xlab': 'Active Power [kW]',
+                'ylab': r'$\Delta$ SoC [%]'}
 
         # Plot residuals vs. SoC
         res_plt_path = self._get_plot_name("ResVsSoc", put_on_ol)
