@@ -165,6 +165,18 @@ class ValveToggler(FixTimeController):
         return ret
 
 
+class RuleBased(FixTimeController):
+    def __call__(self, values=None):
+        t = self.state[1]  # Extract valve state
+        return MIN_TEMP if t < self.min_temp else MAX_TEMP
+
+    def __init__(self, min_temp: float = 21.0, n_steps_max: int = 60 * 60,
+                 verbose: int = 0):
+        super().__init__(n_steps_max)
+        self.min_temp = min_temp
+        self.verbose = verbose
+
+
 def setpoint_toggle_frac(prev_state: bool, dt: int, action: Num, delay_open: Num,
                          delay_close: Num, tol: float = 0.05) -> Tuple[float, bool]:
     """Computes the time the setpoint needs to toggle.

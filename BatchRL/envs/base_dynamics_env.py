@@ -742,10 +742,13 @@ class DynEnv(ABC, gym.Env):
                 series_merging_list = self.default_series_merging
                 analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E{k}", None,
                                                                agent_list, put_on_ol)
+
+                # Plot time series for this episode
                 plot_env_evaluation(action_sequences, curr_states, curr_rew, self.m.data,
                                     name_list, analysis_plot_path, None,
                                     state_mask, show_rewards=True, title_ext=title_ext,
-                                    np_dt_init=np_st_init, rew_save_path=add_pth, bounds=bounds,
+                                    np_dt_init=np_st_init, rew_save_path=add_pth,
+                                    bounds=bounds,
                                     series_merging_list=series_merging_list,
                                     reward_descs=self.reward_descs)
 
