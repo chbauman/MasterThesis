@@ -257,7 +257,7 @@ class OpcuaClient(object):
 
         try:
             self.handler.df_Read.set_index('node', drop=True)
-            return self.handler.df_Read
+            return self.handler.df_Read.copy()
         except ValueError as e:
             logging.warning(f"Exception: {e} while reading values")
 
