@@ -457,13 +457,14 @@ def run_room_models(verbose: int = 1,
     # Do performance evaluation
     if perf_eval:
         with ProgWrap(f"Evaluating agents...", verbose > 0):
-            env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps,
+            env.detailed_eval_agents(agent_list, use_noise=True, n_steps=n_eval_steps,
                                      put_on_ol=put_on_ol, overwrite=overwrite,
                                      verbose=prog_verb(verbose),
                                      plt_fun=plot_heat_cool_rew_det,
                                      episode_marker=heat_marker,
                                      visual_eval=visual_analysis,
-                                     bounds=bounds)
+                                     bounds=bounds,
+                                     agent_filter_ind=3)
     elif verbose > 0:
         print("No performance evaluation!")
 

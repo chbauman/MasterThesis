@@ -602,6 +602,7 @@ class DynEnv(ABC, gym.Env):
                              episode_marker: Callable = None,
                              visual_eval: bool = False,
                              bounds: List[Tuple[int, Tuple[Num, Num]]] = None,
+                             agent_filter_ind: int = None,
                              ) -> Optional[np.ndarray]:
         """Evaluates the given agents for this environment.
 
@@ -627,6 +628,9 @@ class DynEnv(ABC, gym.Env):
         """
 
         max_visual_evals: int = 4
+
+        if agent_filter_ind is None:
+            agent_filter_ind = 0
 
         # Make function compatible for single agent input.
         if not isinstance(agent_list, list):
@@ -691,9 +695,12 @@ class DynEnv(ABC, gym.Env):
                 title_ext=title_ext, all_states=all_states,
                 verbose=0, ep_marks=all_marks)
 
+        print(f"Mean rewards: {np.mean(all_rewards[:, :, 0], axis=1)}")
+
         # Plot time series
         if visual_eval:
-            n_vis_eval = min(n_steps // self.n_ts_per_eps, max_visual_evals)
+            ct = 0
+            n_vis_eval = n_steps // self.n_ts_per_eps
             for k in range(n_vis_eval):
                 k0 = k * self.n_ts_per_eps
                 k1 = (k + 1) * self.n_ts_per_eps
@@ -703,6 +710,19 @@ class DynEnv(ABC, gym.Env):
                 clipped_action_sequences = all_scaled_actions[:, k0:k1]
                 curr_states = all_states[:, k0:k1]
                 curr_rew = all_rewards[:, k0:k1]
+
+                mean_rew = np.mean(curr_rew[:, :, 0], axis=1)
+                winner = np.argwhere(mean_rew == np.amax(mean_rew))
+
+                if [agent_filter_ind] not in winner or ct > max_visual_evals:
+                    if [agent_filter_ind] in winner:
+                        print(f"Len: {len(winner)}")
+                    else:
+                        print(f"Bad case!")
+                    continue
+                else:
+                    print(f"Found time series!!")
+                    ct += 1
 
                 # Time stuff
                 shifted_t_init = self.m.data.get_shifted_t_init(self.curr_ind)
