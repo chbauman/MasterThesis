@@ -623,6 +623,11 @@ class DynEnv(ABC, gym.Env):
             plt_fun: The plotting function.
             episode_marker: Marker for the case if `plt_fun`
                 is :func:`util.visualize.plot_heat_cool_rew_det`
+            visual_eval: Whether to do visual analysis with the evaluated data.
+            bounds: The temperature bounds for the visual analysis plot.
+                Ignored if `visual_eval` is False.
+            agent_filter_ind: Index of agent whose rewards need to be
+                among the best to be plotted. Ignored if `visual_eval` is False.
 
         Returns:
             The rewards seen by all the agents, or None if `overwrite` is False
@@ -709,7 +714,7 @@ class DynEnv(ABC, gym.Env):
 
                 # Extract stuff
                 action_sequences = all_actions[:, k0:k1]
-                clipped_action_sequences = all_scaled_actions[:, k0:k1]
+                # clipped_action_sequences = all_scaled_actions[:, k0:k1]
                 curr_states = all_states[:, k0:k1]
                 curr_rew = all_rewards[:, k0:k1]
 
@@ -717,13 +722,13 @@ class DynEnv(ABC, gym.Env):
                 winner = np.argwhere(mean_rew == np.amax(mean_rew))
 
                 if [agent_filter_ind] not in winner or ct > max_visual_evals:
-                    if [agent_filter_ind] in winner:
-                        print(f"Len: {len(winner)}")
-                    else:
-                        print(f"Bad case!")
+                    # if [agent_filter_ind] in winner:
+                    #     print(f"Len: {len(winner)}")
+                    # else:
+                    #     print(f"Bad case!")
                     continue
                 else:
-                    print(f"Found time series!!")
+                    # print(f"Found time series!!")
                     ct += 1
 
                 # Time stuff
