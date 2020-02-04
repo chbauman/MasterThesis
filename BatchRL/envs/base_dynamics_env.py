@@ -469,6 +469,8 @@ class DynEnv(ABC, gym.Env):
             ValueError: If `start_ind` is too large or if an agent is not suited
                 for this environment.
         """
+        print("This is fucking deprecated!")
+
         # Make function compatible for single agent input
         if not isinstance(agents, list):
             agents = [agents]
@@ -735,7 +737,7 @@ class DynEnv(ABC, gym.Env):
                 analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E{k}", 0,
                                                                agent_list, put_on_ol)
                 plot_env_evaluation(action_sequences, curr_states, curr_rew, self.m.data,
-                                    name_list, analysis_plot_path, clipped_action_sequences,
+                                    name_list, analysis_plot_path, None,
                                     state_mask, show_rewards=True, title_ext=title_ext,
                                     np_dt_init=np_st_init, rew_save_path=add_pth, bounds=bounds,
                                     series_merging_list=series_merging_list,
