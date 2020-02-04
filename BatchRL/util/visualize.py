@@ -650,7 +650,8 @@ def _setup_axis(ax, base_title: str, desc: str, title: bool = True):
 
 def _full_setup_axis(ax_list: List, desc_list: List, title: str = None):
     # Check input
-    assert len(ax_list) == len(desc_list), f"Incompatible lists: {ax_list} and {desc_list}!"
+    assert len(ax_list) == len(desc_list), f"Incompatible lists: {ax_list} and {desc_list}!" \
+                                           f" with title: {title}."
 
     # Set title if it is not None or an empty string.
     set_title = title is not None and title != ""
@@ -666,7 +667,7 @@ def _get_ds_descs(ds, series_mask=None, series_merging_list=None):
     """Extracts the descriptions for the control and the non-control series.
 
     Args:
-        ds:
+        ds: Dataset
 
     Returns:
         The two list of descriptions.
@@ -764,7 +765,7 @@ def plot_env_evaluation(actions: np.ndarray,
         assert len(series_mask) < states.shape[2]
 
     if not show_rewards:
-        warnings.warn("This does not yet work I guess...")
+        raise NotImplementedError("Fuck")
 
     # Check fallback actions
     plot_extra = extra_actions is not None

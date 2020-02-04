@@ -21,7 +21,6 @@ Agents = Union[List[base_agent.AgentBase], base_agent.AgentBase]
 
 DEFAULT_ENV_SAMPLE_DATA: str = "train"
 
-
 RejSamplerFun = Callable[[np.ndarray], bool]
 
 
@@ -601,6 +600,8 @@ class DynEnv(ABC, gym.Env):
                              verbose: int = 0,
                              plt_fun: Callable = plot_reward_details,
                              episode_marker: Callable = None,
+                             visual_eval: bool = False,
+                             bounds: List[Tuple[int, Tuple[Num, Num]]] = None,
                              ) -> Optional[np.ndarray]:
         """Evaluates the given agents for this environment.
 
@@ -624,6 +625,9 @@ class DynEnv(ABC, gym.Env):
             The rewards seen by all the agents, or None if `overwrite` is False
             and the plot already exists.
         """
+
+        max_visual_evals: int = 4
+
         # Make function compatible for single agent input.
         if not isinstance(agent_list, list):
             agent_list = [agent_list]
@@ -640,6 +644,8 @@ class DynEnv(ABC, gym.Env):
         n_extra_rewards = len(self.reward_descs)
         n_tot_rewards = n_extra_rewards + 1
         all_rewards = npf32((n_agents, n_steps, n_tot_rewards))
+        all_actions = npf32((n_agents, n_steps, self.act_dim))
+        all_scaled_actions = npf32((n_agents, n_steps, self.act_dim))
         all_states = npf32((n_agents, n_steps, self.state_dim - self.act_dim))
         all_marks = np.empty((n_agents, n_steps), dtype=np.int32)
 
@@ -664,14 +670,16 @@ class DynEnv(ABC, gym.Env):
             # Evaluate agent.
             if verbose:
                 print(f"Evaluating agent: {a}")
-            rew, ex_rew, states, ep_marks = a.eval(n_steps, reset_seed=True, detailed=True,
-                                                   use_noise=use_noise, scale_states=do_scaling,
-                                                   episode_marker=episode_marker,
-                                                   verbose=verbose)
+            rew, ex_rew, states, ep_marks, acs, s_acs = a.eval(n_steps, reset_seed=True, detailed=True,
+                                                               use_noise=use_noise, scale_states=do_scaling,
+                                                               episode_marker=episode_marker,
+                                                               verbose=verbose)
             all_rewards[a_id, :, 0] = rew
             all_rewards[a_id, :, 1:] = ex_rew
             all_states[a_id] = states
             all_marks[a_id] = ep_marks
+            all_actions[a_id] = acs
+            all_scaled_actions[a_id] = s_acs
 
         # Plot
         if verbose > 0:
@@ -682,4 +690,44 @@ class DynEnv(ABC, gym.Env):
                 self.reward_descs, dt=self.m.data.dt, n_eval_steps=n_steps,
                 title_ext=title_ext, all_states=all_states,
                 verbose=0, ep_marks=all_marks)
+
+        # Plot time series
+        if visual_eval:
+            n_vis_eval = min(n_steps // self.n_ts_per_eps, max_visual_evals)
+            for k in range(n_vis_eval):
+                k0 = k * self.n_ts_per_eps
+                k1 = (k + 1) * self.n_ts_per_eps
+
+                # Extract stuff
+                action_sequences = all_actions[:, k0:k1]
+                clipped_action_sequences = all_scaled_actions[:, k0:k1]
+                curr_states = all_states[:, k0:k1]
+                curr_rew = all_rewards[:, k0:k1]
+
+                # Time stuff
+                shifted_t_init = self.m.data.get_shifted_t_init(self.curr_ind)
+                np_st_init = str_to_np_dt(shifted_t_init)
+
+                state_mask = self.default_state_mask
+                name_list = [a.get_short_name() for a in agent_list]
+                add_pth = None
+                series_merging_list = self.default_series_merging
+                analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E{k}", 0,
+                                                               agent_list, put_on_ol)
+                plot_env_evaluation(action_sequences, curr_states, curr_rew, self.m.data,
+                                    name_list, analysis_plot_path, clipped_action_sequences,
+                                    state_mask, show_rewards=True, title_ext=title_ext,
+                                    np_dt_init=np_st_init, rew_save_path=add_pth, bounds=bounds,
+                                    series_merging_list=series_merging_list,
+                                    reward_descs=self.reward_descs)
+
+                # Plot the rewards for this episode
+                add_pth = self._construct_plot_name(f"AgentAnalysis_E{k}_RewardDetailed", 0,
+                                                    agent_list, put_on_ol)
+                names = [a.get_short_name() for a in agent_list]
+                plot_reward_details(names, curr_rew, add_pth,
+                                    self.reward_descs, dt=self.m.data.dt,
+                                    n_eval_steps=self.n_ts_per_eps,
+                                    title_ext=title_ext)
+
         return all_rewards

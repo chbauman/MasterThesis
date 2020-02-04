@@ -161,7 +161,7 @@ class TestBatteryEnv(TestCase):
 
     def test_agent_eval(self):
         n = 20
-        r, r_other, _, _ = self.ag_1.eval(n, detailed=True)
+        r, r_other, _, _, _, _ = self.ag_1.eval(n, detailed=True)
         self.assertTrue(np.allclose(-r, r_other[:, 0]), "agent.eval not correct")
         self.ag_1.eval(n, reset_seed=True, detailed=True, scale_states=True)
 

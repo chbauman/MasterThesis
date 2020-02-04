@@ -181,9 +181,13 @@ class AgentBase(AbstractAgent, ABC):
 
         # Detailed stuff
         det_rewards, state_t, ep_marks = None, None, None
+        actions, scaled_actions = None, None
         if detailed:
             n_det = len(self.env.reward_descs)
-            n_states = self.env.state_dim - self.env.act_dim
+            n_ac = self.env.act_dim
+            n_states = self.env.state_dim - n_ac
+            actions = npf32((n_steps, n_ac), fill=np.nan)
+            scaled_actions = npf32((n_steps, n_ac), fill=np.nan)
             det_rewards = npf32((n_steps, n_det), fill=np.nan)
             state_t = npf32((n_steps, n_states), fill=np.nan)
             ep_marks = npf32((n_steps, ), fill=np.nan)
@@ -196,6 +200,11 @@ class AgentBase(AbstractAgent, ABC):
             # Determine action
             a = self.get_action(s_curr)
             scaled_a = self.env.scale_action_for_step(a)
+
+            # Save actions
+            if actions is not None:
+                actions[k, :] = a
+                scaled_actions[k, :] = scaled_a
 
             # Execute step
             s_curr, r, fin, _ = self.env.step(a)
@@ -217,7 +226,7 @@ class AgentBase(AbstractAgent, ABC):
         if detailed:
             if scale_states:
                 state_t = self.env.scale_state(state_t, remove_mean=False)
-            return all_rewards, det_rewards, state_t, ep_marks
+            return all_rewards, det_rewards, state_t, ep_marks, actions, scaled_actions
 
         # Return mean reward.
         return np.sum(all_rewards) / n_steps

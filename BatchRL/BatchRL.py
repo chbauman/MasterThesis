@@ -35,7 +35,7 @@ from dynamics.load_models import base_rnn_models, full_models, full_models_short
 from dynamics.recurrent import test_rnn_models
 from envs.base_dynamics_env import DEFAULT_ENV_SAMPLE_DATA
 from envs.dynamics_envs import BatteryEnv, heat_marker
-from opcua_empa.run_opcua import try_opcua, run_rl_control
+from opcua_empa.run_opcua import run_rl_control
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
@@ -424,39 +424,46 @@ def run_room_models(verbose: int = 1,
 
         agent_list = [open_agent, closed_agent, rule_based_agent, agent]
 
-    if visual_analysis:
-        with ProgWrap(f"Analyzing agents...", verbose > 0):
-            b_ind = -2 if include_battery else -1
-            bds = env.temp_bounds
-            bounds = [(b_ind, bds)]
+    # Get bounds for plotting
+    b_ind = -2 if include_battery else -1
+    bds = env.temp_bounds
+    bounds = [(b_ind, bds)]
 
-            for s in eval_list:
-                if s is None:
-                    s = np.random.randint(0, env.n_start_data)
-
-                # Find the current heating water temperatures
-                heat_inds = np.array([2, 3])
-                h_in_and_out = env.get_scaled_init_state(s, heat_inds)
-                title_ext = w_temp_str(h_in_and_out)
-
-                # Plot
-                env.analyze_agents_visually(agent_list, state_mask=None, start_ind=s,
-                                            plot_constrain_actions=False,
-                                            show_rewards=True, series_merging_list=None,
-                                            bounds=bounds, title_ext=title_ext,
-                                            put_on_ol=put_on_ol, plot_rewards=True,
-                                            overwrite=overwrite)
-    elif verbose > 0:
-        print("No visual analysis!")
+    # if visual_analysis:
+    #     with ProgWrap(f"Analyzing agents...", verbose > 0):
+    #         b_ind = -2 if include_battery else -1
+    #         bds = env.temp_bounds
+    #         bounds = [(b_ind, bds)]
+    #
+    #         for s in eval_list:
+    #             if s is None:
+    #                 s = np.random.randint(0, env.n_start_data)
+    #
+    #             # Find the current heating water temperatures
+    #             heat_inds = np.array([2, 3])
+    #             h_in_and_out = env.get_scaled_init_state(s, heat_inds)
+    #             title_ext = w_temp_str(h_in_and_out)
+    #
+    #             # Plot
+    #             env.analyze_agents_visually(agent_list, state_mask=None, start_ind=s,
+    #                                         plot_constrain_actions=False,
+    #                                         show_rewards=True, series_merging_list=None,
+    #                                         bounds=bounds, title_ext=title_ext,
+    #                                         put_on_ol=put_on_ol, plot_rewards=True,
+    #                                         overwrite=overwrite)
+    # elif verbose > 0:
+    #     print("No visual analysis!")
 
     # Do performance evaluation
     if perf_eval:
         with ProgWrap(f"Evaluating agents...", verbose > 0):
-            env.detailed_eval_agents(agent_list, use_noise=True, n_steps=n_eval_steps,
+            env.detailed_eval_agents(agent_list, use_noise=False, n_steps=n_eval_steps,
                                      put_on_ol=put_on_ol, overwrite=overwrite,
                                      verbose=prog_verb(verbose),
                                      plt_fun=plot_heat_cool_rew_det,
-                                     episode_marker=heat_marker)
+                                     episode_marker=heat_marker,
+                                     visual_eval=visual_analysis,
+                                     bounds=bounds)
     elif verbose > 0:
         print("No performance evaluation!")
 
