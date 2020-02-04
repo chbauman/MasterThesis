@@ -33,7 +33,6 @@ from dynamics.battery_model import BatteryModel
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
     load_room_env, rename_rl_folder
 from dynamics.recurrent import test_rnn_models
-from envs.base_dynamics_env import DEFAULT_ENV_SAMPLE_DATA
 from envs.dynamics_envs import BatteryEnv, heat_marker
 from opcua_empa.run_opcua import run_rl_control, run_rule_based_control
 from rest.client import check_date_str
@@ -619,7 +618,7 @@ common_params = [
                            "loaded from NEST database, e.g. 2020-01-21",
      "2020-01-21"),
     ("rl_sampling", str, "Sampling portion of data when resetting env.",
-     DEFAULT_ENV_SAMPLE_DATA),
+     "all"),
     ("room_nr", int, "Integer specifying the room number.", 43),
 ]
 
