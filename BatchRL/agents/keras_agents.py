@@ -30,7 +30,7 @@ DEF_RL_LR = 0.00001
 DEF_GAMMA = 0.99
 
 # Change values here
-used_lr = 0.001
+used_lr = 0.0001
 used_gamma = DEF_GAMMA
 
 

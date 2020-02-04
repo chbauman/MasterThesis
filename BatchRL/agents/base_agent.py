@@ -174,6 +174,9 @@ class AgentBase(AbstractAgent, ABC):
         if reset_seed:
             fix_seed()
 
+        if verbose:
+            print(f"Evaluating agent: {self}")
+
         # Initialize env and reward.
         s_curr = self.env.reset(use_noise=use_noise)
         ep_mark = 0 if episode_marker is None else episode_marker(s_curr)

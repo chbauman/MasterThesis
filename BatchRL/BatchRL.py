@@ -39,7 +39,7 @@ from opcua_empa.run_opcua import run_rl_control, run_rule_based_control
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
-from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, w_temp_str, str2bool, extract_args, DEFAULT_TRAIN_SET, \
+from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, str2bool, extract_args, DEFAULT_TRAIN_SET, \
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
     plot_heat_cool_rew_det
@@ -397,8 +397,8 @@ def run_room_models(verbose: int = 1,
     if physically_consistent:
         m_name = "FullState_Comp_Phys"
 
-    if eval_list is None:
-        eval_list = [2595, 8221, 0, 2042, 12067, None]
+    # if eval_list is None:
+    #     eval_list = [2595, 8221, 0, 2042, 12067, None]
 
     # Load the model and init env
     with ProgWrap(f"Loading environment...", verbose > 0):

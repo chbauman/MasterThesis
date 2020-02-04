@@ -48,7 +48,7 @@ full_models_short_names = [
 ]
 
 DEFAULT_D_FAC = 0.3
-used_d_fac = 0.3  # 0.001  # DEFAULT_D_FAC
+used_d_fac = 0.001  # DEFAULT_D_FAC
 
 
 def _convert_to_short(name: str):
