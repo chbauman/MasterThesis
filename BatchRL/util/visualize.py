@@ -74,7 +74,7 @@ create_dir(EVAL_MODEL_PLOT_DIR)
 
 
 class ModifyDir:
-    """Class adapter for directory that can be changed across modules.
+    """Class wrapper for directory that can be changed across modules.
 
     Initially:
 
@@ -94,10 +94,20 @@ class ModifyDir:
     and the `__fspath__` still allow the usage as string / path.
     """
     def __init__(self, orig_dir: str):
+        """Initializer
+
+        Args:
+            orig_dir: The directory that is wrapped and may be modified.
+        """
         self.ol_dir = orig_dir
         self.ret_dir = orig_dir
 
-    def set_folder(self, new_dir):
+    def set_folder(self, new_dir) -> None:
+        """Adds the given directory to the current path.
+
+        Args:
+            new_dir: The new directory.
+        """
         self.ret_dir = self.ol_dir if new_dir is None else os.path.join(self.ol_dir, new_dir)
 
     def __str__(self):
@@ -107,6 +117,7 @@ class ModifyDir:
         return self.ret_dir
 
     def __fspath__(self):
+        # Allows usage as file path
         return self.ret_dir
 
 
@@ -116,7 +127,8 @@ OVERLEAF_IMG_DIR = ModifyDir(os.path.join(OVERLEAF_DIR, "Imgs"))
 
 @contextmanager
 def change_OL_dir(new_dir_name: str, img: bool = True):
-    """This Context Manager allows you to change the overleaf folder temporarily."""
+    """This Context Manager allows you to change the
+    overleaf images folder temporarily."""
     if not img:
         raise NotImplementedError("Fuck")
     OVERLEAF_IMG_DIR.set_folder(new_dir_name)
