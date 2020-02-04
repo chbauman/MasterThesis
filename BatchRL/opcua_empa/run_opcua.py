@@ -156,7 +156,7 @@ def run_rule_based_control(room_nr: int = DEFAULT_ROOM_NR, *,
     """
 
     exp_name = f"RuleBased_{min_temp}{name_ext}"
-    controller = RuleBased(min_temp)
+    controller = RuleBased(min_temp, n_steps_max=3600 * 24 * 31)
     used_control = [(room_nr, controller)]
 
     # Run control

@@ -804,7 +804,7 @@ def main() -> None:
         debug = extract_args(args.bool, False)[0]
         update_overleaf_plots(verbose, overwrite=overwrite, debug=debug)
 
-    # Overleaf plots
+    # Run rule-based control
     if args.rule_based:
         notify_debug = extract_args(args.bool, True)[0]
         name_ext = extract_args(args.str, "")[0]
