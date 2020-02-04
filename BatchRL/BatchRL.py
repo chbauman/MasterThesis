@@ -608,13 +608,13 @@ common_params = [
     # Parameters used for multiple tasks, format:
     # ("arg_name", type, "help string", default_value),
     ("train_data", str, "Data used for training the models, can be one of "
-                        "'train', 'train_val' or 'all'.", DEFAULT_TRAIN_SET),
+                        "'train', 'train_val' or 'all'.", "all"),
     ("eval_data", str, "Data used for evaluation of the models, can be one of "
                        "'train', 'val', 'train_val', 'test' or 'all'.",
      DEFAULT_EVAL_SET),
     ("hop_eval_data", str, "Data used for evaluation of the models in "
                            "hyperparameter optimization, can be one either "
-                           "'val' or 'test'.", DEFAULT_EVAL_SET),
+                           "'val' or 'test'.", "test"),
     ("data_end_date", str, "String specifying the date when the data was "
                            "loaded from NEST database, e.g. 2020-01-21",
      "2020-01-21"),
