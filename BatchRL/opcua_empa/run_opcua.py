@@ -7,7 +7,7 @@ from typing import List
 
 from agents.keras_agents import default_ddpg_agent
 from dynamics.load_models import load_room_env
-from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController, RLController
+from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController, RLController, RuleBased
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control
@@ -137,3 +137,34 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                 verbose=verbose,
                 _client_class=OpcuaClient,
                 notify_failures=notify_failure)
+
+
+def run_rule_based_control(room_nr: int = DEFAULT_ROOM_NR, *,
+                           min_temp: float = 21.0,
+                           name_ext: str = "",
+                           notify_debug: bool = True,
+                           verbose: int = 5,
+                           ) -> None:
+    """Runs rule-based controller for heating season.
+
+    Args:
+        room_nr:
+        min_temp:
+        name_ext:
+        notify_debug:
+        verbose:
+    """
+
+    exp_name = f"RuleBased_{min_temp}{name_ext}"
+    controller = RuleBased(min_temp)
+    used_control = [(room_nr, controller)]
+
+    # Run control
+    run_control(used_control=used_control,
+                exp_name=exp_name,
+                user='ChristianBaumannETH2020',
+                password='Christian4_ever',
+                debug=notify_debug,
+                verbose=verbose,
+                _client_class=OpcuaClient,
+                notify_failures=True)

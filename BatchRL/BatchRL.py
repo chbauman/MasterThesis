@@ -35,7 +35,7 @@ from dynamics.load_models import base_rnn_models, full_models, full_models_short
 from dynamics.recurrent import test_rnn_models
 from envs.base_dynamics_env import DEFAULT_ENV_SAMPLE_DATA
 from envs.dynamics_envs import BatteryEnv, heat_marker
-from opcua_empa.run_opcua import run_rl_control
+from opcua_empa.run_opcua import run_rl_control, run_rule_based_control
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
@@ -594,6 +594,9 @@ arg_def_list = [
     ("verbose", "use verbose mode"),
     ("write_forced", "overwrite existing files"),
 ]
+arg_def_no_short = [
+    ("rule_based", "run rule-based controller at NEST"),
+]
 opt_param_l = [
     # Additional parameters, arbitrary number of them
     ("int", int, "additional integer parameter(s)"),
@@ -637,6 +640,8 @@ def def_parser() -> argparse.ArgumentParser:
     for kw, h in arg_def_list:
         short_kw = f"-{kw[0]}"
         parser.add_argument(short_kw, f"--{kw}", action="store_true", help=h)
+    for kw, h in arg_def_no_short:
+        parser.add_argument(f"--{kw}", action="store_true", help=h)
 
     # Add parameters used for many tasks
     for kw, t, h, d in common_params:
@@ -798,6 +803,15 @@ def main() -> None:
     if args.plot:
         debug = extract_args(args.bool, False)[0]
         update_overleaf_plots(verbose, overwrite=overwrite, debug=debug)
+
+    # Overleaf plots
+    if args.rule_based:
+        notify_debug = extract_args(args.bool, True)[0]
+        name_ext = extract_args(args.str, "")[0]
+        min_temp = extract_args(args.float, 21.0)[0]
+        run_rule_based_control(room_nr=room_nr, notify_debug=notify_debug,
+                               verbose=verbose, name_ext=name_ext,
+                               min_temp=min_temp)
 
     # Opcua
     if args.ua:
