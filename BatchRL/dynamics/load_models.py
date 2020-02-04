@@ -147,6 +147,7 @@ def load_room_env(m_name: str,
                   dummy_use: bool = False,
                   sample_from: str = DEFAULT_ENV_SAMPLE_DATA,
                   use_heat_sampler: bool = False,
+                  d_fac: float = DEFAULT_D_FAC,
                   ):
     """Loads the complete room environment.
 
@@ -166,6 +167,7 @@ def load_room_env(m_name: str,
         sample_from: Sampling portion of data when resetting env.
         use_heat_sampler: Whether to use a heating sampler to increase
             number of heating cases.
+        d_fac:
 
     Returns:
         The loaded env.
@@ -193,7 +195,6 @@ def load_room_env(m_name: str,
         ds = m.data
 
     # Construct string with most important parameters
-    d_fac = used_d_fac
     p_list = [
         ("R-", room_nr),
         ("DD-", date_str),

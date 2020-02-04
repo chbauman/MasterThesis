@@ -31,7 +31,7 @@ from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model, check_
 from dynamics.base_model import compare_models, check_train_str
 from dynamics.battery_model import BatteryModel
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
-    load_room_env, rename_rl_folder
+    load_room_env, rename_rl_folder, DEFAULT_D_FAC
 from dynamics.recurrent import test_rnn_models
 from envs.dynamics_envs import BatteryEnv, heat_marker
 from opcua_empa.run_opcua import run_rl_control, run_rule_based_control
@@ -623,7 +623,8 @@ common_params = [
     ("rl_sampling", str, "Sampling portion of data when resetting env.",
      "all"),
     ("room_nr", int, "Integer specifying the room number.", 43),
-    ("agent_lr", float, "Integer specifying the room number.", DEF_RL_LR),
+    ("agent_lr", float, "Learning rate of the DDPG agent.", DEF_RL_LR),
+    ("env_noise", float, "Noise level of the RL environment.", DEFAULT_D_FAC),
 ]
 
 
@@ -713,6 +714,7 @@ def main() -> None:
     overwrite = args.write_forced
     sam_heat = args.sam_heat
     agent_lr = args.agent_lr
+    env_noise = args.env_noise
 
     if args.verbose:
         print("Verbosity turned on.")
@@ -802,7 +804,8 @@ def main() -> None:
                         visual_analysis=visual_analysis,
                         n_eval_steps=n_eval_steps,
                         agent_lr=agent_lr,
-                        use_heat_sampler=sam_heat)
+                        use_heat_sampler=sam_heat,
+                        d_fac=env_noise)
 
     # Overleaf plots
     if args.plot:
@@ -834,7 +837,8 @@ def main() -> None:
                        dummy_use=dummy_use,
                        sample_from=rl_sampling,
                        agent_lr=agent_lr,
-                       use_heat_sampler=sam_heat)
+                       use_heat_sampler=sam_heat,
+                       d_fac=env_noise)
 
     # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)
