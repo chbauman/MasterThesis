@@ -1,6 +1,7 @@
 import os
 import warnings
 from typing import Dict, Sequence, Tuple, List, Any, Type
+from contextlib import contextmanager
 
 import matplotlib as mpl
 import numpy as np
@@ -63,13 +64,64 @@ model_plot_path = os.path.join(PLOT_DIR, "Models")  #: Dynamics modeling plot fo
 rl_plot_path = os.path.join(PLOT_DIR, "RL")
 EVAL_MODEL_PLOT_DIR = os.path.join(model_plot_path, "EvalTables")
 OVERLEAF_DIR = os.path.join(BASE_DIR, "Overleaf")  #: Overleaf base folder.
-OVERLEAF_IMG_DIR = os.path.join(OVERLEAF_DIR, "Imgs")
+# OVERLEAF_IMG_DIR = os.path.join(OVERLEAF_DIR, "Imgs")
 
 # Create folders if they do not exist
 create_dir(preprocess_plot_path)
 create_dir(model_plot_path)
 create_dir(rl_plot_path)
 create_dir(EVAL_MODEL_PLOT_DIR)
+
+
+class ModifyDir:
+    """Class adapter for directory that can be changed across modules.
+
+    Initially:
+
+    >>> CONST_DIR_OLD = "Some/Constant/Path"
+
+    Then if you import the variable and change it locally,
+    the other modules do not see the change. Now this changed to:
+
+    >>> CONST_DIR = ModifyDir("Some/Constant/Path")
+
+    Which allows you to modify it:
+
+    >>> CONST_DIR.set_folder("New")
+    >>> CONST_DIR  # Now: "Some/Constant/Path/New"
+
+    And now this can be seen from all modules! The `__str__`, `__repr__`
+    and the `__fspath__` still allow the usage as string / path.
+    """
+    def __init__(self, orig_dir: str):
+        self.ol_dir = orig_dir
+        self.ret_dir = orig_dir
+
+    def set_folder(self, new_dir):
+        self.ret_dir = self.ol_dir if new_dir is None else os.path.join(self.ol_dir, new_dir)
+
+    def __str__(self):
+        return self.ret_dir
+
+    def __repr__(self):
+        return self.ret_dir
+
+    def __fspath__(self):
+        return self.ret_dir
+
+
+# Here it is
+OVERLEAF_IMG_DIR = ModifyDir(os.path.join(OVERLEAF_DIR, "Imgs"))
+
+
+@contextmanager
+def change_OL_dir(new_dir_name: str, img: bool = True):
+    """This Context Manager allows you to change the overleaf folder temporarily."""
+    if not img:
+        raise NotImplementedError("Fuck")
+    OVERLEAF_IMG_DIR.set_folder(new_dir_name)
+    yield None
+    OVERLEAF_IMG_DIR.set_folder(None)
 
 
 def save_figure(save_name, show: bool = False,

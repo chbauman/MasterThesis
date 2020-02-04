@@ -15,6 +15,7 @@ modules / packages.
 import argparse
 import os
 import warnings
+from contextlib import contextmanager
 from functools import reduce
 from typing import List, Tuple, Sequence, Type
 
@@ -41,7 +42,7 @@ from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, str2bool, extract_args, DEFAULT_TRAIN_SET, \
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
-    plot_heat_cool_rew_det
+    plot_heat_cool_rew_det, change_OL_dir
 
 # Model performance evaluation
 N_PERFORMANCE_STEPS = (1, 4, 12, 24, 48)
@@ -794,8 +795,11 @@ def main() -> None:
     if args.battery:
         ext_args = extract_args(args.bool, False, False)
         do_rl, put_on_ol = ext_args
-        run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=put_on_ol,
-                    overwrite=overwrite)
+        with change_OL_dir("Battery"):
+            print(OVERLEAF_IMG_DIR)
+            run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=put_on_ol,
+                        overwrite=overwrite)
+        print(OVERLEAF_IMG_DIR)
 
     # Evaluate room model
     if args.room:
