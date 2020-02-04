@@ -3,7 +3,6 @@
 Defines node strings for the nodes needed to control rooms at DFAB.
 Includes the read and the write nodes.
 """
-
 import logging
 import os
 import pickle

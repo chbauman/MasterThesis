@@ -1,3 +1,11 @@
+"""Provides some high-level initialization function.
+
+The function :func:`load_room_env` can be used to fully
+load a RL env, :func:`load_room_models` may be used to initialize
+multiple dynamics models and :func:`get_model` to load just
+a single model.
+"""
+
 import os
 from typing import List, Dict
 

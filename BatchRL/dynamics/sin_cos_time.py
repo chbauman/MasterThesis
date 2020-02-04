@@ -1,3 +1,9 @@
+"""Defines the Sin-Cos-Time model.
+
+Since the time is usually decoded as sin(t)
+and cos(t), this model recalculates t and predicts
+the next sin and cos values based on that.
+"""
 import numpy as np
 
 from dynamics.base_model import BaseDynamicsModel
