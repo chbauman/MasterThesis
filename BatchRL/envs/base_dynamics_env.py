@@ -580,11 +580,12 @@ class DynEnv(ABC, gym.Env):
                             self.reward_descs, dt=self.m.data.dt, n_eval_steps=self.n_ts_per_eps,
                             title_ext=title_ext)
 
-    def _construct_plot_name(self, base_name: str, start_ind: int, agent_list: List,
+    def _construct_plot_name(self, base_name: str, start_ind: Optional[int], agent_list: List,
                              put_on_ol: bool = False):
         name_list = [a.get_short_name() for a in agent_list]
         agent_names = '_'.join(name_list)
-        base = f"{base_name}_{start_ind}_{agent_names}"
+        s_ext = "" if start_ind is None else f"_{start_ind}"
+        base = f"{base_name}{s_ext}_{agent_names}"
         if put_on_ol:
             return os.path.join(OVERLEAF_IMG_DIR, base)
         return self.get_plt_path(base)
@@ -739,7 +740,7 @@ class DynEnv(ABC, gym.Env):
                 name_list = [a.get_short_name() for a in agent_list]
                 add_pth = None
                 series_merging_list = self.default_series_merging
-                analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E{k}", 0,
+                analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E{k}", None,
                                                                agent_list, put_on_ol)
                 plot_env_evaluation(action_sequences, curr_states, curr_rew, self.m.data,
                                     name_list, analysis_plot_path, None,
@@ -749,7 +750,7 @@ class DynEnv(ABC, gym.Env):
                                     reward_descs=self.reward_descs)
 
                 # Plot the rewards for this episode
-                add_pth = self._construct_plot_name(f"AgentAnalysis_E{k}_RewardDetailed", 0,
+                add_pth = self._construct_plot_name(f"AgentAnalysis_E{k}_RewardDetailed", None,
                                                     agent_list, put_on_ol)
                 names = [a.get_short_name() for a in agent_list]
                 plot_reward_details(names, curr_rew, add_pth,
