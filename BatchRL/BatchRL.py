@@ -22,7 +22,7 @@ import numpy as np
 
 from agents.agents_heuristic import RuleBasedAgent, get_const_agents
 from agents.base_agent import upload_trained_agents, download_trained_agents
-from agents.keras_agents import DDPGBaseAgent, default_ddpg_agent
+from agents.keras_agents import DDPGBaseAgent, default_ddpg_agent, DEF_RL_LR
 from data_processing.data import get_battery_data, \
     choose_dataset_and_constraints, update_data, unique_room_nr
 from data_processing.dataset import Dataset, check_dataset_part
@@ -365,6 +365,7 @@ def run_room_models(verbose: int = 1,
                     hop_eval_set: str = DEFAULT_EVAL_SET,
                     visual_analysis: bool = True,
                     n_eval_steps: int = 10000,
+                    agent_lr: float = DEF_RL_LR,
                     **env_kwargs
                     ) -> None:
     """Trains and evaluates the RL agent.
@@ -382,6 +383,7 @@ def run_room_models(verbose: int = 1,
         visual_analysis: Whether to do the visual analysis.
         n_eval_steps: n_eval_steps: Total number of environment steps to perform
             for agent analysis.
+        agent_lr: Learning rate of DDPG agent.
         env_kwargs: Keyword arguments for environment.
     """
     # Print what the code does
@@ -419,7 +421,8 @@ def run_room_models(verbose: int = 1,
 
         agent = default_ddpg_agent(env, n_steps, fitted=True,
                                    verbose=next_verbose,
-                                   hop_eval_set=hop_eval_set)
+                                   hop_eval_set=hop_eval_set,
+                                   lr=agent_lr)
 
         agent_list = [open_agent, closed_agent, rule_based_agent, agent]
 
@@ -620,6 +623,7 @@ common_params = [
     ("rl_sampling", str, "Sampling portion of data when resetting env.",
      "all"),
     ("room_nr", int, "Integer specifying the room number.", 43),
+    ("agent_lr", float, "Integer specifying the room number.", DEF_RL_LR),
 ]
 
 
@@ -708,6 +712,7 @@ def main() -> None:
     verbose = 5 if args.verbose else 0
     overwrite = args.write_forced
     sam_heat = args.sam_heat
+    agent_lr = args.agent_lr
 
     if args.verbose:
         print("Verbosity turned on.")
@@ -796,6 +801,7 @@ def main() -> None:
                         sample_from=rl_sampling,
                         visual_analysis=visual_analysis,
                         n_eval_steps=n_eval_steps,
+                        agent_lr=agent_lr,
                         use_heat_sampler=sam_heat)
 
     # Overleaf plots
@@ -827,6 +833,7 @@ def main() -> None:
                        notify_debug=notify_debug,
                        dummy_use=dummy_use,
                        sample_from=rl_sampling,
+                       agent_lr=agent_lr,
                        use_heat_sampler=sam_heat)
 
     # Check if any flag is set, if not, do current experiments.

@@ -5,7 +5,7 @@ it is high-level enough.
 """
 from typing import List
 
-from agents.keras_agents import default_ddpg_agent
+from agents.keras_agents import default_ddpg_agent, DEF_RL_LR
 from dynamics.load_models import load_room_env
 from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController, RLController, RuleBased
 from opcua_empa.opcua_util import analyze_experiment, check_room_list
@@ -64,6 +64,7 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
                    n_steps: int = None,
                    hop_eval_set: str = DEFAULT_EVAL_SET,
                    notify_debug: bool = None,
+                   agent_lr: float = DEF_RL_LR,
                    **env_kwargs,
                    ):
     """Runs the RL agent via the opcua client.
@@ -75,6 +76,7 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
         verbose:
         n_steps:
         hop_eval_set:
+        agent_lr:
         notify_debug: Whether to use debug mail address to send notifications,
             Ignored, if `notify_failure` is False.
         **env_kwargs: Keyword arguments for environment, see :func:`load_room_env`.
@@ -108,7 +110,8 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
         with ProgWrap(f"Initializing agents...", verbose > 0):
             agent = default_ddpg_agent(env, n_steps, fitted=True,
                                        verbose=next_verbose,
-                                       hop_eval_set=hop_eval_set)
+                                       hop_eval_set=hop_eval_set,
+                                       lr=agent_lr)
             if verbose:
                 print(agent)
 

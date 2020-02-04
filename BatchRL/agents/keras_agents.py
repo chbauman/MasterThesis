@@ -336,12 +336,12 @@ def default_ddpg_agent(env: RLDynEnv,
                        n_steps: int = None,
                        fitted: bool = True,
                        verbose: int = 1,
-                       hop_eval_set: str = DEFAULT_EVAL_SET) -> DDPGBaseAgent:
+                       hop_eval_set: str = DEFAULT_EVAL_SET,
+                       lr: float = used_lr) -> DDPGBaseAgent:
     # Choose step number
     if n_steps is None:
         n_steps = get_rl_steps(eul=True)
 
-    lr = used_lr
     gam = used_gamma
 
     # Initialize agent
