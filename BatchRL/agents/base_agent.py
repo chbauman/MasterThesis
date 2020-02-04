@@ -1,3 +1,12 @@
+"""Defines the interface for RL agents.
+
+Also provides a function to remove agents that
+were not trained for long, e.g. for debugging or testing, which is
+:func:`remove_agents`.
+
+Further also functions to up- and download agents to
+Google Drive, :func:`upload_trained_agents` and :func:`download_trained_agents`.
+"""
 import os
 import warnings
 from abc import ABC, abstractmethod

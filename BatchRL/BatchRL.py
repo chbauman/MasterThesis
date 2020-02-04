@@ -15,7 +15,6 @@ modules / packages.
 import argparse
 import os
 import warnings
-from contextlib import contextmanager
 from functools import reduce
 from typing import List, Tuple, Sequence, Type
 
@@ -137,6 +136,8 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
                 curr_name = f"Series_{s_ind}{bat_mod.get_fit_data_ext()}"
                 series_mask = [s_ind]
                 plt_dir = bat_mod.get_plt_path("")[:-1]
+                if put_on_ol:
+                    plt_dir = OVERLEAF_IMG_DIR
                 plot_performance_graph([bat_mod], parts, METRICS, "",
                                        short_mod_names=[curr_name],
                                        scale_back=True, remove_units=False,
@@ -796,10 +797,8 @@ def main() -> None:
         ext_args = extract_args(args.bool, False, False)
         do_rl, put_on_ol = ext_args
         with change_OL_dir("Battery"):
-            print(OVERLEAF_IMG_DIR)
             run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=put_on_ol,
                         overwrite=overwrite)
-        print(OVERLEAF_IMG_DIR)
 
     # Evaluate room model
     if args.room:

@@ -1,3 +1,7 @@
+"""The Battery Model is defined here.
+
+In the class :class:`BatteryModel`.
+"""
 import os
 from typing import Callable, Tuple
 

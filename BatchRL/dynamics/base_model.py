@@ -1,3 +1,7 @@
+"""Defines the interface for ML models.
+
+As an abstract class: :class:`BaseDynamicsModel`.
+"""
 import os
 import warnings
 from abc import ABC, abstractmethod

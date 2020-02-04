@@ -1,3 +1,10 @@
+"""Environments based on dynamics models.
+
+Defines the three main RL environments, the
+Battery env :class:`BatteryEnv`, the room env :class:`FullRoomEnv`
+and the joint env :class:`RoomBatteryEnv`. Additionally, a common
+base class (:class:`RLDynEnv`) is defined to avoid too much duplicate code.
+"""
 import warnings
 from abc import ABC, abstractmethod
 from typing import Sequence, Tuple, List, Dict
