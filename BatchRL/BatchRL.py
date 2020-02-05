@@ -492,7 +492,9 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
     # Battery model plots
     with ProgWrap(f"Running battery...", verbose > 0):
-        run_battery(do_rl=False, overwrite=overwrite, verbose=prog_verb(verbose), put_on_ol=not debug)
+        with change_OL_dir("Battery"):
+            run_battery(do_rl=False, overwrite=overwrite,
+                        verbose=prog_verb(verbose), put_on_ol=not debug)
 
     # Get data and constraints
     with ProgWrap(f"Loading data...", verbose > 0):
@@ -538,15 +540,17 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                 print(f"Need to analyze performance of model first!")
 
     # Heating water constant
-    with ProgWrap(f"Plotting heating water...", verbose > 0):
+    with ProgWrap(f"Plotting cooling water...", verbose > 0):
         s_name = os.path.join(OVERLEAF_IMG_DIR, "WaterTemp")
         if overwrite or not os.path.isfile(s_name + ".pdf"):
             ds_heat = ds[2:4]
             n_tot = ds_heat.data.shape[0]
             ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.6), int(n_tot * 0.66))
             plot_dataset(ds_heat_rel, show=False,
-                         title_and_ylab=["Heating Water Temperatures", "Temperature [°C]"],
+                         title_and_ylab=["Cooling Water Temperatures", "Temperature [°C]"],
                          save_name=s_name)
+
+    return 
 
     # Room temperature model
     with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
@@ -796,9 +800,8 @@ def main() -> None:
     if args.battery:
         ext_args = extract_args(args.bool, False, False)
         do_rl, put_on_ol = ext_args
-        with change_OL_dir("Battery"):
-            run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=put_on_ol,
-                        overwrite=overwrite)
+        run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=False,
+                    overwrite=overwrite)
 
     # Evaluate room model
     if args.room:

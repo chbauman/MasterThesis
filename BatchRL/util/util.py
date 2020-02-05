@@ -311,7 +311,8 @@ class ProgWrap(object):
     def __exit__(self, exc_type, exc_value, exc_traceback):
         if self.v:
             sys.stdout.write = self.orig_print
-            print(self.init_str + " Done.")
+            ext = " Done." if exc_type is None else " Failed!"
+            print(self.init_str + ext)
 
 
 class ProgWrapV2(object):
