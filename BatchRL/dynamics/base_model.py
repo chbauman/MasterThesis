@@ -604,6 +604,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             save_to_ol: Whether to save the prediction plots to Overleaf.
             one_file: Whether to plot all series in one file.
             add_errors: Whether to add errors in a box. Do not do this!
+            eval_parts: Evaluation dataset parts.
         """
         if verbose:
             print(f"Analyzing model {self.name}")

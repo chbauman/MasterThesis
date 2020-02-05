@@ -1352,7 +1352,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
     if compare_models:
         parts, mod_names = mod_names, parts
 
-    # Check models
+    # Check model compatibility
     ind = model_list[0].p_out_inds
     for m in model_list:
         assert np.array_equal(ind, m.p_out_inds), "Fuck"
@@ -1363,8 +1363,6 @@ def plot_performance_graph(model_list: List, parts: List[str],
             for i, m in enumerate(metric_list):
                 dat = data_array[:, :, k, i, :]
                 # Scale the errors
-                print(scaling)
-                print(k)
                 if scale_back:
                     m_and_sd = scaling[ind[k]]
                     data_array[:, :, k, i, :] = m.scaling_fun(dat, m_and_sd[1])
@@ -1420,7 +1418,6 @@ def plot_performance_graph(model_list: List, parts: List[str],
             for set_id, set_name in enumerate(parts):
                 for series_id in range(n_series):
                     # Get labels and errors
-                    ind = model_list[model_ind].p_out_inds
                     s_desc = series_descs[ind[series_id]]
                     if scale_back:
                         fac = scaling_fac_arr[series_id, ct_m] if scale_over_series else None

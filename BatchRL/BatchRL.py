@@ -605,6 +605,10 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                  date_str=date_str,
                                  hop_eval_set="val",
                                  from_hop=True, fit=True, verbose=False)
+            full_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
+                                      verbose=prog_verb(verbose) > 0, one_file=True,
+                                      save_to_ol=not debug, base_name="Room1W",
+                                      add_errors=False, eval_parts=eval_parts)
             full_mod.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
                                          overwrite=overwrite, metrics=METRICS, parts=parts)
             full_mods = [full_mod]
