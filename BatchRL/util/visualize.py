@@ -1457,6 +1457,7 @@ def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str,
         series_mask: Used to select subset of series to plot.
     """
     if series_mask is not None:
+        assert max(series_mask) < len(all_plt_dat) and min(series_mask) >= 0, "Fuck"
         all_plt_dat = [all_plt_dat[k] for k in series_mask]
 
     n_series = len(all_plt_dat)
