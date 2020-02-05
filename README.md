@@ -11,8 +11,8 @@ with all the latex code.
 ## [BatchRL](BatchRL)
 
 This folder contains the python code
-for batch reinforcement learning. The code was tested using Pyhton version 3.6,
-it is not compatible with version 2.7 or below. It was tested using PyCharm and
+for batch reinforcement learning. The code was tested using Python version 3.6,
+it is not compatible with version 3.5 or below. It was tested using PyCharm and
 Visual Studio, part of the code was also run on Euler.
 
 ## [Data](Data)
