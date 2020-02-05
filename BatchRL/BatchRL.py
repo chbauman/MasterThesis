@@ -573,7 +573,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                              save_name=s_name)
 
     # Room temperature model
-    with change_OL_dir("RoomModel"):
+    with change_OL_dir("RoomTempModel"):
         eval_parts = ["val", "test"]
         with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
             r_mod_name = "RoomTempFromReduced_RNN"
@@ -586,6 +586,15 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                    verbose=prog_verb(verbose) > 0, one_file=True,
                                    save_to_ol=not debug, base_name="Room1W",
                                    add_errors=False, eval_parts=eval_parts)
+            r_mod.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
+                                      overwrite=overwrite, metrics=METRICS, parts=parts)
+            plot_performance_graph([r_mod], parts, METRICS, "RTempPerformance",
+                                   short_mod_names=["RoomTemp"],
+                                   series_mask=None, scale_back=True,
+                                   remove_units=False, put_on_ol=not debug,
+                                   compare_models=False, overwrite=overwrite,
+                                   fit_data=train_data,
+                                   scale_over_series=False)
 
     # # Combined model evaluation
     # with ProgWrap(f"Analyzing full model performance...", verbose > 0):

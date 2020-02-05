@@ -1374,6 +1374,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
                 inv_scaling_fac = max_arr[k, i] / min_arr[i]
                 scaling_fac_arr[k, i] = inv_scaling_fac
                 data_array[:, :, k, i, :] = data_array[:, :, k, i, :] / inv_scaling_fac
+    if scale_over_series and n_series == 1:
+        print("Set scale_over_series to False!")
     if plot_folder is None:
         plot_folder = OVERLEAF_IMG_DIR if put_on_ol else EVAL_MODEL_PLOT_DIR
     for model_ind, m_name in enumerate(mod_names):
@@ -1411,7 +1413,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
             for set_id, set_name in enumerate(parts):
                 for series_id in range(n_series):
                     # Get labels and errors
-                    s_desc = series_descs[series_id]
+                    ind = model_list[model_ind].p_out_inds
+                    s_desc = series_descs[ind[series_id]]
                     if scale_back:
                         fac = scaling_fac_arr[series_id, ct_m] if scale_over_series else None
                         s_desc = _trf_desc_units(s_desc, m, fac)
