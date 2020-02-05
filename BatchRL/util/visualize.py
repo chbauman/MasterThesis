@@ -1446,14 +1446,19 @@ def plot_performance_graph(model_list: List, parts: List[str],
 
 
 def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str,
-                           add_errors: bool = False) -> None:
+                           add_errors: bool = False,
+                           series_mask: List[int] = None) -> None:
     """Stacks multiple dataset plots on top of each other.
 
     Args:
         all_plt_dat: List with tuples (Dataset, title_and_ylab, Any)
         save_name: The path name of the generated plot.
         add_errors: Whether to add errors in a box.
+        series_mask: Used to select subset of series to plot.
     """
+    if series_mask is not None:
+        all_plt_dat = [all_plt_dat[k] for k in series_mask]
+
     n_series = len(all_plt_dat)
     assert n_series > 0, "Fuck this!"
 

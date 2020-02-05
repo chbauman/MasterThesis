@@ -608,7 +608,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
             full_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
                                       verbose=prog_verb(verbose) > 0, one_file=True,
                                       save_to_ol=not debug, base_name="Room1W",
-                                      add_errors=False, eval_parts=eval_parts)
+                                      add_errors=False, eval_parts=eval_parts,
+                                      series_mask=[4])
             full_mod.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
                                          overwrite=overwrite, metrics=METRICS, parts=parts)
             full_mods = [full_mod]

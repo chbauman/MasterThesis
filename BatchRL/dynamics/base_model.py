@@ -492,7 +492,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                                combine_plots: bool = False,
                                put_on_ol: bool = False,
                                add_errors: bool = False,
-                               n_ts_off: int = 0) -> None:
+                               n_ts_off: int = 0,
+                               series_mask: List[int] = None) -> None:
         """Plots predictions of the model over one week.
 
         If `const_steps` = 0, the predictions are done in a continuous way,
@@ -509,6 +510,8 @@ class BaseDynamicsModel(KerasBase, ABC):
             base: The base name of the output file.
             put_on_ol: Whether to save the plots on Overleaf instead.
             add_errors: Whether to add errors as additional legends.
+            series_mask: Used to select subset of series to plot., only
+                used if `combine_plots` is True.
         """
         continuous_pred = const_steps <= 0
 
@@ -544,7 +547,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                              save_name=cn)
         else:
             tot_save_name, _ = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
-            plot_visual_all_in_one(all_plt_dat, tot_save_name, add_errors)
+            plot_visual_all_in_one(all_plt_dat, tot_save_name, add_errors,
+                                   series_mask=series_mask)
 
     def _get_plt_or_ol_path(self, full_b_name: str, put_on_ol: bool = False):
         if put_on_ol:
@@ -589,7 +593,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                          save_to_ol: bool = False,
                          one_file: bool = False,
                          add_errors: bool = False,
-                         eval_parts: List[str] = None) -> None:
+                         eval_parts: List[str] = None,
+                         series_mask: List[int] = None) -> None:
         """Analyzes the trained model.
 
         Makes some plots using the fitted model and the streak data.
@@ -605,6 +610,8 @@ class BaseDynamicsModel(KerasBase, ABC):
             one_file: Whether to plot all series in one file.
             add_errors: Whether to add errors in a box. Do not do this!
             eval_parts: Evaluation dataset parts.
+            series_mask: Used to select subset of series to plot, only used
+                if `one_file` is True.
         """
         if verbose:
             print(f"Analyzing model {self.name}")
@@ -647,6 +654,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                 'add_errors': add_errors,
                 'n_ts_off': n,
                 'ext': ext_list[ct],
+                'series_mask': series_mask,
             }
             # Plot fixed number of step predictions
             for n_s in n_steps:
