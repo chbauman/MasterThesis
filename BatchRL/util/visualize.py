@@ -1352,14 +1352,21 @@ def plot_performance_graph(model_list: List, parts: List[str],
     if compare_models:
         parts, mod_names = mod_names, parts
 
+    # Check models
+    ind = model_list[0].p_out_inds
+    for m in model_list:
+        assert np.array_equal(ind, m.p_out_inds), "Fuck"
+
     # Series scaling
     if scale_back:
         for k in range(n_series):
             for i, m in enumerate(metric_list):
                 dat = data_array[:, :, k, i, :]
                 # Scale the errors
+                print(scaling)
+                print(k)
                 if scale_back:
-                    m_and_sd = scaling[k]
+                    m_and_sd = scaling[ind[k]]
                     data_array[:, :, k, i, :] = m.scaling_fun(dat, m_and_sd[1])
 
     # Scale errors of each series to have same maximum

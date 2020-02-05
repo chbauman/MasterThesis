@@ -596,21 +596,24 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                    fit_data=train_data,
                                    scale_over_series=False)
 
-    # # Combined model evaluation
-    # with ProgWrap(f"Analyzing full model performance...", verbose > 0):
-    #     full_mod_name = full_models[0]
-    #     full_mod = get_model(full_mod_name, ds_bat, rnn_consts_bat, from_hop=True, fit=True, verbose=False)
-    #
-    #     metrics: Tuple[ErrMetric] = (MSE, MAE, MaxAbsEer)
-    #
-    #     full_mods = [full_mod]
-    #
-    #
-    #     plot_name = "EvalPlot"
-    #     plot_performance_graph(full_mods, parts, metrics, plot_name + "_RTempOnly",
-    #                            short_mod_names=["TempPredCombModel"],
-    #                            series_mask=np.array([5]), scale_back=True, remove_units=False,
-    #                            put_on_ol=True)
+    # Combined model evaluation
+    with change_OL_dir("FullRoomModel"):
+        with ProgWrap(f"Analyzing full model performance...", verbose > 0):
+            full_mod_name = full_models[0]
+            full_mod = get_model(full_mod_name, ds, rnn_consts,
+                                 train_data=train_data,
+                                 date_str=date_str,
+                                 hop_eval_set="val",
+                                 from_hop=True, fit=True, verbose=False)
+            full_mod.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
+                                         overwrite=overwrite, metrics=METRICS, parts=parts)
+            full_mods = [full_mod]
+            plot_performance_graph(full_mods, parts, METRICS, "EvalPlot_RTempOnly",
+                                   short_mod_names=["TempPredCombModel"],
+                                   series_mask=np.array([5]), scale_back=True,
+                                   remove_units=False,
+                                   fit_data=train_data,
+                                   put_on_ol=True)
 
     # # DDPG Performance Evaluation
     # with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
