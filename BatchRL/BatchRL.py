@@ -144,6 +144,7 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
                                        put_on_ol=put_on_ol,
                                        fit_data=train_set,
                                        series_mask=series_mask,
+                                       overwrite=overwrite,
                                        titles=[""],
                                        plot_folder=plt_dir)
 
@@ -506,51 +507,56 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
     # Weather model
     with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
-        # Define model indices and names
-        mod_inds = [0, 4]
-        model_names = ["RNN", "Linear"]
-        n_steps = (0, 24)
+        with change_OL_dir("Weather"):
 
-        # Load weather models
-        mod_list = [get_model(base_rnn_models[k], ds, rnn_consts,
-                              from_hop=True, fit=True, verbose=prog_verb(verbose)) for k in mod_inds]
+            # Define model indices and names
+            mod_inds = ["WeatherFromWeatherTime_RNN", "WeatherFromWeatherTime_Linear"]
+            model_names = ["RNN", "Linear"]
+            n_steps = (0, 24)
 
-        # Compare the models for one week continuous and 6h predictions
-        dir_to_use = OVERLEAF_IMG_DIR if not debug else TEST_DIR
-        ol_file_name = os.path.join(dir_to_use, "WeatherComparison")
+            # Load weather models
+            mod_list = [get_model(k, ds, rnn_consts,
+                                  from_hop=True, fit=True, verbose=prog_verb(verbose)) for k in mod_inds]
 
-        compare_models(mod_list, ol_file_name,
-                       n_steps=n_steps,
-                       model_names=model_names,
-                       overwrite=overwrite)
+            # Compare the models for one week continuous and 6h predictions
+            dir_to_use = OVERLEAF_IMG_DIR if not debug else TEST_DIR
+            ol_file_name = os.path.join(dir_to_use, "WeatherComparison")
 
-        # Plot prediction performance
-        try:
-            # for m in mod_list:
-            #     m.analyze_performance(metrics=METRICS)
-            plot_performance_graph(mod_list, PARTS, METRICS, "WeatherPerformance",
-                                   short_mod_names=model_names,
-                                   series_mask=None, scale_back=True,
-                                   remove_units=False, put_on_ol=not debug,
-                                   compare_models=True, overwrite=overwrite,
-                                   scale_over_series=True)
-        except OSError as e:
-            if verbose:
-                print(f"{e}")
-                print(f"Need to analyze performance of model first!")
+            compare_models(mod_list, ol_file_name,
+                           n_steps=n_steps,
+                           model_names=model_names,
+                           overwrite=overwrite)
 
-    # Heating water constant
-    with ProgWrap(f"Plotting cooling water...", verbose > 0):
-        s_name = os.path.join(OVERLEAF_IMG_DIR, "WaterTemp")
-        if overwrite or not os.path.isfile(s_name + ".pdf"):
-            ds_heat = ds[2:4]
-            n_tot = ds_heat.data.shape[0]
-            ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.6), int(n_tot * 0.66))
-            plot_dataset(ds_heat_rel, show=False,
-                         title_and_ylab=["Cooling Water Temperatures", "Temperature [°C]"],
-                         save_name=s_name)
+            # Plot prediction performance
+            try:
+                # for m in mod_list:
+                #     m.analyze_performance(metrics=METRICS)
+                plot_performance_graph(mod_list, PARTS, METRICS, "WeatherPerformance",
+                                       short_mod_names=model_names,
+                                       series_mask=None, scale_back=True,
+                                       remove_units=False, put_on_ol=not debug,
+                                       compare_models=True, overwrite=overwrite,
+                                       scale_over_series=True)
+            except OSError as e:
+                if verbose:
+                    print(f"{e}")
+                    print(f"Need to analyze performance of model first!")
 
-    return 
+    # Cooling water constant
+    with change_OL_dir("Data"):
+        with ProgWrap(f"Plotting cooling water...", verbose > 0):
+            s_name = os.path.join(OVERLEAF_IMG_DIR, "WaterTemp")
+            if overwrite or not os.path.isfile(s_name + ".pdf"):
+                ds_heat = ds[2:4]
+                ds_heat.descriptions[0] = "Water Temperature (In) [°C]"
+                ds_heat.descriptions[1] = "Water Temperature (Out) [°C]"
+                n_tot = ds_heat.data.shape[0]
+                ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.6), int(n_tot * 0.66))
+                plot_dataset(ds_heat_rel, show=False,
+                             title_and_ylab=["Cooling Water Temperatures", "Temperature [°C]"],
+                             save_name=s_name)
+
+    return
 
     # Room temperature model
     with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):

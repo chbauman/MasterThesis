@@ -1,9 +1,11 @@
+from typing import List
+
 import numpy as np
 
 from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
 from ml.sklearn_util import SKLoader, get_skl_model_name
-from util.numerics import check_shape
+from util.numerics import check_shape, trf_mean_and_std
 from util.util import train_decorator
 
 
@@ -15,7 +17,7 @@ class SKLearnModel(BaseDynamicsModel):
     name: str = "Linear"  #: Base name of model.
     n_out: int  #: Number of series that are predicted.
 
-    def __init__(self, data: Dataset, skl_model, residual: bool = True, **kwargs):
+    def __init__(self, data: Dataset, skl_model, residual: bool = True, clip_ind: int = None, **kwargs):
         """Initializes the constant model.
 
         All series specified by prep_inds are predicted by the last seen value.
@@ -45,6 +47,12 @@ class SKLearnModel(BaseDynamicsModel):
         # Fitting model
         self.is_fitted = False
         self.skl_mod = skl_model
+
+        self.clip_ind = clip_ind
+        self.clip_val = None
+        if clip_ind is not None:
+            assert clip_ind < len(self.out_inds)
+            self.clip_val = trf_mean_and_std(0, mean_and_std=self.data.scaling[clip_ind], remove=True)
 
     @train_decorator()
     def fit(self, verbose: int = 0, train_data: str = "train") -> None:
@@ -90,5 +98,10 @@ class SKLearnModel(BaseDynamicsModel):
         prev_state_res = prev_state.reshape((sh[0], -1))
 
         # Predict
-        p = self.skl_mod.predict(in_data_res)
-        return prev_state_res + p
+        p = prev_state_res + self.skl_mod.predict(in_data_res)
+        if self.clip_ind is not None:
+            print(p.shape)
+            p_to_be_clipped = np.copy(p[:, self.clip_ind])
+            p_to_be_clipped = np.clip(p_to_be_clipped, self.clip_val, a_max=None)
+            p[:, self.clip_ind] = p_to_be_clipped
+        return p

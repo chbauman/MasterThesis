@@ -437,7 +437,7 @@ def get_model(name: str,
             'in_inds': np.array([0, 1, 6, 7], dtype=np.int32),
         }
         skl_base_mod = MultiTaskLassoCV(max_iter=1000, cv=5)
-        return SKLearnModel(skl_model=skl_base_mod, **nec_pars, **inds)
+        return SKLearnModel(skl_model=skl_base_mod, **nec_pars, **inds, clip_ind=1)
     elif name == "Apartment_RNN":
         # The apartment model, predicting only the apartment variables, i.e. water
         # temperatures and room temperature based on all input variables including the weather.

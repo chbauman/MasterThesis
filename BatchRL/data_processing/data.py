@@ -1072,8 +1072,8 @@ def generate_room_datasets(date_str: str = DEFAULT_END_DATE,
 
         # Set descriptions
         full_ds.descriptions[-1] = "Room Temperature [°C]"
-        full_ds.descriptions[2] = "Heating Water Temperature (In) [°C]"
-        full_ds.descriptions[3] = "Heating Water Temperature (Out) [°C]"
+        full_ds.descriptions[2] = "Water Temperature (In) [°C]"
+        full_ds.descriptions[3] = "Water Temperature (Out) [°C]"
 
         # Add blinds
         if len(room_ds) == 5 and use_blinds:
