@@ -588,7 +588,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                          base_name: str = None,
                          save_to_ol: bool = False,
                          one_file: bool = False,
-                         add_errors: bool = False) -> None:
+                         add_errors: bool = False,
+                         eval_parts: List[str] = None) -> None:
         """Analyzes the trained model.
 
         Makes some plots using the fitted model and the streak data.
@@ -627,7 +628,8 @@ class BaseDynamicsModel(KerasBase, ABC):
 
         # Define the extension string lists for naming
         dat_ext = self.get_fit_data_ext()
-        eval_parts = ["train", "val"]
+        if eval_parts is None:
+            eval_parts = ["train", "val"]
         ext_list = [f"EV_" + e.capitalize() + dat_ext for e in eval_parts]
 
         # Do the same for train and validation set

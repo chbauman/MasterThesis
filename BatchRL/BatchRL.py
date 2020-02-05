@@ -510,10 +510,9 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
     # Weather model
     with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
-        with change_OL_dir("Weather"):
+        with change_OL_dir("WeatherLinearRNN"):
             train_data = "train_val"
-            parts = ["test"]
-            eval_parts = ["train", "val", "test"]
+            parts = ["val", "test"]
 
             # Define model indices and names
             mod_inds = ["WeatherFromWeatherTime_RNN", "WeatherFromWeatherTime_Linear"]
@@ -551,6 +550,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                 if verbose:
                     print(f"{e}")
                     print(f"Need to analyze performance of model first!")
+                    print(f"Need run again for completion!")
                 for m in mod_list:
                     m.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
                                           overwrite=overwrite, metrics=METRICS, parts=parts)
@@ -558,9 +558,12 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     # Cooling water constant
     with change_OL_dir("Data"):
         with ProgWrap(f"Plotting cooling water...", verbose > 0):
+            ds_old, rnn_consts = choose_dataset_and_constraints(seq_len=20,
+                                                                add_battery_data=False)
+
             s_name = os.path.join(OVERLEAF_IMG_DIR, "WaterTemp")
             if overwrite or not os.path.isfile(s_name + ".pdf"):
-                ds_heat = ds[2:4]
+                ds_heat = ds_old[2:4]
                 ds_heat.descriptions[0] = "Water Temperature (In) [°C]"
                 ds_heat.descriptions[1] = "Water Temperature (Out) [°C]"
                 n_tot = ds_heat.data.shape[0]
@@ -569,21 +572,20 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                              title_and_ylab=["Cooling Water Temperatures", "Temperature [°C]"],
                              save_name=s_name)
 
-    return
-
     # Room temperature model
-    with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
-        r_mod_name = base_rnn_models[2]
-        r_mod = get_model(r_mod_name, ds_bat, rnn_consts_bat, from_hop=True,
-                          fit=True, verbose=prog_verb(verbose))
-        r_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
-                               verbose=prog_verb(verbose) > 0, one_file=True,
-                               save_to_ol=not debug, base_name="Room1W_E",
-                               add_errors=True)
-        r_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
-                               verbose=prog_verb(verbose) > 0, one_file=True,
-                               save_to_ol=not debug, base_name="Room1W",
-                               add_errors=False)
+    with change_OL_dir("RoomModel"):
+        eval_parts = ["val", "test"]
+        with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
+            r_mod_name = "RoomTempFromReduced_RNN"
+            r_mod = get_model(r_mod_name, ds, rnn_consts, from_hop=True,
+                              train_data=train_data,
+                              date_str=date_str,
+                              hop_eval_set="val",
+                              fit=True, verbose=prog_verb(verbose))
+            r_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
+                                   verbose=prog_verb(verbose) > 0, one_file=True,
+                                   save_to_ol=not debug, base_name="Room1W",
+                                   add_errors=False, eval_parts=eval_parts)
 
     # # Combined model evaluation
     # with ProgWrap(f"Analyzing full model performance...", verbose > 0):
