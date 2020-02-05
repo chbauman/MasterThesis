@@ -1,5 +1,3 @@
-from typing import List
-
 import numpy as np
 
 from data_processing.dataset import Dataset
@@ -100,7 +98,6 @@ class SKLearnModel(BaseDynamicsModel):
         # Predict
         p = prev_state_res + self.skl_mod.predict(in_data_res)
         if self.clip_ind is not None:
-            print(p.shape)
             p_to_be_clipped = np.copy(p[:, self.clip_ind])
             p_to_be_clipped = np.clip(p_to_be_clipped, self.clip_val, a_max=None)
             p[:, self.clip_ind] = p_to_be_clipped

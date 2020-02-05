@@ -693,8 +693,15 @@ class BaseDynamicsModel(KerasBase, ABC):
         save_names = [self.get_plt_path(s) for s in save_names]
 
         # Check if file already exists
-        if not overwrite and os.path.isfile(save_names[0]):
-            return
+        if not overwrite:
+            found_all = True
+            for f in save_names:
+                if not os.path.isfile(f):
+                    found_all = False
+            if found_all:
+                if verbose:
+                    print("Performance evaluation already done.")
+                return
 
         # Performance values
         n_sets = len(parts)

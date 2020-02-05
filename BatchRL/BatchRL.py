@@ -498,16 +498,22 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                         verbose=prog_verb(verbose), put_on_ol=not debug)
 
     # Get data and constraints
+    date_str = "2020-01-21"
     with ProgWrap(f"Loading data...", verbose > 0):
         ds, rnn_consts = choose_dataset_and_constraints(seq_len=20,
+                                                        date_str=date_str,
                                                         add_battery_data=False)
 
         ds_bat, rnn_consts_bat = choose_dataset_and_constraints(seq_len=20,
+                                                                date_str=date_str,
                                                                 add_battery_data=True)
 
     # Weather model
     with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
         with change_OL_dir("Weather"):
+            train_data = "train_val"
+            parts = ["test"]
+            eval_parts = ["train", "val", "test"]
 
             # Define model indices and names
             mod_inds = ["WeatherFromWeatherTime_RNN", "WeatherFromWeatherTime_Linear"]
@@ -516,7 +522,9 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
             # Load weather models
             mod_list = [get_model(k, ds, rnn_consts,
-                                  from_hop=True, fit=True, verbose=prog_verb(verbose)) for k in mod_inds]
+                                  date_str=date_str,
+                                  from_hop=True, fit=True, verbose=prog_verb(verbose),
+                                  train_data=train_data) for k in mod_inds]
 
             # Compare the models for one week continuous and 6h predictions
             dir_to_use = OVERLEAF_IMG_DIR if not debug else TEST_DIR
@@ -525,22 +533,27 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
             compare_models(mod_list, ol_file_name,
                            n_steps=n_steps,
                            model_names=model_names,
+                           part_spec="test",
                            overwrite=overwrite)
 
             # Plot prediction performance
             try:
                 # for m in mod_list:
                 #     m.analyze_performance(metrics=METRICS)
-                plot_performance_graph(mod_list, PARTS, METRICS, "WeatherPerformance",
+                plot_performance_graph(mod_list, parts, METRICS, "WeatherPerformance",
                                        short_mod_names=model_names,
                                        series_mask=None, scale_back=True,
                                        remove_units=False, put_on_ol=not debug,
                                        compare_models=True, overwrite=overwrite,
+                                       fit_data=train_data,
                                        scale_over_series=True)
             except OSError as e:
                 if verbose:
                     print(f"{e}")
                     print(f"Need to analyze performance of model first!")
+                for m in mod_list:
+                    m.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
+                                          overwrite=overwrite, metrics=METRICS, parts=parts)
 
     # Cooling water constant
     with change_OL_dir("Data"):
