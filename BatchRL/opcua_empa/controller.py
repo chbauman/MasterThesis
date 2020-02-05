@@ -171,7 +171,7 @@ class RuleBased(FixTimeController):
     Starts heating as soon as the temperature drops below `self.min_temp`.
     """
     def __call__(self, values=None):
-        t = self.state[1]  # Extract valve state
+        t = self.state[5]  # Extract room temp
         return MIN_TEMP if t >= self.min_temp else MAX_TEMP
 
     def __init__(self, min_temp: float = 21.0, n_steps_max: int = 60 * 60,

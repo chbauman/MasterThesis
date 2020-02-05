@@ -469,7 +469,7 @@ class NodeAndValues:
             state[5] = curr_read_vals[1]  # Assign Room temperature
 
             # Set state
-            cont.set_state(state)
+            cont.set_state(state.copy())
 
         # Get values
         values = _get_values(self.control)
