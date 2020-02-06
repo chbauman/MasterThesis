@@ -3,8 +3,9 @@
 The models are derived from `HyperOptimizableModel` or at least
 from `BaseDynamicsModel`.
 """
+import os
 from functools import partial
-from typing import Dict, Optional, Sequence, Any, Tuple
+from typing import Dict, Optional, Sequence, Any, Tuple, List
 
 import numpy as np
 from hyperopt import hp
@@ -21,7 +22,7 @@ from ml.keras_layers import ConstrainedNoise, FeatureSlice, ExtractInput, IdRecu
 from tests.test_data import get_test_ds
 from tests.test_keras import get_multi_input_layer_output
 from util.util import EULER, create_dir, rem_first, train_decorator, DEFAULT_TRAIN_SET
-from util.visualize import plot_train_history
+from util.visualize import plot_train_history, OVERLEAF_DATA_DIR
 
 
 def weighted_loss(y_true, y_pred, weights):
@@ -370,6 +371,14 @@ class RNNDynamicModel(HyperOptimizableModel):
         # Build model
         self.m = self._build_model()
 
+    @property
+    def n_layers(self):
+        return len(self.hidden_sizes)
+
+    @property
+    def layer_size(self):
+        return self.hidden_sizes[0]
+
     def _build_model(self, debug: bool = False) -> Any:
         """Builds the keras RNN model and returns it.
 
@@ -543,6 +552,7 @@ class PhysicallyConsistentRNN(RNNDynamicModel):
         if do_scaling:
             def lam(sc):
                 return lambda x: sc[1] * x + sc[0]
+
             water_in_temp = Lambda(lam(water_in_scaling), name="scale_water_in")(water_in_temp)
             last_control_input = Lambda(lam(valve_scaling), name="scale_last_control")(last_control_input)
             scaled_room_temp = Lambda(lam(room_t_scaling), name="scale_room_temp")(scaled_room_temp)
@@ -707,6 +717,80 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
             self.m.save_weights(self.get_path(self.name))
         else:
             self.deb("Restored trained model")
+
+
+def _to_str(t: Any):
+    if isinstance(t, float):
+        return f"{t:.4g}"
+    elif isinstance(t, str) or np.issubdtype(type(t), np.integer):
+        return f"{t}"
+    elif isinstance(t, bool):
+        return "GRU" if t else "LSTM"
+    else:
+        print(f"Fuck off: {t}, type: {type(t)}!")
+
+
+def _add_row(curr_str, rnn_model_list, s, attr: str):
+    for ct, m in enumerate(rnn_model_list):
+        end = "\\\\\n" if ct == len(rnn_model_list) - 1 else "&"
+        at_val = _to_str(getattr(m, attr))
+        curr_str += f" ${s} = {at_val}$ {end}"
+    return curr_str
+
+
+def make_latex_hop_table(rnn_model_list: List[RNNDynamicModel],
+                         mod_names: List,
+                         tot_w: float = 0.9,
+                         f_name: str = None,
+                         caption: str = None,
+                         lab: str = None) -> str:
+    """Creates a latex table as string with the values of the hyperparameters.
+
+    Args:
+        rnn_model_list: List with models.
+        mod_names: Name of the models as title of columns.
+        tot_w: Total fraction of textwidth to use.
+        f_name: File saving name.
+        caption: Caption of table.
+        lab: Label of table.
+
+    Returns:
+        The latex table as string.
+    """
+    init_str = "\\begin{table}[ht]\n"
+    init_str += "\\centering\n"
+
+    n_mods = len(rnn_model_list)
+    w = tot_w / n_mods
+    s = "|".join([f"p{{{w}\\textwidth}}"] * n_mods)
+    init_str += f"\\begin{{tabular}}{{|{s}|}}\n"
+
+    # Add titles
+    init_str += "\\hline\n" + " & ".join(mod_names) + "\\\\\n"
+    init_str += f"\\hline\\hline\n"
+
+    # Add rows
+    init_str = _add_row(init_str, rnn_model_list, "n_l", "n_layers")
+    init_str = _add_row(init_str, rnn_model_list, "n_c", "layer_size")
+    init_str = _add_row(init_str, rnn_model_list, "n_{ep}", "n_iter_max")
+    init_str = _add_row(init_str, rnn_model_list, "\\eta", "lr")
+    init_str = _add_row(init_str, rnn_model_list, "\\sigma_i", "input_noise_std")
+    init_str = _add_row(init_str, rnn_model_list, "Cell", "gru")
+
+    # Remaining part
+    init_str += "\\hline\n\\end{tabular}\n"
+    init_str += f"\\caption{{{caption}}}\n\\label{{tab:hyp_{lab}}}\n"
+    init_str += "\\end{table}\n"
+
+    # Save or return
+    if f_name is not None:
+        f_path = os.path.join(OVERLEAF_DATA_DIR, f_name + ".txt")
+        if not os.path.isfile(f_path):
+            with open(f_path, "w") as f:
+                f.write(init_str)
+        print(init_str)
+    else:
+        return init_str
 
 
 ##########################################################################

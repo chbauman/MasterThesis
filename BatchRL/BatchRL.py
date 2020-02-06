@@ -32,7 +32,7 @@ from dynamics.base_model import compare_models, check_train_str
 from dynamics.battery_model import BatteryModel, clean_battery_dataset
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
     load_room_env, rename_rl_folder, DEFAULT_D_FAC
-from dynamics.recurrent import test_rnn_models
+from dynamics.recurrent import test_rnn_models, make_latex_hop_table, RNNDynamicModel
 from envs.dynamics_envs import BatteryEnv, heat_marker
 from opcua_empa.run_opcua import run_rl_control, run_rule_based_control
 from rest.client import check_date_str
@@ -487,9 +487,48 @@ def run_room_models(verbose: int = 1,
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                           debug: bool = False):
+    # Constants
+    date_str = "2020-01-21"
+    room_nr = 43
+    train_data, hop_eval_set = "train_val", "val"
+    train_data_rl, hop_eval_set_rl = "all", "test"
+    next_verb = prog_verb(verbose=verbose)
+
     # If debug is true, the plots are not saved to Overleaf.
     if verbose > 0 and debug:
         print("Running in debug mode!")
+
+    # Load and fit all models
+    with ProgWrap(f"Loading models...", verbose > 0):
+        lst = ["RoomTempFromReduced_RNN",
+               "WeatherFromWeatherTime_RNN",
+               "WeatherFromWeatherTime_Linear"]
+        w_mods = ["WeatherFromWeatherTime_RNN",
+                  "WeatherFromWeatherTime_Linear"]
+        c_mods = lst[:2]
+        # Load models
+        eval_mods = load_room_models(lst,
+                                     use_bat_data=False,
+                                     from_hop=True,
+                                     fit=True,
+                                     date_str=date_str,
+                                     room_nr=room_nr,
+                                     hop_eval_set=hop_eval_set,
+                                     train_data=train_data,
+                                     verbose=next_verb)
+        weather_mods = [v for k, v in eval_mods.items() if k in w_mods]
+        room_mod = eval_mods["RoomTempFromReduced_RNN"]
+        comb_models: List[RNNDynamicModel] = [weather_mods[0], room_mod]
+        rl_mods = load_room_models(lst,
+                                   use_bat_data=False,
+                                   from_hop=True,
+                                   fit=True,
+                                   date_str=date_str,
+                                   room_nr=room_nr,
+                                   hop_eval_set=hop_eval_set_rl,
+                                   train_data=train_data_rl,
+                                   verbose=next_verb)
+        rl_comb_models: List[RNNDynamicModel] = [rl_mods[k] for k in c_mods]
 
     # Battery model plots
     with ProgWrap(f"Running battery...", verbose > 0):
@@ -515,21 +554,14 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
             parts = ["val", "test"]
 
             # Define model indices and names
-            mod_inds = ["WeatherFromWeatherTime_RNN", "WeatherFromWeatherTime_Linear"]
             model_names = ["RNN", "Linear"]
             n_steps = (0, 24)
-
-            # Load weather models
-            mod_list = [get_model(k, ds, rnn_consts,
-                                  date_str=date_str,
-                                  from_hop=True, fit=True, verbose=prog_verb(verbose),
-                                  train_data=train_data) for k in mod_inds]
 
             # Compare the models for one week continuous and 6h predictions
             dir_to_use = OVERLEAF_IMG_DIR if not debug else TEST_DIR
             ol_file_name = os.path.join(dir_to_use, "WeatherComparison")
 
-            compare_models(mod_list, ol_file_name,
+            compare_models(weather_mods, ol_file_name,
                            n_steps=n_steps,
                            model_names=model_names,
                            part_spec="test",
@@ -539,7 +571,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
             try:
                 # for m in mod_list:
                 #     m.analyze_performance(metrics=METRICS)
-                plot_performance_graph(mod_list, parts, METRICS, "WeatherPerformance",
+                plot_performance_graph(weather_mods, parts, METRICS, "WeatherPerformance",
                                        short_mod_names=model_names,
                                        series_mask=None, scale_back=True,
                                        remove_units=False, put_on_ol=not debug,
@@ -551,7 +583,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                     print(f"{e}")
                     print(f"Need to analyze performance of model first!")
                     print(f"Need run again for completion!")
-                for m in mod_list:
+                for m in weather_mods:
                     m.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
                                           overwrite=overwrite, metrics=METRICS, parts=parts)
 
@@ -576,25 +608,29 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     with change_OL_dir("RoomTempModel"):
         eval_parts = ["val", "test"]
         with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
-            r_mod_name = "RoomTempFromReduced_RNN"
-            r_mod = get_model(r_mod_name, ds, rnn_consts, from_hop=True,
-                              train_data=train_data,
-                              date_str=date_str,
-                              hop_eval_set="val",
-                              fit=True, verbose=prog_verb(verbose))
-            r_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
-                                   verbose=prog_verb(verbose) > 0, one_file=True,
-                                   save_to_ol=not debug, base_name="Room1W",
-                                   add_errors=False, eval_parts=eval_parts)
-            r_mod.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
-                                      overwrite=overwrite, metrics=METRICS, parts=parts)
-            plot_performance_graph([r_mod], parts, METRICS, "RTempPerformance",
+            room_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
+                                      verbose=prog_verb(verbose) > 0, one_file=True,
+                                      save_to_ol=not debug, base_name="Room1W",
+                                      add_errors=False, eval_parts=eval_parts)
+            room_mod.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
+                                         overwrite=overwrite, metrics=METRICS, parts=parts)
+            plot_performance_graph([room_mod], parts, METRICS, "RTempPerformance",
                                    short_mod_names=["RoomTemp"],
                                    series_mask=None, scale_back=True,
                                    remove_units=False, put_on_ol=not debug,
                                    compare_models=False, overwrite=overwrite,
                                    fit_data=train_data,
                                    scale_over_series=False)
+
+    with ProgWrap(f"Creating latex table...", verbose > 0):
+        mod_names = ["Room Temperature Model",
+                     "Weather Model"]
+        make_latex_hop_table(comb_models, mod_names=mod_names,
+                             f_name="HopPars_EvalVal",
+                             caption="Test", lab=f"val_{room_nr}")
+        make_latex_hop_table(rl_comb_models, mod_names=mod_names,
+                             f_name="HopPars_EvalTest",
+                             caption="Test", lab=f"test_{room_nr}")
 
     # Combined model evaluation
     with change_OL_dir("FullRoomModel"):

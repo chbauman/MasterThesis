@@ -64,7 +64,6 @@ model_plot_path = os.path.join(PLOT_DIR, "Models")  #: Dynamics modeling plot fo
 rl_plot_path = os.path.join(PLOT_DIR, "RL")
 EVAL_MODEL_PLOT_DIR = os.path.join(model_plot_path, "EvalTables")
 OVERLEAF_DIR = os.path.join(BASE_DIR, "Overleaf")  #: Overleaf base folder.
-# OVERLEAF_IMG_DIR = os.path.join(OVERLEAF_DIR, "Imgs")
 
 # Create folders if they do not exist
 create_dir(preprocess_plot_path)
@@ -102,6 +101,7 @@ class ModifyDir:
         """
         self.ol_dir = orig_dir
         self.ret_dir = orig_dir
+        create_dir(orig_dir)
 
     def set_folder(self, new_dir) -> None:
         """Adds the given directory to the current path.
@@ -128,17 +128,17 @@ class ModifyDir:
 
 # Here it is
 OVERLEAF_IMG_DIR = ModifyDir(os.path.join(OVERLEAF_DIR, "Imgs"))
+OVERLEAF_DATA_DIR = ModifyDir(os.path.join(OVERLEAF_DIR, "Data"))
 
 
 @contextmanager
-def change_OL_dir(new_dir_name: str, img: bool = True):
+def change_OL_dir(new_dir_name: str,
+                  dir_to_modify: ModifyDir = OVERLEAF_IMG_DIR):
     """This Context Manager allows you to change the
     overleaf images folder temporarily."""
-    if not img:
-        raise NotImplementedError("Fuck")
-    OVERLEAF_IMG_DIR.set_folder(new_dir_name)
+    dir_to_modify.set_folder(new_dir_name)
     yield None
-    OVERLEAF_IMG_DIR.set_folder(None)
+    dir_to_modify.set_folder(None)
 
 
 def save_figure(save_name, show: bool = False,
