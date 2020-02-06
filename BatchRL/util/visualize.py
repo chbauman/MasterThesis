@@ -132,8 +132,8 @@ OVERLEAF_DATA_DIR = ModifyDir(os.path.join(OVERLEAF_DIR, "Data"))
 
 
 @contextmanager
-def change_OL_dir(new_dir_name: str,
-                  dir_to_modify: ModifyDir = OVERLEAF_IMG_DIR):
+def change_dir_name(new_dir_name: str,
+                    dir_to_modify: ModifyDir = OVERLEAF_IMG_DIR):
     """This Context Manager allows you to change the
     overleaf images folder temporarily."""
     dir_to_modify.set_folder(new_dir_name)

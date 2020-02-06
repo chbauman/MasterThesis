@@ -41,7 +41,7 @@ from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, str2bool, extract_args, DEFAULT_TRAIN_SET, \
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
-    plot_heat_cool_rew_det, change_OL_dir
+    plot_heat_cool_rew_det, change_dir_name
 
 # Model performance evaluation
 N_PERFORMANCE_STEPS = (1, 4, 12, 24, 48)
@@ -532,7 +532,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
     # Battery model plots
     with ProgWrap(f"Running battery...", verbose > 0):
-        with change_OL_dir("Battery"):
+        with change_dir_name("Battery"):
             run_battery(do_rl=False, overwrite=overwrite,
                         verbose=prog_verb(verbose), put_on_ol=not debug)
 
@@ -549,7 +549,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
     # Weather model
     with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
-        with change_OL_dir("WeatherLinearRNN"):
+        with change_dir_name("WeatherLinearRNN"):
             train_data = "train_val"
             parts = ["val", "test"]
 
@@ -588,7 +588,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                           overwrite=overwrite, metrics=METRICS, parts=parts)
 
     # Cooling water constant
-    with change_OL_dir("Data"):
+    with change_dir_name("Data"):
         with ProgWrap(f"Plotting cooling water...", verbose > 0):
             ds_old, rnn_consts = choose_dataset_and_constraints(seq_len=20,
                                                                 add_battery_data=False)
@@ -605,7 +605,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                              save_name=s_name)
 
     # Room temperature model
-    with change_OL_dir("RoomTempModel"):
+    with change_dir_name("RoomTempModel"):
         eval_parts = ["val", "test"]
         with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
             room_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
@@ -633,7 +633,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                              caption="Test", lab=f"test_{room_nr}")
 
     # Combined model evaluation
-    with change_OL_dir("FullRoomModel"):
+    with change_dir_name("FullRoomModel"):
         with ProgWrap(f"Analyzing full model performance...", verbose > 0):
             full_mod_name = full_models[0]
             full_mod = get_model(full_mod_name, ds, rnn_consts,

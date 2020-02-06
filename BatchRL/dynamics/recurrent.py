@@ -720,6 +720,7 @@ class RNNDynamicOvershootModel(RNNDynamicModel):
 
 
 def _to_str(t: Any):
+    """Helper function for :func:`make_latex_hop_table`."""
     if isinstance(t, float):
         return f"{t:.4g}"
     elif isinstance(t, str) or np.issubdtype(type(t), np.integer):
@@ -731,6 +732,7 @@ def _to_str(t: Any):
 
 
 def _add_row(curr_str, rnn_model_list, s, attr: str):
+    """Helper function for :func:`make_latex_hop_table`."""
     for ct, m in enumerate(rnn_model_list):
         end = "\\\\\n" if ct == len(rnn_model_list) - 1 else "&"
         at_val = _to_str(getattr(m, attr))
