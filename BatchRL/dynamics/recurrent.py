@@ -786,7 +786,7 @@ def make_latex_hop_table(rnn_model_list: List[RNNDynamicModel],
 
     # Save or return
     if f_name is not None:
-        f_path = os.path.join(OVERLEAF_DATA_DIR, f_name + ".txt")
+        f_path = os.path.join(OVERLEAF_DATA_DIR, f_name + ".tex")
         if not os.path.isfile(f_path):
             with open(f_path, "w") as f:
                 f.write(init_str)

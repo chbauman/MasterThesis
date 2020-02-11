@@ -86,8 +86,13 @@ def remove_agents(min_steps: int = 10000, verbose: int = 5) -> None:
                 n_eps = int(num)
                 rem_file = n_eps < min_steps
             except ValueError:
-                n_eps = int(num.split("_")[0])
-                rem_file = n_eps < min_steps
+                n_str = num.split("_")[0]
+                if not n_str[:3] == "NEP":
+                    n_eps = int(n_str)
+                    rem_file = n_eps < min_steps
+                else:
+                    n_eps = int(n_str[3:])
+                    rem_file = n_eps < min_steps
 
         # Remove train rewards plots
         try:
@@ -95,7 +100,8 @@ def remove_agents(min_steps: int = 10000, verbose: int = 5) -> None:
                 n_eps = int(f[8:].split("_")[0])
                 rem_file = n_eps < min_steps
         except ValueError as e:
-            print(f"{e} happened.")
+            pass
+            # print(f"{e} happened.")
 
         # Remove evaluation plot
         try:
@@ -103,7 +109,8 @@ def remove_agents(min_steps: int = 10000, verbose: int = 5) -> None:
                 n_eps = int(f.split("_")[1])
                 rem_file = n_eps < min_steps
         except ValueError as e:
-            print(f"{e} happened.")
+            pass
+            # print(f"{e} happened.")
 
         return rem_file
 
