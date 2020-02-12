@@ -1,12 +1,12 @@
+from typing import Optional, Tuple, List
 from unittest import TestCase
 
 import numpy as np
 
-from data_processing.data import TestData2
 from data_processing.dataset import ModelDataView, SeriesConstraint, Dataset
 from data_processing.preprocess import standardize, fill_holes_linear_interpolate, remove_outliers, clean_data, \
     interpolate_time_series, gaussian_filter_ignoring_nans
-from rest.client import test_rest_client
+from rest.client import test_rest_client, DataStruct
 from util.numerics import nan_array_equal, num_nans
 from util.util import EULER, skip_if_no_internet
 from util.visualize import plot_dataset
@@ -295,11 +295,71 @@ class TestDataset(TestCase):
     pass
 
 
+class TestDataSynthetic(DataStruct):
+    """Synthetic and short dataset to be used for debugging.
+
+    Overrides `get_data` to avoid having to use the REST
+    client to load the data, instead it is defined each time
+    it is called.
+    """
+
+    data_ids = [str(e) for e in [0, 1, 2]]
+
+    def __init__(self):
+        name = "SyntheticTest"
+        super().__init__([], name=name)
+
+    def get_data(self, verbose: int = 0) -> Optional[Tuple[List, List]]:
+        # First Time series
+        dict1 = {'description': "Synthetic Data Series 1: Base Series", 'unit': "Test Unit 1"}
+        val_1 = np.array([1.0, 2.3, 2.3, 1.2, 2.3, 0.8])
+        dat_1 = np.array([
+            np.datetime64('2005-02-25T03:31'),
+            np.datetime64('2005-02-25T03:39'),
+            np.datetime64('2005-02-25T03:48'),
+            np.datetime64('2005-02-25T04:20'),
+            np.datetime64('2005-02-25T04:25'),
+            np.datetime64('2005-02-25T04:30'),
+        ], dtype='datetime64')
+
+        # Second Time series
+        dict2 = {'description': "Synthetic Data Series 2: Delayed and longer", 'unit': "Test Unit 2"}
+        val_2 = np.array([1.0, 1.4, 2.1, 1.5, 3.3, 1.8, 2.5])
+        dat_2 = np.array([
+            np.datetime64('2005-02-25T03:51'),
+            np.datetime64('2005-02-25T03:59'),
+            np.datetime64('2005-02-25T04:17'),
+            np.datetime64('2005-02-25T04:21'),
+            np.datetime64('2005-02-25T04:34'),
+            np.datetime64('2005-02-25T04:55'),
+            np.datetime64('2005-02-25T05:01'),
+        ], dtype='datetime64')
+
+        # Third Time series
+        dict3 = {'description': "Synthetic Data Series 3: Repeating Values", 'unit': "Test Unit 3"}
+        val_3 = np.array([0.0, 1.4, 1.4, 0.0, 3.3, 3.3, 3.3, 3.3, 0.0, 3.3, 2.5])
+        dat_3 = np.array([
+            np.datetime64('2005-02-25T03:45'),
+            np.datetime64('2005-02-25T03:53'),
+            np.datetime64('2005-02-25T03:59'),
+            np.datetime64('2005-02-25T04:21'),
+            np.datetime64('2005-02-25T04:23'),
+            np.datetime64('2005-02-25T04:25'),
+            np.datetime64('2005-02-25T04:34'),
+            np.datetime64('2005-02-25T04:37'),
+            np.datetime64('2005-02-25T04:45'),
+            np.datetime64('2005-02-25T04:55'),
+            np.datetime64('2005-02-25T05:01'),
+        ], dtype='datetime64')
+        return [(val_1, dat_1), (val_2, dat_2), (val_3, dat_3)], [dict1, dict2, dict3]
+
+
+TestData2 = TestDataSynthetic()
+
+
 class TestDataProcessing(TestCase):
     """Tests the dataset class.
     """
-
-    data_ids = [0, 1, 2]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -323,6 +383,11 @@ class TestDataProcessing(TestCase):
         self.assertEqual(TestData2.data_ids, dat_cp.data_ids)
         self.assertNotEqual(id(TestData2.data_ids), id(dat_cp.data_ids))
         self.assertNotEqual(TestData2, dat_cp)
+
+    def test_data_struct_slice(self):
+        dat_cp = TestData2[0:1]
+        assert len(dat_cp.data_ids) == 1
+        assert dat_cp == TestData2.data_ids[0:1]
 
     def test_interpolate(self):
         interpolate_time_series(self.dat[0], self.dt_mins, verbose=False)

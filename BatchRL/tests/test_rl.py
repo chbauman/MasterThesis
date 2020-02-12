@@ -375,6 +375,7 @@ class TestFullEnv(TestCase):
 
     def test_ddpg_test_agent(self):
         ddpg_ag = get_keras_test_agent(self.full_env)
+        ddpg_ag.name = "TestAgent_FullEnv"
         ddpg_ag.fit(verbose=0)
 
     def test_get_const_agent(self):

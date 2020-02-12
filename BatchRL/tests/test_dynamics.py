@@ -674,6 +674,7 @@ class TestBattery(TestCase):
         self.assertTrue(np.array_equal(p.reshape(n), soc + 1))
 
     def test_nonlinear_battery(self):
+        # This fucking fails sometimes, but not often...
         n = 5
         in_data = np.ones((n, 1, 2))
         soc = np.arange(n) + 30

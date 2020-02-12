@@ -296,7 +296,8 @@ class DataStruct:
         n = len(self.data_ids)
 
         # Raises an error if out of range...
-        assert -n <= start_ind < n and -n <= end_ind < n
+        assert -n <= start_ind < n and -n <= end_ind < n, \
+            f"Indices: {start_ind} or {end_ind} out of range (n = {n})!"
 
         # Handles negative indices
         start_ind, end_ind = start_ind % n, end_ind % n
