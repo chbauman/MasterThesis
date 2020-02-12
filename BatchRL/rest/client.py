@@ -52,7 +52,6 @@ if not USE_CL:
 else:
     from .pw_cl import get_pw
 
-
 # Find login file
 curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
 login_path = os.path.join(curr_dir.parent.parent, "rest_login.txt")
@@ -287,6 +286,11 @@ class DataStruct:
 
         # Convert elements of id_list to strings.
         self.data_ids = [str(e) for e in id_list]
+
+    def copy(self) -> 'DataStruct':
+        """Returns a (deep) copy of self."""
+        return DataStruct(self.data_ids.copy(), self.name,
+                          self.start_date, self.end_date)
 
     def set_end(self, end_str: str = None) -> None:
         """Set the end date to given string.
