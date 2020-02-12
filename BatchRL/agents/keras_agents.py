@@ -283,10 +283,6 @@ class DDPGBaseAgent(KerasBaseAgent):
         return False
 
     def _save_path(self):
-        print(self.name)
-        print(self.name)
-        print(self.name)
-        print(self.name)
         return self.env.get_model_path(self.name + ".h5")
 
     def save_model(self, m, name: str, train_data: str = DEFAULT_EVAL_SET) -> None:

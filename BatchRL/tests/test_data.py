@@ -303,11 +303,9 @@ class TestDataSynthetic(DataStruct):
     it is called.
     """
 
-    data_ids = [str(e) for e in [0, 1, 2]]
-
     def __init__(self):
         name = "SyntheticTest"
-        super().__init__([], name=name)
+        super().__init__([0, 1, 2], name=name)
 
     def get_data(self, verbose: int = 0) -> Optional[Tuple[List, List]]:
         # First Time series
@@ -387,7 +385,8 @@ class TestDataProcessing(TestCase):
     def test_data_struct_slice(self):
         dat_cp = TestData2[0:1]
         assert len(dat_cp.data_ids) == 1
-        assert dat_cp == TestData2.data_ids[0:1]
+        assert dat_cp.data_ids == TestData2.data_ids[0:1], \
+            f"Inds: {dat_cp.data_ids}  != {TestData2.data_ids[0:1]}!"
 
     def test_interpolate(self):
         interpolate_time_series(self.dat[0], self.dt_mins, verbose=False)

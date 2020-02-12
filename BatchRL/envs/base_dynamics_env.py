@@ -164,6 +164,8 @@ class DynEnv(ABC, gym.Env):
         """Returns the path of the model folder."""
         if self.short_name is not None:
             return os.path.join(RL_MODEL_DIR, self.short_name)
+        else:
+            raise ValueError("No short name specified!!!")
 
     def set_agent(self, a: base_agent.AgentBase) -> None:
         """Sets the given agent to the environment.

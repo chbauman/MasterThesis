@@ -374,6 +374,7 @@ class TestFullEnv(TestCase):
                                             episode_marker=heat_marker)
 
     def test_ddpg_test_agent(self):
+        self.full_env.short_name = "FullTestModel"
         ddpg_ag = get_keras_test_agent(self.full_env)
         ddpg_ag.name = "TestAgent_FullEnv"
         ddpg_ag.fit(verbose=0)
