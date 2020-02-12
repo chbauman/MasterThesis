@@ -35,7 +35,8 @@ from dynamics.load_models import base_rnn_models, full_models, full_models_short
     load_room_env, rename_rl_folder, DEFAULT_D_FAC
 from dynamics.recurrent import test_rnn_models, make_latex_hop_table, RNNDynamicModel
 from envs.dynamics_envs import BatteryEnv, heat_marker
-from opcua_empa.run_opcua import run_rl_control, run_rule_based_control
+from opcua_empa.opcua_util import analyze_valves_experiment
+from opcua_empa.run_opcua import run_rl_control, run_rule_based_control, try_opcua
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
@@ -467,14 +468,25 @@ def run_room_models(verbose: int = 1,
         print("No performance evaluation!")
 
 
-def analyze_experiments(room_nr: int = 41, verbose: bool = True):
+def analyze_experiments(room_nr: int = 41, verbose: bool = True,
+                        put_on_ol: bool = False):
+    next_verb = prog_verb(verbose)
 
+    # Analyze valve experiment
+    exp_name = "2020_01_15T21_14_51_R475_Experiment_15min_PT_0"
+    with ProgWrap(f"Analyzing valve experiment {exp_name}...", verbose > 0):
+        analyze_valves_experiment(exp_name,
+                                  compute_valve_delay=True,
+                                  verbose=next_verb,
+                                  put_on_ol=put_on_ol,
+                                  exp_file_name="Valve_Delay_Experiment")
+
+    # Analyze heating experiments
     start_dt = datetime(2020, 2, 9, 12, 3, 12)
     end_dt = datetime(2020, 2, 11, 12, 6, 45)
-    # end_dt = datetime(2020, 2, 11, 12, 0, 0)
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
-        load_room_data(start_dt=start_dt, end_dt=end_dt,
-                       room_nr=room_nr, exp_name="Test")
+        full_ds = load_room_data(start_dt=start_dt, end_dt=end_dt,
+                                 room_nr=room_nr, exp_name="Test")
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
@@ -660,8 +672,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
-    rename_rl_folder()
-    # try_opcua()
+    # rename_rl_folder()
+    try_opcua()
     return
 
 

@@ -16,7 +16,7 @@ from opcua_empa.opcuaclient_subscription import toggle
 from rest.client import save_dir
 from util.numerics import has_duplicates, nan_avg_between, find_sequence_inds, remove_nan_rows
 from util.util import str2bool, create_dir, now_str, ProgWrap
-from util.visualize import plot_valve_opening, PLOT_DIR
+from util.visualize import plot_valve_opening, PLOT_DIR, OVERLEAF_IMG_DIR
 
 np.set_printoptions(threshold=5000)
 
@@ -243,7 +243,9 @@ def read_experiment_data(exp_file_name: str, remove_nans: bool = True,
     return read_vals, read_ts, write_vals, write_ts
 
 
-def analyze_experiment(full_exp_name: str, compute_valve_delay: bool = False, verbose: int = 5):
+def analyze_valves_experiment(full_exp_name: str, compute_valve_delay: bool = False,
+                              verbose: int = 5, put_on_ol: bool = False,
+                              exp_file_name: str = None):
     """Analyzes the data generated in an experiment.
 
     Assumes one room only, with three valves."""
@@ -263,8 +265,12 @@ def analyze_experiment(full_exp_name: str, compute_valve_delay: bool = False, ve
     assert np.any(res_req)
 
     # Plot valve opening and closing
-    valve_plt_path = os.path.join(experiment_plot_path, full_exp_name)
-    plot_valve_opening(read_ts, valve_data, valve_plt_path, write_ts, temp_set_p, temp_set_p_meas)
+    if exp_file_name is None:
+        exp_file_name = full_exp_name
+    plt_save_dir = OVERLEAF_IMG_DIR if put_on_ol else experiment_plot_path
+    valve_plt_path = os.path.join(plt_save_dir, exp_file_name)
+    plot_valve_opening(read_ts, valve_data, valve_plt_path,
+                       write_ts, temp_set_p, temp_set_p_meas)
 
     # Compute valve delay
     if compute_valve_delay:

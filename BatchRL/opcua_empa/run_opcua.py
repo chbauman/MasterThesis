@@ -8,7 +8,7 @@ from typing import List
 from agents.keras_agents import default_ddpg_agent, DEF_RL_LR
 from dynamics.load_models import load_room_env
 from opcua_empa.controller import ValveToggler, ValveTest2Controller, FixTimeConstController, RLController, RuleBased
-from opcua_empa.opcua_util import analyze_experiment, check_room_list
+from opcua_empa.opcua_util import check_room_list
 from opcua_empa.opcuaclient_subscription import OpcuaClient
 from opcua_empa.room_control_client import run_control
 from tests.test_opcua import OfflineClient
@@ -21,13 +21,6 @@ def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True)
     if verbose:
         if debug:
             print("Running in debug mode!")
-
-    # Analyze previous experiment
-    exp_name = "2020_01_15T21_14_51_R475_Experiment_15min_PT_0"
-    with ProgWrap(f"Analyzing experiment {exp_name}...", verbose > 0):
-        analyze_experiment(exp_name,
-                           compute_valve_delay=True,
-                           verbose=prog_verb(verbose))
 
     # Choose experiment name
     exp_name = "Test"
