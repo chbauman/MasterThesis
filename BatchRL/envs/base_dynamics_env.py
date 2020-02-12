@@ -606,6 +606,10 @@ class DynEnv(ABC, gym.Env):
                              visual_eval: bool = False,
                              bounds: List[Tuple[int, Tuple[Num, Num]]] = None,
                              agent_filter_ind: int = None,
+                             filter_good_cases: bool = True,
+                             plot_tot_reward_cases: bool = True,
+                             plot_tot_eval: bool = True,
+                             plot_constrained_actions: bool = False,
                              ) -> Optional[np.ndarray]:
         """Evaluates the given agents for this environment.
 
@@ -693,15 +697,16 @@ class DynEnv(ABC, gym.Env):
             all_actions[a_id] = acs
             all_scaled_actions[a_id] = s_acs
 
-        # Plot
-        if verbose > 0:
-            print("Plotting evaluation...")
+        # Plot total rewards for all steps
         title_ext = self._get_detail_eval_title_ext()
-        names = [a.get_short_name() for a in agent_list]
-        plt_fun(names, all_rewards, p_name,
-                self.reward_descs, dt=self.m.data.dt, n_eval_steps=n_steps,
-                title_ext=title_ext, all_states=all_states,
-                verbose=0, ep_marks=all_marks)
+        if plot_tot_eval:
+            if verbose > 0:
+                print("Plotting evaluation...")
+            names = [a.get_short_name() for a in agent_list]
+            plt_fun(names, all_rewards, p_name,
+                    self.reward_descs, dt=self.m.data.dt, n_eval_steps=n_steps,
+                    title_ext=title_ext, all_states=all_states,
+                    verbose=0, ep_marks=all_marks)
 
         print(f"Mean rewards: {np.mean(all_rewards[:, :, 0], axis=1)}")
 
@@ -715,21 +720,24 @@ class DynEnv(ABC, gym.Env):
 
                 # Extract stuff
                 action_sequences = all_actions[:, k0:k1]
-                # clipped_action_sequences = all_scaled_actions[:, k0:k1]
+                clipped_action_sequences = all_scaled_actions[:, k0:k1]
                 curr_states = all_states[:, k0:k1]
                 curr_rew = all_rewards[:, k0:k1]
 
                 mean_rew = np.mean(curr_rew[:, :, 0], axis=1)
                 winner = np.argwhere(mean_rew == np.amax(mean_rew))
 
-                if [agent_filter_ind] not in winner or ct > max_visual_evals:
-                    # if [agent_filter_ind] in winner:
-                    #     print(f"Len: {len(winner)}")
-                    # else:
-                    #     print(f"Bad case!")
-                    continue
+                if filter_good_cases:
+                    if [agent_filter_ind] not in winner or ct > max_visual_evals:
+                        # if [agent_filter_ind] in winner:
+                        #     print(f"Len: {len(winner)}")
+                        # else:
+                        #     print(f"Bad case!")
+                        continue
+                    else:
+                        # print(f"Found time series!!")
+                        ct += 1
                 else:
-                    # print(f"Found time series!!")
                     ct += 1
 
                 # Time stuff
@@ -744,15 +752,18 @@ class DynEnv(ABC, gym.Env):
                                                                agent_list, put_on_ol)
 
                 # Plot time series for this episode
+                ex_actions = clipped_action_sequences if plot_constrained_actions else None
                 plot_env_evaluation(action_sequences, curr_states, curr_rew, self.m.data,
-                                    name_list, analysis_plot_path, None,
-                                    state_mask, show_rewards=True, title_ext=title_ext,
+                                    name_list, analysis_plot_path, extra_actions=ex_actions,
+                                    series_mask=state_mask, show_rewards=True, title_ext=title_ext,
                                     np_dt_init=np_st_init, rew_save_path=add_pth,
                                     bounds=bounds,
                                     series_merging_list=series_merging_list,
                                     reward_descs=self.reward_descs)
 
                 # Plot the rewards for this episode
+                if not plot_tot_reward_cases:
+                    continue
                 add_pth = self._construct_plot_name(f"AgentAnalysis_E{k}_RewardDetailed", None,
                                                     agent_list, put_on_ol)
                 names = [a.get_short_name() for a in agent_list]

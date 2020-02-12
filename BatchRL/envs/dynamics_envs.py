@@ -37,6 +37,7 @@ SOC_GOAL: Num = 60.0  #: Desired SoC at end of episode.
 
 # Reward parts descriptions
 BAT_ENERGY: str = f"Battery Energy Consumption [{ROOM_ENG_FAC:.4g} Wh]"
+BAT_ENERGY_HIGH: str = f"Battery Energy Consumption [kWh]"
 ROOM_ENERGY: str = f"Room Energy Consumption [{ROOM_ENG_FAC:.4g} Wh]"
 TEMP_BOUND_PEN: str = "Temperature Bound Violation [Kh]"
 ENG_COST: str = "Energy Costs"
@@ -494,7 +495,7 @@ class BatteryEnv(RLDynEnv):
 
         # Add max predictions length to kwargs if not there yet.
         ep_key = 'max_eps'
-        kwargs[ep_key] = kwargs.get(ep_key, 24 * 60 // d.dt // 2)
+        kwargs[ep_key] = kwargs.get(ep_key, 24 * 60 // d.dt // 6)
 
         # Define name
         name = "Battery"
@@ -521,7 +522,7 @@ class BatteryEnv(RLDynEnv):
         """Scales the state-of-charge."""
         return self._state_to_scale(unscaled_soc, orig_ind=0, remove_mean=remove_mean)
 
-    reward_descs = [BAT_ENERGY]  #: Description of the detailed reward.
+    reward_descs = [BAT_ENERGY_HIGH]  #: Description of the detailed reward.
 
     def detailed_reward(self, curr_pred: np.ndarray, action: Arr) -> np.ndarray:
         """Computes the energy used by dis- / charging the battery."""

@@ -22,7 +22,7 @@ import numpy as np
 
 from agents.agents_heuristic import RuleBasedAgent, get_const_agents
 from agents.base_agent import upload_trained_agents, download_trained_agents
-from agents.keras_agents import DDPGBaseAgent, default_ddpg_agent, DEF_RL_LR
+from agents.keras_agents import default_ddpg_agent, DEF_RL_LR
 from data_processing.data import get_battery_data, \
     choose_dataset_and_constraints, update_data, unique_room_nr
 from data_processing.dataset import Dataset, check_dataset_part
@@ -38,7 +38,7 @@ from opcua_empa.run_opcua import run_rl_control, run_rule_based_control
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
-from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, str2bool, extract_args, DEFAULT_TRAIN_SET, \
+from util.util import EULER, ProgWrap, prog_verb, str2bool, extract_args, DEFAULT_TRAIN_SET, \
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell, cast_to_subclass
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
     plot_heat_cool_rew_det, change_dir_name
@@ -91,6 +91,7 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
         put_on_ol:
         train_set: Set of data to train model on.
     """
+    date_str = "2020-01-21"
 
     # Print info to console
     next_verb = prog_verb(verbose)
@@ -103,9 +104,7 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
 
     # Load and prepare battery data.
     with ProgWrap(f"Loading battery data...", verbose > 0):
-        bat_name = "Battery"
-        get_battery_data()
-        bat_ds = Dataset.loadDataset(bat_name)
+        bat_ds = get_battery_data(date_str=date_str)
         bat_ds_ugly = Dataset.copy(bat_ds)
         clean_battery_dataset(bat_ds)
         bat_ds.standardize()
@@ -156,9 +155,6 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
         print("Running battery RL.")
 
     with ProgWrap(f"Defining environment...", verbose > 0):
-        # Get numbers of steps
-        n_steps = get_rl_steps(True)
-        n_eval_steps = 10000 if EULER else 100
 
         # Define the environment
         bat_env = BatteryEnv(bat_mod,
@@ -166,21 +162,34 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
                              cont_actions=True,
                              n_cont_actions=1)
 
-    # Define the agents
-    const_ag_1, const_ag_2 = get_const_agents(bat_env)
-    dqn_agent = DDPGBaseAgent(bat_env,
-                              action_range=bat_env.action_range,
-                              n_steps=n_steps,
-                              gamma=0.99)
+    with ProgWrap(f"Analyzing the environment...", verbose > 0):
 
-    # Fit agents and evaluate.
-    ag_list = [const_ag_1, const_ag_2, dqn_agent]
-    bat_env.analyze_agents_visually(ag_list, start_ind=0, fitted=False)
-    bat_env.analyze_agents_visually(ag_list, start_ind=1267, fitted=False)
-    bat_env.analyze_agents_visually(ag_list, start_ind=100, fitted=False)
-    bat_env.detailed_eval_agents(ag_list,
-                                 use_noise=False,
-                                 n_steps=n_eval_steps)
+        # Define the agents
+        const_ag_1, const_ag_2 = get_const_agents(bat_env)
+
+        # Fit agents and evaluate.
+        ag_list = [const_ag_1, const_ag_2]
+        n_steps = 2 * bat_env.n_ts_per_eps
+        bat_env.detailed_eval_agents(ag_list, use_noise=True, n_steps=n_steps,
+                                     put_on_ol=put_on_ol, overwrite=overwrite,
+                                     verbose=prog_verb(verbose),
+                                     visual_eval=True,
+                                     filter_good_cases=False,
+                                     plot_tot_reward_cases=False,
+                                     plot_constrained_actions=True,
+                                     plot_tot_eval=False)
+
+    # # Get numbers of steps
+    # n_steps = get_rl_steps(True)
+    # n_eval_steps = 10000 if EULER else 100
+    # dqn_agent = DDPGBaseAgent(bat_env,
+    #                           action_range=bat_env.action_range,
+    #                           n_steps=n_steps,
+    #                           gamma=0.99)
+    # ag_list = [const_ag_1, const_ag_2, dqn_agent]
+    # bat_env.detailed_eval_agents(ag_list,
+    #                              use_noise=False,
+    #                              n_steps=n_eval_steps)
 
 
 def run_dynamic_model_hyperopt(use_bat_data: bool = True,
@@ -423,7 +432,7 @@ def run_room_models(verbose: int = 1,
         env.do_checks()
 
     # Define default agents and compare
-    with ProgWrap(f"Initializing agents...", verbose > 0):
+    with ProgWrap(f"Initializing and fitting agents...", verbose > 0):
         closed_agent, open_agent = get_const_agents(env)
         ch_rate = 10.0 if include_battery else None
         rule_based_agent = RuleBasedAgent(env, env.temp_bounds,
@@ -440,31 +449,6 @@ def run_room_models(verbose: int = 1,
     b_ind = -2 if include_battery else -1
     bds = env.temp_bounds
     bounds = [(b_ind, bds)]
-
-    # if visual_analysis:
-    #     with ProgWrap(f"Analyzing agents...", verbose > 0):
-    #         b_ind = -2 if include_battery else -1
-    #         bds = env.temp_bounds
-    #         bounds = [(b_ind, bds)]
-    #
-    #         for s in eval_list:
-    #             if s is None:
-    #                 s = np.random.randint(0, env.n_start_data)
-    #
-    #             # Find the current heating water temperatures
-    #             heat_inds = np.array([2, 3])
-    #             h_in_and_out = env.get_scaled_init_state(s, heat_inds)
-    #             title_ext = w_temp_str(h_in_and_out)
-    #
-    #             # Plot
-    #             env.analyze_agents_visually(agent_list, state_mask=None, start_ind=s,
-    #                                         plot_constrain_actions=False,
-    #                                         show_rewards=True, series_merging_list=None,
-    #                                         bounds=bounds, title_ext=title_ext,
-    #                                         put_on_ol=put_on_ol, plot_rewards=True,
-    #                                         overwrite=overwrite)
-    # elif verbose > 0:
-    #     print("No visual analysis!")
 
     # Do performance evaluation
     if perf_eval:
@@ -526,7 +510,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                    train_data=train_data_rl,
                                    verbose=next_verb)
         rl_comb_models: List[RNNDynamicModel] = [cast_to_subclass(rl_mods[k],
-                                                 RNNDynamicModel) for k in c_mods]
+                                                                  RNNDynamicModel) for k in c_mods]
 
     # Battery model plots
     with ProgWrap(f"Running battery...", verbose > 0):
@@ -871,7 +855,7 @@ def main() -> None:
     if args.battery:
         ext_args = extract_args(args.bool, False, False)
         do_rl, put_on_ol = ext_args
-        run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=False,
+        run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=put_on_ol,
                     overwrite=overwrite)
 
     # Evaluate room model

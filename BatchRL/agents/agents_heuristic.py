@@ -27,6 +27,7 @@ def get_const_agents(env: Union[FullRoomEnv, RoomBatteryEnv, BatteryEnv]
     if isinstance(env, FullRoomEnv):
         c = [np.array(heat_pars[i]) for i in range(n_agents)]
     elif isinstance(env, BatteryEnv):
+        bat_pars = (10.0, -8.0)
         c = [np.array(bat_pars[i]) for i in range(n_agents)]
     elif isinstance(env, RoomBatteryEnv):
         c = [np.array([heat_pars[i], bat_pars[i]]) for i in range(n_agents)]
