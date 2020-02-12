@@ -179,7 +179,6 @@ BatteryData = DataStruct(id_list=[40200000,
 dfab_rooms = [Room4BlueData, Room5BlueData, Room4RedData, Room5RedData]
 all_experiment_data = dfab_rooms + [DFAB_AddData, DFAB_AllValves, WeatherData, BatteryData]
 
-
 room_dict = {
     # Dict mapping room numbers to DataStructs
     41: Room4BlueData,
@@ -383,7 +382,8 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind: int, dt_mins,
                              title: str = "",
                              pipeline_kwargs: Dict = None,
                              n_cols=None,
-                             col_ind=None):
+                             col_ind=None,
+                             make_plots: bool = True):
     """Adds the series with index `orig_ind` to `curr_all_dat`
     and plots the series before and after processing
     with the pipeline.
@@ -401,6 +401,7 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind: int, dt_mins,
         ind: Index of series in raw data.
         n_cols: Total number of columns in final data.
         col_ind: Column index of series in processed data.
+        make_plots: Whether to make plots of the data.
     """
     # Use defaults args if not specified.
     if pipeline_kwargs is None:
@@ -437,17 +438,18 @@ def add_and_save_plot_series(data, m, curr_all_dat, ind: int, dt_mins,
 
     base_plot_name = f"{base_plot_dir}_{plot_name}"
 
-    # Plot before data
-    plot_file_name = f"{base_plot_name}_Raw"
-    plot_time_series(data[ind][1], data[ind][0], m=m[ind], show=False, save_name=plot_file_name)
+    if make_plots:
+        # Plot before data
+        plot_file_name = f"{base_plot_name}_Raw"
+        plot_time_series(data[ind][1], data[ind][0], m=m[ind], show=False, save_name=plot_file_name)
 
-    # Plot after data
-    plot_single(np.copy(all_dat[:, col_ind]),
-                m[ind],
-                use_time=True,
-                show=False,
-                title_and_ylab=[title, m[ind]['unit']],
-                save_name=base_plot_name)
+        # Plot after data
+        plot_single(np.copy(all_dat[:, col_ind]),
+                    m[ind],
+                    use_time=True,
+                    show=False,
+                    title_and_ylab=[title, m[ind]['unit']],
+                    save_name=base_plot_name)
 
     return all_dat, dt_init_new
 
@@ -493,7 +495,8 @@ def get_from_data_struct(dat_struct: DataStruct,
                          desc_list: np.ndarray = None,
                          c_inds: np.ndarray = None,
                          p_inds: np.ndarray = None,
-                         standardize_data: bool = False) -> 'Dataset':
+                         standardize_data: bool = False,
+                         make_plots: bool = True) -> 'Dataset':
     """Extracts the specified series and applies
     pre-processing steps to all of them and puts them into a
     Dataset.
@@ -541,7 +544,8 @@ def get_from_data_struct(dat_struct: DataStruct,
                                                          plot_file_name, title,
                                                          n_cols=n_cs,
                                                          pipeline_kwargs=prep_arg_list[ct],
-                                                         col_ind=ct)
+                                                         col_ind=ct,
+                                                         make_plots=make_plots)
             m_out += [m[i]]
 
         # Save
@@ -570,10 +574,12 @@ def dataset_name_from_dat_struct(dat_struct: DataStruct) -> str:
     return full_ds_name(n, end_date)
 
 
-def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int, pl_kwargs,
+def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int,
+                        pl_kwargs,
                         c_inds: np.ndarray = None,
                         p_inds: np.ndarray = None,
-                        standardize_data: bool = False) -> 'Dataset':
+                        standardize_data: bool = False,
+                        make_plots: bool = True) -> 'Dataset':
     """Converts a DataStruct to a Dataset.
 
     Using the same pre-processing steps for each series
@@ -587,6 +593,7 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
         c_inds: Control indices.
         p_inds: Prediction indices.
         standardize_data: Whether to standardize the series in the dataset.
+        make_plots: Whether to make plots from the processed data.
 
     Returns:
         Converted Dataset.
@@ -619,7 +626,8 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
             all_data, dt_init = add_and_save_plot_series(data, m, all_data, i, dt_mins, dt_init, plot_name,
                                                          plot_file_name, title,
                                                          n_cols=n_cs,
-                                                         pipeline_kwargs=pl_kwargs[i])
+                                                         pipeline_kwargs=pl_kwargs[i],
+                                                         make_plots=make_plots)
 
         # Save
         return save_ds_from_raw(all_data, m, name, c_inds, p_inds, standardize_data)
@@ -1257,8 +1265,7 @@ def choose_dataset_and_constraints(seq_len: int = 20,
 
 
 def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
-                   exp_name: str = None, verbose: int = 1):
-
+                   exp_name: str = None, verbose: int = 1, dt: int = 15):
     # Construct full DataStruct
     room_ds = room_dict[room_nr][0:4]
     water_temps = DFAB_AddData[0:2]
@@ -1274,9 +1281,9 @@ def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
     full_struct.start_date = start_dt.strftime("%Y-%m-%d")
     full_struct.end_date = end_dt.strftime("%Y-%m-%d")
 
-    # Read the data
-    dat, m = full_struct.get_data(verbose=verbose)
-    out_temp = dat[0]
-    ot_vals, ot_ts = out_temp
-    print(max(ot_ts))
-    print(min(ot_ts))
+    # Convert to Dataset
+    full_ds = convert_data_struct(full_struct, "None", dt, {},
+                                  standardize_data=False,
+                                  make_plots=False)
+    print(full_ds)
+    print(full_ds.t_init)
