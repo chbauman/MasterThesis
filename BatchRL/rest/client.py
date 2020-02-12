@@ -303,7 +303,8 @@ class DataStruct:
         start_ind, end_ind = start_ind % n, end_ind % n
 
         new_ids = self.data_ids[start_ind:end_ind].copy()
-        return DataStruct(new_ids, self.name,
+        new_name = f"{self.name}[{start_ind}:{end_ind}]"
+        return DataStruct(new_ids, new_name,
                           self.start_date, self.end_date)
 
     def __getitem__(self, key) -> 'DataStruct':
