@@ -269,7 +269,6 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
                                    train_data: str = DEFAULT_TRAIN_SET,
                                    room_nr: int = DEFAULT_ROOM_NR,
                                    hop_eval_set: str = DEFAULT_EVAL_SET,
-                                   eval_data: str = DEFAULT_EVAL_SET,
                                    ) -> None:
     """Runs the hyperparameter optimization for all base RNN models.
 
@@ -283,7 +282,6 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
         train_data: String specifying the part of the data to train the model on.
         room_nr: Integer specifying the room number.
         hop_eval_set: Evaluation set for the hyperparameter optimization.
-        eval_data: Set for model evaluation.
     """
     if verbose:
         print(f"Fitting dynamics ML models based on parameters "
@@ -370,7 +368,6 @@ def run_dynamic_model_fit_from_hop(use_bat_data: bool = False,
 
 def run_room_models(verbose: int = 1,
                     put_on_ol: bool = False,
-                    eval_list: List[int] = None,
                     perf_eval: bool = False,
                     n_steps: int = None,
                     overwrite: bool = False,
@@ -387,7 +384,6 @@ def run_room_models(verbose: int = 1,
     Args:
         verbose:
         put_on_ol:
-        eval_list:
         perf_eval:
         n_steps: Number of steps to train the agent.
         overwrite:
@@ -869,8 +865,7 @@ def main() -> None:
                                        visual_analyze=visual_analyze,
                                        include_composite=include_composite,
                                        date_str=date_str, train_data=train_data,
-                                       room_nr=room_nr, hop_eval_set=hop_eval_data,
-                                       eval_data=eval_data)
+                                       room_nr=room_nr, hop_eval_set=hop_eval_data)
 
     # Train and analyze the battery model
     if args.battery:
