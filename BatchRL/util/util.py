@@ -17,7 +17,7 @@ import time
 import warnings
 from datetime import datetime
 from functools import wraps
-from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable, Optional
+from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable, Optional, Type
 
 import numpy as np
 
@@ -272,6 +272,25 @@ def prog_verb(verbose: int) -> int:
         The verbosity level for next level function calls.
     """
     return max(0, verbose - 1)
+
+
+S = TypeVar('S')
+
+
+def cast_to_subclass(class_inst, sub_class: Type[S]) -> S:
+    """Cast an instance of a class to the given subclass.
+
+    Args:
+        class_inst: The instance to cast.
+        sub_class: The class type to cast the instance to.
+
+    Raises:
+        AssertionError: If `class_inst` is not a subclass of type
+            `sub_class`!
+    """
+    assert isinstance(class_inst, sub_class), "Casting not possible!"
+    ret_val: sub_class = class_inst
+    return ret_val
 
 
 def print_decorator(print_fun: Callable):

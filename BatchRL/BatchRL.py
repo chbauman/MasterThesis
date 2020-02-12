@@ -39,7 +39,7 @@ from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, get_rl_steps, ProgWrap, prog_verb, str2bool, extract_args, DEFAULT_TRAIN_SET, \
-    DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell
+    DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell, cast_to_subclass
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
     plot_heat_cool_rew_det, change_dir_name
 
@@ -518,6 +518,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                      verbose=next_verb)
         weather_mods = [v for k, v in eval_mods.items() if k in w_mods]
         room_mod = eval_mods["RoomTempFromReduced_RNN"]
+        assert isinstance(room_mod, RNNDynamicModel)
         comb_models: List[RNNDynamicModel] = [weather_mods[0], room_mod]
         rl_mods = load_room_models(lst,
                                    use_bat_data=False,
@@ -528,7 +529,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                    hop_eval_set=hop_eval_set_rl,
                                    train_data=train_data_rl,
                                    verbose=next_verb)
-        rl_comb_models: List[RNNDynamicModel] = [rl_mods[k] for k in c_mods]
+        rl_comb_models: List[RNNDynamicModel] = [cast_to_subclass(rl_mods[k],
+                                                 RNNDynamicModel) for k in c_mods]
 
     # Battery model plots
     with ProgWrap(f"Running battery...", verbose > 0):
