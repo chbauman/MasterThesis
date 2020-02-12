@@ -281,9 +281,9 @@ class DataStruct:
         """
         # Initialize values
         self._name = name
-        self.start_date = start_date
-        self.end_date = end_date
-        self.REST = _Client(self.name, self.start_date, self.end_date)
+        self._start_date = start_date
+        self._end_date = end_date
+        self.REST = _Client(self._name, self._start_date, self._end_date)
 
         # Convert elements of id_list to strings.
         self.data_ids = [str(e) for e in id_list]
@@ -296,6 +296,24 @@ class DataStruct:
     def name(self, new_name: str) -> None:
         self._name = new_name
         self.REST.name = new_name
+
+    @property
+    def end_date(self) -> str:
+        return self._end_date
+
+    @end_date.setter
+    def end_date(self, new_end_date: str) -> None:
+        self._end_date = new_end_date
+        self.REST.end_date = new_end_date
+
+    @property
+    def start_date(self) -> str:
+        return self._start_date
+
+    @start_date.setter
+    def start_date(self, new_start_date: str) -> None:
+        self._start_date = new_start_date
+        self.REST.start_date = new_start_date
 
     def copy(self) -> 'DataStruct':
         """Returns a (deep) copy of self."""
@@ -322,7 +340,6 @@ class DataStruct:
 
     def __getitem__(self, key) -> 'DataStruct':
         """Allows for slicing w.r.t. the ids."""
-        print(self.name, key)
         if isinstance(key, slice):
             if key.step is not None and key.step != 1:
                 raise NotImplementedError("Only implemented for contiguous ranges!")

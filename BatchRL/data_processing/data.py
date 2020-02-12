@@ -865,17 +865,17 @@ def compute_DFAB_energy_usage(show_plots=True):
     first_n_del = n_usable // 3
 
     # Room info
-    room_dict = {0: "31", 1: "41", 2: "42", 3: "43", 4: "51", 5: "52", 6: "53"}
+    room_dict_loc = {0: "31", 1: "41", 2: "42", 3: "43", 4: "51", 5: "52", 6: "53"}
     valve_room_allocation = np.array(["31", "31", "31", "31", "31", "31", "31",  # 3rd Floor
                                       "41", "41", "42", "43", "43", "43", "41",  # 4th Floor
                                       "51", "51", "53", "53", "53", "52", "51",  # 5th Floor
                                       ])
-    n_rooms = len(room_dict)
+    n_rooms = len(room_dict_loc)
     n_valves = len(valve_room_allocation)
 
     # Loop over rooms and compute flow per room
     a_mat = np.empty((n_not_nans, n_rooms), dtype=np.float32)
-    for i, room_nr in room_dict.items():
+    for i, room_nr in room_dict_loc.items():
         room_valves = v_dat_not_nan[:, valve_room_allocation == room_nr]
         a_mat[:, i] = np.mean(room_valves, axis=1)
     b = w_dat_not_nan[:, 2]
@@ -947,7 +947,7 @@ def compute_DFAB_energy_usage(show_plots=True):
                     save_name=dw_plot_path)
 
     # Loop over rooms and compute energy
-    for i, room_nr in room_dict.items():
+    for i, room_nr in room_dict_loc.items():
         room_valves = v_dat[:, valve_room_allocation == room_nr]
         room_sum_valves = np.sum(room_valves, axis=1)
 
@@ -1268,8 +1268,6 @@ def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
     room_dat = water_temps + room_ds
     room_dat.start_date = out_temp.start_date
     full_struct = out_temp + irr + room_dat
-    print(WeatherData.data_ids)
-    print(irr.data_ids)
 
     # Set attributes
     if exp_name is not None:
