@@ -130,9 +130,10 @@ DFAB_AllValves = DataStruct(id_list=[421110008,  # First Floor
                             end_date=DEFAULT_END_DATE)
 
 # Weather Data
-WeatherData = DataStruct(id_list=[3200000,
+WeatherData = DataStruct(id_list=[3200000,  # Outside Temperature
                                   3200002,
-                                  3200008],
+                                  3200008,  # Irradiance
+                                  ],
                          name="Weather",
                          start_date='2019-01-01',
                          end_date=DEFAULT_END_DATE)
@@ -177,6 +178,15 @@ BatteryData = DataStruct(id_list=[40200000,
 
 dfab_rooms = [Room4BlueData, Room5BlueData, Room4RedData, Room5RedData]
 all_experiment_data = dfab_rooms + [DFAB_AddData, DFAB_AllValves, WeatherData, BatteryData]
+
+
+room_dict = {
+    # Dict mapping room numbers to DataStructs
+    41: Room4BlueData,
+    43: Room4RedData,
+    51: Room5BlueData,
+    53: Room5RedData,
+}
 
 
 def unique_room_nr(room_nr: int):
@@ -1246,7 +1256,23 @@ def choose_dataset_and_constraints(seq_len: int = 20,
     return ds, rnn_consts
 
 
-def load_room_data(start_dt, end_dt: datetime, room_nr: int = 41,
-                   exp_name: str = None):
+def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
+                   exp_name: str = None, verbose: int = 1):
 
-    pass
+    # Construct full DataStruct
+    print(room_dict[room_nr].data_ids)
+    room_ds = room_dict[room_nr][0:4]
+    water_temps = DFAB_AddData[0:2]
+    out_temp = WeatherData[0]
+    irr = WeatherData[2]
+    full_struct = out_temp + irr + water_temps + room_ds
+
+    # Set attributes
+    if exp_name is not None:
+        full_struct.name = exp_name
+    full_struct.start_date = start_dt.strftime("%Y-%m-%d")
+    full_struct.end_date = end_dt.strftime("%Y-%m-%d")
+
+    d = full_struct.get_data(verbose=verbose)
+    print(full_struct)
+    print(d)

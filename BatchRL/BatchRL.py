@@ -15,6 +15,7 @@ modules / packages.
 import argparse
 import os
 import warnings
+from datetime import datetime
 from functools import reduce
 from typing import List, Tuple, Sequence, Type
 
@@ -24,7 +25,7 @@ from agents.agents_heuristic import RuleBasedAgent, get_const_agents
 from agents.base_agent import upload_trained_agents, download_trained_agents
 from agents.keras_agents import default_ddpg_agent, DEF_RL_LR
 from data_processing.data import get_battery_data, \
-    choose_dataset_and_constraints, update_data, unique_room_nr
+    choose_dataset_and_constraints, update_data, unique_room_nr, load_room_data
 from data_processing.dataset import Dataset, check_dataset_part
 from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model, check_eval_data, upload_hop_pars, \
     download_hop_pars
@@ -467,8 +468,12 @@ def run_room_models(verbose: int = 1,
 
 
 def analyze_experiments(room_nr: int = 41, verbose: bool = True):
+
+    start_dt = datetime(2020, 2, 9, 12, 0, 0)
+    end_dt = datetime(2020, 2, 11, 12, 0, 0)
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
-        pass
+        load_room_data(start_dt=start_dt, end_dt=end_dt,
+                       room_nr=room_nr, exp_name="Test")
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,

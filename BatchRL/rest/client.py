@@ -296,7 +296,7 @@ class DataStruct:
         n = len(self.data_ids)
 
         # Raises an error if out of range...
-        assert -n <= start_ind < n and -n <= end_ind < n, \
+        assert -n <= start_ind <= n and -n <= end_ind <= n, \
             f"Indices: {start_ind} or {end_ind} out of range (n = {n})!"
 
         # Handles negative indices
@@ -314,6 +314,15 @@ class DataStruct:
                 raise NotImplementedError("Only implemented for contiguous ranges!")
             return self._slice(key.start, key.stop)
         return self._slice(key, key + 1)
+
+    def __add__(self, other: 'DataStruct') -> 'DataStruct':
+        """Allows the usage of the + operator."""
+        new_ids = self.data_ids + other.data_ids
+        new_name = f"{self.name}_{other.name}"
+        assert self.start_date == other.start_date, f"Incompatible start date!"
+        assert self.end_date == other.end_date, f"Incompatible start date!"
+        return DataStruct(new_ids, new_name,
+                          self.start_date, self.end_date)
 
     def set_end(self, end_str: str = None) -> None:
         """Set the end date to given string.
