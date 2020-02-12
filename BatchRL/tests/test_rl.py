@@ -177,7 +177,7 @@ class TestBatteryEnv(TestCase):
 
     def test_get_const_agent(self):
         c1, c2 = get_const_agents(self.env)
-        r, exp_r = c2.rule, np.array([-3.0])
+        r, exp_r = c2.rule, np.array([-8.0])
         self.assertTrue(np.allclose(r, exp_r), msg=f"Expected: {exp_r}, got: {r}")
 
 
@@ -379,7 +379,7 @@ class TestFullEnv(TestCase):
 
     def test_get_const_agent(self):
         c1, c2 = get_const_agents(self.full_env)
-        self.assertTrue(np.allclose(c1.rule, np.array([0.0, 6.0])))
+        self.assertTrue(np.allclose(c1.rule, np.array([0.0, -3.0])))
 
     def test_rule_based_agent(self):
         c_rate = 6.0

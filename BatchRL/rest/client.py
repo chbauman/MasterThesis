@@ -292,6 +292,27 @@ class DataStruct:
         return DataStruct(self.data_ids.copy(), self.name,
                           self.start_date, self.end_date)
 
+    def _slice(self, start_ind: int, end_ind: int) -> 'DataStruct':
+        n = len(self.data_ids)
+
+        # Raises an error if out of range...
+        assert -n <= start_ind < n and -n <= end_ind < n
+
+        # Handles negative indices
+        start_ind, end_ind = start_ind % n, end_ind % n
+
+        new_ids = self.data_ids[start_ind:end_ind].copy()
+        return DataStruct(new_ids, self.name,
+                          self.start_date, self.end_date)
+
+    def __getitem__(self, key) -> 'DataStruct':
+        """Allows for slicing w.r.t. the ids."""
+        if isinstance(key, slice):
+            if key.step is not None and key.step != 1:
+                raise NotImplementedError("Only implemented for contiguous ranges!")
+            return self._slice(key.start, key.stop)
+        return self._slice(key, key + 1)
+
     def set_end(self, end_str: str = None) -> None:
         """Set the end date to given string.
 

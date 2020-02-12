@@ -299,6 +299,8 @@ class TestDataProcessing(TestCase):
     """Tests the dataset class.
     """
 
+    data_ids = [0, 1, 2]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -313,6 +315,14 @@ class TestDataProcessing(TestCase):
 
         self.dt_mins = 15
         self.dat, self.m = TestData2.get_data()
+
+    def test_data_struct_copy(self):
+        dat_cp = TestData2.copy()
+        self.assertEqual(TestData2.start_date, dat_cp.start_date)
+        self.assertEqual(TestData2.end_date, dat_cp.end_date)
+        self.assertEqual(TestData2.data_ids, dat_cp.data_ids)
+        self.assertNotEqual(id(TestData2.data_ids), id(dat_cp.data_ids))
+        self.assertNotEqual(TestData2, dat_cp)
 
     def test_interpolate(self):
         interpolate_time_series(self.dat[0], self.dt_mins, verbose=False)
