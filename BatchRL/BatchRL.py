@@ -469,8 +469,9 @@ def run_room_models(verbose: int = 1,
 
 def analyze_experiments(room_nr: int = 41, verbose: bool = True):
 
-    start_dt = datetime(2020, 2, 9, 12, 0, 0)
-    end_dt = datetime(2020, 2, 11, 12, 0, 0)
+    start_dt = datetime(2020, 2, 9, 12, 3, 12)
+    end_dt = datetime(2020, 2, 11, 12, 6, 45)
+    # end_dt = datetime(2020, 2, 11, 12, 0, 0)
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
         load_room_data(start_dt=start_dt, end_dt=end_dt,
                        room_nr=room_nr, exp_name="Test")

@@ -11,7 +11,7 @@ from rest.client import DataStruct, check_date_str
 from util.numerics import align_ts, copy_arr_list, solve_ls, \
     find_rows_with_nans
 from util.util import clean_desc, b_cast, create_dir, add_dt_and_t_init, ProgWrap, yeet, DEFAULT_ROOM_NR, \
-    DEFAULT_END_DATE
+    DEFAULT_END_DATE, floor_datetime_to_min
 from util.visualize import plot_time_series, plot_all, plot_single, preprocess_plot_path, \
     plot_multiple_time_series, plot_dataset, stack_compare_plot
 
@@ -1265,7 +1265,8 @@ def choose_dataset_and_constraints(seq_len: int = 20,
 
 
 def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
-                   exp_name: str = None, verbose: int = 1, dt: int = 15):
+                   exp_name: str = None, verbose: int = 1, dt: int = 15) -> Dataset:
+
     # Construct full DataStruct
     room_ds = room_dict[room_nr][0:4]
     water_temps = DFAB_AddData[0:2]
@@ -1285,5 +1286,28 @@ def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
     full_ds = convert_data_struct(full_struct, "None", dt, {},
                                   standardize_data=False,
                                   make_plots=False)
-    print(full_ds)
-    print(full_ds.t_init)
+
+    dt_64 = np.timedelta64(dt, 'm')
+
+    # Handle start time
+    start_floored = floor_datetime_to_min(start_dt, dt)
+    day_start = floor_datetime_to_min(start_dt, 24 * 60)
+    n_ts_passed = int((start_floored - day_start) / dt_64)
+    assert start_dt >= start_floored >= day_start, "fuck"
+
+    # Handle end time
+    end_floored = floor_datetime_to_min(end_dt, dt)
+    if end_floored != end_dt:
+        end_floored += dt_64
+    day_end = floor_datetime_to_min(end_dt, 24 * 60)
+    if day_end != end_dt:
+        day_end += np.timedelta64(1, 'D') - dt_64
+    n_ts_remain = int((day_end - end_floored) / dt_64)
+    assert end_dt <= end_floored <= day_end, "fuck"
+
+    if verbose:
+        print(f"First timestep: {start_floored}")
+        print(f"Last timestep: {end_floored}")
+
+    res_ds = full_ds.slice_time(n_ts_passed, -n_ts_remain)
+    return res_ds
