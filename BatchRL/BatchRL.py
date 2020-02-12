@@ -41,7 +41,8 @@ from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, ProgWrap, prog_verb, str2bool, extract_args, DEFAULT_TRAIN_SET, \
-    DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell, cast_to_subclass
+    DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell, cast_to_subclass, \
+    str_to_np_dt
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
     plot_heat_cool_rew_det, change_dir_name, plot_env_evaluation
 
@@ -487,14 +488,16 @@ def analyze_experiments(room_nr: int = 41, verbose: bool = True,
     end_dt = datetime(2020, 2, 11, 12, 6, 45)
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
         full_ds = load_room_data(start_dt=start_dt, end_dt=end_dt,
-                                 room_nr=room_nr, exp_name="Test")
+                                 room_nr=room_nr, exp_name="Test", dt=60)
 
-        actions = np.expand_dims(full_ds.data[:, -3:], axis=0)
-        states = np.expand_dims(full_ds.data[:, :-3], axis=0)
+        actions = np.expand_dims(full_ds.data[:, -1:], axis=0)
+        states = np.expand_dims(full_ds.data[:, :-1], axis=0)
         rewards = np.zeros((1, full_ds.data.shape[0]))
         save_path = os.path.join(experiment_plot_path, "experiment_test")
+        print(f"Number of steps: {full_ds.data.shape[0]}, dt = {full_ds.dt}")
         plot_env_evaluation(actions, states, rewards, full_ds,
                             ["Test"], save_path=save_path,
+                            np_dt_init=str_to_np_dt(full_ds.t_init),
                             reward_descs=["Dummy Reward"])
 
 

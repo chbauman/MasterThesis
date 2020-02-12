@@ -516,7 +516,7 @@ class Dataset:
         """
         create_dir(dataset_data_path)
 
-        file_name = self.get_filename(self.name)
+        file_name = self.get_filename(self.name, self.dt)
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
 
@@ -568,21 +568,23 @@ class Dataset:
         return scaled_state
 
     @staticmethod
-    def get_filename(name: str) -> str:
+    def get_filename(name: str, dt: int = 15) -> str:
         """Returns path where to store this `Dataset`."""
-        return os.path.join(dataset_data_path, name) + '.pkl'
+        dt_ext = "" if dt == 15 else f"_dt_{dt}"
+        return os.path.join(dataset_data_path, name + dt_ext) + '.pkl'
 
     @staticmethod
-    def loadDataset(name: str) -> 'Dataset':
+    def loadDataset(name: str, dt: int = 15) -> 'Dataset':
         """Load a saved Dataset object.
 
         Args:
             name: Name of dataset.
+            dt:
 
         Returns:
             Loaded dataset.
         """
-        f_name = Dataset.get_filename(name)
+        f_name = Dataset.get_filename(name, dt=dt)
         if not os.path.isfile(f_name):
             raise FileNotFoundError(f"Dataset {f_name} does not exist.")
         with open(f_name, 'rb') as f:

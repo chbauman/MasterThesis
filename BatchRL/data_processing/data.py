@@ -514,7 +514,7 @@ def get_from_data_struct(dat_struct: DataStruct,
 
     # Try loading data
     try:
-        loaded = Dataset.loadDataset(new_name)
+        loaded = Dataset.loadDataset(new_name, dt=dt_mins)
         print(f"Found Dataset: {new_name}")
         if desc_list is not None:
             loaded.descriptions = desc_list
@@ -609,7 +609,7 @@ def convert_data_struct(dat_struct: DataStruct, base_plot_dir: str, dt_mins: int
 
     # Try loading data
     try:
-        loaded = Dataset.loadDataset(name)
+        loaded = Dataset.loadDataset(name, dt=dt_mins)
         print(f"Found Dataset: {name}")
         return loaded
     except FileNotFoundError:
@@ -1069,7 +1069,7 @@ def generate_room_datasets(date_str: str = DEFAULT_END_DATE,
 
         # Try loading from disk
         try:
-            curr_out_ds = Dataset.loadDataset(new_name)
+            curr_out_ds = Dataset.loadDataset(new_name, dt=room_ds.dt)
             out_ds_list += [curr_out_ds]
             continue
         except FileNotFoundError:
@@ -1124,7 +1124,7 @@ def generate_sin_cos_time_ds(other: Dataset) -> Dataset:
     # Try loading
     name = other.name + "_SinCosTime"
     try:
-        return Dataset.loadDataset(name)
+        return Dataset.loadDataset(name, dt=other.dt)
     except FileNotFoundError:
         pass
 
@@ -1286,15 +1286,21 @@ def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
     full_struct.end_date = end_dt.strftime("%Y-%m-%d")
 
     # Convert to Dataset
-    n_series = len(full_struct.data_ids)
-    c_inds = np.array([n_series - (3 - i) for i in range(3)])
     full_ds = convert_data_struct(full_struct, "None", dt, {},
-                                  c_inds=c_inds,
                                   standardize_data=False,
                                   make_plots=False)
     dt_64 = np.timedelta64(dt, 'm')
 
-    all_descs = weather_descs + water_temp_descs + [r_temp_desc] + [valve_desc, valve_desc, valve_desc]
+    da_state = full_ds[0:5]
+    av_val = np.mean(full_ds.data[:, -3:], axis=1).reshape((-1, 1))
+    val_ds = Dataset(av_val, dt=full_ds.dt, t_init=full_ds.t_init,
+                     scaling=np.empty((1, 2), dtype=np.float32),
+                     is_scaled=np.array([False]),
+                     descs=[""])
+    full_ds = da_state + val_ds
+    full_ds.c_inds = np.array([5])
+
+    all_descs = weather_descs + water_temp_descs + [r_temp_desc] + [valve_desc]
     full_ds.descriptions = np.array(all_descs)
 
     # Handle start time
