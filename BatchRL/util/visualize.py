@@ -933,7 +933,8 @@ def plot_env_evaluation(actions: np.ndarray,
                 _plot_helper(x, curr_dat, m_col=clr_map[j + col_off],
                              label=a_name, ax=ax, steps=steps, **ph_kwargs)
                 if use_time:
-                    ax.xaxis.set_major_formatter(formatter)
+                    pass
+                    # ax.xaxis.set_major_formatter(formatter)
                     # ax.xaxis.set_tick_params(rotation=30)
 
     # Plot all the series
@@ -979,12 +980,13 @@ def plot_env_evaluation(actions: np.ndarray,
         state_axs[-1].set_xlabel()
 
     # Super title
-    sup_t = 'Visual Analysis' if title_ext is None else title_ext
-    con_axs[0].annotate(sup_t, (0.5, 1 - margin / 3),
-                        xycoords='figure fraction', ha='center',
-                        fontsize=24)
-    # plt.suptitle('Main title')
-    # plt.subplots_adjust(top=1.85)
+    if title_ext is not None:
+        sup_t = 'Visual Analysis' if title_ext is None else title_ext
+        con_axs[0].annotate(sup_t, (0.5, 1 - margin / 3),
+                            xycoords='figure fraction', ha='center',
+                            fontsize=24)
+        # plt.suptitle('Main title')
+        # plt.subplots_adjust(top=1.85)
 
     # Save
     s = (16, tot_n_plots * 1.8)
