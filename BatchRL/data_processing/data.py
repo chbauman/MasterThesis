@@ -1260,7 +1260,6 @@ def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
                    exp_name: str = None, verbose: int = 1):
 
     # Construct full DataStruct
-    print(room_dict[room_nr].data_ids)
     room_ds = room_dict[room_nr][0:4]
     water_temps = DFAB_AddData[0:2]
     out_temp = WeatherData[0]
@@ -1275,6 +1274,9 @@ def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
     full_struct.start_date = start_dt.strftime("%Y-%m-%d")
     full_struct.end_date = end_dt.strftime("%Y-%m-%d")
 
-    d = full_struct.get_data(verbose=verbose)
-    print(full_struct)
-    print(d)
+    # Read the data
+    dat, m = full_struct.get_data(verbose=verbose)
+    out_temp = dat[0]
+    ot_vals, ot_ts = out_temp
+    print(max(ot_ts))
+    print(min(ot_ts))

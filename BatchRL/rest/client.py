@@ -321,6 +321,7 @@ class DataStruct:
                           self.start_date, self.end_date)
 
     def _slice(self, start_ind: int, end_ind: int) -> 'DataStruct':
+        """Helper function for `__getitem__`."""
         n = len(self.data_ids)
 
         # Raises an error if out of range...
