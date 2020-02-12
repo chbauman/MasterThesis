@@ -187,6 +187,11 @@ room_dict = {
     53: Room5RedData,
 }
 
+weather_descs = ["Outside Temperature [°C]", "Irradiance [W/m^2]"]
+r_temp_desc = "Room Temperature [°C]"
+water_temp_descs = ["Water Temperature (In) [°C]", "Water Temperature (Out) [°C]"]
+valve_desc = "Averaged Valve Open Time [100%]"
+
 
 def unique_room_nr(room_nr: int):
     """Returns the unique short room number."""
@@ -741,9 +746,8 @@ def get_weather_data(date_str: str = DEFAULT_END_DATE) -> 'Dataset':
     prep_plot_dir = _data_process_plot_path(dat_struct, date_str)
 
     # Get the data
-    custom_descs = np.array(["Outside Temperature [°C]", "Irradiance [W/m^2]"])
     ds = get_from_data_struct(dat_struct, prep_plot_dir, dt_mins, full_name, inds, kws,
-                              desc_list=custom_descs,
+                              desc_list=np.array(weather_descs),
                               standardize_data=True)
     return ds
 
@@ -1082,16 +1086,15 @@ def generate_room_datasets(date_str: str = DEFAULT_END_DATE,
                                 valves_ds.t_init,
                                 np.empty((1, 2), dtype=np.float32),
                                 np.array([False]),
-                                np.array(["Averaged Valve Open Time [100%]"]))
+                                np.array([valve_desc]))
 
         # Put all together
         full_ds = (inlet_water_and_weather + valves_avg_ds) + room_temp_ds
         full_ds.c_inds = np.array([4], dtype=np.int32)
 
         # Set descriptions
-        full_ds.descriptions[-1] = "Room Temperature [°C]"
-        full_ds.descriptions[2] = "Water Temperature (In) [°C]"
-        full_ds.descriptions[3] = "Water Temperature (Out) [°C]"
+        full_ds.descriptions[-1] = r_temp_desc
+        full_ds.descriptions[2], full_ds.descriptions[3] = water_temp_descs
 
         # Add blinds
         if len(room_ds) == 5 and use_blinds:
@@ -1283,11 +1286,16 @@ def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
     full_struct.end_date = end_dt.strftime("%Y-%m-%d")
 
     # Convert to Dataset
+    n_series = len(full_struct.data_ids)
+    c_inds = np.array([n_series - (3 - i) for i in range(3)])
     full_ds = convert_data_struct(full_struct, "None", dt, {},
+                                  c_inds=c_inds,
                                   standardize_data=False,
                                   make_plots=False)
-
     dt_64 = np.timedelta64(dt, 'm')
+
+    all_descs = weather_descs + water_temp_descs + [r_temp_desc] + [valve_desc, valve_desc, valve_desc]
+    full_ds.descriptions = np.array(all_descs)
 
     # Handle start time
     start_floored = floor_datetime_to_min(start_dt, dt)

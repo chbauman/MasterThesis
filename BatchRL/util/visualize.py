@@ -484,7 +484,8 @@ def plot_all(all_data, m, use_time=True, show=True, title_and_ylab=None, scale_b
     save_figure(save_name, show)
 
 
-def plot_dataset(dataset, show: bool = True, title_and_ylab=None, save_name: str = None,
+def plot_dataset(dataset, show: bool = True,
+                 title_and_ylab=None, save_name: str = None,
                  new_plot: bool = True) -> None:
     """Plots the unscaled series in a dataset.
 
@@ -623,8 +624,7 @@ def plot_rewards(hist, name: str = None) -> None:
 
 
 def plot_simple_ts(y_list, title=None, name=None):
-    """
-    Plots the given aligned time series.
+    """Plots the given aligned time series.
     """
     n = len(y_list[0])
     x = range(n)
@@ -642,8 +642,7 @@ def plot_simple_ts(y_list, title=None, name=None):
 
 
 def stack_compare_plot(stack_y, y_compare, title=None, name=None):
-    """
-    Plots the given aligned time series.
+    """Plots the given aligned time series.
     """
     n = len(y_compare[0])
     x = range(n)

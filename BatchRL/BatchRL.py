@@ -35,7 +35,7 @@ from dynamics.load_models import base_rnn_models, full_models, full_models_short
     load_room_env, rename_rl_folder, DEFAULT_D_FAC
 from dynamics.recurrent import test_rnn_models, make_latex_hop_table, RNNDynamicModel
 from envs.dynamics_envs import BatteryEnv, heat_marker
-from opcua_empa.opcua_util import analyze_valves_experiment
+from opcua_empa.opcua_util import analyze_valves_experiment, experiment_plot_path
 from opcua_empa.run_opcua import run_rl_control, run_rule_based_control, try_opcua
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR
@@ -43,7 +43,7 @@ from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, ProgWrap, prog_verb, str2bool, extract_args, DEFAULT_TRAIN_SET, \
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell, cast_to_subclass
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
-    plot_heat_cool_rew_det, change_dir_name
+    plot_heat_cool_rew_det, change_dir_name, plot_env_evaluation
 
 # Model performance evaluation
 N_PERFORMANCE_STEPS = (1, 4, 12, 24, 48)
@@ -488,6 +488,14 @@ def analyze_experiments(room_nr: int = 41, verbose: bool = True,
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
         full_ds = load_room_data(start_dt=start_dt, end_dt=end_dt,
                                  room_nr=room_nr, exp_name="Test")
+
+        actions = np.expand_dims(full_ds.data[:, -3:], axis=0)
+        states = np.expand_dims(full_ds.data[:, :-3], axis=0)
+        rewards = np.zeros((1, full_ds.data.shape[0]))
+        save_path = os.path.join(experiment_plot_path, "experiment_test")
+        plot_env_evaluation(actions, states, rewards, full_ds,
+                            ["Test"], save_path=save_path,
+                            reward_descs=["Dummy Reward"])
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
