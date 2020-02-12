@@ -633,6 +633,13 @@ class DynEnv(ABC, gym.Env):
                 Ignored if `visual_eval` is False.
             agent_filter_ind: Index of agent whose rewards need to be
                 among the best to be plotted. Ignored if `visual_eval` is False.
+            filter_good_cases: Whether to filter out the bad cases and only plot
+                the good ones in the time series analysis.
+            plot_tot_reward_cases: Whether to plot the rewards corresponding to
+                 the time series cases.
+            plot_tot_eval: Whether to plot the total rewards of the whole evalutaion.
+            plot_constrained_actions: Whether to plot the constrained actions in the time series
+                plot.
 
         Returns:
             The rewards seen by all the agents, or None if `overwrite` is False

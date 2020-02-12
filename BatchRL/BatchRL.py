@@ -77,7 +77,8 @@ def test_cleanup(verbose: int = 0) -> None:
 def run_battery(do_rl: bool = True, overwrite: bool = False,
                 verbose: int = 0, steps: Sequence = (24,),
                 put_on_ol: bool = False,
-                train_set: str = "train_val") -> None:
+                train_set: str = "train_val",
+                ) -> None:
     """Runs all battery related stuff.
 
     Loads and prepares the battery data, fits the
@@ -855,8 +856,9 @@ def main() -> None:
     if args.battery:
         ext_args = extract_args(args.bool, False, False)
         do_rl, put_on_ol = ext_args
-        run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=put_on_ol,
-                    overwrite=overwrite)
+        with change_dir_name("Battery"):
+            run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=put_on_ol,
+                        overwrite=overwrite)
 
     # Evaluate room model
     if args.room:
