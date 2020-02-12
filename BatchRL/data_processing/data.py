@@ -1265,7 +1265,11 @@ def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
     water_temps = DFAB_AddData[0:2]
     out_temp = WeatherData[0]
     irr = WeatherData[2]
-    full_struct = out_temp + irr + water_temps + room_ds
+    room_dat = water_temps + room_ds
+    room_dat.start_date = out_temp.start_date
+    full_struct = out_temp + irr + room_dat
+    print(WeatherData.data_ids)
+    print(irr.data_ids)
 
     # Set attributes
     if exp_name is not None:

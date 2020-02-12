@@ -99,6 +99,7 @@ class _Client(object):
     the local disk.
     """
     pw_from_cl: bool = False
+    name: str = None
 
     np_data: List[Tuple[np.ndarray, np.ndarray]] = None
     meta_data: List[str] = None
@@ -279,13 +280,22 @@ class DataStruct:
             end_date: End of time interval.
         """
         # Initialize values
-        self.name = name
+        self._name = name
         self.start_date = start_date
         self.end_date = end_date
         self.REST = _Client(self.name, self.start_date, self.end_date)
 
         # Convert elements of id_list to strings.
         self.data_ids = [str(e) for e in id_list]
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, new_name: str) -> None:
+        self._name = new_name
+        self.REST.name = new_name
 
     def copy(self) -> 'DataStruct':
         """Returns a (deep) copy of self."""
@@ -300,7 +310,10 @@ class DataStruct:
             f"Indices: {start_ind} or {end_ind} out of range (n = {n})!"
 
         # Handles negative indices
-        start_ind, end_ind = start_ind % n, end_ind % n
+        if start_ind < 0:
+            start_ind += n
+        if end_ind < 0:
+            end_ind += n
 
         new_ids = self.data_ids[start_ind:end_ind].copy()
         new_name = f"{self.name}[{start_ind}:{end_ind}]"
@@ -309,6 +322,7 @@ class DataStruct:
 
     def __getitem__(self, key) -> 'DataStruct':
         """Allows for slicing w.r.t. the ids."""
+        print(self.name, key)
         if isinstance(key, slice):
             if key.step is not None and key.step != 1:
                 raise NotImplementedError("Only implemented for contiguous ranges!")
