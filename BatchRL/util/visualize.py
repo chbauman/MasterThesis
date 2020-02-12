@@ -10,12 +10,11 @@ the training of a keras neural network.
 """
 import os
 import warnings
-from typing import Dict, Sequence, Tuple, List, Any, Type
 from contextlib import contextmanager
+from typing import Dict, Sequence, Tuple, List, Any, Type
 
 import matplotlib as mpl
 import numpy as np
-from matplotlib.dates import DateFormatter
 from mpl_toolkits.axes_grid1 import host_subplot
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
@@ -926,7 +925,6 @@ def plot_env_evaluation(actions: np.ndarray,
     # Define helper function
     def _plot_helper_helper(data: np.ndarray, axis_list: List, ag_names: Sequence[str],
                             steps: bool = False, merged: bool = False, col_off: int = 0) -> None:
-        formatter = DateFormatter("%m/%d, %H:%M")
         for j, a_name in enumerate(ag_names):
             for i, ax in enumerate(axis_list):
                 curr_dat = data[i, :, j] if merged else data[j, :, i]
@@ -934,6 +932,7 @@ def plot_env_evaluation(actions: np.ndarray,
                              label=a_name, ax=ax, steps=steps, **ph_kwargs)
                 if use_time:
                     pass
+                    # formatter = DateFormatter("%m/%d, %H:%M")
                     # ax.xaxis.set_major_formatter(formatter)
                     # ax.xaxis.set_tick_params(rotation=30)
 

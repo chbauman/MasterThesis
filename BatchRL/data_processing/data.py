@@ -1246,6 +1246,12 @@ def choose_dataset_and_constraints(seq_len: int = 20,
     return ds, rnn_consts
 
 
+def load_room_data(start_dt, end_dt: datetime, room_nr: int = 41,
+                   exp_name: str = None):
+
+    pass
+
+
 #######################################################################################################
 # Testing
 

@@ -466,6 +466,11 @@ def run_room_models(verbose: int = 1,
         print("No performance evaluation!")
 
 
+def analyze_experiments(room_nr: int = 41, verbose: bool = True):
+    with ProgWrap(f"Analyzing experiments...", verbose > 0):
+        pass
+
+
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                           debug: bool = False):
     # Constants
@@ -656,6 +661,7 @@ def curr_tests() -> None:
 
 arg_def_list = [
     # The following arguments can be provided.
+    ("analyze_exp", "analyze experiments"),
     ("battery", "run the battery model"),
     ("cleanup", "cleanup all test files, including ones from unit tests"),
     ("data", "update the data from the nest database"),
@@ -913,7 +919,11 @@ def main() -> None:
                        use_heat_sampler=sam_heat,
                        d_fac=env_noise)
 
-    # Check if any flag is set, if not, do current experiments.
+    # Analyze experiments
+    if args.analyze_exp:
+        analyze_experiments(room_nr=room_nr, verbose=verbose)
+
+        # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)
     excluded = ["verbose"]
     var_dict = {k: val for k, val in var_dict.items() if k not in excluded}

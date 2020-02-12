@@ -21,7 +21,7 @@ def get_const_agents(env: Union[FullRoomEnv, RoomBatteryEnv, BatteryEnv]
     n_agents = 2
 
     heat_pars = (0.0, 1.0)
-    bat_pars = (6.0, -3.0)
+    bat_pars = (-3.0, 6.0)
 
     # Define constant action based on env.
     if isinstance(env, FullRoomEnv):
