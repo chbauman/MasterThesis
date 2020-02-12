@@ -245,7 +245,7 @@ def read_experiment_data(exp_file_name: str, remove_nans: bool = True,
 
 def analyze_valves_experiment(full_exp_name: str, compute_valve_delay: bool = False,
                               verbose: int = 5, put_on_ol: bool = False,
-                              exp_file_name: str = None):
+                              exp_file_name: str = None, overwrite: bool = False):
     """Analyzes the data generated in an experiment.
 
     Assumes one room only, with three valves."""
@@ -269,8 +269,9 @@ def analyze_valves_experiment(full_exp_name: str, compute_valve_delay: bool = Fa
         exp_file_name = full_exp_name
     plt_save_dir = OVERLEAF_IMG_DIR if put_on_ol else experiment_plot_path
     valve_plt_path = os.path.join(plt_save_dir, exp_file_name)
-    plot_valve_opening(read_ts, valve_data, valve_plt_path,
-                       write_ts, temp_set_p, temp_set_p_meas)
+    if not os.path.isfile(valve_plt_path) or overwrite:
+        plot_valve_opening(read_ts, valve_data, valve_plt_path,
+                           write_ts, temp_set_p, temp_set_p_meas)
 
     # Compute valve delay
     if compute_valve_delay:

@@ -469,7 +469,7 @@ def run_room_models(verbose: int = 1,
 
 
 def analyze_experiments(room_nr: int = 41, verbose: bool = True,
-                        put_on_ol: bool = False):
+                        put_on_ol: bool = False, overwrite: bool = False):
     next_verb = prog_verb(verbose)
 
     # Analyze valve experiment
@@ -479,7 +479,8 @@ def analyze_experiments(room_nr: int = 41, verbose: bool = True,
                                   compute_valve_delay=True,
                                   verbose=next_verb,
                                   put_on_ol=put_on_ol,
-                                  exp_file_name="Valve_Delay_Experiment")
+                                  exp_file_name="Valve_Delay_Experiment",
+                                  overwrite=overwrite)
 
     # Analyze heating experiments
     start_dt = datetime(2020, 2, 9, 12, 3, 12)
@@ -501,6 +502,11 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     # If debug is true, the plots are not saved to Overleaf.
     if verbose > 0 and debug:
         print("Running in debug mode!")
+
+    # Generate the experiments plots
+    with ProgWrap(f"Plotting experiments...", verbose > 0):
+        with change_dir_name("Experiments"):
+            analyze_experiments(put_on_ol=not debug)
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
