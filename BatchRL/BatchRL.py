@@ -34,7 +34,7 @@ from dynamics.battery_model import BatteryModel, clean_battery_dataset
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
     load_room_env, DEFAULT_D_FAC
 from dynamics.recurrent import test_rnn_models, make_latex_hop_table, RNNDynamicModel
-from envs.dynamics_envs import BatteryEnv, heat_marker
+from envs.dynamics_envs import BatteryEnv, heat_marker, compute_room_rewards, RangeT, TEMP_BOUNDS
 from opcua_empa.opcua_util import analyze_valves_experiment, experiment_plot_path
 from opcua_empa.run_opcua import run_rl_control, run_rule_based_control, try_opcua
 from rest.client import check_date_str
@@ -470,7 +470,9 @@ def run_room_models(verbose: int = 1,
 
 
 def analyze_experiments(room_nr: int = 41, verbose: bool = True,
-                        put_on_ol: bool = False, overwrite: bool = False):
+                        put_on_ol: bool = False, overwrite: bool = False,
+                        alpha: float = 50.0,
+                        temp_bounds: RangeT = TEMP_BOUNDS):
     next_verb = prog_verb(verbose)
 
     # Analyze valve experiment
@@ -488,12 +490,22 @@ def analyze_experiments(room_nr: int = 41, verbose: bool = True,
     end_dt = datetime(2020, 2, 11, 12, 6, 45)
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
         full_ds = load_room_data(start_dt=start_dt, end_dt=end_dt,
-                                 room_nr=room_nr, exp_name="Test", dt=1)
+                                 room_nr=room_nr, exp_name="Test", dt=5)
 
         actions = np.expand_dims(full_ds.data[:, -1:], axis=0)
         states = np.expand_dims(full_ds.data[:, :-1], axis=0)
-        rewards = np.zeros((1, full_ds.data.shape[0]))
+
         save_path = os.path.join(experiment_plot_path, "experiment_test")
+
+        all_rewards = compute_room_rewards(full_ds.data[:, -1],
+                                           full_ds.data[:, -2],
+                                           full_ds.data[:, 2:4],
+                                           alpha=alpha,
+                                           temp_bounds=temp_bounds,
+                                           dt=full_ds.dt,
+                                           )
+        rewards = np.expand_dims(all_rewards[:, 0], axis=0)
+
         print(f"Number of steps: {full_ds.data.shape[0]}, dt = {full_ds.dt}")
         series_merging = [
             ([0, 1], "Weather"),
@@ -503,7 +515,7 @@ def analyze_experiments(room_nr: int = 41, verbose: bool = True,
                             ["Test"], save_path=save_path,
                             np_dt_init=str_to_np_dt(full_ds.t_init),
                             series_merging_list=series_merging,
-                            reward_descs=["Dummy Reward"])
+                            reward_descs=["Reward"])
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,

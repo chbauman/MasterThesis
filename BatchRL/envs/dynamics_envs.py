@@ -158,6 +158,7 @@ def temp_penalty(room_temp: Num, temp_bounds: RangeT, t_h: Num = 0.25):
     Needs the `room_temp` and the `temp_bounds` to be scaled
     to original scale, i.e. physically meaningful ones.
     Uses the absolute error.
+    This is deprecated, use :func:`compute_room_rewards`!
 
     Args:
         room_temp: The actual room temperature.
@@ -175,6 +176,7 @@ def room_energy_used(water_temps: Sequence, valve_action: Num, t_h: Num):
 
     Needs the actions and the water temperatures to be
     in the original (physical) space.
+    This is deprecated, use :func:`compute_room_rewards`!
 
     Args:
         water_temps: The current water temperatures.
@@ -205,7 +207,6 @@ def compute_room_rewards(actions: np.ndarray, room_temp: np.ndarray,
     Returns:
         All rewards in an array with shape (n, 3)
     """
-
     # Check input
     n_actions = len(actions)
     check_shape(actions, (n_actions,))
@@ -240,6 +241,7 @@ class FullRoomEnv(RLDynEnv):
     # Plot defaults
     default_state_mask = np.array([0, 1, 4])
     default_series_merging = [((0, 1), "Weather")]
+
 
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int = 48,
