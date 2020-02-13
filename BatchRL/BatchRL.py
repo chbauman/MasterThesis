@@ -32,7 +32,7 @@ from dynamics.base_hyperopt import HyperOptimizableModel, optimize_model, check_
 from dynamics.base_model import compare_models, check_train_str
 from dynamics.battery_model import BatteryModel, clean_battery_dataset
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
-    load_room_env, rename_rl_folder, DEFAULT_D_FAC
+    load_room_env, DEFAULT_D_FAC
 from dynamics.recurrent import test_rnn_models, make_latex_hop_table, RNNDynamicModel
 from envs.dynamics_envs import BatteryEnv, heat_marker
 from opcua_empa.opcua_util import analyze_valves_experiment, experiment_plot_path
@@ -488,16 +488,21 @@ def analyze_experiments(room_nr: int = 41, verbose: bool = True,
     end_dt = datetime(2020, 2, 11, 12, 6, 45)
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
         full_ds = load_room_data(start_dt=start_dt, end_dt=end_dt,
-                                 room_nr=room_nr, exp_name="Test", dt=60)
+                                 room_nr=room_nr, exp_name="Test", dt=1)
 
         actions = np.expand_dims(full_ds.data[:, -1:], axis=0)
         states = np.expand_dims(full_ds.data[:, :-1], axis=0)
         rewards = np.zeros((1, full_ds.data.shape[0]))
         save_path = os.path.join(experiment_plot_path, "experiment_test")
         print(f"Number of steps: {full_ds.data.shape[0]}, dt = {full_ds.dt}")
+        series_merging = [
+            ([0, 1], "Weather"),
+            ([2, 3], "Water Temperatures", "[°C]")
+        ]
         plot_env_evaluation(actions, states, rewards, full_ds,
                             ["Test"], save_path=save_path,
                             np_dt_init=str_to_np_dt(full_ds.t_init),
+                            series_merging_list=series_merging,
                             reward_descs=["Dummy Reward"])
 
 
@@ -956,7 +961,7 @@ def main() -> None:
 
     # Analyze experiments
     if args.analyze_exp:
-        analyze_experiments(room_nr=room_nr, verbose=verbose)
+        analyze_experiments(room_nr=room_nr, verbose=verbose > 0)
 
         # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)

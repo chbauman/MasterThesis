@@ -748,7 +748,7 @@ def _get_ds_descs(ds, series_mask=None, series_merging_list=None):
     # Extract descriptions for merged plots
     if series_merging_list is not None:
         lst = []
-        for inds, _ in series_merging_list:
+        for inds, *_ in series_merging_list:
             inner_l = [state_descs[i] for i in inds]
             lst += [inner_l]
         merge_descs = lst
@@ -773,7 +773,7 @@ def _handle_merging(n_feats_init, series_mask=None, series_merging_list=None) ->
 
     # Now merge!
     inds = np.ones((n_masked,), dtype=np.bool)
-    for el, _ in series_merging_list:
+    for el, *_ in series_merging_list:
         for e in el:
             # Find e in mask
             w = np.argwhere(s_mask == e)
@@ -791,7 +791,7 @@ def _extract_states(states, series_mask=None, series_merging_list=None):
     masked_state = states if series_mask is None else states[:, :, series_mask]
     merged_state_list = []
     if series_merging_list is not None:
-        for inds, t in series_merging_list:
+        for inds, *_ in series_merging_list:
             merged_state_list += [states[:, :, inds]]
 
     return masked_state, merged_state_list
@@ -949,14 +949,18 @@ def plot_env_evaluation(actions: np.ndarray,
             for ct_x, curr_ax in enumerate(all_axs):
                 curr_desc = merge_descs[ct][ct_x]
                 _, u = split_desc_units(curr_desc)
-                _plot_helper_helper(merged_states_list[ct][:, :, ct_x:(ct_x + 1)], [curr_ax], [curr_desc],
+                _plot_helper_helper(merged_states_list[ct][:, :, ct_x:(ct_x + 1)],
+                                    [curr_ax], [curr_desc],
                                     steps=False, merged=True, col_off=ct_x)
                 curr_ax.set_ylabel(u)
                 curr_ax.legend(**leg_kwargs, loc=2 - ct_x)
         else:
             # Series might be scaled badly!
+            _, u = split_desc_units(m[2])
             _plot_helper_helper(merged_states_list[ct], [state_mrg_axs[ct]], merge_descs[ct],
                                 steps=False, merged=True)
+            state_mrg_axs[ct].set_ylabel(u)
+            state_mrg_axs[ct].legend(**leg_kwargs)
 
     # Plot bounds
     if bounds is not None:
