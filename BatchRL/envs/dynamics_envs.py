@@ -15,8 +15,8 @@ from dynamics.base_model import BaseDynamicsModel
 from dynamics.battery_model import BatteryModel
 from dynamics.composite import CompositeModel
 from envs.base_dynamics_env import DynEnv, RejSampler
-from util.numerics import trf_mean_and_std, rem_mean_and_std, npf32
-from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list, yeet
+from util.numerics import trf_mean_and_std, rem_mean_and_std, npf32, check_shape
+from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list, yeet, linear_oob
 
 RangeT = Tuple[Num, Num]  #: Range for single state / action series.
 InRangeT = LOrEl[RangeT]  #: The type of action ranges.
@@ -186,6 +186,50 @@ def room_energy_used(water_temps: Sequence, valve_action: Num, t_h: Num):
     """
     d_temp = np.abs(water_temps[0] - water_temps[1])
     return np.clip(valve_action, 0.0, 1.0) * d_temp * t_h
+
+
+def compute_room_rewards(actions: np.ndarray, room_temp: np.ndarray,
+                         water_temp: np.ndarray, alpha: float = 50.0,
+                         temp_bounds: RangeT = TEMP_BOUNDS,
+                         dt: int = 15):
+    """Computes all the parts that define the reward for the room env.
+
+    Args:
+        actions: The actions with shape (n,)
+        room_temp: The room temperatures with shape (n,)
+        water_temp: The water temperatures with shape (n, 2)
+        alpha: The temperature penalty scaling factor.
+        temp_bounds: The temperature bounds
+        dt: The time step length in minutes.
+
+    Returns:
+        All rewards in an array with shape (n, 3)
+    """
+
+    # Check input
+    n_actions = len(actions)
+    check_shape(actions, (n_actions,))
+    check_shape(room_temp, (n_actions,))
+    check_shape(water_temp, (n_actions, 2))
+
+    # Compute energy used
+    clipped_actions = np.clip(actions, 0.0, 1.0)
+    d_temp = np.abs(water_temp[:, 0] - water_temp[:, 1])
+    eng_used = clipped_actions * d_temp * dt / 60.0
+
+    # Compute temperature penalty
+    temp_pen = linear_oob(room_temp, temp_bounds) * dt / 60.0
+
+    # Compute total reward
+    tot_rew = -eng_used - alpha * temp_pen
+
+    # Put all into an array and return
+    all_rew = np.empty((n_actions, 3))
+    all_rew[:, 0] = tot_rew
+    all_rew[:, 1] = eng_used
+    all_rew[:, 0] = temp_pen
+
+    return all_rew
 
 
 class FullRoomEnv(RLDynEnv):
@@ -597,7 +641,6 @@ def room_bat_name(p: CProf = None,
                   max_eps: int = 48,
                   temp_bounds: RangeT = None,
                   alpha: float = 2.5) -> str:
-
     ext = make_param_ext([("NEP", max_eps), ("AL", alpha),
                           ("TBD", temp_bounds), ("P", p)])
     return "RoomBattery" + ext

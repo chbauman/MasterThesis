@@ -24,7 +24,7 @@ from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, m
     np_dt_to_str, str_to_np_dt, day_offset_ts, fix_seed, to_list, rem_files_and_dirs, split_desc_units, create_dir, \
     yeet, \
     dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str, floor_datetime_to_min, extract_args, fun_to_class, \
-    skip_if_no_internet, ProgWrap
+    skip_if_no_internet, ProgWrap, linear_oob
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
     _trf_desc_units, plot_env_evaluation, plot_valve_opening
 
@@ -74,6 +74,12 @@ class TestNumerics(TestCase):
              [4, 3, 4]],
         ])
         self.c_inds = np.array([1])
+
+    def test_oob(self):
+        a1 = np.array([0.0, 1.0, 2.0])
+        b = [0.5, 1.0]
+        exp = np.array([0.5, 0, 1.0])
+        self.assertTrue(np.array_equal(exp, linear_oob(a1, b)))
 
     def test_mock_1(self):
 
