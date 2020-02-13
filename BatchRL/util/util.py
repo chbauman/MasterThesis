@@ -482,7 +482,7 @@ def check_and_scale(action: Num, tot_n_actions: int, interval: Sequence[Num]):
 
 
 def linear_oob(x: Arr, bounds: Sequence[Num]) -> Arr:
-    """Same as below but compatible for numpy arrays."""
+    """Same as :func:`linear_oob_penalty` but compatible for numpy arrays."""
     assert bounds[0] <= bounds[1], "Invalid bounds!"
     low = np.where(x < bounds[0], bounds[0] - x, 0)
     high = np.where(x > bounds[1], x - bounds[1], 0)

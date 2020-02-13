@@ -227,7 +227,7 @@ def compute_room_rewards(actions: np.ndarray, room_temp: np.ndarray,
     all_rew = np.empty((n_actions, 3))
     all_rew[:, 0] = tot_rew
     all_rew[:, 1] = eng_used
-    all_rew[:, 0] = temp_pen
+    all_rew[:, 2] = temp_pen
 
     return all_rew
 
@@ -319,6 +319,16 @@ class FullRoomEnv(RLDynEnv):
         # Penalty for constraint violation
         r_temp = self.get_r_temp(curr_pred)
         temp_pen = temp_penalty(r_temp, self.temp_bounds, self.dt_h)
+
+        # Compute again with other method
+        w_temps_r = np.reshape(w_temps, (1, 2))
+        a_r = np.reshape(action_rescaled, (1,))
+        r_temp_r = np.reshape(r_temp, (1,))
+        all_rew = compute_room_rewards(a_r, r_temp_r, w_temps_r, self.alpha,
+                                       self.temp_bounds, self.m.data.dt)
+        assert np.allclose(all_rew[0, 1], tot_energy_used), f"{all_rew}, {tot_energy_used}"
+        assert np.allclose(all_rew[0, 2], temp_pen), f"{all_rew}, {temp_pen}"
+
         return np.array([tot_energy_used, temp_pen])
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
