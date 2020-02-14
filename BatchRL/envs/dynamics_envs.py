@@ -242,7 +242,6 @@ class FullRoomEnv(RLDynEnv):
     default_state_mask = np.array([0, 1, 4])
     default_series_merging = [((0, 1), "Weather")]
 
-
     def __init__(self, m: BaseDynamicsModel,
                  max_eps: int = 48,
                  temp_bounds: RangeT = None,

@@ -490,7 +490,7 @@ def analyze_experiments(room_nr: int = 41, verbose: bool = True,
     end_dt = datetime(2020, 2, 11, 12, 6, 45)
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
         full_ds = load_room_data(start_dt=start_dt, end_dt=end_dt,
-                                 room_nr=room_nr, exp_name="Test", dt=5)
+                                 room_nr=room_nr, exp_name="Test", dt=15)
 
         actions = np.expand_dims(full_ds.data[:, -1:], axis=0)
         states = np.expand_dims(full_ds.data[:, :-1], axis=0)
