@@ -531,7 +531,7 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
                                   put_on_ol=put_on_ol,
                                   exp_file_name="Valve_Fast_Toggle",
                                   overwrite=overwrite)
-
+    
     # Define common kwargs
     kws = {'verbose': verbose,
            'alpha': alpha,
@@ -565,7 +565,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     # Generate the experiments plots
     with ProgWrap(f"Plotting experiments...", verbose > 0):
         with change_dir_name("Experiments"):
-            analyze_experiments(put_on_ol=not debug)
+            analyze_experiments(put_on_ol=not debug, room_nr=41, verbose=next_verb)
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
@@ -1006,7 +1006,7 @@ def main() -> None:
     if args.analyze_exp:
         analyze_experiments(room_nr=room_nr, verbose=verbose)
 
-        # Check if any flag is set, if not, do current experiments.
+    # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)
     excluded = ["verbose"]
     var_dict = {k: val for k, val in var_dict.items() if k not in excluded}
