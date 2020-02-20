@@ -269,9 +269,11 @@ def analyze_valves_experiment(full_exp_name: str, compute_valve_delay: bool = Fa
         exp_file_name = full_exp_name
     plt_save_dir = OVERLEAF_IMG_DIR if put_on_ol else experiment_plot_path
     valve_plt_path = os.path.join(plt_save_dir, exp_file_name)
-    if not os.path.isfile(valve_plt_path) or overwrite:
+    if not os.path.isfile(valve_plt_path + ".pdf") or overwrite:
         plot_valve_opening(read_ts, valve_data, valve_plt_path,
                            write_ts, temp_set_p, temp_set_p_meas)
+    elif verbose:
+        print("Plot already exists!")
 
     # Compute valve delay
     if compute_valve_delay:

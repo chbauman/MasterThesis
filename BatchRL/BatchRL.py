@@ -469,43 +469,30 @@ def run_room_models(verbose: int = 1,
         print("No performance evaluation!")
 
 
-def analyze_experiments(room_nr: int = 41, verbose: bool = True,
-                        put_on_ol: bool = False, overwrite: bool = False,
-                        alpha: float = 50.0,
-                        temp_bounds: RangeT = TEMP_BOUNDS):
-    next_verb = prog_verb(verbose)
-
-    # Analyze valve experiment
-    exp_name = "2020_01_15T21_14_51_R475_Experiment_15min_PT_0"
-    with ProgWrap(f"Analyzing valve experiment {exp_name}...", verbose > 0):
-        analyze_valves_experiment(exp_name,
-                                  compute_valve_delay=True,
-                                  verbose=next_verb,
-                                  put_on_ol=put_on_ol,
-                                  exp_file_name="Valve_Delay_Experiment",
-                                  overwrite=overwrite)
-
-    # Analyze heating experiments
-    start_dt = datetime(2020, 2, 9, 12, 3, 12)
-    end_dt = datetime(2020, 2, 11, 12, 6, 45)
-
-    # DDPG dates
-    start_dt, end_dt = datetime(2020, 2, 5, 12, 0, 0), datetime(2020, 2, 10, 12, 0, 0)
+def analyze_heating_period(start_dt, end_dt,
+                           room_nr: int = DEFAULT_ROOM_NR,
+                           name: str = "experiment_test",
+                           verbose: int = 5,
+                           overwrite: bool = False,
+                           **env_kwargs):
 
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
         full_ds = load_room_data(start_dt=start_dt, end_dt=end_dt,
-                                 room_nr=room_nr, exp_name="Test", dt=15)
+                                 room_nr=room_nr, exp_name=f"{name}_room_{room_nr}", dt=15)
 
         actions = np.expand_dims(full_ds.data[:, -1:], axis=0)
         states = np.expand_dims(full_ds.data[:, :-1], axis=0)
 
-        save_path = os.path.join(experiment_plot_path, "experiment_test")
+        save_path = os.path.join(experiment_plot_path, name)
+        if os.path.isfile(save_path + ".pdf") and not overwrite:
+            if verbose:
+                print("Plot already exists!")
+            return
 
         all_rewards = compute_room_rewards(full_ds.data[:, -1],
                                            full_ds.data[:, -2],
                                            full_ds.data[:, 2:4],
-                                           alpha=alpha,
-                                           temp_bounds=temp_bounds,
+                                           **env_kwargs,
                                            dt=full_ds.dt,
                                            )
         rewards = np.expand_dims(all_rewards[:, 0], axis=0)
@@ -520,6 +507,46 @@ def analyze_experiments(room_nr: int = 41, verbose: bool = True,
                             np_dt_init=str_to_np_dt(full_ds.t_init),
                             series_merging_list=series_merging,
                             reward_descs=["Reward"])
+
+
+def analyze_experiments(room_nr: int = 41, verbose: int = 5,
+                        put_on_ol: bool = False, overwrite: bool = False,
+                        alpha: float = 50.0,
+                        temp_bounds: RangeT = TEMP_BOUNDS):
+    next_verb = prog_verb(verbose)
+
+    # Analyze valve experiment
+    with ProgWrap(f"Analyzing valve experiments...", verbose > 0):
+        exp_name = "2020_01_15T21_14_51_R475_Experiment_15min_PT_0"
+        analyze_valves_experiment(exp_name,
+                                  compute_valve_delay=True,
+                                  verbose=next_verb,
+                                  put_on_ol=put_on_ol,
+                                  exp_file_name="Valve_Delay_Experiment",
+                                  overwrite=overwrite)
+        exp_name = "2020_01_09T11_29_28_ValveToggle_Constant6min_PT_0"
+        analyze_valves_experiment(exp_name,
+                                  compute_valve_delay=True,
+                                  verbose=next_verb,
+                                  put_on_ol=put_on_ol,
+                                  exp_file_name="Valve_Fast_Toggle",
+                                  overwrite=overwrite)
+
+    # Define common kwargs
+    kws = {'verbose': verbose,
+           'alpha': alpha,
+           'temp_bounds': temp_bounds,
+           'overwrite': overwrite}
+
+    # Test data
+    start_dt = datetime(2020, 2, 9, 12, 3, 12)
+    end_dt = datetime(2020, 2, 11, 12, 6, 45)
+    analyze_heating_period(start_dt, end_dt, room_nr, **kws)
+
+    # DDPG experiment
+    start_dt, end_dt = datetime(2020, 2, 5, 12, 0, 0), datetime(2020, 2, 10, 12, 0, 0)
+    name = "ddpg_exp"
+    analyze_heating_period(start_dt, end_dt, room_nr, name, **kws)
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
@@ -977,7 +1004,7 @@ def main() -> None:
 
     # Analyze experiments
     if args.analyze_exp:
-        analyze_experiments(room_nr=room_nr, verbose=verbose > 0)
+        analyze_experiments(room_nr=room_nr, verbose=verbose)
 
         # Check if any flag is set, if not, do current experiments.
     var_dict = vars(args)
