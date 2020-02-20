@@ -488,6 +488,10 @@ def analyze_experiments(room_nr: int = 41, verbose: bool = True,
     # Analyze heating experiments
     start_dt = datetime(2020, 2, 9, 12, 3, 12)
     end_dt = datetime(2020, 2, 11, 12, 6, 45)
+
+    # DDPG dates
+    start_dt, end_dt = datetime(2020, 2, 5, 12, 0, 0), datetime(2020, 2, 10, 12, 0, 0)
+
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
         full_ds = load_room_data(start_dt=start_dt, end_dt=end_dt,
                                  room_nr=room_nr, exp_name="Test", dt=15)

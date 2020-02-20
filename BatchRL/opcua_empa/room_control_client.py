@@ -255,40 +255,44 @@ class ControlClient:
                 self.termination_reason = "Internet connection lost :("
                 cont = False
         else:
-            ext_values = self.node_gen.extract_values(read_vals, return_temp_setp=True)
-            self._print_set_on_change("_curr_meas_temp_sp", ext_values[2][0],
-                                      msg="Measured Temp. Setpoint")
-            self._print_set_on_change("_curr_meas_temp", ext_values[1][0],
-                                      msg="Measured Room Temp.")
-            self._print_set_on_change("_curr_meas_res_ack", ext_values[0][0],
-                                      msg="Research Acknowledgement")
-            valve_tuple = tuple(self.node_gen.get_valve_values()[0])
-            self._print_set_on_change("_curr_valves", valve_tuple,
-                                      msg="Valves")
+            try:
+                ext_values = self.node_gen.extract_values(read_vals, return_temp_setp=True)
 
-            # Check that the research acknowledgement is true.
-            # Wait for at least 20s before requiring to be true, takes some time.
-            res_ack_true = np.all(ext_values[0]) or self._n_pub < 20
-            if res_ack_true:
-                self._n_bad_res = 0
-            else:
-                self._n_bad_res += 1
-            res_ack_true = self._n_bad_res < self.n_bad_res_max
+                self._print_set_on_change("_curr_meas_temp_sp", ext_values[2][0],
+                                          msg="Measured Temp. Setpoint")
+                self._print_set_on_change("_curr_meas_temp", ext_values[1][0],
+                                          msg="Measured Room Temp.")
+                self._print_set_on_change("_curr_meas_res_ack", ext_values[0][0],
+                                          msg="Research Acknowledgement")
+                valve_tuple = tuple(self.node_gen.get_valve_values()[0])
+                self._print_set_on_change("_curr_valves", valve_tuple,
+                                          msg="Valves")
 
-            # Check measured temperatures, stop if too low or high.
-            temps_in_bound = check_in_range(np.array(ext_values[1]), *self.TEMP_MIN_MAX)
+                # Check that the research acknowledgement is true.
+                # Wait for at least 20s before requiring to be true, takes some time.
+                res_ack_true = np.all(ext_values[0]) or self._n_pub < 20
+                if res_ack_true:
+                    self._n_bad_res = 0
+                else:
+                    self._n_bad_res += 1
+                res_ack_true = self._n_bad_res < self.n_bad_res_max
 
-            # Stop if (first) controller gives termination signal.
-            terminate_now = self.node_gen.control[0][1].terminate()
-            cont = res_ack_true and temps_in_bound and not terminate_now
+                # Check measured temperatures, stop if too low or high.
+                temps_in_bound = check_in_range(np.array(ext_values[1]), *self.TEMP_MIN_MAX)
 
-            # Print the reason of termination.
-            if not temps_in_bound:
-                self.termination_reason = "Temperature bounds reached, aborting experiment."
-            if not res_ack_true:
-                self.termination_reason = "Research mode confirmation lost :("
-            if terminate_now:
-                self.termination_reason = "Experiment time over!"
+                # Stop if (first) controller gives termination signal.
+                terminate_now = self.node_gen.control[0][1].terminate()
+                cont = res_ack_true and temps_in_bound and not terminate_now
+
+                # Print the reason of termination.
+                if not temps_in_bound:
+                    self.termination_reason = "Temperature bounds reached, aborting experiment."
+                if not res_ack_true:
+                    self.termination_reason = "Research mode confirmation lost :("
+                if terminate_now:
+                    self.termination_reason = "Experiment time over!"
+            except ValueError:
+                print("Fuck!")
 
         # Compute and publish current control input
         self._write_values()
