@@ -213,6 +213,8 @@ class DDPGBaseAgent(KerasBaseAgent):
         # Build the model.
         self._build_agent_model()
 
+        self.plot_name = "DDPG"
+
     def __str__(self) -> str:
         return f"DDPG Agent with layers {self.layers}."
 
