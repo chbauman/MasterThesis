@@ -34,7 +34,18 @@ def get_const_agents(env: Union[FullRoomEnv, RoomBatteryEnv, BatteryEnv]
     else:
         raise TypeError(f"Env: {env} not supported!")
 
-    return ConstActionAgent(env, c[0]), ConstActionAgent(env, c[1])
+    a1, a2 = ConstActionAgent(env, c[0]), ConstActionAgent(env, c[1])
+
+    # Set plot name
+    if isinstance(env, FullRoomEnv):
+        a1.plot_name = "Valves Closed"
+        a2.plot_name = "Valves Open"
+    elif isinstance(env, BatteryEnv):
+        a1.plot_name = "Charging (10 kW)"
+        a2.plot_name = "Discharging (8 kW)"
+    elif isinstance(env, RoomBatteryEnv):
+        pass
+    return a1, a2
 
 
 class RuleBasedAgent(AgentBase):
@@ -79,6 +90,8 @@ class RuleBasedAgent(AgentBase):
             self.bounds = (mid, mid)
         else:
             self.bounds = rule
+
+        self.plot_name = "Rule-Based"
 
     def __str__(self):
         return f"Rule-Based Agent with bounds {self.bounds}"

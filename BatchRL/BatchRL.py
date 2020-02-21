@@ -605,7 +605,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     # Battery model plots
     with ProgWrap(f"Running battery...", verbose > 0):
         with change_dir_name("Battery"):
-            run_battery(do_rl=False, overwrite=overwrite,
+            run_battery(do_rl=True, overwrite=overwrite,
                         verbose=prog_verb(verbose), put_on_ol=not debug)
 
     # Get data and constraints

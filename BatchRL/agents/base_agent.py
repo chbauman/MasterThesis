@@ -143,6 +143,7 @@ class AgentBase(AbstractAgent, ABC):
     env: 'DynEnv'  #: The corresponding environment
     name: str  #: The name of the Agent / control strategy
     fit_data: str = None
+    plot_name: str = None
 
     def __init__(self, env: 'DynEnv', name: str = "Abstract Agent"):
         self.env = env
@@ -151,6 +152,11 @@ class AgentBase(AbstractAgent, ABC):
     def fit(self, verbose: int = 0, train_data: str = "") -> None:
         """No fitting needed."""
         pass
+
+    def get_plot_name(self) -> str:
+        if self.plot_name is not None:
+            return self.plot_name
+        return self.get_short_name()
 
     def get_short_name(self) -> str:
         return self.name

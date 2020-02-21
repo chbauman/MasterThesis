@@ -756,7 +756,7 @@ class DynEnv(ABC, gym.Env):
                 np_st_init = str_to_np_dt(shifted_t_init)
 
                 state_mask = self.default_state_mask
-                name_list = [a.get_short_name() for a in agent_list]
+                name_list = [a.get_plot_name() for a in agent_list]
                 add_pth = None
                 series_merging_list = self.default_series_merging
                 analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E{k}", None,
@@ -777,8 +777,7 @@ class DynEnv(ABC, gym.Env):
                     continue
                 add_pth = self._construct_plot_name(f"AgentAnalysis_E{k}_RewardDetailed", None,
                                                     agent_list, put_on_ol)
-                names = [a.get_short_name() for a in agent_list]
-                plot_reward_details(names, curr_rew, add_pth,
+                plot_reward_details(name_list, curr_rew, add_pth,
                                     self.reward_descs, dt=self.m.data.dt,
                                     n_eval_steps=self.n_ts_per_eps,
                                     title_ext=title_ext)
