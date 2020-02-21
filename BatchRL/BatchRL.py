@@ -42,7 +42,7 @@ from tests.test_util import cleanup_test_data, TEST_DIR
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, ProgWrap, prog_verb, str2bool, extract_args, DEFAULT_TRAIN_SET, \
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell, cast_to_subclass, \
-    str_to_np_dt
+    str_to_np_dt, fix_seed
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
     plot_heat_cool_rew_det, change_dir_name, plot_env_evaluation
 
@@ -434,6 +434,7 @@ def run_room_models(verbose: int = 1,
 
         # Run checks
         env.do_checks()
+        fix_seed()
 
     # Define default agents and compare
     with ProgWrap(f"Initializing and fitting agents...", verbose > 0):
@@ -531,7 +532,7 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
                                   put_on_ol=put_on_ol,
                                   exp_file_name="Valve_Fast_Toggle",
                                   overwrite=overwrite)
-    
+
     # Define common kwargs
     kws = {'verbose': verbose,
            'alpha': alpha,
@@ -725,13 +726,29 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                    series_mask=np.array([5]), scale_back=True,
                                    remove_units=False,
                                    fit_data=train_data,
+                                   overwrite=overwrite,
                                    put_on_ol=True)
 
-    # # DDPG Performance Evaluation
-    # with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
-    #     eval_list = [11889]
-    #     run_room_models(verbose=prog_verb(verbose), put_on_ol=not debug,
-    #                     eval_list=eval_list, alpha=2.5)
+    # DDPG Performance Evaluation
+    with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
+        temp_bds = (22.0, 26.0)
+        with change_dir_name("RoomRL_R43_T22_26"):
+            run_room_models(verbose=prog_verb(verbose),
+                            n_steps=500000,
+                            include_battery=False,
+                            perf_eval=True,
+                            visual_analysis=True,
+                            overwrite=overwrite,
+                            put_on_ol=not debug,
+                            date_str=date_str,
+                            physically_consistent=False,
+                            hop_eval_set="test",
+                            sample_from="all",
+                            train_data="all",
+                            temp_bds=temp_bds,
+                            n_eval_steps=10000,
+                            room_nr=43,
+                            alpha=50.0)
     pass
 
 

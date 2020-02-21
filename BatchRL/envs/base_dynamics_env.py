@@ -588,9 +588,11 @@ class DynEnv(ABC, gym.Env):
         agent_names = '_'.join(name_list)
         s_ext = "" if start_ind is None else f"_{start_ind}"
         base = f"{base_name}{s_ext}_{agent_names}"
+        orig_name = self.get_plt_path(base)
         if put_on_ol:
+            print(f"Original: {orig_name}")
             return os.path.join(OVERLEAF_IMG_DIR, base)
-        return self.get_plt_path(base)
+        return orig_name
 
     def _get_detail_eval_title_ext(self):
         # For the water temperature info in the title, see overriding method.
