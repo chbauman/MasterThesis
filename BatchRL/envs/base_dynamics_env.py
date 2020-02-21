@@ -719,7 +719,7 @@ class DynEnv(ABC, gym.Env):
         if plot_tot_eval:
             if verbose > 0:
                 print("Plotting evaluation...")
-            names = [a.get_short_name() for a in agent_list]
+            names = [a.get_plot_name() for a in agent_list]
             plt_fun(names, all_rewards, p_name,
                     self.reward_descs, dt=self.m.data.dt, n_eval_steps=n_steps,
                     title_ext=title_ext, all_states=all_states,
