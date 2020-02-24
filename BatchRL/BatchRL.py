@@ -682,6 +682,24 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                              title_and_ylab=["Cooling Water Temperatures", "Temperature [°C]"],
                              save_name=s_name)
 
+    # Constant cooling
+    with change_dir_name("Data"):
+        with ProgWrap(f"Plotting cooling period...", verbose > 0):
+            room_nr = 43
+            ds_old, rnn_consts = choose_dataset_and_constraints(seq_len=20,
+                                                                room_nr=room_nr,
+                                                                add_battery_data=False)
+
+            s_name = os.path.join(OVERLEAF_IMG_DIR, f"Cooling")
+            if overwrite or not os.path.isfile(s_name + ".pdf"):
+                ds_heat = ds_old[4]
+                ds_heat.descriptions[0] = "Valve State"
+                n_tot = ds_heat.data.shape[0]
+                ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.55), int(n_tot * 0.65))
+                plot_dataset(ds_heat_rel, show=False,
+                             title_and_ylab=[f"Cooling Room {room_nr}", "Valve State"],
+                             save_name=s_name)
+
     # Room temperature model
     with change_dir_name("RoomTempModel"):
         eval_parts = ["val", "test"]
@@ -742,6 +760,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
             eval_dict = {'filter_good_cases': False,
                          'heating_title_ext': True,
                          'max_visual_evals': 20}
+
+            # Combined heating and cooling
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=500000,
                             include_battery=False,
@@ -759,6 +779,28 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                             eval_dict=eval_dict,
                             room_nr=43,
                             alpha=50.0)
+
+            run_room_models(verbose=prog_verb(verbose),
+                            n_steps=20000,
+                            include_battery=False,
+                            perf_eval=True,
+                            visual_analysis=True,
+                            overwrite=overwrite,
+                            put_on_ol=not debug,
+                            date_str=date_str,
+                            physically_consistent=False,
+                            hop_eval_set="test",
+                            sample_from="all",
+                            train_data="all",
+                            temp_bds=(23.0, 25.0),
+                            n_eval_steps=1000,
+                            eval_dict=eval_dict,
+                            room_nr=41,
+                            alpha=50.0,
+                            use_heat_sampler=True,
+                            d_fac=0.001,
+                            agent_lr=0.0001,
+                            )
     pass
 
 

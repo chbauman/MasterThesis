@@ -512,6 +512,10 @@ def plot_dataset(dataset, show: bool = True,
                         title_and_ylab=title_and_ylab,
                         dt_mins=dataset.dt,
                         new_plot=new_plot)
+
+    fig = plt.gcf()
+    fig.autofmt_xdate()
+
     if save_name is not None:
         save_figure(save_name, show)
 
