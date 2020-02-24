@@ -745,6 +745,7 @@ class DynEnv(ABC, gym.Env):
                 mean_rew = np.mean(curr_rew[:, :, 0], axis=1)
                 winner = np.argwhere(mean_rew == np.amax(mean_rew))
 
+                ext_ = "" if [agent_filter_ind] not in winner else "_n"
                 if filter_good_cases:
                     if [agent_filter_ind] not in winner or ct > max_visual_evals:
                         # if [agent_filter_ind] in winner:
@@ -768,14 +769,14 @@ class DynEnv(ABC, gym.Env):
                 name_list = [a.get_plot_name() for a in agent_list]
                 add_pth = None
                 series_merging_list = self.default_series_merging
-                analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E{k}", None,
+                analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E{k}{ext_}", None,
                                                                agent_list, put_on_ol)
                 if heating_title_ext:
                     unscaled_state = curr_states[0, 0]
                     print(unscaled_state.shape)
                     w_in = unscaled_state[2]
                     heating = w_in > unscaled_state[4]
-                    ext = f"{'Heating' if heating else 'Cooling'}, Inflow Water Temp.: {w_in:.1g} °C"
+                    ext = f"{'Heating' if heating else 'Cooling'}, Inflow Water Temp.: {w_in:.1f} °C"
                     curr_title_ext = f"{title_ext} {ext}"
                 else:
                     curr_title_ext = title_ext
