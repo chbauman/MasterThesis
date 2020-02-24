@@ -741,7 +741,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
         with change_dir_name("RoomRL_R43_T22_26"):
             eval_dict = {'filter_good_cases': False,
                          'heating_title_ext': True,
-                         'max_visual_evals': 10}
+                         'max_visual_evals': 20}
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=500000,
                             include_battery=False,
@@ -755,7 +755,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                             sample_from="all",
                             train_data="all",
                             temp_bds=temp_bds,
-                            n_eval_steps=500,
+                            n_eval_steps=1000,
                             eval_dict=eval_dict,
                             room_nr=43,
                             alpha=50.0)

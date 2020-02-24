@@ -769,17 +769,19 @@ class DynEnv(ABC, gym.Env):
                 name_list = [a.get_plot_name() for a in agent_list]
                 add_pth = None
                 series_merging_list = self.default_series_merging
-                analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E{k}{ext_}", None,
-                                                               agent_list, put_on_ol)
+
                 if heating_title_ext:
                     unscaled_state = curr_states[0, 0]
-                    print(unscaled_state.shape)
                     w_in = unscaled_state[2]
                     heating = w_in > unscaled_state[4]
                     ext = f"{'Heating' if heating else 'Cooling'}, Inflow Water Temp.: {w_in:.1f} °C"
                     curr_title_ext = f"{title_ext} {ext}"
+                    ext_ += "_h" if heating else "_c"
                 else:
                     curr_title_ext = title_ext
+
+                analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E{k}{ext_}", None,
+                                                               agent_list, put_on_ol)
 
                 # Plot time series for this episode
                 ex_actions = clipped_action_sequences if plot_constrained_actions else None
