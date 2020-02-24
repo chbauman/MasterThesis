@@ -716,7 +716,10 @@ def _setup_axis(ax, base_title: str, desc: str, title: bool = True):
     t, u = split_desc_units(desc)
     ax.set_ylabel(u)
     if title:
-        ax.set_title(f"{base_title}: {t}")
+        if base_title != "":
+            ax.set_title(f"{base_title}: {t}")
+        else:
+            ax.set_title(f"{t}")
 
 
 def _full_setup_axis(ax_list: List, desc_list: List, title: str = None):
@@ -725,7 +728,7 @@ def _full_setup_axis(ax_list: List, desc_list: List, title: str = None):
                                            f" with title: {title}."
 
     # Set title if it is not None or an empty string.
-    set_title = title is not None and title != ""
+    set_title = title is not None
 
     # Set axes
     for ct, ax in enumerate(ax_list):
@@ -819,7 +822,8 @@ def plot_env_evaluation(actions: np.ndarray,
                         rew_save_path: str = None,
                         series_merging_list: MergeListT = None,
                         bounds: List[Tuple[int, Tuple[Num, Num]]] = None,
-                        reward_descs: List[str] = None) -> None:
+                        reward_descs: List[str] = None,
+                        ex_ext: bool = True) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Refactor this shit more!
@@ -910,7 +914,7 @@ def plot_env_evaluation(actions: np.ndarray,
         _full_setup_axis(con_fb_axs, control_descs, "Constrained " + c_title)
     _full_setup_axis(state_axs, state_descs, "States")
     for ct, m in enumerate(series_merging_list):
-        _full_setup_axis([state_mrg_axs[ct]], [m[1]], "Exogenous States")
+        _full_setup_axis([state_mrg_axs[ct]], [m[1]], "Exogenous States" if ex_ext else "")
 
     # Define legend fontsize
     sz = 12

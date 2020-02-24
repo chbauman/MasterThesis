@@ -481,8 +481,9 @@ def analyze_heating_period(start_dt, end_dt,
                            name: str = "experiment_test",
                            verbose: int = 5,
                            overwrite: bool = False,
+                           put_on_ol: bool = False,
+                           agent_name: str = None,
                            **env_kwargs):
-
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
         full_ds = load_room_data(start_dt=start_dt, end_dt=end_dt,
                                  room_nr=room_nr, exp_name=f"{name}_room_{room_nr}", dt=15)
@@ -490,7 +491,8 @@ def analyze_heating_period(start_dt, end_dt,
         actions = np.expand_dims(full_ds.data[:, -1:], axis=0)
         states = np.expand_dims(full_ds.data[:, :-1], axis=0)
 
-        save_path = os.path.join(experiment_plot_path, name)
+        plt_dir = experiment_plot_path if not put_on_ol else OVERLEAF_IMG_DIR
+        save_path = os.path.join(plt_dir, name)
         if os.path.isfile(save_path + ".pdf") and not overwrite:
             if verbose:
                 print("Plot already exists!")
@@ -500,20 +502,24 @@ def analyze_heating_period(start_dt, end_dt,
                                            full_ds.data[:, -2],
                                            full_ds.data[:, 2:4],
                                            **env_kwargs,
-                                           dt=full_ds.dt,
-                                           )
+                                           dt=full_ds.dt)
         rewards = np.expand_dims(all_rewards[:, 0], axis=0)
 
-        print(f"Number of steps: {full_ds.data.shape[0]}, dt = {full_ds.dt}")
+        if verbose:
+            print(f"Total rewards: {np.sum(all_rewards, axis=0)}")
+            print(f"Number of steps: {full_ds.data.shape[0]}, dt = {full_ds.dt}")
+
         series_merging = [
             ([0, 1], "Weather"),
             ([2, 3], "Water Temperatures", "[°C]")
         ]
         plot_env_evaluation(actions, states, rewards, full_ds,
-                            ["Test"], save_path=save_path,
+                            [agent_name if agent_name is not None else "Test"],
+                            save_path=save_path,
                             np_dt_init=str_to_np_dt(full_ds.t_init),
                             series_merging_list=series_merging,
-                            reward_descs=["Reward"])
+                            reward_descs=["Reward"],
+                            ex_ext=False)
 
 
 def analyze_experiments(room_nr: int = 41, verbose: int = 5,
@@ -543,6 +549,7 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
     kws = {'verbose': verbose,
            'alpha': alpha,
            'temp_bounds': temp_bounds,
+           'put_on_ol': put_on_ol,
            'overwrite': overwrite}
 
     # Test data
@@ -552,8 +559,13 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
 
     # DDPG experiment
     start_dt, end_dt = datetime(2020, 2, 5, 12, 0, 0), datetime(2020, 2, 10, 12, 0, 0)
-    name = "ddpg_exp"
-    analyze_heating_period(start_dt, end_dt, room_nr, name, **kws)
+    name = "DDPG_Exp_22_26"
+    analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="DDPG", **kws)
+
+    # RBC experiment
+    start_dt, end_dt = datetime(2020, 2, 19, 12, 0, 0), datetime(2020, 2, 24, 12, 0, 0)
+    name = "RBC_Exp_22_5"
+    analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="Rule-Based", **kws)
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
