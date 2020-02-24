@@ -17,7 +17,7 @@ import os
 import warnings
 from datetime import datetime
 from functools import reduce
-from typing import List, Tuple, Sequence, Type
+from typing import List, Tuple, Sequence, Type, Dict
 
 import numpy as np
 
@@ -390,6 +390,7 @@ def run_room_models(verbose: int = 1,
                     visual_analysis: bool = True,
                     n_eval_steps: int = 10000,
                     agent_lr: float = DEF_RL_LR,
+                    eval_dict: Dict = None,
                     **env_kwargs
                     ) -> None:
     """Trains and evaluates the RL agent.
@@ -407,8 +408,12 @@ def run_room_models(verbose: int = 1,
         n_eval_steps: n_eval_steps: Total number of environment steps to perform
             for agent analysis.
         agent_lr: Learning rate of DDPG agent.
+        eval_dict: Kwargs for evaluation.
         env_kwargs: Keyword arguments for environment.
     """
+    if eval_dict is None:
+        eval_dict = {}
+
     # Print what the code does
     if verbose:
         print("Running RL agents on learned room model.")
@@ -465,7 +470,8 @@ def run_room_models(verbose: int = 1,
                                      episode_marker=heat_marker,
                                      visual_eval=visual_analysis,
                                      bounds=bounds,
-                                     agent_filter_ind=3)
+                                     agent_filter_ind=3,
+                                     **eval_dict)
     elif verbose > 0:
         print("No performance evaluation!")
 
@@ -733,6 +739,9 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
         temp_bds = (22.0, 26.0)
         with change_dir_name("RoomRL_R43_T22_26"):
+            eval_dict = {'filter_good_cases': False,
+                         'heating_title_ext': True,
+                         'max_visual_evals': 5}
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=500000,
                             include_battery=False,
@@ -746,7 +755,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                             sample_from="all",
                             train_data="all",
                             temp_bds=temp_bds,
-                            n_eval_steps=10000,
+                            n_eval_steps=500,
+                            eval_dict=eval_dict,
                             room_nr=43,
                             alpha=50.0)
     pass

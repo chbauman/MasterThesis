@@ -614,6 +614,8 @@ class DynEnv(ABC, gym.Env):
                              plot_tot_reward_cases: bool = True,
                              plot_tot_eval: bool = True,
                              plot_constrained_actions: bool = False,
+                             max_visual_evals: int = 4,
+                             heating_title_ext: bool = False,
                              ) -> Optional[np.ndarray]:
         """Evaluates the given agents for this environment.
 
@@ -641,16 +643,15 @@ class DynEnv(ABC, gym.Env):
                 the good ones in the time series analysis.
             plot_tot_reward_cases: Whether to plot the rewards corresponding to
                  the time series cases.
-            plot_tot_eval: Whether to plot the total rewards of the whole evalutaion.
+            plot_tot_eval: Whether to plot the total rewards of the whole evaluation.
             plot_constrained_actions: Whether to plot the constrained actions in the time series
                 plot.
+            max_visual_evals: Max. number of visual evaluations.
 
         Returns:
             The rewards seen by all the agents, or None if `overwrite` is False
             and the plot already exists.
         """
-
-        max_visual_evals: int = 4
 
         if agent_filter_ind is None:
             agent_filter_ind = 0
@@ -756,6 +757,8 @@ class DynEnv(ABC, gym.Env):
                         ct += 1
                 else:
                     ct += 1
+                if ct > max_visual_evals:
+                    continue
 
                 # Time stuff
                 shifted_t_init = self.m.data.get_shifted_t_init(self.curr_ind)
@@ -767,12 +770,21 @@ class DynEnv(ABC, gym.Env):
                 series_merging_list = self.default_series_merging
                 analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E{k}", None,
                                                                agent_list, put_on_ol)
+                if heating_title_ext:
+                    unscaled_state = curr_states[0, 0]
+                    print(unscaled_state.shape)
+                    w_in = unscaled_state[2]
+                    heating = w_in > unscaled_state[4]
+                    ext = f"{'Heating' if heating else 'Cooling'}, Inflow Water Temp.: {w_in:.1g} °C"
+                    curr_title_ext = f"{title_ext} {ext}"
+                else:
+                    curr_title_ext = title_ext
 
                 # Plot time series for this episode
                 ex_actions = clipped_action_sequences if plot_constrained_actions else None
                 plot_env_evaluation(action_sequences, curr_states, curr_rew, self.m.data,
                                     name_list, analysis_plot_path, extra_actions=ex_actions,
-                                    series_mask=state_mask, show_rewards=True, title_ext=title_ext,
+                                    series_mask=state_mask, show_rewards=True, title_ext=curr_title_ext,
                                     np_dt_init=np_st_init, rew_save_path=add_pth,
                                     bounds=bounds,
                                     series_merging_list=series_merging_list,
