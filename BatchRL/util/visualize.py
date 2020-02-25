@@ -1132,7 +1132,7 @@ def plot_reward_details(labels: Sequence[str],
         """Attach a text label above each bar in *rects*, displaying its height."""
         for rect in rect_list:
             height = rect.get_height()
-            ax.annotate(f'{height:.4g}',
+            ax.annotate(f'{height:.2f}',
                         xy=(rect.get_x() + rect.get_width() / 2, height),
                         xytext=(0, 3),  # 3 points vertical offset
                         textcoords="offset points",

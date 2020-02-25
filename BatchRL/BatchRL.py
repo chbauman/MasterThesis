@@ -772,11 +772,30 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     # DDPG Performance Evaluation
     with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
         temp_bds = (22.0, 26.0)
-        with change_dir_name("RoomRL_R43_T22_26"):
-            eval_dict = {'filter_good_cases': False,
-                         'heating_title_ext': True,
-                         'max_visual_evals': 20}
+        eval_dict = {'filter_good_cases': False,
+                     'heating_title_ext': True,
+                     'max_visual_evals': 20}
 
+        # with change_dir_name("BatteryRoomRL_R43_T22_26"):
+        #     run_room_models(verbose=prog_verb(verbose),
+        #                     n_steps=20000,
+        #                     include_battery=True,
+        #                     perf_eval=True,
+        #                     visual_analysis=True,
+        #                     overwrite=overwrite,
+        #                     put_on_ol=not debug,
+        #                     date_str=date_str,
+        #                     physically_consistent=False,
+        #                     hop_eval_set="test",
+        #                     sample_from="all",
+        #                     train_data="all",
+        #                     temp_bds=temp_bds,
+        #                     n_eval_steps=1000,
+        #                     eval_dict=eval_dict,
+        #                     room_nr=43,
+        #                     alpha=50.0)
+
+        with change_dir_name("RoomRL_R43_T22_26"):
             # Combined heating and cooling
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=500000,
@@ -796,7 +815,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                             room_nr=43,
                             alpha=50.0)
 
-        with change_dir_name("RoomRL_R41_T22_5"):
+        with change_dir_name("RoomRL_R41_T22_5_Heat"):
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=20000,
                             include_battery=False,
@@ -810,15 +829,40 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                             sample_from="all",
                             train_data="all",
                             temp_bds=(22.5, 22.5),
-                            n_eval_steps=1000,
+                            n_eval_steps=10000,
                             eval_dict=eval_dict,
                             room_nr=41,
                             alpha=50.0,
                             use_heat_sampler=True,
                             d_fac=0.001,
                             agent_lr=0.0001,
-                            rbc_dt_inc=-0.2,
+                            # rbc_dt_inc=-0.1,
                             )
+
+        with change_dir_name("BatteryRoomRL_R41_T22_5_Heat"):
+            run_room_models(verbose=prog_verb(verbose),
+                            n_steps=20000,
+                            include_battery=True,
+                            perf_eval=True,
+                            visual_analysis=True,
+                            overwrite=overwrite,
+                            put_on_ol=not debug,
+                            date_str=date_str,
+                            physically_consistent=False,
+                            hop_eval_set="test",
+                            sample_from="all",
+                            train_data="all",
+                            temp_bds=(22.5, 22.5),
+                            n_eval_steps=10000,
+                            eval_dict=eval_dict,
+                            room_nr=41,
+                            alpha=50.0,
+                            use_heat_sampler=True,
+                            d_fac=0.001,
+                            agent_lr=0.0001,
+                            # rbc_dt_inc=-0.1,
+                            )
+
     pass
 
 

@@ -44,7 +44,8 @@ def get_const_agents(env: Union[FullRoomEnv, RoomBatteryEnv, BatteryEnv]
         a1.plot_name = "Charging (10 kW)"
         a2.plot_name = "Discharging (8 kW)"
     elif isinstance(env, RoomBatteryEnv):
-        pass
+        a1.plot_name = "Valves Closed Discharge"
+        a2.plot_name = "Valves Open Charge"
     return a1, a2
 
 
