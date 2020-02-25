@@ -616,6 +616,7 @@ class DynEnv(ABC, gym.Env):
                              plot_constrained_actions: bool = False,
                              max_visual_evals: int = 4,
                              heating_title_ext: bool = False,
+                             indicate_bad_case: bool = False,
                              ) -> Optional[np.ndarray]:
         """Evaluates the given agents for this environment.
 
@@ -647,6 +648,8 @@ class DynEnv(ABC, gym.Env):
             plot_constrained_actions: Whether to plot the constrained actions in the time series
                 plot.
             max_visual_evals: Max. number of visual evaluations.
+            heating_title_ext:
+            indicate_bad_case:
 
         Returns:
             The rewards seen by all the agents, or None if `overwrite` is False
@@ -777,6 +780,16 @@ class DynEnv(ABC, gym.Env):
                     ext = f"{'Heating' if heating else 'Cooling'}, Inflow Water Temp.: {w_in:.1f} °C"
                     curr_title_ext = f"{title_ext} {ext}"
                     ext_ += "_h" if heating else "_c"
+                    if indicate_bad_case:
+                        assert n_agents == 4, "Fuck you!"
+                        r_temp_closed = curr_states[1, -1, 4]
+                        r_temp_open = curr_states[0, -1, 4]
+                        h_case = r_temp_open > r_temp_closed
+                        if h_case != heating:
+                            print(f"Fuck! k = {k}, {heating}")
+                            ext_ += "_b"
+                        else:
+                            print(f"Nice! k = {k}, {heating}")
                 else:
                     curr_title_ext = title_ext
 
