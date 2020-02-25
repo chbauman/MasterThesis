@@ -62,7 +62,8 @@ class RuleBasedAgent(AgentBase):
     def __init__(self, env: Union[FullRoomEnv, RoomBatteryEnv],
                  rule: Sequence,
                  const_charge_rate: Num = None,
-                 strict: bool = False):
+                 strict: bool = False,
+                 rbc_dt_inc: float = None):
         """Initializer.
 
         Args:
@@ -89,6 +90,8 @@ class RuleBasedAgent(AgentBase):
             mid = 0.5 * (rule[0] + rule[1])
             self.bounds = (mid, mid)
         else:
+            if rbc_dt_inc is not None:
+                rule = (rule[0] + rbc_dt_inc, rule[1])
             self.bounds = rule
 
         self.plot_name = "Rule-Based"

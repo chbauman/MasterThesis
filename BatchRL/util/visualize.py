@@ -30,6 +30,7 @@ if EULER:
 import matplotlib.pyplot as plt
 import matplotlib.colors as mpl_colors
 
+# Set pdf output to be editable
 mpl.rcParams['pdf.fonttype'] = 42
 mpl.rcParams['ps.fonttype'] = 42
 

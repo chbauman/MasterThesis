@@ -390,6 +390,7 @@ def run_room_models(verbose: int = 1,
                     visual_analysis: bool = True,
                     n_eval_steps: int = 10000,
                     agent_lr: float = DEF_RL_LR,
+                    rbc_dt_inc: float = None,
                     eval_dict: Dict = None,
                     **env_kwargs
                     ) -> None:
@@ -408,6 +409,7 @@ def run_room_models(verbose: int = 1,
         n_eval_steps: n_eval_steps: Total number of environment steps to perform
             for agent analysis.
         agent_lr: Learning rate of DDPG agent.
+        rbc_dt_inc:
         eval_dict: Kwargs for evaluation.
         env_kwargs: Keyword arguments for environment.
     """
@@ -446,7 +448,8 @@ def run_room_models(verbose: int = 1,
         closed_agent, open_agent = get_const_agents(env)
         ch_rate = 10.0 if include_battery else None
         rule_based_agent = RuleBasedAgent(env, env.temp_bounds,
-                                          const_charge_rate=ch_rate)
+                                          const_charge_rate=ch_rate,
+                                          rbc_dt_inc=rbc_dt_inc)
 
         agent = default_ddpg_agent(env, n_steps, fitted=True,
                                    verbose=next_verbose,
@@ -553,9 +556,10 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
            'overwrite': overwrite}
 
     # Test data
-    start_dt = datetime(2020, 2, 9, 12, 3, 12)
-    end_dt = datetime(2020, 2, 11, 12, 6, 45)
-    analyze_heating_period(start_dt, end_dt, room_nr, **kws)
+    if not put_on_ol:
+        start_dt = datetime(2020, 2, 9, 12, 3, 12)
+        end_dt = datetime(2020, 2, 11, 12, 6, 45)
+        analyze_heating_period(start_dt, end_dt, room_nr, **kws)
 
     # DDPG experiment
     start_dt, end_dt = datetime(2020, 2, 5, 12, 0, 0), datetime(2020, 2, 10, 12, 0, 0)
@@ -792,6 +796,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                             room_nr=43,
                             alpha=50.0)
 
+        with change_dir_name("RoomRL_R41_T22_5"):
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=20000,
                             include_battery=False,
@@ -805,13 +810,14 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                             sample_from="all",
                             train_data="all",
                             temp_bds=(22.5, 22.5),
-                            n_eval_steps=5000,
+                            n_eval_steps=1000,
                             eval_dict=eval_dict,
                             room_nr=41,
                             alpha=50.0,
                             use_heat_sampler=True,
                             d_fac=0.001,
                             agent_lr=0.0001,
+                            rbc_dt_inc=-0.2,
                             )
     pass
 
