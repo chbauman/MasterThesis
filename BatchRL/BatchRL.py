@@ -34,7 +34,8 @@ from dynamics.battery_model import BatteryModel, clean_battery_dataset
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
     load_room_env, DEFAULT_D_FAC
 from dynamics.recurrent import test_rnn_models, make_latex_hop_table, RNNDynamicModel
-from envs.dynamics_envs import BatteryEnv, heat_marker, compute_room_rewards, RangeT, TEMP_BOUNDS, ROOM_ENG_FAC
+from envs.dynamics_envs import BatteryEnv, heat_marker, compute_room_rewards, RangeT, TEMP_BOUNDS, ROOM_ENG_FAC, \
+    RoomBatteryEnv
 from opcua_empa.opcua_util import analyze_valves_experiment, experiment_plot_path
 from opcua_empa.run_opcua import run_rl_control, run_rule_based_control, try_opcua
 from rest.client import check_date_str
@@ -466,6 +467,11 @@ def run_room_models(verbose: int = 1,
     # Do performance evaluation
     if perf_eval:
         with ProgWrap(f"Evaluating agents...", verbose > 0):
+            disconnect_data = None
+            if isinstance(env, RoomBatteryEnv):
+                con_inds = env.connect_inds
+                c_inds_np = [np.timedelta64(i, 'h') for i in con_inds]
+                disconnect_data = (1, c_inds_np)
             env.detailed_eval_agents(agent_list, use_noise=True, n_steps=n_eval_steps,
                                      put_on_ol=put_on_ol, overwrite=overwrite,
                                      verbose=prog_verb(verbose),
@@ -474,6 +480,7 @@ def run_room_models(verbose: int = 1,
                                      visual_eval=visual_analysis,
                                      bounds=bounds,
                                      agent_filter_ind=3,
+                                     disconnect_data=disconnect_data,
                                      **eval_dict)
     elif verbose > 0:
         print("No performance evaluation!")

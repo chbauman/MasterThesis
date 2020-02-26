@@ -619,6 +619,7 @@ class DynEnv(ABC, gym.Env):
                              max_visual_evals: int = 4,
                              heating_title_ext: bool = False,
                              indicate_bad_case: bool = False,
+                             disconnect_data=None,
                              ) -> Optional[np.ndarray]:
         """Evaluates the given agents for this environment.
 
@@ -687,6 +688,7 @@ class DynEnv(ABC, gym.Env):
         all_scaled_actions = npf32((n_agents, n_steps, self.act_dim))
         all_states = npf32((n_agents, n_steps, self.state_dim - self.act_dim))
         all_marks = np.empty((n_agents, n_steps), dtype=np.int32)
+        ret_inds = None
 
         do_scaling = self.m.data.fully_scaled
 
@@ -709,10 +711,13 @@ class DynEnv(ABC, gym.Env):
             # Evaluate agent.
             if verbose:
                 print(f"Evaluating agent: {a}")
-            rew, ex_rew, states, ep_marks, acs, s_acs = a.eval(n_steps, reset_seed=True, detailed=True,
-                                                               use_noise=use_noise, scale_states=do_scaling,
-                                                               episode_marker=episode_marker,
-                                                               verbose=verbose)
+            eval_res = a.eval(n_steps, reset_seed=True, detailed=True,
+                              use_noise=use_noise, scale_states=do_scaling,
+                              episode_marker=episode_marker,
+                              return_inds=True,
+                              verbose=verbose)
+            rew, ex_rew, states, ep_marks, acs, s_acs, ret_inds = eval_res
+
             all_rewards[a_id, :, 0] = rew
             all_rewards[a_id, :, 1:] = ex_rew
             all_states[a_id] = states
@@ -746,6 +751,7 @@ class DynEnv(ABC, gym.Env):
                 clipped_action_sequences = all_scaled_actions[:, k0:k1]
                 curr_states = all_states[:, k0:k1]
                 curr_rew = all_rewards[:, k0:k1]
+                ep_ind = ret_inds[k]
 
                 mean_rew = np.mean(curr_rew[:, :, 0], axis=1)
                 winner = np.argwhere(mean_rew == np.amax(mean_rew))
@@ -767,7 +773,7 @@ class DynEnv(ABC, gym.Env):
                     continue
 
                 # Time stuff
-                shifted_t_init = self.m.data.get_shifted_t_init(self.curr_ind)
+                shifted_t_init = self.m.data.get_shifted_t_init(ep_ind)
                 np_st_init = str_to_np_dt(shifted_t_init)
 
                 state_mask = self.default_state_mask
@@ -806,7 +812,8 @@ class DynEnv(ABC, gym.Env):
                                     np_dt_init=np_st_init, rew_save_path=add_pth,
                                     bounds=bounds,
                                     series_merging_list=series_merging_list,
-                                    reward_descs=self.reward_descs)
+                                    reward_descs=self.reward_descs,
+                                    disconnect_data=disconnect_data)
 
                 # Plot the rewards for this episode
                 if not plot_tot_reward_cases:

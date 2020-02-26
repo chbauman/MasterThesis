@@ -836,12 +836,12 @@ def plot_env_evaluation(actions: np.ndarray,
                         series_merging_list: MergeListT = None,
                         bounds: List[Tuple[int, Tuple[Num, Num]]] = None,
                         reward_descs: List[str] = None,
+                        disconnect_data: Tuple[int, Tuple[int, int]] = None,
                         ex_ext: bool = True) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Refactor this shit more!
     TODO: Add grid????
-    TODO: Solve Super title Problems!!
     TODO: Add ticks without labels for intermediate series!
     TODO: No reward? (show_rewards=False)
 
@@ -939,6 +939,7 @@ def plot_env_evaluation(actions: np.ndarray,
         x = [np_dt_init + i * interval for i in range(episode_len)]
     else:
         x = range(len(rewards[0]))
+    x_array = np.array(x)
 
     ph_kwargs = {"dates": use_time}
 
@@ -996,6 +997,25 @@ def plot_env_evaluation(actions: np.ndarray,
             lower = [low for _ in range(episode_len)]
             state_axs[i].fill_between(x, lower, upper, facecolor='green',
                                       interpolate=True, alpha=al)
+
+    # Plot disconnect time
+    if disconnect_data is not None:
+        i, dis_t = disconnect_data
+        dt_h_low, dt_h_high = dis_t
+        init_day = np.array(x_array[0], dtype='datetime64[D]')
+        end_day = np.array(x_array[-1], dtype='datetime64[D]')
+        time_passed_init = x_array[0] - init_day
+        if dt_h_low < time_passed_init < dt_h_high:
+            state_axs[i].fill_between([x_array[0], init_day + dt_h_high], -100, 100, facecolor='black',
+                                      interpolate=True, alpha=1.0)
+        print(init_day)
+        print(time_passed_init)
+        print(i)
+
+        time_passed_end = x_array[-1] - end_day
+        if dt_h_low < time_passed_end < dt_h_high:
+            state_axs[i].fill_between([end_day + dt_h_low, x_array[-1]], -100, 100, facecolor='black',
+                                      interpolate=True, alpha=1.0)
 
     # Add legends
     con_axs[0].legend(**leg_kwargs)

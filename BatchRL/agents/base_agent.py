@@ -172,6 +172,7 @@ class AgentBase(AbstractAgent, ABC):
              detailed: bool = False,
              use_noise: bool = False, scale_states: bool = False,
              episode_marker: Callable = None,
+             return_inds: bool = False,
              verbose: int = 0):
         """Evaluates the agent for a given number of steps.
 
@@ -186,6 +187,7 @@ class AgentBase(AbstractAgent, ABC):
             scale_states: Whether to scale the state trajectory to
                 original values, only used if `detailed` is True.
             episode_marker: Function mapping from state to natural numbers.
+            return_inds:
             verbose:
 
         Returns:
@@ -203,6 +205,12 @@ class AgentBase(AbstractAgent, ABC):
         s_curr = self.env.reset(use_noise=use_noise)
         ep_mark = 0 if episode_marker is None else episode_marker(s_curr)
         all_rewards = npf32((n_steps,))
+
+        ret_inds = None
+        ret_ct = 1
+        if return_inds:
+            ret_inds = np.empty(((n_steps + 1) // self.env.n_ts_per_eps + 1,), dtype=np.int)
+            ret_inds[0] = self.env.curr_ind
 
         # Detailed stuff
         det_rewards, state_t, ep_marks = None, None, None
@@ -246,6 +254,9 @@ class AgentBase(AbstractAgent, ABC):
             if fin:
                 s_curr = self.env.reset(use_noise=use_noise)
                 ep_mark = 0 if episode_marker is None else episode_marker(s_curr)
+                if return_inds:
+                    ret_inds[ret_ct] = self.env.curr_ind
+                    ret_ct += 1
 
         # This is an ugly hack, because I am running out of time!
         if hasattr(self, 'action_range') and self.action_range is not None:
@@ -260,6 +271,8 @@ class AgentBase(AbstractAgent, ABC):
         if detailed:
             if scale_states:
                 state_t = self.env.scale_state(state_t, remove_mean=False)
+            if return_inds:
+                return all_rewards, det_rewards, state_t, ep_marks, actions, scaled_actions, ret_inds
             return all_rewards, det_rewards, state_t, ep_marks, actions, scaled_actions
 
         # Return mean reward.
