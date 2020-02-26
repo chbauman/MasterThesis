@@ -1564,10 +1564,10 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
     init_str = "\\begin{table}[ht]\n"
     init_str += "\\centering\n"
 
-    day_w = 0.5
-    other_w = (0.8 - day_w) / 2
+    day_w = 0.33
+    other_w = (0.8 - day_w)
     s = "|".join([f"p{{{day_w / n_days}\\textwidth}}"] * n_days)
-    init_str += f"\\begin{{tabular}}{{|p{{{other_w}\\textwidth}}|p{{{other_w}\\textwidth}}|{s}|}}\n"
+    init_str += f"\\begin{{tabular}}{{|p{{{0.2 * other_w}\\textwidth}}|p{{{0.8 * other_w}\\textwidth}}|{s}|}}\n"
 
     # Add titles
     init_str += "\\hline\n Agent & Data & " + " & ".join([f'Day {i + 1}' for i in range(n_days)]) + "\\\\\n"
