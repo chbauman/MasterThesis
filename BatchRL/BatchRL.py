@@ -34,7 +34,7 @@ from dynamics.battery_model import BatteryModel, clean_battery_dataset
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
     load_room_env, DEFAULT_D_FAC
 from dynamics.recurrent import test_rnn_models, make_latex_hop_table, RNNDynamicModel
-from envs.dynamics_envs import BatteryEnv, heat_marker, compute_room_rewards, RangeT, TEMP_BOUNDS
+from envs.dynamics_envs import BatteryEnv, heat_marker, compute_room_rewards, RangeT, TEMP_BOUNDS, ROOM_ENG_FAC
 from opcua_empa.opcua_util import analyze_valves_experiment, experiment_plot_path
 from opcua_empa.run_opcua import run_rl_control, run_rule_based_control, try_opcua
 from rest.client import check_date_str
@@ -44,7 +44,7 @@ from util.util import EULER, ProgWrap, prog_verb, str2bool, extract_args, DEFAUL
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell, cast_to_subclass, \
     str_to_np_dt, fix_seed
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
-    plot_heat_cool_rew_det, change_dir_name, plot_env_evaluation
+    plot_heat_cool_rew_det, change_dir_name, plot_env_evaluation, make_experiment_table
 
 # Model performance evaluation
 N_PERFORMANCE_STEPS = (1, 4, 12, 24, 48)
@@ -486,20 +486,17 @@ def analyze_heating_period(start_dt, end_dt,
                            overwrite: bool = False,
                            put_on_ol: bool = False,
                            agent_name: str = None,
-                           **env_kwargs):
+                           **env_kwargs) -> np.ndarray:
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
+        dt = 15
         full_ds = load_room_data(start_dt=start_dt, end_dt=end_dt,
-                                 room_nr=room_nr, exp_name=f"{name}_room_{room_nr}", dt=15)
+                                 room_nr=room_nr, exp_name=f"{name}_room_{room_nr}", dt=dt)
 
         actions = np.expand_dims(full_ds.data[:, -1:], axis=0)
         states = np.expand_dims(full_ds.data[:, :-1], axis=0)
 
         plt_dir = experiment_plot_path if not put_on_ol else OVERLEAF_IMG_DIR
         save_path = os.path.join(plt_dir, name)
-        if os.path.isfile(save_path + ".pdf") and not overwrite:
-            if verbose:
-                print("Plot already exists!")
-            return
 
         all_rewards = compute_room_rewards(full_ds.data[:, -1],
                                            full_ds.data[:, -2],
@@ -512,17 +509,33 @@ def analyze_heating_period(start_dt, end_dt,
             print(f"Total rewards: {np.sum(all_rewards, axis=0)}")
             print(f"Number of steps: {full_ds.data.shape[0]}, dt = {full_ds.dt}")
 
-        series_merging = [
-            ([0, 1], "Weather"),
-            ([2, 3], "Water Temperatures", "[°C]")
-        ]
-        plot_env_evaluation(actions, states, rewards, full_ds,
-                            [agent_name if agent_name is not None else "Test"],
-                            save_path=save_path,
-                            np_dt_init=str_to_np_dt(full_ds.t_init),
-                            series_merging_list=series_merging,
-                            reward_descs=["Reward"],
-                            ex_ext=False)
+        if not os.path.isfile(save_path + ".pdf") or overwrite:
+            series_merging = [
+                ([0, 1], "Weather"),
+                ([2, 3], "Water Temperatures", "[°C]")
+            ]
+            plot_env_evaluation(actions, states, rewards, full_ds,
+                                [agent_name if agent_name is not None else "Test"],
+                                save_path=save_path,
+                                np_dt_init=str_to_np_dt(full_ds.t_init),
+                                series_merging_list=series_merging,
+                                reward_descs=["Reward"],
+                                ex_ext=False)
+        elif verbose:
+            print("Plot already exists!")
+
+        # Return daily averages
+        energy_used = all_rewards[:, 1]
+        n_dt_per_day = 60 * 24 // dt
+        n_days = energy_used.shape[0] // n_dt_per_day
+        clip_at = n_dt_per_day * n_days
+
+        out_arr = np.empty((3, n_days), dtype=np.float32)
+        d_unscaled = full_ds.get_unscaled_data()
+        out_arr[0, :] = np.mean(all_rewards[:clip_at, 1].reshape((n_days, n_dt_per_day)), axis=1)  # Energy
+        out_arr[1, :] = np.mean(d_unscaled[:clip_at, 0].reshape((n_days, n_dt_per_day)), axis=1)  # Out. temp.
+        out_arr[2, :] = np.mean(d_unscaled[:clip_at, 4].reshape((n_days, n_dt_per_day)), axis=1)  # Room temp.
+        return out_arr
 
 
 def analyze_experiments(room_nr: int = 41, verbose: int = 5,
@@ -564,12 +577,20 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
     # DDPG experiment
     start_dt, end_dt = datetime(2020, 2, 5, 12, 0, 0), datetime(2020, 2, 10, 12, 0, 0)
     name = "DDPG_Exp_22_26"
-    analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="DDPG", **kws)
+    ddpg_res = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="DDPG", **kws)
 
     # RBC experiment
     start_dt, end_dt = datetime(2020, 2, 19, 12, 0, 0), datetime(2020, 2, 24, 12, 0, 0)
     name = "RBC_Exp_22_5"
-    analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="Rule-Based", **kws)
+    rbc_res = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="Rule-Based", **kws)
+
+    name_list = ["DDPG", "RBC"]
+    series_list = [
+        f"Energy Consumption [{ROOM_ENG_FAC:.4g} Wh]",
+        "Average outside temp. [°C]",
+        "Average room temp. [°C]"
+    ]
+    make_experiment_table([ddpg_res, rbc_res], name_list, series_list, f_name="DDPG_RBC")
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
@@ -823,7 +844,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
         with change_dir_name("BatteryRoomRL_R41_T22_5_Heat"):
             run_room_models(verbose=prog_verb(verbose),
-                            n_steps=50000,
+                            n_steps=100000,
                             include_battery=True,
                             perf_eval=True,
                             visual_analysis=True,

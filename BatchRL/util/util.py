@@ -112,6 +112,7 @@ def force_decorator_factory(wait: float = 0.5, verbose: bool = True):
     Returns:
         The decorator.
     """
+
     def force_decorator(fun):
         """The decorator to be returned."""
 
@@ -250,7 +251,6 @@ class FunClassBase:
 
 
 def fun_to_class(fun: Callable):
-
     class FunClass(FunClassBase):
 
         def __call__(self, *args, **kwargs):
@@ -696,6 +696,7 @@ class CacheDecoratorFactory(object):
         Returns:
             The decorated function.
         """
+
         @wraps(f)
         def decorated(s, n: Union[Tuple, int], *args, **kwargs):
             """The actual decorator.
@@ -780,6 +781,7 @@ def train_decorator():
     and `self.save_model(self.m, self.name, train_data=train_data)` that
     load and save the model respectively need to be implemented.
     """
+
     def decorator(fit):
         """The actual decorator."""
 
@@ -1129,9 +1131,11 @@ def skip_if_no_internet(f):
 
     Skips test method if there is no internet connection.
     """
+
     def wrapper(self, *args, **kwargs):
         if not internet():
             self.skipTest("No internet connection available!")
         else:
             f(self, *args, **kwargs)
+
     return wrapper

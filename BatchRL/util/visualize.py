@@ -1550,3 +1550,48 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
     # Save
     plt.legend(loc=7)
     save_figure(save_name)
+
+
+def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
+                          f_name: str,
+                          caption: str = "Test",
+                          lab: str = "exp_tab"):
+    assert len(name_list) == len(arr_list) > 0
+    first_arr = arr_list[0]
+    n_days = first_arr.shape[1]
+    assert first_arr.shape[0] == len(series_list)
+
+    init_str = "\\begin{table}[ht]\n"
+    init_str += "\\centering\n"
+
+    day_w = 0.5
+    other_w = (0.8 - day_w) / 2
+    s = "|".join([f"p{{{day_w / n_days}\\textwidth}}"] * n_days)
+    init_str += f"\\begin{{tabular}}{{|p{{{other_w}\\textwidth}}|p{{{other_w}\\textwidth}}|{s}|}}\n"
+
+    # Add titles
+    init_str += "\\hline\n Agent & Data & " + " & ".join([f'Day {i + 1}' for i in range(n_days)]) + "\\\\\n"
+    init_str += f"\\hline\n"
+
+    # Add rows
+    for ct, a in enumerate(name_list):
+        init_str += f"\\hline\n"
+        for ct_s, s in enumerate(series_list):
+            if ct_s == 0:
+                init_str += a
+            init_str += f" & {s} & "
+            init_str += " & ".join([f"{v:.2f}" for v in arr_list[ct][ct_s]])
+            init_str += "\\\\\n"
+
+    # Remaining part
+    init_str += "\\hline\n\\end{tabular}\n"
+    init_str += f"\\caption{{{caption}}}\n\\label{{tab:exp_{lab}}}\n"
+    init_str += "\\end{table}\n"
+
+    print(init_str)
+
+    # Save
+    f_path = os.path.join(OVERLEAF_DATA_DIR, f_name + ".tex")
+    if not os.path.isfile(f_path):
+        with open(f_path, "w") as f:
+            f.write(init_str)
