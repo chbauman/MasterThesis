@@ -985,12 +985,17 @@ def plot_env_evaluation(actions: np.ndarray,
 
     # Plot bounds
     if bounds is not None:
+        al = 0.2
         for i, bd in bounds:
             low, up = bd
+            if low == up:
+                low -= 0.05
+                up += 0.05
+                al = 0.8
             upper = [up for _ in range(episode_len)]
             lower = [low for _ in range(episode_len)]
             state_axs[i].fill_between(x, lower, upper, facecolor='green',
-                                      interpolate=True, alpha=0.2)
+                                      interpolate=True, alpha=al)
 
     # Add legends
     con_axs[0].legend(**leg_kwargs)

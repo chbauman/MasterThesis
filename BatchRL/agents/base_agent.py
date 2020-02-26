@@ -249,18 +249,12 @@ class AgentBase(AbstractAgent, ABC):
 
         # This is an ugly hack, because I am running out of time!
         if hasattr(self, 'action_range') and self.action_range is not None:
-            print(f"max: {np.max(actions, axis=0)}, min: {np.min(actions, axis=0)}")
-            print(f"max: {np.max(scaled_actions, axis=0)}, min: {np.min(scaled_actions, axis=0)}")
-
             # assert hasattr(self, 'get_info'), f"(Go fuck your-) self: {self}"
             scaling = self.get_info().get('action_scaled_01')
             p1 = np.array([i[0] for i in scaling], dtype=np.float32)
             p2 = np.array([i[1] - i[0] for i in scaling], dtype=np.float32)
             a_scaling_pars = p1, p2
-
             actions = a_scaling_pars[0] + actions * a_scaling_pars[1]
-            print(f"max: {np.max(actions, axis=0)}, min: {np.min(actions, axis=0)}")
-            print(a_scaling_pars)
 
         # Return all rewards
         if detailed:
