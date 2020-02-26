@@ -470,8 +470,8 @@ def run_room_models(verbose: int = 1,
             disconnect_data = None
             if isinstance(env, RoomBatteryEnv):
                 con_inds = env.connect_inds
-                c_inds_np = [np.timedelta64(i, 'h') for i in con_inds]
-                disconnect_data = (1, c_inds_np)
+                c_inds_np = [np.timedelta64(i // 4, 'h') for i in con_inds]
+                disconnect_data = (1, c_inds_np, (18.0, 82.0))
             env.detailed_eval_agents(agent_list, use_noise=True, n_steps=n_eval_steps,
                                      put_on_ol=put_on_ol, overwrite=overwrite,
                                      verbose=prog_verb(verbose),

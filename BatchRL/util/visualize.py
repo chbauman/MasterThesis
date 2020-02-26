@@ -147,7 +147,8 @@ def change_dir_name(new_dir_name: str,
 def save_figure(save_name, show: bool = False,
                 vector_format: bool = True,
                 size: Tuple[Num, Num] = None,
-                font_size: int = None) -> None:
+                font_size: int = None,
+                auto_fmt_time: bool = True) -> None:
     """Saves the current figure.
 
     Args:
@@ -156,7 +157,12 @@ def save_figure(save_name, show: bool = False,
         show: If true, does nothing.
         vector_format: Whether to save image in vector format.
         font_size: The desired font size.
+        auto_fmt_time: Nice stuff, just set to True!
     """
+    if auto_fmt_time:
+        fig = plt.gcf()
+        fig.autofmt_xdate()
+
     if font_size is not None:
         plt.rc('font', size=font_size)
 
@@ -1000,21 +1006,30 @@ def plot_env_evaluation(actions: np.ndarray,
 
     # Plot disconnect time
     if disconnect_data is not None:
-        i, dis_t = disconnect_data
+        i, dis_t, ran = disconnect_data
         dt_h_low, dt_h_high = dis_t
         init_day = np.array(x_array[0], dtype='datetime64[D]')
         end_day = np.array(x_array[-1], dtype='datetime64[D]')
         time_passed_init = x_array[0] - init_day
-        if dt_h_low < time_passed_init < dt_h_high:
-            state_axs[i].fill_between([x_array[0], init_day + dt_h_high], -100, 100, facecolor='black',
+        end_dt = np.timedelta64(ds.dt, 'm')
+        if dt_h_low <= time_passed_init < dt_h_high:
+            print("Fuck yeah 1")
+            state_axs[i].fill_between([x_array[0], init_day + dt_h_high - end_dt],
+                                      ran[0], ran[1], facecolor='black',
                                       interpolate=True, alpha=1.0)
-        print(init_day)
-        print(time_passed_init)
-        print(i)
+
+        if dt_h_low > time_passed_init > dt_h_low - np.timedelta64(2, 'h'):
+            for slf in range(7):
+                print("yaaaay")
+            state_axs[i].fill_between([init_day + dt_h_low, init_day + dt_h_high - end_dt],
+                                      ran[0], ran[1], facecolor='black',
+                                      interpolate=True, alpha=1.0)
 
         time_passed_end = x_array[-1] - end_day
-        if dt_h_low < time_passed_end < dt_h_high:
-            state_axs[i].fill_between([end_day + dt_h_low, x_array[-1]], -100, 100, facecolor='black',
+        if dt_h_low < time_passed_end <= dt_h_high:
+            print("Fuck yeah")
+            state_axs[i].fill_between([end_day + dt_h_low, x_array[-1] - end_dt],
+                                      ran[0], ran[1], facecolor='black',
                                       interpolate=True, alpha=1.0)
 
     # Add legends
