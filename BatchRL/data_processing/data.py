@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Optional, Sequence, List, Tuple
 
 import numpy as np
@@ -1283,7 +1283,8 @@ def load_room_data(start_dt: datetime, end_dt: datetime, room_nr: int = 41,
     if exp_name is not None:
         full_struct.name = exp_name
     full_struct.start_date = start_dt.strftime("%Y-%m-%d")
-    full_struct.end_date = end_dt.strftime("%Y-%m-%d")
+    end_dt_next = end_dt + timedelta(days=1)
+    full_struct.end_date = end_dt_next.strftime("%Y-%m-%d")
 
     # Convert to Dataset
     full_ds = convert_data_struct(full_struct, "None", dt, {},

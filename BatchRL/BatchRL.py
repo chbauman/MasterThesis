@@ -823,7 +823,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
         with change_dir_name("BatteryRoomRL_R41_T22_5_Heat"):
             run_room_models(verbose=prog_verb(verbose),
-                            n_steps=20000,
+                            n_steps=50000,
                             include_battery=True,
                             perf_eval=True,
                             visual_analysis=True,
