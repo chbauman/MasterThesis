@@ -586,9 +586,9 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
 
     name_list = ["DDPG", "RBC"]
     series_list = [
-        f"Energy Consumption [{ROOM_ENG_FAC:.4g} Wh]",
-        "Average outside temp. [°C]",
-        "Average room temp. [°C]"
+        f"Energy Consumption [${ROOM_ENG_FAC:.4g} Wh$]",
+        "Average outside temp. [$^\\circ C$]",
+        "Average room temp. [$^\\circ C$]"
     ]
     make_experiment_table([ddpg_res, rbc_res], name_list, series_list, f_name="DDPG_RBC")
 
