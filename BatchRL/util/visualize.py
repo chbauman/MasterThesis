@@ -36,9 +36,10 @@ mpl.rcParams['ps.fonttype'] = 42
 
 register_matplotlib_converters()
 
+DEFAULT_FONT_SIZE: int = 18
 font = {'family': 'serif',
         # 'weight': 'bold',
-        'size': 18}
+        'size': DEFAULT_FONT_SIZE}
 
 plt.rc('font', **font)
 # plt.rc('text', usetex=True)  # Makes Problems with the Celsius sign :(
@@ -145,7 +146,8 @@ def change_dir_name(new_dir_name: str,
 
 def save_figure(save_name, show: bool = False,
                 vector_format: bool = True,
-                size: Tuple[Num, Num] = None) -> None:
+                size: Tuple[Num, Num] = None,
+                font_size: int = None) -> None:
     """Saves the current figure.
 
     Args:
@@ -153,7 +155,11 @@ def save_figure(save_name, show: bool = False,
         save_name: Path where to save the plot.
         show: If true, does nothing.
         vector_format: Whether to save image in vector format.
+        font_size: The desired font size.
     """
+    if font_size is not None:
+        plt.rc('font', size=font_size)
+
     if save_name is not None and not show:
         # Set figure size
         fig = plt.gcf()
@@ -166,6 +172,10 @@ def save_figure(save_name, show: bool = False,
         save_kwargs = {'bbox_inches': 'tight'}
         plt.savefig(save_name + save_format, **save_kwargs)
         plt.close()
+
+    # Set font back to original
+    if font_size is not None:
+        plt.rc('font', size=DEFAULT_FONT_SIZE)
 
 
 def _plot_helper(x, y, m_col='blue', label: str = None,
@@ -1143,7 +1153,7 @@ def plot_reward_details(labels: Sequence[str],
 
     # Set layout and save
     fig.tight_layout()
-    save_figure(save_name=path_name)
+    save_figure(save_name=path_name, size=(24, 9))
 
 
 def _load_all_model_data(model_list: List,

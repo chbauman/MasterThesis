@@ -420,7 +420,8 @@ class DynEnv(ABC, gym.Env):
         """Render method for compatibility with OpenAI gym."""
         print("Rendering not implemented!")
 
-    def _to_scaled(self, action: Arr, to_original: bool = False) -> np.ndarray:
+    def _to_scaled(self, action: Arr, to_original: bool = False,
+                   extra_scaling: bool = False) -> np.ndarray:
         """Converts actions to the right range.
 
         Needs to be overridden by subclasses.
@@ -555,7 +556,8 @@ class DynEnv(ABC, gym.Env):
         s_ac = clipped_action_sequences.shape
         for k in range(s_ac[0]):
             for i in range(s_ac[1]):
-                clipped_action_sequences[k, i] = self._to_scaled(clipped_action_sequences[k, i], to_original=True)
+                clipped_action_sequences[k, i] = self._to_scaled(clipped_action_sequences[k, i],
+                                                                 to_original=True)
         if not plot_constrain_actions or np.allclose(clipped_action_sequences, action_sequences):
             clipped_action_sequences = None
 
