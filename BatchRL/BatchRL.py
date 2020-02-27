@@ -739,11 +739,11 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
             s_name = os.path.join(OVERLEAF_IMG_DIR, f"Cooling")
             if overwrite or not os.path.isfile(s_name + ".pdf"):
                 ds_heat = ds_old[4]
-                ds_heat.descriptions[0] = "Valve State"
+                ds_heat.descriptions[0] = "Valve state"
                 n_tot = ds_heat.data.shape[0]
                 ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.55), int(n_tot * 0.65))
                 plot_dataset(ds_heat_rel, show=False,
-                             title_and_ylab=[f"Cooling Room {room_nr}", "Valve State"],
+                             title_and_ylab=[f"Cooling room {room_nr}", "Valve state"],
                              save_name=s_name)
 
     # Room temperature model

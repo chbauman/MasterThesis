@@ -679,7 +679,7 @@ def get_battery_data(analyze: bool = False, date_str: str = DEFAULT_END_DATE) ->
     p_kwargs_ap = {'clean_args': [([], 6 * 60, [])]}
     kws = [p_kwargs_soc, p_kwargs_ap]
     c_inds = np.array([1], dtype=np.int32)
-    custom_descs = np.array(["State of Charge [%]", "Active Power [kW]"])
+    custom_descs = np.array(["State of charge [%]", "Active power [kW]"])
 
     # Get the data
     ds = get_from_data_struct(dat_struct, bat_plot_path, dt_mins, name, inds, kws,

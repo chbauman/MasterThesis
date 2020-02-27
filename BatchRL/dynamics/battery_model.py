@@ -270,7 +270,7 @@ class BatteryModel(BaseDynamicsModel):
         res_time_plt_path = self._get_plot_name("ResVsTime", put_on_ol)
         if not os.path.isfile(res_plt_path + ".pdf") or overwrite or \
                 not os.path.isfile(res_time_plt_path + ".pdf"):
-            labs_res = {"title": "Residual Plot", "xlab": "State of Charge [%]",
+            labs_res = {"title": "Residual plot", "xlab": "State of charge [%]",
                         "ylab": r"Residuals ($\Delta$ SoC [%])"}
             p_orig, _, soc_orig = self.init_data
             res = soc_orig[:-1] + self._eval_at(p_orig[:-1]) - soc_orig[1:]

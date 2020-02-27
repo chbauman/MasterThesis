@@ -96,6 +96,7 @@ class ModifyDir:
     And now this can be seen from all modules! The :func:`__str__`, :func:`__repr__`
     and the :func:`__fspath__` still allow the usage as string / path.
     """
+
     def __init__(self, orig_dir: str):
         """Initializer
 
@@ -933,7 +934,7 @@ def plot_env_evaluation(actions: np.ndarray,
         _full_setup_axis(con_fb_axs, control_descs, "Constrained " + c_title)
     _full_setup_axis(state_axs, state_descs, "States")
     for ct, m in enumerate(series_merging_list):
-        _full_setup_axis([state_mrg_axs[ct]], [m[1]], "Exogenous States" if ex_ext else "")
+        _full_setup_axis([state_mrg_axs[ct]], [m[1]], "Exogenous states" if ex_ext else "")
 
     # Define legend fontsize
     sz = 12
@@ -1001,9 +1002,10 @@ def plot_env_evaluation(actions: np.ndarray,
                 al = 0.6
                 dx = x[-1] - x[0]
                 state_axs[i].annotate(f'Comfort setpoint',
-                                      xy=(x[0] + dx / 2, up),
+                                      xy=(x[0] + dx / 2, up - 0.05),
                                       xytext=(0, 3),  # 3 points vertical offset
-                                      bbox={'facecolor': 'white', 'alpha': 0.5},
+                                      bbox={'facecolor': 'white', 'alpha': 0.6,
+                                            'edgecolor': 'none'},
                                       textcoords="offset points",
                                       ha='center', va='bottom')
 
@@ -1575,7 +1577,7 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
 
     ax = host_subplot(111)
     ax.set_xlabel("Time")
-    ax.set_ylabel("Valve Closed / Open (0 / 1)")
+    ax.set_ylabel("Valve closed / open (0 / 1)")
 
     # Plot all valves
     for k in range(n_valves):
