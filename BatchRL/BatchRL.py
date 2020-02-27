@@ -519,7 +519,7 @@ def analyze_heating_period(start_dt, end_dt,
         if not os.path.isfile(save_path + ".pdf") or overwrite:
             series_merging = [
                 ([0, 1], "Weather"),
-                ([2, 3], "Water Temperatures", "[°C]")
+                ([2, 3], "Water temperatures", "[°C]")
             ]
             plot_env_evaluation(actions, states, rewards, full_ds,
                                 [agent_name if agent_name is not None else "Test"],
@@ -720,12 +720,12 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
             s_name = os.path.join(OVERLEAF_IMG_DIR, "WaterTemp")
             if overwrite or not os.path.isfile(s_name + ".pdf"):
                 ds_heat = ds_old[2:4]
-                ds_heat.descriptions[0] = "Water Temperature (In) [°C]"
-                ds_heat.descriptions[1] = "Water Temperature (Out) [°C]"
+                ds_heat.descriptions[0] = "Water temperature (in) [°C]"
+                ds_heat.descriptions[1] = "Water temperature (out) [°C]"
                 n_tot = ds_heat.data.shape[0]
                 ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.6), int(n_tot * 0.66))
                 plot_dataset(ds_heat_rel, show=False,
-                             title_and_ylab=["Cooling Water Temperatures", "Temperature [°C]"],
+                             title_and_ylab=["Cooling water temperatures", "Temperature [°C]"],
                              save_name=s_name)
 
     # Constant cooling

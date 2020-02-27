@@ -653,6 +653,7 @@ class DynEnv(ABC, gym.Env):
             max_visual_evals: Max. number of visual evaluations.
             heating_title_ext:
             indicate_bad_case:
+            disconnect_data:
 
         Returns:
             The rewards seen by all the agents, or None if `overwrite` is False
@@ -726,7 +727,7 @@ class DynEnv(ABC, gym.Env):
             all_scaled_actions[a_id] = s_acs
 
         # Plot total rewards for all steps
-        title_ext = self._get_detail_eval_title_ext()
+        title_ext = ""  # self._get_detail_eval_title_ext()
         if plot_tot_eval:
             if verbose > 0:
                 print("Plotting evaluation...")
@@ -785,7 +786,7 @@ class DynEnv(ABC, gym.Env):
                     unscaled_state = curr_states[0, 0]
                     w_in = unscaled_state[2]
                     heating = w_in > unscaled_state[4]
-                    ext = f"{'Heating' if heating else 'Cooling'}, Inflow Water Temp.: {w_in:.1f} °C"
+                    ext = f"{'Heating' if heating else 'Cooling'}, inflow water temp.: {w_in:.1f} °C"
                     curr_title_ext = f"{title_ext} {ext}"
                     ext_ += "_h" if heating else "_c"
                     if indicate_bad_case:

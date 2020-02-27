@@ -187,10 +187,10 @@ room_dict = {
     53: Room5RedData,
 }
 
-weather_descs = ["Outside Temperature [°C]", "Irradiance [W/m^2]"]
-r_temp_desc = "Room Temperature [°C]"
-water_temp_descs = ["Water Temperature (In) [°C]", "Water Temperature (Out) [°C]"]
-valve_desc = "Averaged Valve Open Time [100%]"
+weather_descs = ["Outside temperature [°C]", "Irradiance [W/m^2]"]
+r_temp_desc = "Room temperature [°C]"
+water_temp_descs = ["Water temperature (in) [°C]", "Water temperature (out) [°C]"]
+valve_desc = "Averaged valve open time [100%]"
 
 
 def unique_room_nr(room_nr: int):
@@ -951,10 +951,10 @@ def compute_DFAB_energy_usage(show_plots=True):
         w_plot_path = os.path.join(dfab_rooms_plot_path, w_name + "_WaterTemps")
         dw_plot_path = os.path.join(dfab_rooms_plot_path, w_name + "_WaterTempDiff")
         plot_dataset(w_dataset, show=False,
-                     title_and_ylab=["Water Temps", "Temperature"],
+                     title_and_ylab=["Water temps", "Temperature"],
                      save_name=w_plot_path)
         plot_single(d_temp, m_room, use_time=True, show=False,
-                    title_and_ylab=["Temperature Difference", "DT"],
+                    title_and_ylab=["Temperature difference", "DT"],
                     scale_back=False,
                     save_name=dw_plot_path)
 

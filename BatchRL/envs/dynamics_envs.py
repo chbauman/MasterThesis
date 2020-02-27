@@ -36,11 +36,11 @@ SOC_BOUND: RangeT = (20.0, 80.0)  #: The desired state-of-charge range.
 SOC_GOAL: Num = 60.0  #: Desired SoC at end of episode.
 
 # Reward parts descriptions
-BAT_ENERGY: str = f"Battery Energy Consumption [{ROOM_ENG_FAC:.4g} Wh]"
-BAT_ENERGY_HIGH: str = f"Battery Energy Consumption [kWh]"
-ROOM_ENERGY: str = f"Room Energy Consumption [{ROOM_ENG_FAC:.4g} Wh]"
-TEMP_BOUND_PEN: str = "Temperature Bound Violation [Kh]"
-ENG_COST: str = "Energy Costs"
+BAT_ENERGY: str = f"Battery energy consumption [{ROOM_ENG_FAC:.4g} Wh]"
+BAT_ENERGY_HIGH: str = f"Battery energy consumption [kWh]"
+ROOM_ENERGY: str = f"Room energy consumption [{ROOM_ENG_FAC:.4g} Wh]"
+TEMP_BOUND_PEN: str = "Temperature bound violation [Kh]"
+ENG_COST: str = "Energy costs"
 
 
 def heat_marker(state: np.ndarray) -> bool:

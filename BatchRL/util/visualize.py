@@ -876,7 +876,7 @@ def plot_env_evaluation(actions: np.ndarray,
         check_shape(rewards, (n_agents, episode_len, -1))
         n_rewards = rewards.shape[2]
         if reward_descs is not None:
-            reward_descs = ["Total Reward"] + reward_descs
+            reward_descs = ["Total reward"] + reward_descs
             assert n_rewards == len(reward_descs), f"Fuck this: {reward_descs}"
     n_feats, series_mask = _handle_merging(n_feats, series_mask, series_merging_list)
     if series_merging_list is None:
@@ -998,7 +998,15 @@ def plot_env_evaluation(actions: np.ndarray,
             if low == up:
                 low -= 0.05
                 up += 0.05
-                al = 0.8
+                al = 0.6
+                dx = x[-1] - x[0]
+                state_axs[i].annotate(f'Comfort setpoint',
+                                      xy=(x[0] + dx / 2, up),
+                                      xytext=(0, 3),  # 3 points vertical offset
+                                      bbox={'facecolor': 'white', 'alpha': 0.5},
+                                      textcoords="offset points",
+                                      ha='center', va='bottom')
+
             upper = [up for _ in range(episode_len)]
             lower = [low for _ in range(episode_len)]
             state_axs[i].fill_between(x, lower, upper, facecolor='green',
@@ -1138,7 +1146,7 @@ def plot_reward_details(labels: Sequence[str],
     assert n_agents == len(labels)
     red_fun = np.sum if sum_reward else np.mean
     mean_rewards = red_fun(rewards, axis=1)
-    all_descs = ["Total Reward"] + rew_descs
+    all_descs = ["Total reward"] + rew_descs
 
     agg_rew = "Total reward" if sum_reward else "Mean rewards per hour"
     title = f"{agg_rew} for {n_eval_steps} steps. "
