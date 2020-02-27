@@ -275,7 +275,7 @@ class FullRoomEnv(RLDynEnv):
             curr_pred: Current state.
 
         Returns:
-            Room Temperature
+            Room temperature
         """
         return self.get_unscaled(curr_pred, 5)
 

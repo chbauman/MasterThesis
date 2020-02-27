@@ -17,7 +17,7 @@ import os
 import warnings
 from datetime import datetime
 from functools import reduce
-from typing import List, Tuple, Sequence, Type, Dict
+from typing import List, Tuple, Sequence, Type, Dict, Any
 
 import numpy as np
 
@@ -493,6 +493,7 @@ def analyze_heating_period(start_dt, end_dt,
                            overwrite: bool = False,
                            put_on_ol: bool = False,
                            agent_name: str = None,
+                           metrics_eval_list: Any = False,
                            **env_kwargs) -> np.ndarray:
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
         dt = 15
@@ -542,6 +543,21 @@ def analyze_heating_period(start_dt, end_dt,
         out_arr[0, :] = np.mean(all_rewards[:clip_at, 1].reshape((n_days, n_dt_per_day)), axis=1)  # Energy
         out_arr[1, :] = np.mean(d_unscaled[:clip_at, 0].reshape((n_days, n_dt_per_day)), axis=1)  # Out. temp.
         out_arr[2, :] = np.mean(d_unscaled[:clip_at, 4].reshape((n_days, n_dt_per_day)), axis=1)  # Room temp.
+
+        out_full = np.empty((3, clip_at), dtype=np.float32)
+        out_full[0] = all_rewards[:clip_at, 1]
+        out_full[1] = d_unscaled[:clip_at, 0]
+        out_full[2] = d_unscaled[:clip_at, 4]
+
+        if metrics_eval_list is not None:
+            n_met = len(metrics_eval_list)
+
+            met_eval = np.empty((3, n_met), dtype=np.float32)
+            for ct_m, m in enumerate(metrics_eval_list):
+                for k in range(3):
+                    met_eval[k, ct_m] = m(out_full[k])
+            return out_arr, met_eval
+
         return out_arr
 
 
@@ -568,12 +584,27 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
                                   exp_file_name="Valve_Fast_Toggle",
                                   overwrite=overwrite)
 
+    met_names = [
+        "Min",
+        "Max",
+        "Mean",
+        "Total",
+    ]
+    met_list = [
+        np.min,
+        np.max,
+        np.mean,
+        np.sum,
+    ]
+
     # Define common kwargs
     kws = {'verbose': verbose,
            'alpha': alpha,
            'temp_bounds': temp_bounds,
            'put_on_ol': put_on_ol,
-           'overwrite': overwrite}
+           'overwrite': overwrite,
+           'metrics_eval_list': met_list,
+           }
 
     # Test data
     if not put_on_ol:
@@ -584,12 +615,12 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
     # DDPG experiment
     start_dt, end_dt = datetime(2020, 2, 5, 12, 0, 0), datetime(2020, 2, 10, 12, 0, 0)
     name = "DDPG_Exp_22_26"
-    ddpg_res = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="DDPG", **kws)
+    ddpg_res, ddpg_met = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="DDPG", **kws)
 
     # RBC experiment
     start_dt, end_dt = datetime(2020, 2, 19, 12, 0, 0), datetime(2020, 2, 24, 12, 0, 0)
     name = "RBC_Exp_22_5"
-    rbc_res = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="Rule-Based", **kws)
+    rbc_res, rbc_met = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="Rule-Based", **kws)
 
     name_list = ["DDPG", "RBC"]
     series_list = [
@@ -599,7 +630,9 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
     ]
     make_experiment_table([ddpg_res, rbc_res], name_list, series_list, f_name="DDPG_RBC",
                           caption="Comparison of DDPG with Rule-Based controller (RBC)",
-                          lab="com_ddpg_rbc")
+                          lab="com_ddpg_rbc",
+                          metric_eval=[ddpg_met, rbc_met],
+                          metrics_names=met_names)
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
@@ -619,6 +652,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     with ProgWrap(f"Plotting experiments...", verbose > 0):
         with change_dir_name("Experiments"):
             analyze_experiments(put_on_ol=not debug, room_nr=41, verbose=next_verb)
+
+    return
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):

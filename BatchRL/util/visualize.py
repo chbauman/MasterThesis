@@ -1615,23 +1615,30 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
 def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
                           f_name: str,
                           caption: str = "Test",
-                          lab: str = "exp_tab"):
+                          lab: str = "exp_tab",
+                          metric_eval: Any = None,
+                          metrics_names: Any = None):
+
     assert len(name_list) == len(arr_list) > 0
     first_arr = arr_list[0]
     n_days = first_arr.shape[1]
     assert first_arr.shape[0] == len(series_list)
+    n_metrics = len(metrics_names) if metrics_names is not None else 0
+    n_columns = n_days + n_metrics
 
     init_str = "\\begin{table}[ht]\n"
     init_str += "\\centering\n"
 
     day_w = 0.33
     other_w = (0.8 - day_w)
-    s = "|".join([f"p{{{day_w / n_days}\\textwidth}}"] * n_days)
+    s = "|".join([f"p{{{day_w / n_columns}\\textwidth}}"] * n_columns)
     init_str += f"\\begin{{tabular}}{{|p{{{0.2 * other_w}\\textwidth}}|p{{{0.8 * other_w}\\textwidth}}|{s}|}}\n"
 
     # Add titles
-    init_str += "\\hline\n Agent & Data & " + " & ".join([f'Day {i + 1}' for i in range(n_days)]) + "\\\\\n"
-    init_str += f"\\hline\n"
+    init_str += "\\hline\n Agent & Data & " + " & ".join([f'Day {i + 1}' for i in range(n_days)])
+    if metric_eval is not None:
+        init_str += " & " + " & ".join([i for i in metrics_names])
+    init_str += f"\\\\\n\\hline\n"
 
     # Add rows
     for ct, a in enumerate(name_list):
@@ -1641,6 +1648,8 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
                 init_str += a
             init_str += f" & {s} & "
             init_str += " & ".join([f"{v:.2f}" for v in arr_list[ct][ct_s]])
+            if metric_eval is not None:
+                init_str += " & " + " & ".join([f"{metric_eval[ct][ct_s, i]:.2f}" for i in range(n_metrics)])
             init_str += "\\\\\n"
 
     # Remaining part
