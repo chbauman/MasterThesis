@@ -45,7 +45,7 @@ from util.util import EULER, ProgWrap, prog_verb, str2bool, extract_args, DEFAUL
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell, cast_to_subclass, \
     str_to_np_dt, fix_seed
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
-    plot_heat_cool_rew_det, change_dir_name, plot_env_evaluation, make_experiment_table
+    plot_heat_cool_rew_det, change_dir_name, plot_env_evaluation, make_experiment_table, LONG_FIG_SIZE
 
 # Model performance evaluation
 N_PERFORMANCE_STEPS = (1, 4, 12, 24, 48)
@@ -760,7 +760,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                 ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.6), int(n_tot * 0.66))
                 plot_dataset(ds_heat_rel, show=False,
                              title_and_ylab=["Cooling water temperatures", "Temperature [°C]"],
-                             save_name=s_name)
+                             save_name=s_name, fig_size=LONG_FIG_SIZE)
 
         # Constant cooling
         with ProgWrap(f"Plotting cooling period...", verbose > 0):
@@ -774,10 +774,10 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                 ds_heat = ds_old[4]
                 ds_heat.descriptions[0] = "Valve state"
                 n_tot = ds_heat.data.shape[0]
-                ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.55), int(n_tot * 0.65))
+                ds_heat_rel = ds_heat.slice_time(int(n_tot * 0.55), int(n_tot * 0.75))
                 plot_dataset(ds_heat_rel, show=False,
                              title_and_ylab=[f"Cooling room {room_nr}", "Valve state"],
-                             save_name=s_name)
+                             save_name=s_name, fig_size=LONG_FIG_SIZE)
 
     # Room temperature model
     with change_dir_name("RoomTempModel"):

@@ -1630,7 +1630,7 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
 
     # Save
     plt.legend(loc=7)
-    save_figure(save_name)
+    save_figure(save_name, size=LONG_FIG_SIZE)
 
 
 def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
