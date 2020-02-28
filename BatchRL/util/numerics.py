@@ -149,7 +149,7 @@ class MAE(ErrMetric):
 
 class MaxAbsEer(ErrMetric):
     """Maximum Absolute Error error metric."""
-    name = "Max. Abs. Err."
+    name = "Max. abs. err."
     long_name = "Maximum Absolute Error"
     err_fun = max_abs_err
 

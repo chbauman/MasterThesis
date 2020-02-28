@@ -15,7 +15,8 @@ from ml.time_series import AR_Model
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, \
     save_performance_extended, get_metrics_eval_save_name_list, ErrMetric, MSE, find_inds
 from util.util import create_dir, mins_to_str, Arr, tot_size, yeet, DEFAULT_TRAIN_SET, DEFAULT_EVAL_SET
-from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one
+from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one, \
+    LONG_FIG_SIZE
 
 #: Plot title definition
 CONT_TITLE: str = "One week continuous predictions"
@@ -520,7 +521,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
         # Define title
         title = _get_title(const_steps, self.data.dt)
-        title = None
+        title = ""
 
         # Setup base name
         if base is None:
@@ -545,12 +546,13 @@ class BaseDynamicsModel(KerasBase, ABC):
                 plot_dataset(ds,
                              show=False,
                              title_and_ylab=t,
-                             save_name=cn)
+                             save_name=cn,
+                             fig_size=LONG_FIG_SIZE)
         else:
             tot_save_name, _ = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
             plot_visual_all_in_one(all_plt_dat, tot_save_name, add_errors,
                                    series_mask=series_mask,
-                                   fig_size=(24, 7))
+                                   fig_size=LONG_FIG_SIZE)
 
     def _get_plt_or_ol_path(self, full_b_name: str, put_on_ol: bool = False):
         if put_on_ol:

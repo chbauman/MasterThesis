@@ -37,6 +37,8 @@ mpl.rcParams['ps.fonttype'] = 42
 register_matplotlib_converters()
 
 DEFAULT_FONT_SIZE: int = 18
+LONG_FIG_SIZE = (18, 6)
+
 font = {'family': 'serif',
         # 'weight': 'bold',
         'size': DEFAULT_FONT_SIZE}
@@ -506,8 +508,10 @@ def plot_all(all_data, m, use_time=True, show=True, title_and_ylab=None, scale_b
 
 
 def plot_dataset(dataset, show: bool = True,
-                 title_and_ylab=None, save_name: str = None,
-                 new_plot: bool = True) -> None:
+                 title_and_ylab=None,
+                 save_name: str = None,
+                 new_plot: bool = True,
+                 fig_size: Tuple[int, int] = None) -> None:
     """Plots the unscaled series in a dataset.
 
     Args:
@@ -538,7 +542,7 @@ def plot_dataset(dataset, show: bool = True,
     fig.autofmt_xdate()
 
     if save_name is not None:
-        save_figure(save_name, show)
+        save_figure(save_name, show, size=fig_size)
 
 
 def scatter_plot(x, y, *,
@@ -571,7 +575,7 @@ def scatter_plot(x, y, *,
         min_x = np.min(x_curr)
         x = np.linspace(min_x, max_x, 5)
         y = fit_linear_1d(x_curr, y_curr, x)
-        plt.plot(x, y, label='Linear Fit')
+        plt.plot(x, y, label='Linear fit')
 
     if custom_line:
         # Add a custom line to plot
@@ -725,7 +729,7 @@ def plot_residuals_acf(residuals: np.ndarray,
 
     # Save or show
     if name is not None:
-        save_figure(name, False)
+        save_figure(name, False, size=LONG_FIG_SIZE)
     else:
         plt.show()
 
@@ -1480,13 +1484,11 @@ def plot_performance_graph(model_list: List, parts: List[str],
             ax1 = plt.subplot(subplot_ind, sharex=ax1, sharey=ax1 if share_y else None)
 
             # Set ticks
-            tick_label = [mins_to_str(dt * int(i)) + f"\n{int(i)} Steps" for i in inds]
+            tick_label = [mins_to_str(dt * int(i)) + f"\n{int(i)} Step{'s' if i > 1 else ''}" for i in inds]
             if ct_m != len(metric_list) - 1:
                 tick_label = ["" for _ in inds]
             if not last_met:
                 plt.setp(ax1.get_xticklabels(), visible=False)
-            else:
-                plt.setp(ax1.get_xticklabels(), fontsize=12)
             plt.xticks(inds, tick_label)
             plt.ylabel(m.name)
 
