@@ -11,7 +11,7 @@ from data_processing.dataset import Dataset
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import fit_linear_bf_1d, npf32, trf_mean_and_std
 from util.util import print_if_verb, yeet, Num
-from util.visualize import scatter_plot, OVERLEAF_IMG_DIR, basic_plot
+from util.visualize import scatter_plot, OVERLEAF_IMG_DIR, basic_plot, LONG_FIG_SIZE
 
 
 def clean_battery_dataset(ds: Dataset) -> None:
@@ -83,6 +83,8 @@ class BatteryModel(BaseDynamicsModel):
     init_data: Tuple[np.ndarray, ...]
     nan_mask: np.ndarray
     exp_mask: np.ndarray
+
+    _scatter_plot_size = LONG_FIG_SIZE
 
     def __init__(self, dataset: Dataset, base_ind: int = None):
         """Initializes the battery model with the specified dataset.
@@ -221,8 +223,8 @@ class BatteryModel(BaseDynamicsModel):
 
     @staticmethod
     def _get_labs(set_title: bool = False):
-        return {'title': 'Battery Model' if set_title else None,
-                'xlab': 'Active Power [kW]',
+        return {'title': 'Battery model' if set_title else None,
+                'xlab': 'Active power [kW]',
                 'ylab': r'$\Delta$ SoC [%]'}
 
     def plot_all_data(self, put_on_ol: bool = False,
@@ -245,7 +247,8 @@ class BatteryModel(BaseDynamicsModel):
                          m_and_std_x=scale[1],
                          m_and_std_y=scale[0],
                          add_line=True,
-                         save_name=before_plt_path)
+                         save_name=before_plt_path,
+                         fig_size=self._scatter_plot_size)
 
     def analyze_bat_model(self, put_on_ol: bool = False,
                           overwrite: bool = False) -> None:
@@ -261,8 +264,8 @@ class BatteryModel(BaseDynamicsModel):
         scale[0, 0] = 0.0
 
         # Define plot labels
-        labs = {'title': 'Battery Model',
-                'xlab': 'Active Power [kW]',
+        labs = {'title': '',
+                'xlab': 'Active power [kW]',
                 'ylab': r'$\Delta$ SoC [%]'}
 
         # Plot residuals vs. SoC
@@ -270,7 +273,7 @@ class BatteryModel(BaseDynamicsModel):
         res_time_plt_path = self._get_plot_name("ResVsTime", put_on_ol)
         if not os.path.isfile(res_plt_path + ".pdf") or overwrite or \
                 not os.path.isfile(res_time_plt_path + ".pdf"):
-            labs_res = {"title": "Residual plot", "xlab": "State of charge [%]",
+            labs_res = {"title": "", "xlab": "State of charge [%]",
                         "ylab": r"Residuals ($\Delta$ SoC [%])"}
             p_orig, _, soc_orig = self.init_data
             res = soc_orig[:-1] + self._eval_at(p_orig[:-1]) - soc_orig[1:]
@@ -285,12 +288,14 @@ class BatteryModel(BaseDynamicsModel):
                          m_and_std_x=d.scaling[self.in_inds[0]],
                          m_and_std_y=scale[0],
                          add_line=True,
-                         save_name=res_plt_path)
+                         save_name=res_plt_path,
+                         fig_size=self._scatter_plot_size)
 
             # Plot residuals vs. time
-            time_labs = ("Time", "Residuals")
+            time_labs = ("Timestep", "Residuals")
             basic_plot(None, filtered_res, res_time_plt_path,
-                       time_labs)
+                       time_labs,
+                       fig_size=self._scatter_plot_size)
 
         # Check if plot already exists
         after_plt_path = self._get_plot_name("Cleaned", put_on_ol)
@@ -308,5 +313,6 @@ class BatteryModel(BaseDynamicsModel):
                      m_and_std_x=scale[1],
                      m_and_std_y=scale[0],
                      custom_line=[x_pw_line, y_pw_line],
-                     custom_label='PW Linear Fit',
-                     save_name=after_plt_path)
+                     custom_label='Piece-wise linear fit',
+                     save_name=after_plt_path,
+                     fig_size=self._scatter_plot_size)

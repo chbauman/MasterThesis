@@ -229,7 +229,8 @@ def _plot_helper(x, y, m_col='blue', label: str = None,
 
 def basic_plot(x, y, save_name: str,
                xy_lab: Tuple[str, str] = (None, None),
-               title: str = None):
+               title: str = None,
+               fig_size=None):
     """Simple plot function that plots one data series."""
 
     if x is None:
@@ -243,7 +244,7 @@ def basic_plot(x, y, save_name: str,
         plt.title(title)
 
     # Save
-    save_figure(save_name)
+    save_figure(save_name, size=fig_size)
 
 
 def plot_time_series(x, y, m: Dict, show: bool = True,
@@ -554,8 +555,23 @@ def scatter_plot(x, y, *,
                  add_line=False,
                  custom_line=None,
                  custom_label=None,
-                 save_name=None):
+                 save_name=None,
+                 fig_size=None) -> None:
     """Scatter Plot.
+
+    Args:
+        x: x-coordinates
+        y: y-coordinates
+        show:
+        lab_dict:
+        lab:
+        m_and_std_x:
+        m_and_std_y:
+        add_line:
+        custom_line:
+        custom_label:
+        save_name:
+        fig_size:
     """
 
     plt.subplots()
@@ -600,7 +616,7 @@ def scatter_plot(x, y, *,
     # Show or save
     if show:
         plt.show()
-    save_figure(save_name, show)
+    save_figure(save_name, show, size=fig_size)
 
 
 def plot_train_history(hist, name: str = None, val: bool = True) -> None:

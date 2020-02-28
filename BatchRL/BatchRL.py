@@ -798,8 +798,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                    scale_over_series=False)
 
     with ProgWrap(f"Creating latex table...", verbose > 0):
-        mod_names = ["Room Temperature Model",
-                     "Weather Model"]
+        mod_names = ["Room temperature model",
+                     "Weather model"]
         make_latex_hop_table(comb_models, mod_names=mod_names,
                              f_name="HopPars_EvalVal",
                              caption="Test", lab=f"val_{room_nr}")
