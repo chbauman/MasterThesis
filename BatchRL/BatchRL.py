@@ -610,7 +610,7 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
     if not put_on_ol:
         start_dt = datetime(2020, 2, 9, 12, 3, 12)
         end_dt = datetime(2020, 2, 11, 12, 6, 45)
-        analyze_heating_period(start_dt, end_dt, room_nr, **kws)
+        # analyze_heating_period(start_dt, end_dt, room_nr, **kws)
 
     # DDPG experiment
     start_dt, end_dt = datetime(2020, 2, 5, 12, 0, 0), datetime(2020, 2, 10, 12, 0, 0)
@@ -652,8 +652,6 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     with ProgWrap(f"Plotting experiments...", verbose > 0):
         with change_dir_name("Experiments"):
             analyze_experiments(put_on_ol=not debug, room_nr=41, verbose=next_verb)
-
-    return
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):

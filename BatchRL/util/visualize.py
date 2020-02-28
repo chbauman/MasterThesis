@@ -928,10 +928,10 @@ def plot_env_evaluation(actions: np.ndarray,
 
     _full_setup_axis(rew_axs[:-1], reward_descs[:-1], "Reward")
 
-    c_title = "Control Inputs"
-    _full_setup_axis(con_axs, control_descs, "Original " + c_title if plot_extra else c_title)
+    c_title = "Control inputs"
+    _full_setup_axis(con_axs, control_descs, "Original " + c_title.lower() if plot_extra else c_title)
     if plot_extra:
-        _full_setup_axis(con_fb_axs, control_descs, "Constrained " + c_title)
+        _full_setup_axis(con_fb_axs, control_descs, "Constrained " + c_title.lower())
     _full_setup_axis(state_axs, state_descs, "States")
     for ct, m in enumerate(series_merging_list):
         _full_setup_axis([state_mrg_axs[ct]], [m[1]], "Exogenous states" if ex_ext else "")

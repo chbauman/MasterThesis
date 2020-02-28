@@ -978,7 +978,7 @@ def compute_DFAB_energy_usage(show_plots=True):
                         m_room,
                         use_time=True,
                         show=False,
-                        title_and_ylab=['Energy Consumption', 'Energy'],
+                        title_and_ylab=['Energy consumption', 'Energy'],
                         save_name=room_energy_plot_path)
             plot_single(room_sum_valves,
                         m_room,
@@ -1025,7 +1025,7 @@ def analyze_room_energy_consumption():
     m = [{'description': ds.descriptions[relevant_rooms][k], 'dt': n_mins} for k in range(d)]
     f_name = os.path.join(preprocess_plot_path, "DFAB")
     f_name = os.path.join(f_name, "energy_comparison")
-    plot_all(dat, m, use_time=False, show=False, title_and_ylab=["Room Energy Consumption", "Energy over one day"],
+    plot_all(dat, m, use_time=False, show=False, title_and_ylab=["Room energy consumption", "Energy over one day"],
              save_name=f_name)
 
 
