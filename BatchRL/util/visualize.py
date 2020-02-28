@@ -1223,8 +1223,10 @@ def plot_reward_details(labels: Sequence[str],
         auto_label(r)
 
     # Set layout and save
-    fig.tight_layout()
-    save_figure(save_name=path_name, size=(24, 9))
+    # fig.tight_layout()
+    # s = ((1.5 - n_rewards / 5) * 24 * n_rewards / 5, 9 * n_rewards / 5)
+    s = (24, 9)
+    save_figure(save_name=path_name, size=s)
 
 
 def _load_all_model_data(model_list: List,
@@ -1402,7 +1404,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
                            fit_data: str = DEFAULT_TRAIN_SET,
                            titles: List = None,
                            plot_folder: str = None,
-                           fig_size: Tuple[int, int] = None,
+                           fig_size: Tuple[float, float] = None,
                            set_title: bool = True) -> None:
     """Plots the evaluated performance for multiple models.
 
@@ -1428,6 +1430,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
         titles: List with titles for the plots.
         plot_folder: The folder to put the plot into. Overwrites `put_on_ol`!
         fig_size:
+        set_title:
     """
     metric_names = [m.name for m in metric_list]
 
