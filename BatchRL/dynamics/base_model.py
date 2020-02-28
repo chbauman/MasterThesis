@@ -15,8 +15,8 @@ from ml.time_series import AR_Model
 from util.numerics import add_mean_and_std, rem_mean_and_std, copy_arr_list, get_shape1, npf32, \
     save_performance_extended, get_metrics_eval_save_name_list, ErrMetric, MSE, find_inds
 from util.util import create_dir, mins_to_str, Arr, tot_size, yeet, DEFAULT_TRAIN_SET, DEFAULT_EVAL_SET
-from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one, \
-    LONG_FIG_SIZE
+from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, \
+    OVERLEAF_IMG_DIR, plot_visual_all_in_one, LONG_FIG_SIZE
 
 #: Plot title definition
 CONT_TITLE: str = "One week continuous predictions"
@@ -520,7 +520,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         time_str = mins_to_str(dt * const_steps)
 
         # Define title
-        title = _get_title(const_steps, self.data.dt)
+        # title = _get_title(const_steps, self.data.dt)
         title = ""
 
         # Setup base name
@@ -573,7 +573,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         data_str = self._get_fit_data_set()
         return f"_TS_{data_str}" if data_str != DEFAULT_TRAIN_SET else ""
 
-    def _acf_plot_path(self, i: int = 0, data_str: str = None,
+    def _acf_plot_path(self, i: int = 0,
                        add_ext: bool = True, partial: bool = False):
         """Creates the plot path for the acf plot file."""
         p = "P" if partial else ""
@@ -681,7 +681,6 @@ class BaseDynamicsModel(KerasBase, ABC):
         """Analyzes the multistep prediction performance of the model.
 
         Uses the metrics provided by `metrics`.
-        TODO: Implement scaling to get meaningful error?.
 
         Args:
             n_steps: The list with the timesteps to predict.
