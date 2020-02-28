@@ -18,6 +18,8 @@ from envs.base_dynamics_env import DynEnv, RejSampler
 from util.numerics import trf_mean_and_std, rem_mean_and_std, npf32, check_shape
 from util.util import make_param_ext, Arr, linear_oob_penalty, LOrEl, Num, to_list, yeet, linear_oob
 
+USE_LEFTOVER_REWARD = False
+
 RangeT = Tuple[Num, Num]  #: Range for single state / action series.
 InRangeT = LOrEl[RangeT]  #: The type of action ranges.
 RangeListT = List[RangeT]
@@ -411,7 +413,7 @@ class LowHighProfile(CProf):
     low_start_ind: int
     high_start_ind: int
 
-    def __init__(self, dt: int = 15, high_start: int = 7,
+    def __init__(self, dt: int = 15, high_start: int = 6,
                  low_start: int = 20):
 
         n_ts_per_h = int(60 / dt)
@@ -585,16 +587,18 @@ class BatteryEnv(RLDynEnv):
         action_rescaled = self._to_scaled(action, True)[0]
         curr_pred = self._get_scaled_soc(curr_pred).item()
 
-        return compute_bat_energy(action_rescaled,
-                                  self.dt_h,
-                                  self.n_ts,
-                                  self.n_ts_per_eps,
-                                  curr_pred,
-                                  self.soc_bound,
-                                  self.req_soc,
-                                  self.action_range[0],
-                                  fail_violations=True,
-                                  fail_actions=True)
+        bat_eng = compute_bat_energy(action_rescaled,
+                                     self.dt_h,
+                                     self.n_ts,
+                                     self.n_ts_per_eps,
+                                     curr_pred,
+                                     self.soc_bound,
+                                     self.req_soc,
+                                     self.action_range[0],
+                                     fail_violations=True,
+                                     fail_actions=True)
+
+        return bat_eng
 
     def compute_reward(self, curr_pred: np.ndarray, action: Arr) -> float:
         """Compute the reward for choosing action `action`.
@@ -837,6 +841,18 @@ class RoomBatteryEnv(RLDynEnv):
         if not ev_connected:
             if self._disc_since() > 1:
                 bat_eng = 0
+            if self._disc_since() == 2 and USE_LEFTOVER_REWARD:
+                # Return reward based on too high SoC
+                ps = self.bat_mod.params
+                bat_soc_ind_prep = self.prep_inds[-1]
+                d_soc = self.min_goal_soc_scaled - curr_pred[bat_soc_ind_prep] - ps[0]
+                bat_eng = 0.0
+                if d_soc < 0:
+                    _, bat_ac = self._to_scaled(np.array([0, d_soc / ps[1]]),
+                                                extra_scaling=False,
+                                                to_original=True)
+                    bat_eng = bat_ac
+
         bat_eng *= BAT_SCALING
 
         # Return all parts
