@@ -668,7 +668,7 @@ class BaseDynamicsModel(KerasBase, ABC):
                                             **base_kwargs)
 
             # Plot for continuous predictions
-            self.plot_one_week_analysis(copy_arr_list(dat_copy), 0,
+            self.plot_one_week_analysis(copy_arr_list(dat), 0,
                                         base=base_name,
                                         **base_kwargs)
 
@@ -942,7 +942,7 @@ def compare_models(model_list: List[BaseDynamicsModel],
     m_0 = model_list[0]
     d, n_pred = m_0.data, len(m_0.out_inds)
     for m in model_list:
-        assert m.data == d, "Model data is not compatible!"
+        assert m.data.name == d.name, "Model data is not compatible!"
 
     # Extract data
     dat_1, dat_2, n = d.get_streak(part_spec)

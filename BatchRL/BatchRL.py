@@ -651,7 +651,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     # Generate the experiments plots
     with ProgWrap(f"Plotting experiments...", verbose > 0):
         with change_dir_name("Experiments"):
-            analyze_experiments(put_on_ol=not debug, room_nr=41, verbose=next_verb)
+            analyze_experiments(put_on_ol=not debug, room_nr=41, verbose=next_verb,
+                                overwrite=overwrite)
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
@@ -700,9 +701,9 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                                         date_str=date_str,
                                                         add_battery_data=False)
 
-        ds_bat, rnn_consts_bat = choose_dataset_and_constraints(seq_len=20,
-                                                                date_str=date_str,
-                                                                add_battery_data=True)
+        # ds, rnn_consts = choose_dataset_and_constraints(seq_len=20,
+        #                                                 date_str=date_str,
+        #                                                 add_battery_data=True)
 
     # Weather model
     with ProgWrap(f"Analyzing weather model visually...", verbose > 0):
@@ -711,7 +712,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
             parts = ["val", "test"]
 
             # Define model indices and names
-            model_names = ["RNN", "Linear"]
+            model_names = ["RNN", "Piece-wise linear"]
             n_steps = (0, 24)
 
             # Compare the models for one week continuous and 6h predictions
@@ -744,8 +745,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                     m.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
                                           overwrite=overwrite, metrics=METRICS, parts=parts)
 
-    # Cooling water constant
     with change_dir_name("Data"):
+        # Cooling water constant
         with ProgWrap(f"Plotting cooling water...", verbose > 0):
             ds_old, rnn_consts = choose_dataset_and_constraints(seq_len=20,
                                                                 add_battery_data=False)
@@ -761,8 +762,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                              title_and_ylab=["Cooling water temperatures", "Temperature [°C]"],
                              save_name=s_name)
 
-    # Constant cooling
-    with change_dir_name("Data"):
+        # Constant cooling
         with ProgWrap(f"Plotting cooling period...", verbose > 0):
             room_nr = 43
             ds_old, rnn_consts = choose_dataset_and_constraints(seq_len=20,
@@ -783,6 +783,11 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     with change_dir_name("RoomTempModel"):
         eval_parts = ["val", "test"]
         with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
+            room_mod = get_model("RoomTempFromReduced_RNN", Dataset.copy(ds), rnn_consts,
+                                 train_data=train_data,
+                                 date_str=date_str,
+                                 hop_eval_set="val",
+                                 from_hop=True, fit=True, verbose=False)
             room_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
                                       verbose=prog_verb(verbose) > 0, one_file=True,
                                       save_to_ol=not debug, base_name="Room1W",
@@ -811,7 +816,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
     with change_dir_name("FullRoomModel"):
         with ProgWrap(f"Analyzing full model performance...", verbose > 0):
             full_mod_name = full_models[0]
-            full_mod = get_model(full_mod_name, ds, rnn_consts,
+            full_mod = get_model(full_mod_name, Dataset.copy(ds), rnn_consts,
                                  train_data=train_data,
                                  date_str=date_str,
                                  hop_eval_set="val",
@@ -842,6 +847,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
         with change_dir_name("RoomRL_R43_T22_26"):
             # Combined heating and cooling
+            n_eval_steps = 10000
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=500000,
                             include_battery=False,
@@ -855,7 +861,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                             sample_from="all",
                             train_data="all",
                             temp_bds=temp_bds,
-                            n_eval_steps=1000,
+                            n_eval_steps=n_eval_steps,
                             eval_dict=eval_dict,
                             room_nr=43,
                             alpha=50.0)
@@ -874,7 +880,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                             sample_from="all",
                             train_data="all",
                             temp_bds=(22.5, 22.5),
-                            n_eval_steps=1000,
+                            n_eval_steps=n_eval_steps,
                             eval_dict=eval_dict,
                             room_nr=41,
                             alpha=50.0,
@@ -898,7 +904,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                             sample_from="all",
                             train_data="all",
                             temp_bds=(22.5, 22.5),
-                            n_eval_steps=1000,
+                            n_eval_steps=n_eval_steps,
                             eval_dict=eval_dict,
                             room_nr=41,
                             alpha=50.0,

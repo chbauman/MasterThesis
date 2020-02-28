@@ -279,7 +279,7 @@ def load_room_models(name_list: List[str], *,
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
-        all_mods = {nm: get_model(nm, ds, rnn_consts,
+        all_mods = {nm: get_model(nm, Dataset.copy(ds), rnn_consts,
                                   verbose=next_verb,
                                   date_str=date_str,
                                   room_nr=room_nr,

@@ -1620,13 +1620,13 @@ def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: st
         ax_twin.set_ylim(MIN_TEMP - 2, MAX_TEMP + 2)
         ax_twin.set_ylabel("Temperature [°C]")
         _plot_helper(t_timestamps, t_setpoints, grid=True, dates=True,
-                     m_col=clr_map[n_valves], label=f"Temp. Setpoint", ax=ax_twin)
+                     m_col=clr_map[n_valves], label=f"Temp. setpoint", ax=ax_twin)
 
         # Plot feedback temperature setpoints
         if t_setpoints_meas is not None:
             _plot_helper(timestamps, t_setpoints_meas, grid=True, dates=True,
                          m_col=clr_map[n_valves + 1],
-                         label=f"Temp. Setpoint Feedback", ax=ax_twin)
+                         label=f"Temp. setpoint feedback", ax=ax_twin)
 
     # Save
     plt.legend(loc=7)
