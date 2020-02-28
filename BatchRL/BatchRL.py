@@ -712,7 +712,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
             parts = ["val", "test"]
 
             # Define model indices and names
-            model_names = ["RNN", "Piece-wise linear"]
+            model_names = ["RNN", "PW linear"]
             n_steps = (0, 24)
 
             # Compare the models for one week continuous and 6h predictions
@@ -735,7 +735,9 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                        remove_units=False, put_on_ol=not debug,
                                        compare_models=True, overwrite=overwrite,
                                        fit_data=train_data,
-                                       scale_over_series=True)
+                                       scale_over_series=True,
+                                       fig_size=(18, 9),
+                                       set_title=False)
             except OSError as e:
                 if verbose:
                     print(f"{e}")
@@ -781,6 +783,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
     # Room temperature model
     with change_dir_name("RoomTempModel"):
+        room_eval_plot_size = (18, 7.5)
         eval_parts = ["val", "test"]
         with ProgWrap(f"Analyzing room temperature model visually...", verbose > 0):
             room_mod = get_model("RoomTempFromReduced_RNN", Dataset.copy(ds), rnn_consts,
@@ -800,7 +803,9 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                    remove_units=False, put_on_ol=not debug,
                                    compare_models=False, overwrite=overwrite,
                                    fit_data=train_data,
-                                   scale_over_series=False)
+                                   scale_over_series=False,
+                                   fig_size=room_eval_plot_size,
+                                   set_title=False)
 
     with ProgWrap(f"Creating latex table...", verbose > 0):
         mod_names = ["Room temperature model",
@@ -835,7 +840,9 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                    remove_units=False,
                                    fit_data=train_data,
                                    overwrite=overwrite,
-                                   put_on_ol=True)
+                                   put_on_ol=True,
+                                   fig_size=room_eval_plot_size,
+                                   set_title=False)
 
     # DDPG Performance Evaluation
     with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):

@@ -1401,7 +1401,9 @@ def plot_performance_graph(model_list: List, parts: List[str],
                            scale_over_series: bool = False,
                            fit_data: str = DEFAULT_TRAIN_SET,
                            titles: List = None,
-                           plot_folder: str = None) -> None:
+                           plot_folder: str = None,
+                           fig_size: Tuple[int, int] = None,
+                           set_title: bool = True) -> None:
     """Plots the evaluated performance for multiple models.
 
     `series_mask` can be used to select subset of series.
@@ -1425,6 +1427,7 @@ def plot_performance_graph(model_list: List, parts: List[str],
         fit_data: The portion of the data the models were fit on.
         titles: List with titles for the plots.
         plot_folder: The folder to put the plot into. Overwrites `put_on_ol`!
+        fig_size:
     """
     metric_names = [m.name for m in metric_list]
 
@@ -1530,13 +1533,14 @@ def plot_performance_graph(model_list: List, parts: List[str],
             if ct_m == 0 or scale_back:
                 if ct_m == 0:
                     t = titles[model_ind] if titles is not None else m_name
-                    plt.title(t)
+                    if set_title:
+                        plt.title(t)
                 plt.legend()
             # if ct_m == len(metric_names) - 1:
             #     plt.xlabel(f"Steps [{mins_to_str(dt)}]")
 
         # Construct the path of the plot
-        save_figure(plot_path)
+        save_figure(plot_path, size=fig_size)
 
 
 def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str,
