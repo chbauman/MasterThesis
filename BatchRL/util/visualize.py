@@ -37,7 +37,7 @@ mpl.rcParams['ps.fonttype'] = 42
 register_matplotlib_converters()
 
 DEFAULT_FONT_SIZE: int = 18
-LONG_FIG_SIZE = (18, 6)
+LONG_FIG_SIZE = (12, 4)
 
 font = {'family': 'serif',
         # 'weight': 'bold',
