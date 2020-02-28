@@ -171,6 +171,7 @@ def save_figure(save_name, show: bool = False,
         # Set figure size
         fig = plt.gcf()
         sz = size if size is not None else (16, 9)
+        print(f"Size: {sz}")
         fig.set_size_inches(*sz)
 
         # Save and clear
@@ -715,9 +716,9 @@ def plot_residuals_acf(residuals: np.ndarray,
     plot_fun(residuals, lags=lags)
 
     # Set title and labels
-    title = "Autocorrelation of Residuals"
+    title = "Autocorrelation of residuals"
     if partial:
-        title = "Partial " + title
+        title = "Partial " + title.lower()
     plt.title(title)
     plt.ylabel("Correlation")
     plt.xlabel("Lag")
@@ -1522,7 +1523,8 @@ def plot_performance_graph(model_list: List, parts: List[str],
 
 def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str,
                            add_errors: bool = False,
-                           series_mask: List[int] = None) -> None:
+                           series_mask: List[int] = None,
+                           fig_size: Tuple[int, int] = None) -> None:
     """Stacks multiple dataset plots on top of each other.
 
     Args:
@@ -1530,6 +1532,7 @@ def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str,
         save_name: The path name of the generated plot.
         add_errors: Whether to add errors in a box.
         series_mask: Used to select subset of series to plot.
+        fig_size:
     """
     if series_mask is not None:
         assert max(series_mask) < len(all_plt_dat) and min(series_mask) >= 0, "Fuck"
@@ -1563,7 +1566,7 @@ def plot_visual_all_in_one(all_plt_dat: List[Tuple], save_name: str,
             props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
             plt.text(0.05, 0.95, text_str, transform=ax1.transAxes, fontsize=14,
                      verticalalignment='top', bbox=props)
-    save_figure(save_name)
+    save_figure(save_name, size=fig_size)
 
 
 def plot_valve_opening(timestamps: np.ndarray, valves: np.ndarray, save_name: str,

@@ -18,7 +18,7 @@ from util.util import create_dir, mins_to_str, Arr, tot_size, yeet, DEFAULT_TRAI
 from util.visualize import plot_dataset, model_plot_path, plot_residuals_acf, OVERLEAF_IMG_DIR, plot_visual_all_in_one
 
 #: Plot title definition
-CONT_TITLE: str = "1 Week Continuous Predictions"
+CONT_TITLE: str = "One week continuous predictions"
 
 
 def check_train_str(train_data: str) -> None:
@@ -29,7 +29,7 @@ def check_train_str(train_data: str) -> None:
 
 def _get_title(n: int, dt: int = 15) -> str:
     """Plot title generating helper function."""
-    return CONT_TITLE if n == 0 else mins_to_str(dt * n) + " Ahead Predictions"
+    return CONT_TITLE if n == 0 else mins_to_str(dt * n) + " ahead predictions"
 
 
 def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
@@ -59,7 +59,7 @@ def get_plot_ds(s, tr: Optional[np.ndarray], d: Dataset, orig_p_ind: np.ndarray,
                           actual_dt,
                           scaling,
                           is_scd,
-                          ['Prediction', 'Ground Truth'])
+                          ['Prediction', 'Ground truth'])
     return analysis_ds
 
 
@@ -520,6 +520,7 @@ class BaseDynamicsModel(KerasBase, ABC):
 
         # Define title
         title = _get_title(const_steps, self.data.dt)
+        title = None
 
         # Setup base name
         if base is None:
@@ -548,7 +549,8 @@ class BaseDynamicsModel(KerasBase, ABC):
         else:
             tot_save_name, _ = self._get_one_week_plot_name(base, ext, 0, put_on_ol)
             plot_visual_all_in_one(all_plt_dat, tot_save_name, add_errors,
-                                   series_mask=series_mask)
+                                   series_mask=series_mask,
+                                   fig_size=(24, 7))
 
     def _get_plt_or_ol_path(self, full_b_name: str, put_on_ol: bool = False):
         if put_on_ol:
@@ -823,7 +825,7 @@ class BaseDynamicsModel(KerasBase, ABC):
             plot_data[:, 4] = np.copy(mean_pred - 2 * std_pred)
 
             desc = d.descriptions[k_orig]
-            title_and_ylab = ['1 Week Predictions', desc]
+            title_and_ylab = ['One week predictions', desc]
             analysis_ds = Dataset(plot_data,
                                   d.dt,
                                   actual_dt,
@@ -956,7 +958,7 @@ def compare_models(model_list: List[BaseDynamicsModel],
 
         # Get data
         data_lst = []
-        m_names = ['Ground Truth']
+        m_names = ['Ground truth']
         for ct, m in enumerate(model_list):
             m_names += [model_list[ct].name if model_names is None else model_names[ct]]
             data_lst += [m.get_predicted_plt_data(dat, name_list=names,
