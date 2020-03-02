@@ -557,8 +557,15 @@ def analyze_heating_period(start_dt, end_dt,
 
             met_eval = np.empty((3, n_met), dtype=np.float32)
             for ct_m, m in enumerate(metrics_eval_list):
-                for k in range(3):
-                    met_eval[k, ct_m] = m(out_full[k])
+                if type(m) is tuple:
+                    met_eval[:, ct_m] = np.nan
+                    for k in m[1]:
+                        met_eval[k, ct_m] = m[0](out_full[k])
+                    pass
+
+                else:
+                    for k in range(3):
+                        met_eval[k, ct_m] = m(out_full[k])
             return out_arr, met_eval
 
         return out_arr
@@ -591,13 +598,24 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
         "Min",
         "Max",
         "Mean",
-        "Total",
+        "MAE 22.0",
+        "MAE 22.5",
     ]
+
+    def mae_t(t_dev: float = 22.5):
+
+        def mae_225(arr, *args, **kwargs) -> float:
+            res = np.mean(np.abs(arr - t_dev), *args, **kwargs)
+            return res.item()
+
+        return mae_225
+
     met_list = [
         np.min,
         np.max,
         np.mean,
-        np.sum,
+        (mae_t(22.0), [2]),
+        (mae_t(22.5), [2]),
     ]
 
     # Define common kwargs
@@ -626,21 +644,34 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
     rbc_res, rbc_met = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="Rule-Based", **kws)
 
     # DDPG experiment 2
-    start_dt, end_dt = datetime(2020, 2, 26, 12, 0, 0), datetime(2020, 3, 2, 12, 0, 0)
+    start_dt, end_dt = datetime(2020, 2, 25, 12, 0, 0), datetime(2020, 3, 1, 12, 0, 0)
     name = "DDPG_Exp_22_5"
     ddpg_2_res, ddpg_2_met = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="DDPG", **kws)
 
     name_list = ["DDPG", "RBC", "DDPG 2"]
     series_list = [
-        f"Energy Consumption [\\si{{${ROOM_ENG_FAC:.4g}}}{{\\watt\\hour}}$]",
+        f"Energy consumption [\\SI{{{ROOM_ENG_FAC:.4g}}}{{\\watt\\hour}}]",
         "Average outside temp. [\\si{\\celsius}]",
         "Average room temp. [\\si{\\celsius}]"
     ]
-    make_experiment_table([ddpg_res, rbc_res, ddpg_2_res], name_list, series_list, f_name="DDPG_RBC",
+    s_list_short = [
+        f"En. cons. [\\SI{{{ROOM_ENG_FAC:.4g}}}{{\\watt\\hour}}]",
+        "Avg. out. temp. [\\si{\\celsius}]",
+        "Avg. room temp. [\\si{\\celsius}]"
+    ]
+    make_experiment_table([ddpg_res, rbc_res, ddpg_2_res], name_list, s_list_short, f_name="DDPG_RBC_no_days",
                           caption="Comparison of DDPG with Rule-Based controller (RBC)",
                           lab="com_ddpg_rbc",
                           metric_eval=[ddpg_met, rbc_met, ddpg_2_met],
                           metrics_names=met_names)
+    make_experiment_table([ddpg_res, rbc_res, ddpg_2_res], name_list, s_list_short, f_name="DDPG_RBC_pres",
+                          caption="Comparison of DDPG with Rule-Based controller (RBC)",
+                          lab="com_ddpg_rbc",
+                          metric_eval=[ddpg_met, rbc_met, ddpg_2_met],
+                          metrics_names=met_names,
+                          tot_width=0.7,
+                          daily_averages=False,
+                          content_only=True)
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,

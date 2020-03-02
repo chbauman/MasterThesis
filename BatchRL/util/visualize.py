@@ -1674,28 +1674,44 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
                           caption: str = "Test",
                           lab: str = "exp_tab",
                           metric_eval: Any = None,
-                          metrics_names: Any = None):
+                          metrics_names: Any = None,
+                          tot_width: float = 0.8,
+                          daily_averages: bool = True,
+                          content_only: bool = False):
 
     assert len(name_list) == len(arr_list) > 0
     first_arr = arr_list[0]
     n_days = first_arr.shape[1]
     assert first_arr.shape[0] == len(series_list)
     n_metrics = len(metrics_names) if metrics_names is not None else 0
+    if not daily_averages:
+        n_days = 0
     n_columns = n_days + n_metrics
+    init_str = ""
 
-    init_str = "\\begin{table}[ht]\n"
-    init_str += "\\centering\n"
+    if not content_only:
+        init_str += "\\begin{table}[ht]\n"
+        init_str += "\\centering\n"
 
-    day_w = 0.33
-    other_w = (0.8 - day_w)
-    s = "|".join([f"p{{{day_w / n_columns}\\textwidth}}"] * n_columns)
-    init_str += f"\\begin{{tabular}}{{|p{{{0.2 * other_w}\\textwidth}}|p{{{0.8 * other_w}\\textwidth}}|{s}|}}\n"
+        day_w = 0.33
+        other_w = (tot_width - day_w)
+        s = "|".join([f"p{{{day_w / n_columns}\\textwidth}}"] * n_columns)
+        init_str += f"\\begin{{tabular}}{{|p{{{(1.0 - tot_width) * other_w}" \
+                    f"\\textwidth}}|p{{{tot_width * other_w}\\textwidth}}|{s}|}}\n"
 
     # Add titles
-    init_str += "\\hline\n Agent & Data & " + " & ".join([f'Day {i + 1}' for i in range(n_days)])
+    init_str += "\\hline\n Agent & Data"
+    if daily_averages:
+        init_str += " & " + " & ".join([f'Day {i + 1}' for i in range(n_days)])
     if metric_eval is not None:
         init_str += " & " + " & ".join([i for i in metrics_names])
     init_str += f"\\\\\n\\hline\n"
+
+    def to_str(f_val):
+        if f_val != f_val:
+            return ""
+        else:
+            return f"{f_val:.2f}"
 
     # Add rows
     for ct, a in enumerate(name_list):
@@ -1703,16 +1719,20 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
         for ct_s, s in enumerate(series_list):
             if ct_s == 0:
                 init_str += a
-            init_str += f" & {s} & "
-            init_str += " & ".join([f"{v:.2f}" for v in arr_list[ct][ct_s]])
+            init_str += f" & {s}"
+            if daily_averages:
+                init_str += " & " + " & ".join([to_str(v) for v in arr_list[ct][ct_s]])
             if metric_eval is not None:
-                init_str += " & " + " & ".join([f"{metric_eval[ct][ct_s, i]:.2f}" for i in range(n_metrics)])
+                init_str += " & " + " & ".join([to_str(metric_eval[ct][ct_s, i]) for i in range(n_metrics)])
             init_str += "\\\\\n"
 
     # Remaining part
-    init_str += "\\hline\n\\end{tabular}\n"
-    init_str += f"\\caption{{{caption}}}\n\\label{{tab:exp_{lab}}}\n"
-    init_str += "\\end{table}\n"
+    init_str += "\\hline\n"
+
+    if not content_only:
+        init_str += "\\end{tabular}\n"
+        init_str += f"\\caption{{{caption}}}\n\\label{{tab:exp_{lab}}}\n"
+        init_str += "\\end{table}\n"
 
     print(init_str)
 
