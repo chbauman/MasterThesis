@@ -180,6 +180,7 @@ def save_figure(save_name, show: bool = False,
         save_format = '.pdf' if vector_format else '.png'
         # save_kwargs = {'bbox_inches': 'tight', 'dpi': 500}
         save_kwargs = {'bbox_inches': 'tight'}
+        fig.tight_layout()
         plt.savefig(save_name + save_format, **save_kwargs)
         plt.close()
 
@@ -1199,32 +1200,48 @@ def plot_reward_details(labels: Sequence[str],
                     label=all_descs[i])
              for i in range(n_rewards)]
 
+    min_rew, max_rew = np.min(mean_rewards), np.max(mean_rewards)
+
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel('Reward')
     ax.set_title(title)
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend()
+    fac = 1.5
+    plt.ylim((min_rew * fac, max_rew * fac))
 
     # Label the rectangles with the values.
     def auto_label(rect_list):
         """Attach a text label above each bar in *rects*, displaying its height."""
         for rect in rect_list:
             height = rect.get_height()
+            pos = height > 0
             ax.annotate(f'{height:.2f}',
                         xy=(rect.get_x() + rect.get_width() / 2, height),
-                        xytext=(0, 3),  # 3 points vertical offset
+                        xytext=(0, 3 if pos else -3),  # 3 points vertical offset
                         textcoords="offset points",
-                        ha='center', va='bottom')
+                        ha='center', va='bottom' if pos else 'top',
+                        fontsize=18 if n_rewards < 4 else 11)
 
     for r in rects:
         auto_label(r)
 
+    # Shrink current axis's height by 10% on the bottom
+    leg_h = 0.3
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * leg_h,
+                     box.width, box.height * (1.0 - leg_h)])
+
+    # Put a legend below current axis
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -leg_h / 2),
+              fancybox=True, shadow=True, ncol=1)
+
     # Set layout and save
     # fig.tight_layout()
     # s = ((1.5 - n_rewards / 5) * 24 * n_rewards / 5, 9 * n_rewards / 5)
-    s = (24, 9)
-    save_figure(save_name=path_name, size=s)
+    s = (11, 5.5)
+    save_figure(save_name=path_name, size=s, auto_fmt_time=False)
 
 
 def _load_all_model_data(model_list: List,

@@ -39,7 +39,7 @@ from envs.dynamics_envs import BatteryEnv, heat_marker, compute_room_rewards, Ra
 from opcua_empa.opcua_util import analyze_valves_experiment, experiment_plot_path
 from opcua_empa.run_opcua import run_rl_control, run_rule_based_control, try_opcua
 from rest.client import check_date_str
-from tests.test_util import cleanup_test_data, TEST_DIR
+from tests.test_util import cleanup_test_data, TEST_DIR, TestPlot
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
 from util.util import EULER, ProgWrap, prog_verb, str2bool, extract_args, DEFAULT_TRAIN_SET, \
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell, cast_to_subclass, \
@@ -64,7 +64,9 @@ def run_integration_tests(verbose: int = 1) -> None:
     """
     # Do all the tests.
     with ProgWrap(f"Running a few tests...", verbose > 0):
-        test_rnn_models()
+        # test_rnn_models()
+        plot_test_case = TestPlot()
+        plot_test_case.test_reward_bar_plot()
 
 
 def test_cleanup(verbose: int = 0) -> None:

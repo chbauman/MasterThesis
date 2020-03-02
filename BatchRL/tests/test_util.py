@@ -658,14 +658,35 @@ class TestPlot(TestCase):
             nb_actions = 1
 
         agents = [ConstActionAgent(Dummy(), 1.0 * i) for i in range(n_ag)]
-        rewards = np.random.normal(2.0, 1.0, (n_ag, n_steps, n_rew))
+        rewards = np.random.normal(0.0, 1.0, (n_ag, n_steps, n_rew))
         test_path = self.get_test_path(f"test_reward_bar_{n_ag}_{n_rew}_{n_steps}")
         lst = [a.get_short_name() for a in agents]
+        if len(lst) == 4 and n_rew == 3:
+            lst = [
+                "Valves Open",
+                "Valves Closed",
+                "Rule-Based",
+                "DDPG",
+            ]
+            descs = ["room energy consumption[75.9 Wh]",
+                     "temperature bound violation [Kh]"]
+        elif len(lst) == 4 and n_rew == 5:
+            lst = [
+                "Open, Charge",
+                "Closed, Discharge",
+                "Rule-Based",
+                "DDPG",
+            ]
+            descs = ["room energy consumption[75.9 Wh]",
+                     "temperature bound violation [Kh]",
+                     "battery energy consumption",
+                     "total price"]
+
         plot_reward_details(lst, rewards, test_path, descs)
 
     def test_reward_bar_plot(self):
-        self.make_bar_plot(3, 4, 5)
-        self.make_bar_plot(6, 2, 10)
+        self.make_bar_plot(4, 3, 5)
+        self.make_bar_plot(4, 5, 10)
         self.make_bar_plot(1, 8, 3)
 
     def test_trf_unit_desc(self):
