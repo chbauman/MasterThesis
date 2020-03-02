@@ -67,6 +67,7 @@ def run_integration_tests(verbose: int = 1) -> None:
         # test_rnn_models()
         plot_test_case = TestPlot()
         plot_test_case.test_reward_bar_plot()
+        plot_test_case.test_plot_env_evaluation()
 
 
 def test_cleanup(verbose: int = 0) -> None:

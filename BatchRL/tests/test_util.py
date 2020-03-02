@@ -661,6 +661,8 @@ class TestPlot(TestCase):
         rewards = np.random.normal(0.0, 1.0, (n_ag, n_steps, n_rew))
         test_path = self.get_test_path(f"test_reward_bar_{n_ag}_{n_rew}_{n_steps}")
         lst = [a.get_short_name() for a in agents]
+
+        # To have more representative cases!
         if len(lst) == 4 and n_rew == 3:
             lst = [
                 "Valves Open",
@@ -699,7 +701,7 @@ class TestPlot(TestCase):
 
         # Variable parameters
         n_tot_series = 7
-        n_agents = 5
+        n_agents = 4
         ep_len = 11
 
         # Fixed parameters (or at least unsave to change)
@@ -736,7 +738,7 @@ class TestPlot(TestCase):
         plot_env_evaluation(actions, states, rewards, MockDataset(), a_names, save_path,
                             extra_actions=extra_actions, title_ext="New Super Title", np_dt_init=np_dt_init)
         plot_env_evaluation(actions, states, rewards, MockDataset(), a_names, save_path + "_2",
-                            series_mask=s_mask, bounds=[(-1, (0.3, 0.6))], series_merging_list=[(w_inds, "Weather")])
+                            series_mask=s_mask, bounds=[(-1, (0.4, 0.4))], series_merging_list=[(w_inds, "Weather")])
 
         with self.assertRaises(AssertionError):
             plot_env_evaluation(actions, states, rewards, MockDataset(), a_names, save_path + "_2",

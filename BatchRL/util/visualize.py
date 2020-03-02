@@ -1015,26 +1015,29 @@ def plot_env_evaluation(actions: np.ndarray,
 
     # Plot bounds
     if bounds is not None:
-        al = 0.2
+        al = 0.13
         for i, bd in bounds:
             low, up = bd
             if low == up:
+                mid = up
                 low -= 0.05
                 up += 0.05
                 al = 0.6
                 dx = x[-1] - x[0]
                 state_axs[i].annotate(f'Comfort setpoint',
-                                      xy=(x[0] + dx / 2, up - 0.05),
-                                      xytext=(0, 3),  # 3 points vertical offset
-                                      bbox={'facecolor': 'white', 'alpha': 0.6,
+                                      xy=(x[0] + dx / 2, mid),
+                                      xytext=(0, 0),  # 3 points vertical offset
+                                      bbox={'facecolor': 'white', 'alpha': 0.2,
                                             'edgecolor': 'none'},
                                       textcoords="offset points",
-                                      ha='center', va='bottom')
-
-            upper = [up for _ in range(episode_len)]
-            lower = [low for _ in range(episode_len)]
-            state_axs[i].fill_between(x, lower, upper, facecolor='green',
-                                      interpolate=True, alpha=al)
+                                      ha='center', va='bottom',
+                                      fontsize=14)
+                state_axs[i].plot([x[0], x[-1]], [mid, mid], "--o", ms=4, lw=4, c=(0.0, 1.0, 0.0, 0.6))
+            else:
+                upper = [up for _ in range(episode_len)]
+                lower = [low for _ in range(episode_len)]
+                state_axs[i].fill_between(x, lower, upper, facecolor='green',
+                                          interpolate=True, alpha=al)
 
     # Plot disconnect time
     if disconnect_data is not None:
@@ -1044,23 +1047,22 @@ def plot_env_evaluation(actions: np.ndarray,
         end_day = np.array(x_array[-1], dtype='datetime64[D]')
         time_passed_init = x_array[0] - init_day
         end_dt = np.timedelta64(ds.dt, 'm')
+        fb_args = {"facecolor": 'black',
+                   'interpolate': True,
+                   'alpha': 1.0,
+                   'zorder': 9999}
         if dt_h_low <= time_passed_init < dt_h_high:
-            print("Fuck yeah 1")
             state_axs[i].fill_between([x_array[0], init_day + dt_h_high - end_dt],
-                                      ran[0], ran[1], facecolor='black',
-                                      interpolate=True, alpha=1.0)
+                                      ran[0], ran[1], **fb_args)
 
         if dt_h_low > time_passed_init > dt_h_low - np.timedelta64(2, 'h'):
             state_axs[i].fill_between([init_day + dt_h_low, init_day + dt_h_high - end_dt],
-                                      ran[0], ran[1], facecolor='black',
-                                      interpolate=True, alpha=1.0)
+                                      ran[0], ran[1], **fb_args)
 
         time_passed_end = x_array[-1] - end_day
         if dt_h_low < time_passed_end <= dt_h_high:
-            print("Fuck yeah")
             state_axs[i].fill_between([end_day + dt_h_low, x_array[-1]],
-                                      ran[0], ran[1], facecolor='black',
-                                      interpolate=True, alpha=1.0)
+                                      ran[0], ran[1], **fb_args)
 
     # Add legends
     con_axs[0].legend(**leg_kwargs)
