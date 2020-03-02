@@ -1698,9 +1698,10 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
         s = "|".join([f"p{{{day_w / n_columns}\\textwidth}}"] * n_columns)
         init_str += f"\\begin{{tabular}}{{|p{{{(1.0 - tot_width) * other_w}" \
                     f"\\textwidth}}|p{{{tot_width * other_w}\\textwidth}}|{s}|}}\n"
+        init_str += "\\hline\n"
 
     # Add titles
-    init_str += "\\hline\n Agent & Data"
+    init_str += "Agent & Data"
     if daily_averages:
         init_str += " & " + " & ".join([f'Day {i + 1}' for i in range(n_days)])
     if metric_eval is not None:

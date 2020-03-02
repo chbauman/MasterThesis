@@ -659,7 +659,7 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
         "Avg. out. temp. [\\si{\\celsius}]",
         "Avg. room temp. [\\si{\\celsius}]"
     ]
-    make_experiment_table([ddpg_res, rbc_res, ddpg_2_res], name_list, s_list_short, f_name="DDPG_RBC_no_days",
+    make_experiment_table([ddpg_res, rbc_res, ddpg_2_res], name_list, s_list_short, f_name="DDPG_RBC",
                           caption="Comparison of DDPG with Rule-Based controller (RBC)",
                           lab="com_ddpg_rbc",
                           metric_eval=[ddpg_met, rbc_met, ddpg_2_met],
