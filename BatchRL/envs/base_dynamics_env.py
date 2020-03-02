@@ -673,9 +673,11 @@ class DynEnv(ABC, gym.Env):
             if verbose > 0:
                 print("Agent evaluation plot already exists!")
             return
-        first_analysis_plot_path = self._construct_plot_name(f"AgentAnalysis_E0", None,
-                                                             agent_list, put_on_ol)
-        if os.path.isfile(first_analysis_plot_path + ".pdf") and not overwrite:
+        p_1 = self._construct_plot_name(f"AgentAnalysis_E0", None,
+                                        agent_list, put_on_ol)
+        p_2 = self._construct_plot_name(f"AgentAnalysis_E0_n", None,
+                                        agent_list, put_on_ol)
+        if (os.path.isfile(p_1 + ".pdf") or os.path.isfile(p_2 + ".pdf")) and not overwrite:
             if visual_eval and not plot_tot_eval:
                 print("Agent time series plot already exists!")
                 return
