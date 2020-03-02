@@ -1051,8 +1051,9 @@ def plot_env_evaluation(actions: np.ndarray,
                    'interpolate': True,
                    'alpha': 1.0,
                    'zorder': 9999}
+        dx_h = (x_array[1] - x_array[0]) / 2
         if dt_h_low <= time_passed_init < dt_h_high:
-            state_axs[i].fill_between([x_array[0], init_day + dt_h_high - end_dt],
+            state_axs[i].fill_between([x_array[0] - dx_h, init_day + dt_h_high - end_dt],
                                       ran[0], ran[1], **fb_args)
 
         if dt_h_low > time_passed_init > dt_h_low - np.timedelta64(2, 'h'):
@@ -1061,7 +1062,7 @@ def plot_env_evaluation(actions: np.ndarray,
 
         time_passed_end = x_array[-1] - end_day
         if dt_h_low < time_passed_end <= dt_h_high:
-            state_axs[i].fill_between([end_day + dt_h_low, x_array[-1]],
+            state_axs[i].fill_between([end_day + dt_h_low, x_array[-1] + dx_h],
                                       ran[0], ran[1], **fb_args)
 
     # Add legends
