@@ -814,7 +814,8 @@ class DynEnv(ABC, gym.Env):
                                     bounds=bounds,
                                     series_merging_list=series_merging_list,
                                     reward_descs=self.reward_descs,
-                                    disconnect_data=disconnect_data)
+                                    disconnect_data=disconnect_data,
+                                    tot_reward_only=True)
 
                 # Plot the rewards for this episode
                 if not plot_tot_reward_cases:

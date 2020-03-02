@@ -866,7 +866,8 @@ def plot_env_evaluation(actions: np.ndarray,
                         bounds: List[Tuple[int, Tuple[Num, Num]]] = None,
                         reward_descs: List[str] = None,
                         disconnect_data: Tuple[int, Tuple[int, int]] = None,
-                        ex_ext: bool = True) -> None:
+                        ex_ext: bool = True,
+                        tot_reward_only: bool = False) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Refactor this shit more!
@@ -892,7 +893,17 @@ def plot_env_evaluation(actions: np.ndarray,
     n_agents, episode_len, n_feats = states.shape
     check_shape(actions, (n_agents, episode_len, -1))
     n_rewards = 1
-    if len(rewards.shape) == 2:
+    if tot_reward_only:
+        if len(rewards.shape) == 3:
+            rewards = rewards[:, :, 0]
+        if len(rewards.shape) == 2:
+            check_shape(rewards, (n_agents, episode_len))
+            rewards = np.expand_dims(rewards, axis=-1)
+        rew_s = rewards.shape
+        assert len(rew_s) == 3 and rew_s[2] == 1, f"Fuck: {rewards.shape}"
+        if reward_descs is not None:
+            reward_descs = ["Total reward"]
+    elif len(rewards.shape) == 2:
         check_shape(rewards, (n_agents, episode_len))
         rewards = np.expand_dims(rewards, axis=-1)
     else:
