@@ -15,6 +15,7 @@ from typing import Dict, Sequence, Tuple, List, Any, Type
 
 import matplotlib as mpl
 import numpy as np
+from matplotlib.dates import DateFormatter
 from mpl_toolkits.axes_grid1 import host_subplot
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
@@ -764,7 +765,8 @@ def _setup_axis(ax, base_title: str, desc: str, title: bool = True):
             ax.set_title(f"{t}")
 
 
-def _full_setup_axis(ax_list: List, desc_list: List, title: str = None):
+def _full_setup_axis(ax_list: List, desc_list: List, title: str = None,
+                     hide: bool = False):
     # Check input
     assert len(ax_list) == len(desc_list), f"Incompatible lists: {ax_list} and {desc_list}!" \
                                            f" with title: {title}."
@@ -775,8 +777,9 @@ def _full_setup_axis(ax_list: List, desc_list: List, title: str = None):
     # Set axes
     for ct, ax in enumerate(ax_list):
         _setup_axis(ax, title, desc_list[ct], title=set_title)
-        ax.get_xaxis().set_visible(False)
-        ax.get_xaxis().set_ticklabels([])
+        if hide:
+            ax.get_xaxis().set_visible(False)
+            ax.get_xaxis().set_ticklabels([])
 
 
 def _get_ds_descs(ds, series_mask=None, series_merging_list=None):
@@ -882,9 +885,6 @@ def plot_env_evaluation(actions: np.ndarray,
         check_shape(series_mask, (-1,))
         assert len(series_mask) < states.shape[2]
 
-    if not show_rewards:
-        raise NotImplementedError("Fuck")
-
     # Check fallback actions
     plot_extra = extra_actions is not None
     use_time = np_dt_init is not None
@@ -912,6 +912,9 @@ def plot_env_evaluation(actions: np.ndarray,
         if reward_descs is not None:
             reward_descs = ["Total reward"] + reward_descs
             assert n_rewards == len(reward_descs), f"Fuck this: {reward_descs}"
+    if not show_rewards:
+        n_rewards = 0
+
     n_feats, series_mask = _handle_merging(n_feats, series_mask, series_merging_list)
     if series_merging_list is None:
         series_merging_list = []
@@ -959,7 +962,9 @@ def plot_env_evaluation(actions: np.ndarray,
                 reward_descs = [f"Rewards {ct}" for ct, r_ax in enumerate(rew_axs)]
         [r_ax.set_title(reward_descs[ct]) for ct, r_ax in enumerate(rew_axs)]
 
-    _full_setup_axis(rew_axs[:-1], reward_descs[:-1], "Reward")
+        _full_setup_axis(rew_axs[:-1], reward_descs[:-1], "Reward", hide=show_rewards)
+    else:
+        _full_setup_axis([rew_axs[-1]], reward_descs[-1:], None, hide=show_rewards)
 
     c_title = "Control inputs"
     _full_setup_axis(con_axs, control_descs, "Original " + c_title.lower() if plot_extra else c_title)
@@ -971,7 +976,9 @@ def plot_env_evaluation(actions: np.ndarray,
 
     # Define legend fontsize
     sz = 12
-    leg_kwargs = {'prop': {'size': sz}}
+    leg_kwargs = {'prop': {'size': sz},
+                  'loc': 1}
+    l_kws_reduced = {'prop': {'size': sz}, }
 
     # Take care of the x-axis
     if use_time:
@@ -992,6 +999,9 @@ def plot_env_evaluation(actions: np.ndarray,
                 _plot_helper(x, curr_dat, m_col=clr_map[j + col_off],
                              label=a_name, ax=ax, steps=steps, **ph_kwargs)
                 if use_time:
+                    if x_array[-1] - x_array[0] < np.timedelta64(13, 'h'):
+                        formatter = DateFormatter("%H:%M")
+                        ax.xaxis.set_major_formatter(formatter)
                     pass
                     # formatter = DateFormatter("%m/%d, %H:%M")
                     # ax.xaxis.set_major_formatter(formatter)
@@ -1002,7 +1012,8 @@ def plot_env_evaluation(actions: np.ndarray,
     if plot_extra:
         _plot_helper_helper(extra_actions, con_fb_axs, agent_names, steps=True)
     _plot_helper_helper(states, state_axs, agent_names, steps=False)
-    _plot_helper_helper(rewards, rew_axs, agent_names, steps=False)
+    if show_rewards:
+        _plot_helper_helper(rewards, rew_axs, agent_names, steps=False)
     for ct, m in enumerate(series_merging_list):
         if len(m) == 2:
             # Add left and right y-label
@@ -1015,7 +1026,14 @@ def plot_env_evaluation(actions: np.ndarray,
                                     [curr_ax], [curr_desc],
                                     steps=False, merged=True, col_off=ct_x)
                 curr_ax.set_ylabel(u)
-                curr_ax.legend(**leg_kwargs, loc=2 - ct_x)
+
+            # See https://github.com/matplotlib/matplotlib/issues/3706
+            legs = [curr_ax.legend(**l_kws_reduced, loc=2 - ct_x)
+                    for ct_x, curr_ax in enumerate(all_axs)]
+            legs[0].set_zorder(999999)
+            legs[0].remove()
+            all_axs[-1].add_artist(legs[0])
+
         else:
             # Series might be scaled badly!
             _, u = split_desc_units(m[2])
@@ -1080,11 +1098,15 @@ def plot_env_evaluation(actions: np.ndarray,
     con_axs[0].legend(**leg_kwargs)
     state_axs[0].legend(**leg_kwargs)
     x_label = "Time" if use_time else f"Timestep [{ds.dt}min]"
-    if show_rewards:
+    if not show_rewards:
+        rew_axs[-1].yaxis.set_visible(False)
+        rew_axs[-1].xaxis.set_visible(True)
+    if True or show_rewards:
+        print(f"Len: {len(state_axs)}")
         rew_axs[-1].set_xlabel(x_label)
         rew_axs[-1].legend(**leg_kwargs)
     else:
-        state_axs[-1].set_xlabel()
+        state_axs[-1].set_xlabel(x_label)
 
     # Super title
     if title_ext is not None:

@@ -33,7 +33,7 @@ from dynamics.base_model import compare_models, check_train_str
 from dynamics.battery_model import BatteryModel, clean_battery_dataset
 from dynamics.load_models import base_rnn_models, full_models, full_models_short_names, get_model, load_room_models, \
     load_room_env, DEFAULT_D_FAC
-from dynamics.recurrent import test_rnn_models, make_latex_hop_table, RNNDynamicModel
+from dynamics.recurrent import make_latex_hop_table, RNNDynamicModel
 from envs.dynamics_envs import BatteryEnv, heat_marker, compute_room_rewards, RangeT, TEMP_BOUNDS, ROOM_ENG_FAC, \
     RoomBatteryEnv
 from opcua_empa.opcua_util import analyze_valves_experiment, experiment_plot_path
@@ -532,6 +532,24 @@ def analyze_heating_period(start_dt, end_dt,
                                 series_merging_list=series_merging,
                                 reward_descs=["Reward"],
                                 ex_ext=False)
+            plot_env_evaluation(actions, states, rewards, full_ds,
+                                [agent_name if agent_name is not None else "Test"],
+                                save_path=save_path + "_no_w_temp",
+                                np_dt_init=str_to_np_dt(full_ds.t_init),
+                                series_merging_list=[([0, 1], "Weather"), ],
+                                series_mask=np.array([0, 1, 4]),
+                                reward_descs=["Reward"],
+                                show_rewards=True,
+                                ex_ext=False)
+            plot_env_evaluation(actions, states, rewards, full_ds,
+                                [agent_name if agent_name is not None else "Test"],
+                                save_path=save_path + "_reduced",
+                                np_dt_init=str_to_np_dt(full_ds.t_init),
+                                series_merging_list=None,
+                                series_mask=np.array([4]),
+                                reward_descs=["Reward"],
+                                show_rewards=False,
+                                ex_ext=False)
         elif verbose:
             print("Plot already exists!")
 
@@ -627,11 +645,11 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
            'metrics_eval_list': met_list,
            }
 
-    # Test data
-    if not put_on_ol:
-        start_dt = datetime(2020, 2, 9, 12, 3, 12)
-        end_dt = datetime(2020, 2, 11, 12, 6, 45)
-        # analyze_heating_period(start_dt, end_dt, room_nr, **kws)
+    # # Test data
+    # if not put_on_ol:
+    #     start_dt = datetime(2020, 2, 9, 12, 3, 12)
+    #     end_dt = datetime(2020, 2, 11, 12, 6, 45)
+    #     analyze_heating_period(start_dt, end_dt, room_nr, **kws)
 
     # DDPG experiment
     start_dt, end_dt = datetime(2020, 2, 5, 12, 0, 0), datetime(2020, 2, 10, 12, 0, 0)
@@ -706,6 +724,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
         with change_dir_name("Experiments"):
             analyze_experiments(put_on_ol=not debug, room_nr=41, verbose=next_verb,
                                 overwrite=overwrite)
+    return
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
