@@ -875,8 +875,6 @@ def plot_env_evaluation(actions: np.ndarray,
 
     TODO: Refactor this shit more!
     TODO: Add grid????
-    TODO: Add ticks without labels for intermediate series!
-    TODO: No reward? (show_rewards=False)
 
     Only for one specific initial condition.
     """
@@ -999,7 +997,7 @@ def plot_env_evaluation(actions: np.ndarray,
                 _plot_helper(x, curr_dat, m_col=clr_map[j + col_off],
                              label=a_name, ax=ax, steps=steps, **ph_kwargs)
                 if use_time:
-                    if x_array[-1] - x_array[0] < np.timedelta64(13, 'h'):
+                    if x_array[-1] - x_array[0] < np.timedelta64(3, 'D'):
                         formatter = DateFormatter("%H:%M")
                         ax.xaxis.set_major_formatter(formatter)
                     pass

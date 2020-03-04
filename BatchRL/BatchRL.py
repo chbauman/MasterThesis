@@ -724,7 +724,6 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
         with change_dir_name("Experiments"):
             analyze_experiments(put_on_ol=not debug, room_nr=41, verbose=next_verb,
                                 overwrite=overwrite)
-    return
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
@@ -765,6 +764,8 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
         with change_dir_name("Battery"):
             run_battery(do_rl=True, overwrite=overwrite,
                         verbose=prog_verb(verbose), put_on_ol=not debug)
+
+    return
 
     # Get data and constraints
     date_str = "2020-01-21"
