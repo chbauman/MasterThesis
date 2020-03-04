@@ -766,7 +766,7 @@ def _setup_axis(ax, base_title: str, desc: str, title: bool = True):
 
 
 def _full_setup_axis(ax_list: List, desc_list: List, title: str = None,
-                     hide: bool = False):
+                     hide: bool = True, hide_last: bool = True):
     # Check input
     assert len(ax_list) == len(desc_list), f"Incompatible lists: {ax_list} and {desc_list}!" \
                                            f" with title: {title}."
@@ -777,9 +777,11 @@ def _full_setup_axis(ax_list: List, desc_list: List, title: str = None,
     # Set axes
     for ct, ax in enumerate(ax_list):
         _setup_axis(ax, title, desc_list[ct], title=set_title)
-        if hide:
-            ax.get_xaxis().set_visible(False)
-            ax.get_xaxis().set_ticklabels([])
+
+        # if hide:
+        #     if hide_last or ct < len(ax_list) - 1:
+        #         ax.get_xaxis().set_visible(False)
+        #         ax.get_xaxis().set_ticklabels([])
 
 
 def _get_ds_descs(ds, series_mask=None, series_merging_list=None):
@@ -849,6 +851,13 @@ def _extract_states(states, series_mask=None, series_merging_list=None):
     return masked_state, merged_state_list
 
 
+def _remove_tick_label(ax):
+    # labels = [item.get_text() for item in ax.get_xticklabels()]
+    # empty_string_labels = [''] * len(labels)
+    # ax.set_xticklabels(empty_string_labels)
+    [label.set_visible(False) for label in ax.get_xticklabels()]
+
+
 # Type for series merge lists
 MergeListT = List[Tuple[IndT, str]]
 
@@ -868,7 +877,7 @@ def plot_env_evaluation(actions: np.ndarray,
                         series_merging_list: MergeListT = None,
                         bounds: List[Tuple[int, Tuple[Num, Num]]] = None,
                         reward_descs: List[str] = None,
-                        disconnect_data: Tuple[int, Tuple[int, int]] = None,
+                        disconnect_data: Tuple[int, Tuple[int, int], Any] = None,
                         ex_ext: bool = True,
                         tot_reward_only: bool = False) -> None:
     """Plots the evaluation of multiple agents on an environment.
@@ -943,6 +952,7 @@ def plot_env_evaluation(actions: np.ndarray,
     state_mrg_axs = [fig.add_subplot(gs_state_merged[i, :], sharex=rew_ax)
                      for i in range(n_act_plots, n_act_plots + n_merged_series)]
     con_fb_axs = [fig.add_subplot(gs_con_fb[i, :], sharex=rew_ax) for i in range(n_actions, n_act_plots)]
+    ax_list = con_axs + con_fb_axs + state_mrg_axs + state_axs + rew_axs
     assert plot_extra or con_fb_axs == [], "Something is wrong!"
 
     # Find legends
@@ -960,15 +970,13 @@ def plot_env_evaluation(actions: np.ndarray,
                 reward_descs = [f"Rewards {ct}" for ct, r_ax in enumerate(rew_axs)]
         [r_ax.set_title(reward_descs[ct]) for ct, r_ax in enumerate(rew_axs)]
 
-        _full_setup_axis(rew_axs[:-1], reward_descs[:-1], "Reward", hide=show_rewards)
-    else:
-        _full_setup_axis([rew_axs[-1]], reward_descs[-1:], None, hide=show_rewards)
+        _full_setup_axis(rew_axs[:-1], reward_descs[:-1], "Reward", hide=True)
 
     c_title = "Control inputs"
     _full_setup_axis(con_axs, control_descs, "Original " + c_title.lower() if plot_extra else c_title)
     if plot_extra:
         _full_setup_axis(con_fb_axs, control_descs, "Constrained " + c_title.lower())
-    _full_setup_axis(state_axs, state_descs, "States")
+    _full_setup_axis(state_axs, state_descs, "States", hide_last=show_rewards)
     for ct, m in enumerate(series_merging_list):
         _full_setup_axis([state_mrg_axs[ct]], [m[1]], "Exogenous states" if ex_ext else "")
 
@@ -986,7 +994,8 @@ def plot_env_evaluation(actions: np.ndarray,
         x = range(len(rewards[0]))
     x_array = np.array(x)
     eval_5_15h = np.timedelta64(5, 'h') <= x_array[-1] - x_array[0] <= np.timedelta64(15, 'h')
-    auto_fmt = not eval_5_15h
+    eval_4_7d = np.timedelta64(4, 'D') <= x_array[-1] - x_array[0] <= np.timedelta64(7, 'D')
+    auto_fmt = not (eval_5_15h or eval_4_7d)
 
     ph_kwargs = {"dates": use_time}
 
@@ -1102,13 +1111,31 @@ def plot_env_evaluation(actions: np.ndarray,
     x_label = "Time" if use_time else f"Timestep [{ds.dt}min]"
     if not show_rewards:
         rew_axs[-1].yaxis.set_visible(False)
-        rew_axs[-1].xaxis.set_visible(True)
-    if True or show_rewards:
+        # rew_axs[-1].xaxis.set_visible(True)
+    if show_rewards:
         print(f"Len: {len(state_axs)}")
         rew_axs[-1].set_xlabel(x_label)
         rew_axs[-1].legend(**leg_kwargs)
     else:
         state_axs[-1].set_xlabel(x_label)
+
+    # Remove tick labels
+    for a in ax_list:
+        a.grid(b=True)
+    for c_ax in con_axs:
+        _remove_tick_label(c_ax)
+    for c_ax in state_mrg_axs:
+        _remove_tick_label(c_ax)
+    for c_ax in con_fb_axs:
+        _remove_tick_label(c_ax)
+    if show_rewards:
+        for s_ax in state_axs:
+            _remove_tick_label(s_ax)
+        for r_ax in rew_axs[:-1]:
+            _remove_tick_label(r_ax)
+    else:
+        for s_ax in state_axs[:-1]:
+            _remove_tick_label(s_ax)
 
     # Super title
     if title_ext is not None:

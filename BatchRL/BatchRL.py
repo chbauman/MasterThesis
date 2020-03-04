@@ -725,6 +725,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
             analyze_experiments(put_on_ol=not debug, room_nr=41, verbose=next_verb,
                                 overwrite=overwrite)
 
+    return
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
         lst = ["RoomTempFromReduced_RNN",
@@ -925,7 +926,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
         with change_dir_name("RoomRL_R43_T22_26"):
             # Combined heating and cooling
-            n_eval_steps = 1000
+            n_eval_steps = 10000
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=500000,
                             include_battery=False,
