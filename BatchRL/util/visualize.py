@@ -223,7 +223,7 @@ def _plot_helper(x, y, m_col='blue', label: str = None,
         plot_method = ax.step
 
     if grid:
-        plt.grid()
+        plt.grid(b=True)
 
     # Finally plot and return
     return plot_method(x, y, **kwargs)
@@ -1474,6 +1474,97 @@ def _trf_desc_units(curr_desc: str, m: Type[ErrMetric], add_fac: Num = None) -> 
     return f"{base}[{f_add}{trf_unit}]"
 
 
+def plot_p_g_2(model_list: List,
+               parts: List[str],
+               metric_list: Sequence[Type[ErrMetric]],
+               short_mod_names: List = None,
+               remove_units: bool = True,
+               series_mask=None,
+               scale_back: bool = False,
+               compare_models: bool = False,
+               overwrite: bool = True,
+               fit_data: str = DEFAULT_TRAIN_SET,
+               plot_folder: str = None,
+               fig_size: Tuple[float, float] = None,
+               **kwargs):
+    """Similar as the one below."""
+
+    plt_name = "mas_max_error_comp"
+    save_path = os.path.join(plot_folder, plt_name)
+    if os.path.isfile(save_path + ".pdf") and not overwrite:
+        return
+
+    metric_names = [m.name for m in metric_list]
+
+    # Check if models are compatible
+    from dynamics.base_model import check_model_compatibility
+    check_model_compatibility(model_list)
+    if not np.any(model_list[0].data.is_scaled):
+        scale_back = False
+
+    # Prepare the labels
+    series_descs, mod_names, scaling = _get_descs(model_list, remove_units,
+                                                  series_mask, short_mod_names)
+
+    # Load data
+    data_array, inds = _load_all_model_data(model_list,
+                                            parts, metric_names,
+                                            series_mask, fit_data=fit_data)
+    n_models, n_parts, n_series, n_metrics, n_steps = data_array.shape
+
+    # Switch lists
+    if compare_models:
+        parts, mod_names = mod_names, parts
+
+    assert n_models == 1 and n_series == 1 and scale_back
+
+    # Series scaling
+    dt = model_list[0].data.dt
+    ind = model_list[0].p_out_inds
+    if scale_back:
+        for k in range(n_series):
+            for i, m in enumerate(metric_list):
+                dat = data_array[:, :, k, i, :]
+                # Scale the errors
+                if scale_back:
+                    m_and_sd = scaling[ind[k]]
+                    data_array[:, :, k, i, :] = m.scaling_fun(dat, m_and_sd[1])
+
+    s_desc = series_descs[ind[0]]
+    s_desc = s_desc.replace("temperature", "temp.")
+
+    fig = plt.figure()
+    ax = plt.subplot(111)
+
+    met_inds = [1, 2]
+    for m_ct, m_ind in enumerate(met_inds):
+        for p_ind in range(n_parts):
+            dat = data_array[0, p_ind, 0, m_ind, :]
+            ax.plot(inds, dat, joint_styles[p_ind],
+                    c=clr_map[m_ind],
+                    label=f"{parts[p_ind].capitalize()}: {metric_names[m_ind]}")
+
+    tick_label = [mins_to_str(dt * int(i)) +
+                  f"\n{int(i)} Step{'s' if i > 1 else ''}" for i in inds]
+    plt.xticks(inds, tick_label)
+    plt.ylabel(s_desc)
+    ax.tick_params(axis='x', labelsize=14)
+
+    # Shrink current axis by 20%
+    shrink_fac = 0.8
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * shrink_fac, box.height])
+
+    # Put a legend to the right of the current axis
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),
+              fancybox=True, shadow=True)
+    ax.grid(b=True)
+
+    if fig_size is None:
+        fig_size = (14, 3.5)
+    save_figure(save_path, size=fig_size)
+
+
 def plot_performance_graph(model_list: List, parts: List[str],
                            metric_list: Sequence[Type[ErrMetric]],
                            name: str = "Test",
@@ -1733,7 +1824,6 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
                           tot_width: float = 0.8,
                           daily_averages: bool = True,
                           content_only: bool = False):
-
     assert len(name_list) == len(arr_list) > 0
     first_arr = arr_list[0]
     n_days = first_arr.shape[1]

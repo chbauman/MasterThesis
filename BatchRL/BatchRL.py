@@ -45,7 +45,7 @@ from util.util import EULER, ProgWrap, prog_verb, str2bool, extract_args, DEFAUL
     DEFAULT_ROOM_NR, DEFAULT_EVAL_SET, DEFAULT_END_DATE, data_ext, BASE_DIR, execute_powershell, cast_to_subclass, \
     str_to_np_dt, fix_seed
 from util.visualize import plot_performance_table, plot_performance_graph, OVERLEAF_IMG_DIR, plot_dataset, \
-    plot_heat_cool_rew_det, change_dir_name, plot_env_evaluation, make_experiment_table, LONG_FIG_SIZE
+    plot_heat_cool_rew_det, change_dir_name, plot_env_evaluation, make_experiment_table, LONG_FIG_SIZE, plot_p_g_2
 
 # Model performance evaluation
 N_PERFORMANCE_STEPS = (1, 4, 12, 24, 48)
@@ -154,6 +154,15 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
                                        overwrite=overwrite,
                                        titles=[""],
                                        plot_folder=plt_dir)
+                plot_p_g_2([bat_mod], parts, METRICS,
+                           short_mod_names=[curr_name],
+                           scale_back=True, remove_units=False,
+                           put_on_ol=put_on_ol,
+                           fit_data=train_set,
+                           series_mask=series_mask,
+                           overwrite=overwrite,
+                           titles=[""],
+                           plot_folder=plt_dir)
 
     if not do_rl:
         if verbose:
@@ -621,7 +630,6 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
     ]
 
     def mae_t(t_dev: float = 22.5):
-
         def mae_225(arr, *args, **kwargs) -> float:
             res = np.mean(np.abs(arr - t_dev), *args, **kwargs)
             return res.item()
@@ -725,7 +733,6 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
             analyze_experiments(put_on_ol=not debug, room_nr=41, verbose=next_verb,
                                 overwrite=overwrite)
 
-    return
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
         lst = ["RoomTempFromReduced_RNN",
@@ -878,6 +885,15 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                    scale_over_series=False,
                                    fig_size=room_eval_plot_size,
                                    set_title=False)
+            plot_p_g_2([room_mod], parts, METRICS,
+                       short_mod_names=["RoomTemp"],
+                       series_mask=None, scale_back=True,
+                       remove_units=False, put_on_ol=not debug,
+                       compare_models=False, overwrite=overwrite,
+                       fit_data=train_data,
+                       scale_over_series=False,
+                       set_title=False,
+                       plot_folder=OVERLEAF_IMG_DIR)
 
     with ProgWrap(f"Creating latex table...", verbose > 0):
         mod_names = ["Room temperature model",
@@ -915,6 +931,16 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                    put_on_ol=True,
                                    fig_size=room_eval_plot_size,
                                    set_title=False)
+            plot_p_g_2(full_mods, parts, METRICS,
+                       short_mod_names=["TempPredCombModel"],
+                       series_mask=np.array([5]),
+                       scale_back=True,
+                       remove_units=False,
+                       fit_data=train_data,
+                       overwrite=overwrite,
+                       put_on_ol=True,
+                       set_title=False,
+                       plot_folder=OVERLEAF_IMG_DIR)
 
     # DDPG Performance Evaluation
     with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):
