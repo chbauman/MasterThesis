@@ -737,7 +737,8 @@ class DynEnv(ABC, gym.Env):
             plt_fun(names, all_rewards, p_name,
                     self.reward_descs, dt=self.m.data.dt, n_eval_steps=n_steps,
                     title_ext=title_ext, all_states=all_states,
-                    verbose=0, ep_marks=all_marks)
+                    verbose=0, ep_marks=all_marks,
+                    add_base_title=False)
 
         print(f"Mean rewards: {np.mean(all_rewards[:, :, 0], axis=1)}")
 
@@ -827,6 +828,7 @@ class DynEnv(ABC, gym.Env):
                 plot_reward_details(name_list, curr_rew, add_pth,
                                     self.reward_descs, dt=self.m.data.dt,
                                     n_eval_steps=self.n_ts_per_eps,
-                                    title_ext=title_ext)
+                                    title_ext=title_ext,
+                                    add_base_title=False)
 
         return all_rewards

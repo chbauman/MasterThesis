@@ -674,7 +674,7 @@ class RoomBatteryEnv(RLDynEnv):
     m: CompositeModel
     bat_mod: BatteryModel
 
-    reward_descs = list([TEMP_BOUND_PEN, ROOM_ENERGY, BAT_ENERGY])  #: Description of the detailed reward.
+    reward_descs = list([ROOM_ENERGY, TEMP_BOUND_PEN, BAT_ENERGY])  #: Description of the detailed reward.
 
     # Indices specifying series
     inds: np.ndarray = np.array([2, 3, 5, 8], dtype=np.int32)  #: The indices of water temps, room temp and soc
@@ -807,12 +807,12 @@ class RoomBatteryEnv(RLDynEnv):
         zero_ac = np.array([0.0, 0.0])
         heat_ac = self._to_scaled(zero_ac, False)
         d_r = self.detailed_reward(np.ones((n_s,)), heat_ac)
-        assert np.allclose(d_r[1], 0.0), f"Room energy computation incorrect: {d_r[1]}!"
+        assert np.allclose(d_r[0], 0.0), f"Room energy computation incorrect: {d_r[1]}!"
 
         # Check same with scale_action_for_step
         h_ac2 = self.scale_action_for_step(zero_ac)
         d_r = self.detailed_reward(np.ones((n_s,)), h_ac2)
-        assert np.allclose(d_r[1], 0.0), f"Second room energy computation incorrect: {d_r[1]}!"
+        assert np.allclose(d_r[0], 0.0), f"Second room energy computation incorrect: {d_r[1]}!"
 
         if verbose:
             print("Checks passed :)")
@@ -856,7 +856,7 @@ class RoomBatteryEnv(RLDynEnv):
         bat_eng *= BAT_SCALING
 
         # Return all parts
-        all_rew = [temp_pen, room_eng, bat_eng]
+        all_rew = [room_eng, temp_pen, bat_eng]
         if self.p is not None:
             curr_n_ts = self.get_curr_day_n()
             all_rew += [(room_eng + bat_eng) * self.p(curr_n_ts)]
@@ -869,11 +869,11 @@ class RoomBatteryEnv(RLDynEnv):
         """
         det_rew = self.detailed_reward(curr_pred, action)
         if self.p is not None:
-            return -det_rew[-1] - det_rew[0] * self.alpha
+            return -det_rew[-1] - det_rew[1] * self.alpha
 
         # Return minus the energy used minus the temperature penalty.
-        energy = det_rew[1] + det_rew[2]
-        return -energy - det_rew[0] * self.alpha
+        energy = det_rew[0] + det_rew[2]
+        return -energy - det_rew[1] * self.alpha
 
     def scale_action_for_step(self, action: Arr):
         # Clips the fucking actions!

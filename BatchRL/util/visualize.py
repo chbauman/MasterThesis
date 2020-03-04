@@ -985,6 +985,8 @@ def plot_env_evaluation(actions: np.ndarray,
     else:
         x = range(len(rewards[0]))
     x_array = np.array(x)
+    eval_5_15h = np.timedelta64(5, 'h') <= x_array[-1] - x_array[0] <= np.timedelta64(15, 'h')
+    auto_fmt = not eval_5_15h
 
     ph_kwargs = {"dates": use_time}
 
@@ -1050,16 +1052,18 @@ def plot_env_evaluation(actions: np.ndarray,
                 low -= 0.05
                 up += 0.05
                 al = 0.6
-                dx = x[-1] - x[0]
-                state_axs[i].annotate(f'Comfort setpoint',
-                                      xy=(x[0] + dx / 2, mid),
-                                      xytext=(0, 0),  # 3 points vertical offset
-                                      bbox={'facecolor': 'white', 'alpha': 0.2,
-                                            'edgecolor': 'none'},
-                                      textcoords="offset points",
-                                      ha='center', va='bottom',
-                                      fontsize=14)
-                state_axs[i].plot([x[0], x[-1]], [mid, mid], "--o", ms=4, lw=4, c=(0.0, 1.0, 0.0, 0.6))
+                # dx = x[-1] - x[0]
+                # state_axs[i].annotate(f'Comfort setpoint',
+                #                       xy=(x[0] + dx / 2, mid),
+                #                       xytext=(0, 0),  # 3 points vertical offset
+                #                       bbox={'facecolor': 'white', 'alpha': 0.2,
+                #                             'edgecolor': 'none'},
+                #                       textcoords="offset points",
+                #                       ha='center', va='bottom',
+                #                       fontsize=14)
+                state_axs[i].plot([x[0], x[-1]], [mid, mid], "--o",
+                                  ms=4, lw=4, c=(0.0, 1.0, 0.0, 0.6),
+                                  label=f'Comfort setpoint')
             else:
                 upper = [up for _ in range(episode_len)]
                 lower = [low for _ in range(episode_len)]
@@ -1118,7 +1122,7 @@ def plot_env_evaluation(actions: np.ndarray,
     # Save
     s = (16, tot_n_plots * 1.8)
     if save_path is not None:
-        save_figure(save_path, size=s)
+        save_figure(save_path, size=s, auto_fmt_time=auto_fmt)
 
     # Make a plot of the rewards
     if n_rewards == 1:
@@ -1177,6 +1181,7 @@ def plot_reward_details(labels: Sequence[str],
                         sum_reward: bool = False,
                         tol: float = 0.0005,
                         verbose: int = 0,
+                        add_base_title: bool = True,
                         **kwargs) -> None:
     """Creates a bar plot with the different rewards of the different agents.
 
@@ -1192,6 +1197,7 @@ def plot_reward_details(labels: Sequence[str],
         sum_reward: Whether to sum the rewards instead of averaging it.
         tol: Values smaller than `tol` will be set to 0.0 to avoid very small numbers in plot.
         verbose: Verbosity.
+        add_base_title:
     """
 
     if verbose:
@@ -1206,6 +1212,8 @@ def plot_reward_details(labels: Sequence[str],
 
     agg_rew = "Total reward" if sum_reward else "Mean rewards per hour"
     title = f"{agg_rew} for {n_eval_steps} steps. "
+    if not add_base_title:
+        title = ""
     if title_ext is not None:
         title += title_ext
 
