@@ -41,7 +41,7 @@ SOC_GOAL: Num = 60.0  #: Desired SoC at end of episode.
 BAT_ENERGY: str = f"Battery energy consumption [{ROOM_ENG_FAC:.4g} Wh]"
 BAT_ENERGY_HIGH: str = f"Battery energy consumption [kWh]"
 ROOM_ENERGY: str = f"Room energy consumption [{ROOM_ENG_FAC:.4g} Wh]"
-TEMP_BOUND_PEN: str = "Temperature bound violation [Kh]"
+TEMP_BOUND_PEN: str = "Comfort violation [Kh]"
 ENG_COST: str = "Energy costs"
 
 

@@ -649,6 +649,7 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
     ddpg_2_res, ddpg_2_met = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="DDPG", **kws)
 
     name_list = ["DDPG", "RBC", "DDPG 2"]
+    name_list_short = name_list[:2]
     series_list = [
         f"Energy consumption [\\SI{{{ROOM_ENG_FAC:.4g}}}{{\\watt\\hour}}]",
         "Average outside temp. [\\si{\\celsius}]",
@@ -669,6 +670,14 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
                           s_list_short, f_name="DDPG_RBC_days_only",
                           caption="Comparison of DDPG with Rule-Based controller (RBC)",
                           lab="com_ddpg_rbc_days")
+    make_experiment_table([ddpg_res, rbc_res], name_list_short,
+                          s_list_short, f_name="DDPG_RBC_pres_1",
+                          caption="Comparison of DDPG with Rule-Based controller (RBC)",
+                          metric_eval=[ddpg_met, rbc_met],
+                          metrics_names=met_names,
+                          tot_width=0.7,
+                          daily_averages=False,
+                          content_only=True)
     make_experiment_table([ddpg_res, rbc_res, ddpg_2_res], name_list,
                           s_list_short, f_name="DDPG_RBC_pres",
                           caption="Comparison of DDPG with Rule-Based controller (RBC)",

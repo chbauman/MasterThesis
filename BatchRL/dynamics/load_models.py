@@ -162,7 +162,7 @@ def load_room_env(m_name: str,
     Args:
         m_name: Name of the underlying (complete) model.
         verbose: Verbosity.
-        alpha: Temperature bound violation weighting factor.
+        alpha: Comfort violation weighting factor.
         include_battery: See :func:`get_model`.
         date_str: See :func:`get_model`.
         temp_bds: Temperature comfort bounds.
