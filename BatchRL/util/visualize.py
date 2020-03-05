@@ -1975,6 +1975,6 @@ def eval_env_evaluation(all_rewards, all_states, ep_marks,
     if n_heat > 1:
         plot_hist(res[case_ind == 1], plt_base_name + f"_Heat_{n_heat}",
                   x_lab="Temperature deviation [°C]", bin_size=bin_size, tol=tol)
-    if np.sum(case_ind == 1) > 1:
+    if np.sum(case_ind == -1) > 1:
         plot_hist(res[case_ind == -1], plt_base_name + f"_Cool_{n_tot - n_heat}",
                   x_lab="Temperature deviation [°C]", bin_size=bin_size, tol=tol)
