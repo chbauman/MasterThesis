@@ -1891,11 +1891,27 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
             f.write(init_str)
 
 
-def plot_hist(vals):
-    pass
+def plot_hist(vals, save_path: str, fig_size: Any = None, x_lab: str = None) -> None:
+    """Plots a histogram of `vals`.
+
+    Args:
+        vals:
+        save_path:
+        fig_size:
+        x_lab:
+    """
+    max_val = int(np.ceil(np.nanmax(vals)))
+    plt.hist(vals, range(max_val + 1), density=True)
+    plt.grid(True)
+    plt.ylabel(f"Probability")
+    if x_lab is not None:
+        plt.xlabel(x_lab)
+    if fig_size is None:
+        fig_size = (8, 4.5)
+    save_figure(save_path, size=fig_size, auto_fmt_time=False)
 
 
-def eval_env_evaluation(all_rewards, all_states, ep_marks, episode_len: int):
+def eval_env_evaluation(all_rewards, all_states, ep_marks, episode_len: int, plt_dir: str):
 
     print("Evaluating environment quality...")
 
@@ -1927,4 +1943,5 @@ def eval_env_evaluation(all_rewards, all_states, ep_marks, episode_len: int):
             res[k] = np.nan
             print(f"Special case found, mark: {mark}")
 
-    plot_hist(res)
+    p_path = os.path.join(plt_dir, "model_stability")
+    plot_hist(res, p_path, x_lab="Temperature deviation [°C]")

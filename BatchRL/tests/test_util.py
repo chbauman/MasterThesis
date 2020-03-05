@@ -26,7 +26,7 @@ from util.util import rem_first, tot_size, scale_to_range, linear_oob_penalty, m
     dynamic_model_dir, param_dict_to_name, prog_verb, w_temp_str, floor_datetime_to_min, extract_args, fun_to_class, \
     skip_if_no_internet, ProgWrap, linear_oob
 from util.visualize import PLOT_DIR, plot_reward_details, model_plot_path, rl_plot_path, plot_performance_table, \
-    _trf_desc_units, plot_env_evaluation, plot_valve_opening
+    _trf_desc_units, plot_env_evaluation, plot_valve_opening, plot_hist
 
 # Define and create directory for test files.
 TEST_DIR = os.path.join(PLOT_DIR, "Test")  #: Directory for test output.
@@ -696,6 +696,12 @@ class TestPlot(TestCase):
         exp = "Test [(5)^2]"
         out = _trf_desc_units(init_d, MSE)
         self.assertEqual(exp, out)
+
+    def test_hist(self):
+        vals = np.array([np.nan, 0.3, 2.3, 1.2, np.nan, 0.0, 1.1, 5.1, 0.0, 0.0,
+                         np.nan, 0.0, 0.2])
+        pl_path = self.get_test_path(f"test_hist")
+        plot_hist(vals, pl_path)
 
     def test_plot_env_evaluation(self):
 
