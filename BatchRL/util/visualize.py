@@ -1900,7 +1900,8 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
             f.write(init_str)
 
 
-def plot_hist(vals, save_path: str, fig_size: Any = None, x_lab: str = None) -> None:
+def plot_hist(vals, save_path: str, fig_size: Any = None, x_lab: str = None,
+              title: str = None) -> None:
     """Plots a histogram of `vals`.
 
     Args:
@@ -1908,11 +1909,14 @@ def plot_hist(vals, save_path: str, fig_size: Any = None, x_lab: str = None) -> 
         save_path:
         fig_size:
         x_lab:
+        title:
     """
     max_val = int(np.ceil(np.nanmax(vals)))
     plt.hist(vals, range(max_val + 1), density=True)
     plt.grid(True)
     plt.ylabel(f"Probability")
+    if title is not None:
+        plt.title(title)
     if x_lab is not None:
         plt.xlabel(x_lab)
     if fig_size is None:
@@ -1920,7 +1924,7 @@ def plot_hist(vals, save_path: str, fig_size: Any = None, x_lab: str = None) -> 
     save_figure(save_path, size=fig_size, auto_fmt_time=False)
 
 
-def eval_env_evaluation(all_rewards, all_states, ep_marks, episode_len: int, plt_dir: str):
+def eval_env_evaluation(all_rewards, all_states, ep_marks, episode_len: int, plt_base_name: str):
 
     print("Evaluating environment quality...")
 
@@ -1929,6 +1933,7 @@ def eval_env_evaluation(all_rewards, all_states, ep_marks, episode_len: int, plt
     n_eps = n_steps // episode_len
 
     res = np.empty((n_eps, ), dtype=np.float32)
+    case_ind = np.empty((n_eps, ), dtype=np.int32)
 
     for k in range(n_eps):
         k0, k1 = k * episode_len, (k + 1) * episode_len
@@ -1943,14 +1948,26 @@ def eval_env_evaluation(all_rewards, all_states, ep_marks, episode_len: int, plt
         closed_r_temp = curr_states[1, :, 4]
 
         if heating:
-            assert mark
+            case_ind[k] = 1
+            assert np.all(mark)
             res[k] = np.maximum(0, np.max(closed_r_temp - open_r_temp))
         elif cooling:
-            assert not mark
+            case_ind[k] = -1
+            assert np.all(np.logical_not(mark))
             res[k] = np.maximum(0, np.max(-closed_r_temp + open_r_temp))
         else:
+            case_ind[k] = 0
             res[k] = np.nan
-            print(f"Special case found, mark: {mark}")
+            print(f"Special case found, mark: {mark[0]}")
 
-    p_path = os.path.join(plt_dir, "model_stability")
-    plot_hist(res, p_path, x_lab="Temperature deviation [°C]")
+    n_tot = np.sum(case_ind != 0)
+    plot_hist(res, plt_base_name, x_lab="Temperature deviation [°C]", title=f"Total: {n_tot}")
+    n_heat = np.sum(case_ind == 1)
+    if n_heat > 1:
+        plot_hist(res[case_ind == 1], plt_base_name + "_Heat",
+                  x_lab="Temperature deviation [°C]",
+                  title=f"Total: {n_heat}")
+    if np.sum(case_ind == 1) > 1:
+        plot_hist(res[case_ind == -1], plt_base_name + "_Cool",
+                  x_lab="Temperature deviation [°C]",
+                  title=f"Total: {n_tot}")

@@ -495,6 +495,7 @@ def run_room_models(verbose: int = 1,
                                      bounds=bounds,
                                      agent_filter_ind=3,
                                      disconnect_data=disconnect_data,
+                                     eval_quality=not include_battery,
                                      **eval_dict)
     elif verbose > 0:
         print("No performance evaluation!")
@@ -747,7 +748,6 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
         with change_dir_name("Experiments"):
             analyze_experiments(put_on_ol=not debug, room_nr=41, verbose=next_verb,
                                 overwrite=overwrite)
-    return
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
@@ -968,7 +968,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
         with change_dir_name("RoomRL_R43_T22_26"):
             # Combined heating and cooling
-            n_eval_steps = 10000 if not debug else 100
+            n_eval_steps = 10000 if not debug else 1000
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=500000,
                             include_battery=False,
