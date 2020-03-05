@@ -1961,13 +1961,11 @@ def eval_env_evaluation(all_rewards, all_states, ep_marks, episode_len: int, plt
             print(f"Special case found, mark: {mark[0]}")
 
     n_tot = np.sum(case_ind != 0)
-    plot_hist(res, plt_base_name, x_lab="Temperature deviation [°C]", title=f"Total: {n_tot}")
+    plot_hist(res, plt_base_name + f"_{n_tot}", x_lab="Temperature deviation [°C]")
     n_heat = np.sum(case_ind == 1)
     if n_heat > 1:
-        plot_hist(res[case_ind == 1], plt_base_name + "_Heat",
-                  x_lab="Temperature deviation [°C]",
-                  title=f"Total: {n_heat}")
+        plot_hist(res[case_ind == 1], plt_base_name + f"_Heat_{n_heat}",
+                  x_lab="Temperature deviation [°C]")
     if np.sum(case_ind == 1) > 1:
-        plot_hist(res[case_ind == -1], plt_base_name + "_Cool",
-                  x_lab="Temperature deviation [°C]",
-                  title=f"Total: {n_tot}")
+        plot_hist(res[case_ind == -1], plt_base_name + f"_Cool_{n_tot - n_heat}",
+                  x_lab="Temperature deviation [°C]")

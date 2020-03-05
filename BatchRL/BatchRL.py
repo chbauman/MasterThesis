@@ -37,7 +37,7 @@ from dynamics.recurrent import make_latex_hop_table, RNNDynamicModel
 from envs.dynamics_envs import BatteryEnv, heat_marker, compute_room_rewards, RangeT, TEMP_BOUNDS, ROOM_ENG_FAC, \
     RoomBatteryEnv
 from opcua_empa.opcua_util import analyze_valves_experiment, experiment_plot_path
-from opcua_empa.run_opcua import run_rl_control, run_rule_based_control, try_opcua
+from opcua_empa.run_opcua import run_rl_control, run_rule_based_control
 from rest.client import check_date_str
 from tests.test_util import cleanup_test_data, TEST_DIR, TestPlot
 from util.numerics import MSE, MAE, MaxAbsEer, ErrMetric
@@ -53,7 +53,7 @@ METRICS: Tuple[Type[ErrMetric], ...] = (MSE, MAE, MaxAbsEer)
 PARTS = ["Val", "Train"]
 
 
-def run_integration_tests(verbose: int = 1) -> None:
+def run_tests(verbose: int = 1) -> None:
     """Runs a few rather time consuming tests.
 
     Args:
@@ -968,7 +968,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
         with change_dir_name("RoomRL_R43_T22_26"):
             # Combined heating and cooling
-            n_eval_steps = 10000 if not debug else 1000
+            n_eval_steps = 10000 if not debug else 30000
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=500000,
                             include_battery=False,
@@ -1039,8 +1039,22 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
 def curr_tests() -> None:
     """The code that I am currently experimenting with."""
-    # rename_rl_folder()
-    try_opcua()
+
+    print("Hi")
+    
+    mod_name = "PhysConsModel"
+
+    all_mods = load_room_models([mod_name],
+                                use_bat_data=False,
+                                from_hop=True,
+                                fit=True,
+                                date_str="2020-01-21",
+                                verbose=5)
+    mod = all_mods[mod_name]
+
+    mod.analyze_performance(N_PERFORMANCE_STEPS, verbose=5,
+                            overwrite=False,
+                            metrics=METRICS)
     return
 
 
@@ -1201,7 +1215,7 @@ def main() -> None:
 
     # Run integration tests and optionally the cleanup after.
     if args.test:
-        run_integration_tests(verbose=verbose)
+        run_tests(verbose=verbose)
     if args.cleanup:
         test_cleanup(verbose=verbose)
 

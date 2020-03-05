@@ -744,10 +744,11 @@ class DynEnv(ABC, gym.Env):
                     add_base_title=False)
 
         if eval_quality:
-            quality_plot_path = self._construct_plot_name(f"Env_Quality", None,
+            quality_plot_path = self._construct_plot_name(f"Env_Quality_{n_steps}", None,
                                                           agent_list, put_on_ol)
             eval_env_evaluation(all_rewards, all_states,
-                                all_marks, self.n_ts_per_eps, plt_base_name=quality_plot_path)
+                                all_marks, self.n_ts_per_eps,
+                                plt_base_name=quality_plot_path)
 
         print(f"Mean rewards: {np.mean(all_rewards[:, :, 0], axis=1)}")
 
