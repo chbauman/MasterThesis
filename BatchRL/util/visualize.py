@@ -879,7 +879,9 @@ def plot_env_evaluation(actions: np.ndarray,
                         reward_descs: List[str] = None,
                         disconnect_data: Tuple[int, Tuple[int, int], Any] = None,
                         ex_ext: bool = True,
-                        tot_reward_only: bool = False) -> None:
+                        tot_reward_only: bool = False,
+                        color_offset: int = 0,
+                        fig_size: Any = None) -> None:
     """Plots the evaluation of multiple agents on an environment.
 
     TODO: Refactor this shit more!
@@ -1017,12 +1019,12 @@ def plot_env_evaluation(actions: np.ndarray,
                     # ax.xaxis.set_tick_params(rotation=30)
 
     # Plot all the series
-    _plot_helper_helper(actions, con_axs, agent_names, steps=True)
+    _plot_helper_helper(actions, con_axs, agent_names, steps=True, col_off=color_offset)
     if plot_extra:
-        _plot_helper_helper(extra_actions, con_fb_axs, agent_names, steps=True)
-    _plot_helper_helper(states, state_axs, agent_names, steps=False)
+        _plot_helper_helper(extra_actions, con_fb_axs, agent_names, steps=True, col_off=color_offset)
+    _plot_helper_helper(states, state_axs, agent_names, steps=False, col_off=color_offset)
     if show_rewards:
-        _plot_helper_helper(rewards, rew_axs, agent_names, steps=False)
+        _plot_helper_helper(rewards, rew_axs, agent_names, steps=False, col_off=color_offset)
     for ct, m in enumerate(series_merging_list):
         if len(m) == 2:
             # Add left and right y-label
@@ -1147,7 +1149,7 @@ def plot_env_evaluation(actions: np.ndarray,
         # plt.subplots_adjust(top=1.85)
 
     # Save
-    s = (16, tot_n_plots * 1.8)
+    s = (16, tot_n_plots * 1.8) if fig_size is None else fig_size
     if save_path is not None:
         save_figure(save_path, size=s, auto_fmt_time=auto_fmt)
 
@@ -1894,6 +1896,8 @@ def plot_hist(vals):
 
 
 def eval_env_evaluation(all_rewards, all_states, ep_marks, episode_len: int):
+
+    print("Evaluating environment quality...")
 
     n_agents, n_steps, n_tot_rewards = all_rewards.shape
 

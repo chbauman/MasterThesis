@@ -507,6 +507,7 @@ def analyze_heating_period(start_dt, end_dt,
                            put_on_ol: bool = False,
                            agent_name: str = None,
                            metrics_eval_list: Any = False,
+                           c_offs: int = 0,
                            **env_kwargs) -> np.ndarray:
     with ProgWrap(f"Analyzing experiments...", verbose > 0):
         dt = 15
@@ -541,7 +542,8 @@ def analyze_heating_period(start_dt, end_dt,
                                 np_dt_init=str_to_np_dt(full_ds.t_init),
                                 series_merging_list=series_merging,
                                 reward_descs=["Reward"],
-                                ex_ext=False)
+                                ex_ext=False,
+                                color_offset=c_offs)
             plot_env_evaluation(actions, states, rewards, full_ds,
                                 [agent_name if agent_name is not None else "Test"],
                                 save_path=save_path + "_no_w_temp",
@@ -550,7 +552,8 @@ def analyze_heating_period(start_dt, end_dt,
                                 series_mask=np.array([0, 1, 4]),
                                 reward_descs=["Reward"],
                                 show_rewards=True,
-                                ex_ext=False)
+                                ex_ext=False,
+                                color_offset=c_offs)
             plot_env_evaluation(actions, states, rewards, full_ds,
                                 [agent_name if agent_name is not None else "Test"],
                                 save_path=save_path + "_reduced",
@@ -559,7 +562,9 @@ def analyze_heating_period(start_dt, end_dt,
                                 series_mask=np.array([4]),
                                 reward_descs=["Reward"],
                                 show_rewards=False,
-                                ex_ext=False)
+                                ex_ext=False,
+                                color_offset=c_offs,
+                                fig_size=(16, 3))
         elif verbose:
             print("Plot already exists!")
 
@@ -663,17 +668,20 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
     # DDPG experiment
     start_dt, end_dt = datetime(2020, 2, 5, 12, 0, 0), datetime(2020, 2, 10, 12, 0, 0)
     name = "DDPG_Exp_22_26"
-    ddpg_res, ddpg_met = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="DDPG", **kws)
+    ddpg_res, ddpg_met = analyze_heating_period(start_dt, end_dt, room_nr, name,
+                                                agent_name="DDPG", c_offs=3, **kws)
 
     # RBC experiment
     start_dt, end_dt = datetime(2020, 2, 19, 12, 0, 0), datetime(2020, 2, 24, 12, 0, 0)
     name = "RBC_Exp_22_5"
-    rbc_res, rbc_met = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="Rule-Based", **kws)
+    rbc_res, rbc_met = analyze_heating_period(start_dt, end_dt, room_nr, name,
+                                              agent_name="Rule-Based", c_offs=2, **kws)
 
     # DDPG experiment 2
     start_dt, end_dt = datetime(2020, 2, 26, 12, 0, 0), datetime(2020, 3, 2, 12, 0, 0)
     name = "DDPG_Exp_22_5"
-    ddpg_2_res, ddpg_2_met = analyze_heating_period(start_dt, end_dt, room_nr, name, agent_name="DDPG", **kws)
+    ddpg_2_res, ddpg_2_met = analyze_heating_period(start_dt, end_dt, room_nr, name,
+                                                    agent_name="DDPG", c_offs=3, **kws)
 
     name_list = ["DDPG", "RBC", "DDPG 2"]
     name_list_short = name_list[:2]
@@ -733,6 +741,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
         with change_dir_name("Experiments"):
             analyze_experiments(put_on_ol=not debug, room_nr=41, verbose=next_verb,
                                 overwrite=overwrite)
+    return
 
     # Load and fit all models
     with ProgWrap(f"Loading models...", verbose > 0):
