@@ -194,7 +194,8 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
                                      filter_good_cases=False,
                                      plot_tot_reward_cases=False,
                                      plot_constrained_actions=True,
-                                     plot_tot_eval=False)
+                                     plot_tot_eval=False,
+                                     eval_quality=True)
 
     # # Get numbers of steps
     # n_steps = get_rl_steps(True)
@@ -952,7 +953,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
         with change_dir_name("RoomRL_R43_T22_26"):
             # Combined heating and cooling
-            n_eval_steps = 10000
+            n_eval_steps = 10000 if not debug else 100
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=500000,
                             include_battery=False,

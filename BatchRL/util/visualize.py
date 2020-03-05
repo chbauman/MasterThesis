@@ -1887,3 +1887,40 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
     if not os.path.isfile(f_path):
         with open(f_path, "w") as f:
             f.write(init_str)
+
+
+def plot_hist(vals):
+    pass
+
+
+def eval_env_evaluation(all_rewards, all_states, ep_marks, episode_len: int):
+
+    n_agents, n_steps, n_tot_rewards = all_rewards.shape
+
+    n_eps = n_steps // episode_len
+
+    res = np.empty((n_eps, ), dtype=np.float32)
+
+    for k in range(n_eps):
+        k0, k1 = k * episode_len, (k + 1) * episode_len
+        assert np.max(ep_marks[:, k0:k1]) == np.min(ep_marks[:, k0:k1])
+        mark = ep_marks[0, k0:k1]
+
+        curr_states = all_states[:, k0:k1]
+        heating = np.all(curr_states[:, :, 2] > curr_states[:, :, 4])
+        cooling = np.all(curr_states[:, :, 2] < curr_states[:, :, 4])
+
+        open_r_temp = curr_states[0, :, 4]
+        closed_r_temp = curr_states[1, :, 4]
+
+        if heating:
+            assert mark
+            res[k] = np.maximum(0, np.max(closed_r_temp - open_r_temp))
+        elif cooling:
+            assert not mark
+            res[k] = np.maximum(0, np.max(-closed_r_temp + open_r_temp))
+        else:
+            res[k] = np.nan
+            print(f"Special case found, mark: {mark}")
+
+    plot_hist(res)

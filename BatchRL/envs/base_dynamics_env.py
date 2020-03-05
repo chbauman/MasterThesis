@@ -5,7 +5,7 @@ based on a model of class `BaseDynamicsModel`.
 """
 import os
 from abc import ABC, abstractmethod
-from typing import Dict, Union, List, Tuple, Optional, Callable
+from typing import Dict, Union, List, Tuple, Optional, Callable, Any
 
 import gym
 import numpy as np
@@ -15,7 +15,8 @@ from agents.base_agent import RL_MODEL_DIR
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import npf32
 from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts, ts_per_day, ProgWrap
-from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR, MergeListT
+from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR, MergeListT, \
+    eval_env_evaluation
 
 Agents = Union[List[base_agent.AgentBase], base_agent.AgentBase]
 
@@ -619,7 +620,8 @@ class DynEnv(ABC, gym.Env):
                              max_visual_evals: int = 4,
                              heating_title_ext: bool = False,
                              indicate_bad_case: bool = False,
-                             disconnect_data=None,
+                             disconnect_data: Any = None,
+                             eval_quality: bool = False
                              ) -> Optional[np.ndarray]:
         """Evaluates the given agents for this environment.
 
@@ -654,6 +656,7 @@ class DynEnv(ABC, gym.Env):
             heating_title_ext:
             indicate_bad_case:
             disconnect_data:
+            eval_quality:
 
         Returns:
             The rewards seen by all the agents, or None if `overwrite` is False
@@ -739,6 +742,10 @@ class DynEnv(ABC, gym.Env):
                     title_ext=title_ext, all_states=all_states,
                     verbose=0, ep_marks=all_marks,
                     add_base_title=False)
+
+        if eval_quality:
+            eval_env_evaluation(all_rewards, all_states,
+                                all_marks, self.n_ts_per_eps)
 
         print(f"Mean rewards: {np.mean(all_rewards[:, :, 0], axis=1)}")
 
