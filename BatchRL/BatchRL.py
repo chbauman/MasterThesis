@@ -968,7 +968,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
         with change_dir_name("RoomRL_R43_T22_26"):
             # Combined heating and cooling
-            n_eval_steps = 10000 if not debug else 30000
+            n_eval_steps = 10000 if not debug else 2000
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=500000,
                             include_battery=False,
