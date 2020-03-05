@@ -1041,7 +1041,7 @@ def curr_tests() -> None:
     """The code that I am currently experimenting with."""
 
     print("Hi")
-    
+
     mod_name = "PhysConsModel"
 
     all_mods = load_room_models([mod_name],

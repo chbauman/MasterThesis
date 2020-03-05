@@ -701,7 +701,8 @@ class TestPlot(TestCase):
         vals = np.array([np.nan, 0.3, 2.3, 1.2, np.nan, 0.0, 1.1, 5.1, 0.0, 0.0,
                          np.nan, 0.0, 0.2])
         pl_path = self.get_test_path(f"test_hist")
-        plot_hist(vals, pl_path)
+        plot_hist(vals, pl_path, tol=0.001)
+        plot_hist(vals, pl_path + "_2", tol=0.001, bin_size=0.25)
 
     def test_plot_env_evaluation(self):
 
