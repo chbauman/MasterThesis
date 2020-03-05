@@ -687,40 +687,45 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
     name_list = ["DDPG", "RBC", "DDPG 2"]
     name_list_short = name_list[:2]
     series_list = [
-        f"Energy consumption [\\SI{{{ROOM_ENG_FAC:.4g}}}{{\\watt\\hour}}]",
+        f"Energy consumption [\\si{{\\watt\\hour}}]",
         "Average outside temp. [\\si{\\celsius}]",
         "Average room temp. [\\si{\\celsius}]"
     ]
     s_list_short = [
-        f"En. cons. [\\SI{{{ROOM_ENG_FAC:.4g}}}{{\\watt\\hour}}]",
-        "Avg. out. temp. [\\si{\\celsius}]",
-        "Avg. room temp. [\\si{\\celsius}]"
+        f"Energy [\\si{{\\watt\\hour}}]",
+        "Outside temp. [\\si{\\celsius}]",
+        "Room temp. [\\si{\\celsius}]"
     ]
+    all_res = [ddpg_res, rbc_res, ddpg_2_res]
+    all_met = [ddpg_met, rbc_met, ddpg_2_met]
+    for r in all_res:
+        r[0, :] = ROOM_ENG_FAC * r[0, :]
+    for r in all_met:
+        r[0, :] = ROOM_ENG_FAC * r[0, :]
     make_experiment_table([ddpg_res, rbc_res, ddpg_2_res], name_list,
                           s_list_short, f_name="DDPG_RBC",
                           caption="Comparison of DDPG with Rule-Based controller (RBC)",
                           lab="com_ddpg_rbc",
                           metric_eval=[ddpg_met, rbc_met, ddpg_2_met],
                           metrics_names=met_names)
-    make_experiment_table([ddpg_res, rbc_res, ddpg_2_res], name_list,
+    cell_colors = [
+        (2, 0, "red"),
+        (2, 1, "blue"),
+        (3, 2, "green"),
+    ]
+    make_experiment_table([rbc_res, ddpg_res], name_list_short[::-1],
+                          s_list_short, f_name="DDPG_RBC_pres_colored",
+                          caption="Comparison of DDPG with Rule-Based controller (RBC)",
+                          metric_eval=[rbc_met[:, :-1], ddpg_met[:, :-1]],
+                          metrics_names=met_names[:-1],
+                          tot_width=0.7,
+                          daily_averages=False,
+                          content_only=True,
+                          cell_colors=cell_colors)
+    make_experiment_table([rbc_res, ddpg_res], name_list_short[::-1],
                           s_list_short, f_name="DDPG_RBC_days_only",
                           caption="Comparison of DDPG with Rule-Based controller (RBC)",
-                          lab="com_ddpg_rbc_days")
-    make_experiment_table([ddpg_res, rbc_res], name_list_short,
-                          s_list_short, f_name="DDPG_RBC_pres_1",
-                          caption="Comparison of DDPG with Rule-Based controller (RBC)",
-                          metric_eval=[ddpg_met, rbc_met],
-                          metrics_names=met_names,
-                          tot_width=0.7,
-                          daily_averages=False,
-                          content_only=True)
-    make_experiment_table([ddpg_res, rbc_res, ddpg_2_res], name_list,
-                          s_list_short, f_name="DDPG_RBC_pres",
-                          caption="Comparison of DDPG with Rule-Based controller (RBC)",
-                          metric_eval=[ddpg_met, rbc_met, ddpg_2_met],
-                          metrics_names=met_names,
-                          tot_width=0.7,
-                          daily_averages=False,
+                          lab="com_ddpg_rbc_days",
                           content_only=True)
 
 

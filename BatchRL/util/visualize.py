@@ -1825,7 +1825,8 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
                           metrics_names: Any = None,
                           tot_width: float = 0.8,
                           daily_averages: bool = True,
-                          content_only: bool = False):
+                          content_only: bool = False,
+                          cell_colors: Any = None):
     assert len(name_list) == len(arr_list) > 0
     first_arr = arr_list[0]
     n_days = first_arr.shape[1]
@@ -1835,6 +1836,8 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
         n_days = 0
     n_columns = n_days + n_metrics
     init_str = ""
+    if cell_colors is None:
+        cell_colors = []
 
     if not content_only:
         init_str += "\\begin{table}[ht]\n"
@@ -1855,23 +1858,29 @@ def make_experiment_table(arr_list: List[np.ndarray], name_list, series_list,
         init_str += " & " + " & ".join([i for i in metrics_names])
     init_str += f"\\\\\n\\hline\n"
 
-    def to_str(f_val):
+    def to_str(f_val, col=""):
+        str_base = f"\\cellcolor{{{col}!25}}" if col != "" else ""
         if f_val != f_val:
-            return ""
+            return str_base
         else:
-            return f"{f_val:.2f}"
+            return str_base + f"{f_val:.2f}"
 
     # Add rows
     for ct, a in enumerate(name_list):
         init_str += f"\\hline\n"
         for ct_s, s in enumerate(series_list):
+            s_cols = [(i, c) for (i, k, c) in cell_colors if k == ct_s]
             if ct_s == 0:
                 init_str += a
             init_str += f" & {s}"
             if daily_averages:
                 init_str += " & " + " & ".join([to_str(v) for v in arr_list[ct][ct_s]])
             if metric_eval is not None:
-                init_str += " & " + " & ".join([to_str(metric_eval[ct][ct_s, i]) for i in range(n_metrics)])
+                met_str_list = [to_str(metric_eval[ct][ct_s, i])
+                                                for i in range(n_metrics)]
+                for (i, c) in s_cols:
+                    met_str_list[i] = f"\\cellcolor{{{c}!25}}" + met_str_list[i]
+                init_str += " & " + " & ".join(met_str_list)
             init_str += "\\\\\n"
 
     # Remaining part
