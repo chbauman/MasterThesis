@@ -14,7 +14,8 @@ from agents import base_agent
 from agents.base_agent import RL_MODEL_DIR
 from dynamics.base_model import BaseDynamicsModel
 from util.numerics import npf32
-from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts, ts_per_day, ProgWrap
+from util.util import Arr, create_dir, make_param_ext, str_to_np_dt, Num, day_offset_ts, ts_per_day, ProgWrap, \
+    load_pickle, save_pickle
 from util.visualize import rl_plot_path, plot_env_evaluation, plot_reward_details, OVERLEAF_IMG_DIR, MergeListT, \
     eval_env_evaluation
 
@@ -685,51 +686,68 @@ class DynEnv(ABC, gym.Env):
                 print("Agent time series plot already exists!")
                 return
 
+        pickle_data_path = self._construct_plot_name(f"pickled_data_{n_steps}", None,
+                                                     agent_list, False) + ".pkl"
+
         # Init scores.
         n_agents = len(agent_list)
         n_extra_rewards = len(self.reward_descs)
         n_tot_rewards = n_extra_rewards + 1
-        all_rewards = npf32((n_agents, n_steps, n_tot_rewards))
-        all_actions = npf32((n_agents, n_steps, self.act_dim))
-        all_scaled_actions = npf32((n_agents, n_steps, self.act_dim))
-        all_states = npf32((n_agents, n_steps, self.state_dim - self.act_dim))
-        all_marks = np.empty((n_agents, n_steps), dtype=np.int32)
-        ret_inds = None
 
-        do_scaling = self.m.data.fully_scaled
+        # Load data from pickle if exists
+        if os.path.isfile(pickle_data_path):
+            if verbose > 0:
+                print("Loading from previous evaluation...")
+            all_rewards, all_rewards, all_states, all_marks, \
+                all_actions, all_scaled_actions, ret_inds = load_pickle(pickle_data_path)
+        else:
+            all_rewards = npf32((n_agents, n_steps, n_tot_rewards))
+            all_actions = npf32((n_agents, n_steps, self.act_dim))
+            all_scaled_actions = npf32((n_agents, n_steps, self.act_dim))
+            all_states = npf32((n_agents, n_steps, self.state_dim - self.act_dim))
+            all_marks = np.empty((n_agents, n_steps), dtype=np.int32)
+            ret_inds = None
 
-        if verbose > 0:
-            print("Evaluating agents...")
-        for a_id, a in enumerate(agent_list):
+            do_scaling = self.m.data.fully_scaled
 
-            # Set agent
-            self.set_agent(a)
+            if verbose > 0:
+                print("Evaluating agents...")
+            for a_id, a in enumerate(agent_list):
 
-            # Fit agent if not already fitted
-            if verbose:
-                print(f"Fitting agent: {a}")
-            a.fit(verbose=verbose, train_data=a.fit_data)
+                # Set agent
+                self.set_agent(a)
 
-            # Check that agent references this environment
-            if not a.env == self:
-                raise ValueError(f"Agent {a_id} was not assigned to this env!")
+                # Fit agent if not already fitted
+                if verbose:
+                    print(f"Fitting agent: {a}")
+                a.fit(verbose=verbose, train_data=a.fit_data)
 
-            # Evaluate agent.
-            if verbose:
-                print(f"Evaluating agent: {a}")
-            eval_res = a.eval(n_steps, reset_seed=True, detailed=True,
-                              use_noise=use_noise, scale_states=do_scaling,
-                              episode_marker=episode_marker,
-                              return_inds=True,
-                              verbose=verbose)
-            rew, ex_rew, states, ep_marks, acs, s_acs, ret_inds = eval_res
+                # Check that agent references this environment
+                if not a.env == self:
+                    raise ValueError(f"Agent {a_id} was not assigned to this env!")
 
-            all_rewards[a_id, :, 0] = rew
-            all_rewards[a_id, :, 1:] = ex_rew
-            all_states[a_id] = states
-            all_marks[a_id] = ep_marks
-            all_actions[a_id] = acs
-            all_scaled_actions[a_id] = s_acs
+                # Evaluate agent.
+                if verbose:
+                    print(f"Evaluating agent: {a}")
+                eval_res = a.eval(n_steps, reset_seed=True, detailed=True,
+                                  use_noise=use_noise, scale_states=do_scaling,
+                                  episode_marker=episode_marker,
+                                  return_inds=True,
+                                  verbose=verbose)
+                rew, ex_rew, states, ep_marks, acs, s_acs, ret_inds = eval_res
+
+                all_rewards[a_id, :, 0] = rew
+                all_rewards[a_id, :, 1:] = ex_rew
+                all_states[a_id] = states
+                all_marks[a_id] = ep_marks
+                all_actions[a_id] = acs
+                all_scaled_actions[a_id] = s_acs
+
+                if verbose:
+                    print(f"Saving evaluation data...")
+                all_data = (all_rewards, all_rewards, all_states, all_marks,
+                            all_actions, all_scaled_actions, ret_inds)
+                save_pickle(pickle_data_path, all_data)
 
         # Plot total rewards for all steps
         title_ext = ""  # self._get_detail_eval_title_ext()

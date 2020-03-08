@@ -8,6 +8,7 @@ tests of these functions are included.
 import builtins as __builtin__
 import datetime
 import os
+import pickle
 import random
 import shutil
 import socket
@@ -1139,3 +1140,16 @@ def skip_if_no_internet(f):
             f(self, *args, **kwargs)
 
     return wrapper
+
+
+def save_pickle(name: str, data: Any) -> None:
+    """Save data using pickle."""
+    with open(name, 'wb') as f:
+        pickle.dump(data, f)
+
+
+def load_pickle(name: str) -> Any:
+    """Load pickled data."""
+    with open(name, 'rb') as f:
+        data = pickle.load(f)
+    return data
