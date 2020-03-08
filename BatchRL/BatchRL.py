@@ -545,7 +545,8 @@ def analyze_heating_period(start_dt, end_dt,
                                 series_merging_list=series_merging,
                                 reward_descs=["Reward"],
                                 ex_ext=False,
-                                color_offset=c_offs)
+                                color_offset=c_offs,
+                                fig_size=(12, 7))
             plot_env_evaluation(actions, states, rewards, full_ds,
                                 [agent_name if agent_name is not None else "Test"],
                                 save_path=save_path + "_no_w_temp",
@@ -968,7 +969,7 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
 
         with change_dir_name("RoomRL_R43_T22_26"):
             # Combined heating and cooling
-            n_eval_steps = 10000 if not debug else 10000
+            n_eval_steps = 10000 if not debug else 30000
             run_room_models(verbose=prog_verb(verbose),
                             n_steps=500000,
                             include_battery=False,

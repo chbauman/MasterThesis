@@ -1919,7 +1919,7 @@ def plot_hist(vals, save_path: str, fig_size: Any = None, x_lab: str = None,
     bins = [-bin_size + tol + i * bin_size for i in range(n_bins + 1)]
     plt.hist(vals, bins, density=True)
     plt.grid(True)
-    plt.ylabel(f"Probability")
+    plt.ylabel(f"Probability" if bin_size == 1.0 else f"Probability density")
     if title is not None:
         plt.title(title)
     if x_lab is not None:
@@ -1974,7 +1974,7 @@ def eval_env_evaluation(all_rewards, all_states, ep_marks,
     n_heat = np.sum(case_ind == 1)
     if n_heat > 1:
         plot_hist(res[case_ind == 1], plt_base_name + f"_Heat_{n_heat}",
-                  x_lab="Temperature deviation [°C]", bin_size=bin_size, tol=tol)
+                  x_lab="Temperature deviation [°C]", bin_size=bin_size / 5, tol=tol)
     if np.sum(case_ind == -1) > 1:
         plot_hist(res[case_ind == -1], plt_base_name + f"_Cool_{n_tot - n_heat}",
                   x_lab="Temperature deviation [°C]", bin_size=bin_size, tol=tol)
