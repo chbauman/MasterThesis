@@ -1013,6 +1013,11 @@ def plot_env_evaluation(actions: np.ndarray,
                     if x_array[-1] - x_array[0] < np.timedelta64(3, 'D'):
                         formatter = DateFormatter("%H:%M")
                         ax.xaxis.set_major_formatter(formatter)
+                    elif x_array[-1] - x_array[0] < np.timedelta64(6, 'D'):
+                        if fig_size is not None and fig_size[0] < 10:
+                            formatter = DateFormatter("%d.%m")
+                            ax.xaxis.set_major_formatter(formatter)
+
                     pass
                     # formatter = DateFormatter("%m/%d, %H:%M")
                     # ax.xaxis.set_major_formatter(formatter)

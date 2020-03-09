@@ -568,6 +568,17 @@ def analyze_heating_period(start_dt, end_dt,
                                 ex_ext=False,
                                 color_offset=c_offs,
                                 fig_size=(16, 3))
+            plot_env_evaluation(actions, states, rewards, full_ds,
+                                [agent_name if agent_name is not None else "Test"],
+                                save_path=save_path + "_reduced_narrow",
+                                np_dt_init=str_to_np_dt(full_ds.t_init),
+                                series_merging_list=None,
+                                series_mask=np.array([4]),
+                                reward_descs=["Reward"],
+                                show_rewards=False,
+                                ex_ext=False,
+                                color_offset=c_offs,
+                                fig_size=(9, 3))
         elif verbose:
             print("Plot already exists!")
 
@@ -729,6 +740,20 @@ def analyze_experiments(room_nr: int = 41, verbose: int = 5,
                           caption="Comparison of DDPG with Rule-Based controller (RBC)",
                           lab="com_ddpg_rbc_days",
                           content_only=True)
+    cell_colors = [
+        (0, 0, "red"),
+        (0, 1, "blue"),
+        (1, 2, "green"),
+    ]
+    make_experiment_table([rbc_res, ddpg_res], name_list_short[::-1],
+                          s_list_short, f_name="DDPG_RBC_pres_colored_2",
+                          caption="Comparison of DDPG with Rule-Based controller (RBC)",
+                          metric_eval=[rbc_met[:, 2:-1], ddpg_met[:, 2:-1]],
+                          metrics_names=met_names[2:-1],
+                          tot_width=0.7,
+                          daily_averages=False,
+                          content_only=True,
+                          cell_colors=cell_colors)
 
 
 def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
