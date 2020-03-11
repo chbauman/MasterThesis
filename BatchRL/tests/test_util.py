@@ -745,7 +745,8 @@ class TestPlot(TestCase):
         plot_env_evaluation(actions, states, rewards, MockDataset(), a_names, save_path,
                             extra_actions=extra_actions, title_ext="New Super Title", np_dt_init=np_dt_init)
         plot_env_evaluation(actions, states, rewards, MockDataset(), a_names, save_path + "_2",
-                            series_mask=s_mask, bounds=[(-1, (0.4, 0.4))], series_merging_list=[(w_inds, "Weather")])
+                            series_mask=s_mask, bounds=[(-1, (0.4, 0.4))],
+                            series_merging_list=[(w_inds, "Weather")], np_dt_init=np_dt_init)
 
         with self.assertRaises(AssertionError):
             plot_env_evaluation(actions, states, rewards, MockDataset(), a_names, save_path + "_2",

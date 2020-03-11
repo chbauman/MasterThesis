@@ -994,9 +994,11 @@ def plot_env_evaluation(actions: np.ndarray,
     else:
         x = range(len(rewards[0]))
     x_array = np.array(x)
-    eval_5_15h = np.timedelta64(5, 'h') <= x_array[-1] - x_array[0] <= np.timedelta64(15, 'h')
-    eval_4_7d = np.timedelta64(4, 'D') <= x_array[-1] - x_array[0] <= np.timedelta64(7, 'D')
-    auto_fmt = not (eval_5_15h or eval_4_7d)
+    auto_fmt = False
+    if use_time:
+        eval_5_15h = np.timedelta64(5, 'h') <= x_array[-1] - x_array[0] <= np.timedelta64(15, 'h')
+        eval_4_7d = np.timedelta64(4, 'D') <= x_array[-1] - x_array[0] <= np.timedelta64(7, 'D')
+        auto_fmt = not (eval_5_15h or eval_4_7d)
 
     ph_kwargs = {"dates": use_time}
 
