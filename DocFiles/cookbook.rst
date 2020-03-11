@@ -2,43 +2,44 @@
 Cookbook
 ========
 
-Crawl a web page
-----------------
+This page explains how to use the main script, `BatchRL.py`.
+You will need to `cd` into the folder `BatchRL` and activate
+the virtual environment before running these commands.
 
-The most simple way to use our program is with no arguments.
-Simply run::
+Verbose mode
+------------
 
-        crawler <url>
+One option that can be used in all cases, 
+is :option:`-v`:
+	
+   python BatchRL.py -v [other_options]
 
-to crawl a webpage.
+In this case the output will usually be more
+verbose than without that option.
 
-Crawl a page slowly
--------------------
+Retrieve data from the NEST database
+------------------------------------
 
-To add a delay to your crawler,
-use :option:`-d`::
+If you want to loat the data from the database to your
+local PC, 
+simply run::
 
-        crawler -d 10 <url>
+    python BatchRL.py -d --data_end_date 2020-02-21
 
-This will wait 10 seconds between page fetches.
+This will retrieve, process, and store the data from 
+beginning of 2019 until the specified date with the option
+:option:`--data_end_date`. There is no need to specify a room
+number, this will load the data for all room. Also includes
+the data of the battery.
 
-Crawl only your blog
---------------------
+Battery
+-------
 
-You will want to use the :option:`-i` flag,
-which while ignore URLs matching the passed regex::
+Running the script with the option :option:`-b` for
+battery::
 
-        crawler -i "^blog/" <url>
+    python BatchRL.py -b --data_end_date 2020-02-21
 
-This will only crawl pages that contain your blog URL.
+Will fit and evaluate the battery model, based on the
+data that was collected up to the specified date.
 
-
-        Only crawl certain pages
-        ------------------------
-
-        You will want to use the :option:`-i` flag,
-        which while ignore URLs matching the passed regex::
-
-                crawler -i "pdf$" <url>
-
-        This will ignore URLs that end in PDF.

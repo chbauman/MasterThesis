@@ -86,6 +86,7 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
                 verbose: int = 0, steps: Sequence = (24,),
                 put_on_ol: bool = False,
                 train_set: str = "train_val",
+                date_str="2020-01-21"
                 ) -> None:
     """Runs all battery related stuff.
 
@@ -99,8 +100,9 @@ def run_battery(do_rl: bool = True, overwrite: bool = False,
         steps: Sequence of number of evaluation steps for analysis.
         put_on_ol:
         train_set: Set of data to train model on.
+        date_str:
     """
-    date_str = "2020-01-21"
+    # date_str = "2020-01-21"
 
     # Print info to console
     next_verb = prog_verb(verbose)
@@ -1300,7 +1302,7 @@ def main() -> None:
         do_rl, put_on_ol = ext_args
         with change_dir_name("Battery"):
             run_battery(verbose=verbose, do_rl=do_rl, put_on_ol=put_on_ol,
-                        overwrite=overwrite)
+                        overwrite=overwrite, date_str=date_str)
 
     # Evaluate room model
     if args.room:
