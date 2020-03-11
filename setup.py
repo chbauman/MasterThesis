@@ -2,8 +2,9 @@ import os
 
 NEST_LOGIN_FILE = "rest_login.txt"
 OPCUA_LOGIN_FILE = "opcua_login.txt"
-EMAIL_LOGIN_FILE = "notify_email_login.txt"
-DEBUG_EMAIL_LOGIN_FILE = "notify_email_debug_login.txt"
+EMAIL_LOGIN_FILE = "email_receiver_login.txt"
+DEBUG_EMAIL_LOGIN_FILE = "email_receiver_debug_login.txt"
+EMAIL_SEND_LOGIN_FILE = "notify_email_login.txt"
 VENV_DIR = "venv"
 
 
@@ -81,10 +82,13 @@ def main():
     get_login_and_write_to_file(OPCUA_LOGIN_FILE, "Opcua client")
 
     # Get notification email login data and store in file
-    get_login_and_write_to_file(EMAIL_LOGIN_FILE, "Notification email")
+    get_login_and_write_to_file(EMAIL_LOGIN_FILE, "Notification receiver email")
+
+    # Get notification email login data and store in file
+    get_login_and_write_to_file(EMAIL_SEND_LOGIN_FILE, "Notification sender email")
 
     # Get debug notification email login data and store in file
-    get_login_and_write_to_file(DEBUG_EMAIL_LOGIN_FILE, "Debug notification email")
+    get_login_and_write_to_file(DEBUG_EMAIL_LOGIN_FILE, "Debug notification receiver email")
 
     print("Setup done!")
 

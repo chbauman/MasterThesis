@@ -20,7 +20,7 @@ import pandas as pd
 from opcua_empa.controller import ControlT
 from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.opcuaclient_subscription import OpcuaClient
-from util.notify import send_mail, set_exit_handler, read_pw_from_file, login_from_file
+from util.notify import send_mail, set_exit_handler, login_from_file
 from util.numerics import check_in_range
 from util.util import ProgWrap
 
@@ -112,7 +112,6 @@ class ControlClient:
         self.client = _client_class(user=user, password=password)
         self.node_gen = NodeAndValues(used_control, exp_name=exp_name)
 
-        self._pw = read_pw_from_file()
         self.deb_mail = debug_mail
 
         if no_data_saving:
@@ -232,8 +231,7 @@ class ControlClient:
         msg += f"\n\nStarting date and time: {self._start_time}"
 
         # Send mail
-        send_mail(subject=sub, msg=msg, debug=self.deb_mail,
-                  password=self._pw)
+        send_mail(subject=sub, msg=msg, debug=self.deb_mail)
 
     def _write_values(self):
         # Compute and publish current control input

@@ -764,11 +764,6 @@ class TestNotify(TestCase):
     def test_send_mail(self):
         send_mail(subject="Running Tests", msg="Sali", debug=True)
 
-    def test_load_pw(self):
-        test_pw_file = os.path.join(TEST_DATA_DIR, "test_pw.txt")
-        pw = util.notify.read_pw_from_file(test_pw_file)
-        self.assertEqual(pw, "test_pw")
-
     def test_load_login(self):
         test_login_file = os.path.join(TEST_DATA_DIR, "test_login.txt")
         user, pw = util.notify.login_from_file(test_login_file)

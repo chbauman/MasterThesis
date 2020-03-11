@@ -20,12 +20,7 @@ from typing import List, Callable
 
 from util.util import force_decorator_factory
 
-sender_email: str = "chris.python.notifyer@gmail.com"  #: Sender address
-debug_email: str = "chris.python.debug@gmail.com"  #: Debug receiver address
-receiver_email: str = "chris.baum.1995@gmail.com"  #: Real receiver address
-
 curr_dir = Path(os.path.dirname(os.path.realpath(__file__)))
-pw_def_path = os.path.join(curr_dir.parent.parent, "python_notifyer.txt")
 
 # Signal codes, valid on Windows at least
 codes = [
@@ -88,7 +83,6 @@ class FailureNotifier:
     """
 
     _sent_mail: bool = False
-    _pw: str = None
 
     def __init__(self, name: str, verbose: int = 1,
                  debug: bool = False, exit_fun: Callable = None):
@@ -96,8 +90,6 @@ class FailureNotifier:
         self.verbose = verbose
         self.debug = debug
         self.exit_fun = exit_fun
-
-        self._pw = read_pw_from_file()
 
     def __enter__(self):
         """Enter context, sets exit handler for uncaught interrupts."""
@@ -132,7 +124,7 @@ class FailureNotifier:
         sub = f"Error while executing '{self.name}'."
         if not self._sent_mail:
             send_mail(self.debug, subject=sub,
-                      msg=msg, password=self._pw)
+                      msg=msg)
             self._sent_mail = True
 
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
@@ -160,19 +152,11 @@ def login_from_file(file_name: str) -> List[str]:
         return [l.rstrip() for l in f if l.rstrip() != ""]
 
 
-def read_pw_from_file(file_name: str = pw_def_path) -> str:
-    """Reads the password in the file given."""
-    login = login_from_file(file_name)
-    assert len(login) == 1, f"Invalid password: {login}"
-    return login[0]
-
-
 @force_decorator_factory()
 def send_mail(debug: bool = True,
               subject: str = "Hello there!",
               msg: str = "General Kenobi",
-              use_ssl: bool = True,
-              password: str = None) -> None:
+              use_ssl: bool = True) -> None:
     """Sends a mail via python.
 
     Decorated with the force decorator since a connection timeout
@@ -186,7 +170,6 @@ def send_mail(debug: bool = True,
         subject: Subject of the mail.
         msg: Message of the mail.
         use_ssl: Whether to use SSL, use default.
-        password: If None, will be loaded from file.
     """
     # Define message
     message = f"Subject: {subject}\n\n{msg}\n\n" \
@@ -198,8 +181,9 @@ def send_mail(debug: bool = True,
     ssl.create_default_context()
 
     # Load password and select mail account
-    if password is None:
-        password = read_pw_from_file()
+    receiver_email, receiver_pw = login_from_file("../email_receiver_login.txt")
+    debug_email, debug_pw = login_from_file("../email_receiver_debug_login.txt")
+    sender_email, password = login_from_file("../notify_email_login.txt")
     rec_mail = debug_email if debug else receiver_email
 
     # Send the mail

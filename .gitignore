@@ -33,3 +33,6 @@ BatchRL/credentials.json
 
 Temp
 opcua_login.txt
+email_receiver_debug_login.txt
+email_receiver_login.txt
+notify_email_login.txt
