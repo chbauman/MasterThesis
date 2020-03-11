@@ -4,6 +4,7 @@ NEST_LOGIN_FILE = "rest_login.txt"
 OPCUA_LOGIN_FILE = "opcua_login.txt"
 EMAIL_LOGIN_FILE = "notify_email_login.txt"
 DEBUG_EMAIL_LOGIN_FILE = "notify_email_debug_login.txt"
+VENV_DIR = "venv"
 
 
 def str2bool(v) -> bool:
@@ -22,8 +23,16 @@ def str2bool(v) -> bool:
         raise ValueError(f"Boolean value expected, got {v}")
 
 
-def get_login_and_write_to_file(file_name: str, name: str):
+def get_login_and_write_to_file(file_name: str, name: str) -> None:
+    """Asks the user for the login data.
 
+    If the file already exists, asks if the user wants
+    to overwrite it.
+
+    Args:
+        file_name: The file containing the login info.
+        name: The name of whatever the login is for.
+    """
     # Check if login already exists
     f_exists = os.path.isfile(file_name)
     create_file = not f_exists
@@ -50,9 +59,20 @@ def get_login_and_write_to_file(file_name: str, name: str):
 def main():
     print("Setting up everything...")
 
-    if not os.path.isdir("venv"):
+    # Check platform
+    using_win = os.name == 'nt'
+    if not using_win:
+        print("May not work, only tested on Windows!")
+
+    if not os.path.isdir(VENV_DIR):
         print("Setting up virtual environment...")
-        # TODO
+        cmd = "py" if using_win else "python3"
+        act_path = os.path.join(VENV_DIR, "Scripts", "activate")
+        req_path = os.path.join("BatchRL", "requirements.txt")
+        os.system(f"{cmd} -m venv {VENV_DIR}")
+        os.system(f"{act_path} & {cmd} -m pip install -r {req_path}")
+        print("Venv setup done :)")
+        print("")
 
     # Get NEST login data and store in file
     get_login_and_write_to_file(NEST_LOGIN_FILE, "NEST database")
@@ -61,6 +81,11 @@ def main():
     get_login_and_write_to_file(OPCUA_LOGIN_FILE, "Opcua client")
 
     # Get notification email login data and store in file
+    get_login_and_write_to_file(EMAIL_LOGIN_FILE, "Notification email")
+
+    # Get debug notification email login data and store in file
+    get_login_and_write_to_file(DEBUG_EMAIL_LOGIN_FILE, "Debug notification email")
+
     print("Setup done!")
 
 
