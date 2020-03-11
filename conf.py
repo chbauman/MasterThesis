@@ -18,9 +18,9 @@ sys.path.insert(0, '..\\MasterThesis\\BatchRL')
 # -- Project information -----------------------------------------------------
 
 project = 'BatchRL'
-copyright = '2019, Christian Baumann'
+copyright = '2020, Christian Baumann'
 author = 'Christian Baumann'
-version = '1.2.4'
+version = '1.3.1'
 
 show_authors = True
 

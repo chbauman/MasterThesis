@@ -1277,7 +1277,7 @@ def main() -> None:
         ind_list = []
         if n_steps is not None:
             _, *ind_list = args.int
-        use_bat_data, enf_opt = extract_args(args.bool, True, False)
+        use_bat_data, enf_opt = extract_args(args.bool, False, False)
         run_dynamic_model_hyperopt(use_bat_data=use_bat_data,
                                    verbose=verbose,
                                    enforce_optimize=enf_opt,
@@ -1289,7 +1289,7 @@ def main() -> None:
 
     # Fit and analyze all models
     if args.mod_eval:
-        perf_analyze, visual_analyze, include_composite = extract_args(args.bool, True, False, False)
+        perf_analyze, visual_analyze, include_composite = extract_args(args.bool, True, True, True)
         run_dynamic_model_fit_from_hop(verbose=verbose, perf_analyze=perf_analyze,
                                        visual_analyze=visual_analyze,
                                        include_composite=include_composite,
@@ -1308,7 +1308,7 @@ def main() -> None:
     if args.room:
         alpha, tb_low, tb_high = extract_args(args.float, 50.0, None, None)
         n_steps, n_eval_steps = extract_args(args.int, None, 10000)
-        ext_args = extract_args(args.bool, False, False, False, True)
+        ext_args = extract_args(args.bool, False, True, False, True)
         add_bat, perf_eval, phys_cons, visual_analysis = ext_args
         temp_bds = None if tb_high is None else (tb_low, tb_high)
         run_room_models(verbose=verbose, alpha=alpha, n_steps=n_steps,

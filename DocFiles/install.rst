@@ -17,7 +17,7 @@ These are not necessarily needed, depending on the code that is run.
 But it will result in a runtime error if any of these accounts is needed.
 
 Afterwards open Powershell in the folder
-MasterThesis and then run:
+`MasterThesis` and then run:
 
 .. code-block:: bash
 
