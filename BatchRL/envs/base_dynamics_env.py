@@ -474,7 +474,7 @@ class DynEnv(ABC, gym.Env):
             ValueError: If `start_ind` is too large or if an agent is not suited
                 for this environment.
         """
-        print("This is fucking deprecated!")
+        print("This is deprecated!")
 
         # Make function compatible for single agent input
         if not isinstance(agents, list):

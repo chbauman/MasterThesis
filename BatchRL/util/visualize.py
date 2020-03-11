@@ -302,7 +302,7 @@ def plot_ip_time_series(y, lab=None, m=None, show=True, init=None, mean_and_stds
     where x is assumed to be uniform.
     DEPRECATED: DO NOT USE!!!!!
     """
-    warnings.warn("This is fucking deprecated!!!!")
+    warnings.warn("This is deprecated!!!!")
 
     # Define plot
     plt.subplots()

@@ -579,6 +579,17 @@ def analyze_heating_period(start_dt, end_dt,
                                 ex_ext=False,
                                 color_offset=c_offs,
                                 fig_size=(9, 3))
+            plot_env_evaluation(actions, states, rewards, full_ds,
+                                [agent_name if agent_name is not None else "Test"],
+                                save_path=save_path + "_reduced_weather",
+                                np_dt_init=str_to_np_dt(full_ds.t_init),
+                                series_merging_list=[([0, 1], "Weather"), ],
+                                series_mask=np.array([0, 1, 4]),
+                                reward_descs=["Reward"],
+                                show_rewards=False,
+                                ex_ext=False,
+                                color_offset=c_offs,
+                                fig_size=(9, 4))
         elif verbose:
             print("Plot already exists!")
 
