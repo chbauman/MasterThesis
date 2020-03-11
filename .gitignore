@@ -32,3 +32,4 @@ BatchRL/settings.yaml
 BatchRL/credentials.json
 
 Temp
+opcua_login.txt

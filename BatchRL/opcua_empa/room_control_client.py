@@ -20,7 +20,7 @@ import pandas as pd
 from opcua_empa.controller import ControlT
 from opcua_empa.opcua_util import NodeAndValues
 from opcua_empa.opcuaclient_subscription import OpcuaClient
-from util.notify import send_mail, set_exit_handler, read_pw_from_file
+from util.notify import send_mail, set_exit_handler, read_pw_from_file, login_from_file
 from util.numerics import check_in_range
 from util.util import ProgWrap
 
@@ -87,8 +87,8 @@ class ControlClient:
     def __init__(self,
                  used_control: ControlT,
                  exp_name: str = None,
-                 user: str = 'ChristianBaumannETH2020',
-                 password: str = 'Christian4_ever', *,
+                 user: str = None,
+                 password: str = None, *,
                  verbose: int = 1,
                  no_data_saving: bool = False,
                  notify_failures: bool = False,
@@ -101,6 +101,10 @@ class ControlClient:
         want to test something.
         """
         assert len(used_control) == 1, "Only one room supported!"
+
+        # Load login data from file if not specified
+        if user is None or password is None:
+            user, password = login_from_file("../opcua_login.txt")
 
         self.notify_failures = notify_failures
         self.verbose = verbose

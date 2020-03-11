@@ -44,8 +44,8 @@ def try_opcua(verbose: int = 1, room_list: List[int] = None, debug: bool = True)
     cl_class = OfflineClient if debug else OpcuaClient
     run_control(used_control=used_control,
                 exp_name=exp_name,
-                user='ChristianBaumannETH2020',
-                password='Christian4_ever',
+                user=None,
+                password=None,
                 verbose=verbose,
                 _client_class=cl_class)
 
@@ -127,8 +127,8 @@ def run_rl_control(room_nr: int = DEFAULT_ROOM_NR,
     # Run control
     run_control(used_control=used_control,
                 exp_name=exp_name,
-                user='ChristianBaumannETH2020',
-                password='Christian4_ever',
+                user=None,
+                password=None,
                 debug=notify_debug,
                 verbose=verbose,
                 _client_class=OpcuaClient,
@@ -158,8 +158,8 @@ def run_rule_based_control(room_nr: int = DEFAULT_ROOM_NR, *,
     # Run control
     run_control(used_control=used_control,
                 exp_name=exp_name,
-                user='ChristianBaumannETH2020',
-                password='Christian4_ever',
+                user=None,
+                password=None,
                 debug=notify_debug,
                 verbose=verbose,
                 _client_class=OpcuaClient,
