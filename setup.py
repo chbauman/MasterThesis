@@ -5,7 +5,7 @@ be run. Asks for various login info that will be needed.
 If used, one can also specify dummy values as login info
 and change it later (or never).
 
-Tested on Windows only,
+Tested on Windows only!
 """
 
 import os
