@@ -13,7 +13,7 @@
 # import os
 import sys
 
-sys.path.insert(0, 'C:\\Users\\Chrigi\\Documents\\MasterThesis\\MasterThesis\\BatchRL')
+sys.path.insert(0, '..\\MasterThesis\\BatchRL')
 
 # -- Project information -----------------------------------------------------
 
