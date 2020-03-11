@@ -8,6 +8,10 @@ DOC_DIR = "../MasterThesis/DocFiles"
 
 
 def main():
+    """Copies the files in `DOC_DIR` to the documentation folder.
+
+    This function might be a bit fragile, but it does its job.
+    """
     print("Setting up documentation...")
     add_str = []
     for f in os.listdir(DOC_DIR):

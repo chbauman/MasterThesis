@@ -23,7 +23,7 @@ from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable, O
 
 import numpy as np
 
-# BASE_DIR = ".."au 
+# BASE_DIR = ".."
 BASE_DIR = Path(os.path.dirname(os.path.realpath(__file__))).parent.parent
 TEMP_DIR = os.path.join(BASE_DIR, "Temp")
 
