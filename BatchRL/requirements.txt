@@ -20,3 +20,5 @@ sphinx_rtd_theme
 sphinx_autodoc_typehints
 sphinx-argparse
 wxpython
+pypiwin32
+requests_negotiate_sspi

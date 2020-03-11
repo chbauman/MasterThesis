@@ -174,7 +174,6 @@ def save_figure(save_name, show: bool = False,
         # Set figure size
         fig = plt.gcf()
         sz = size if size is not None else (16, 9)
-        print(f"Size: {sz}")
         fig.set_size_inches(*sz)
 
         # Save and clear
@@ -1120,7 +1119,6 @@ def plot_env_evaluation(actions: np.ndarray,
         rew_axs[-1].yaxis.set_visible(False)
         # rew_axs[-1].xaxis.set_visible(True)
     if show_rewards:
-        print(f"Len: {len(state_axs)}")
         rew_axs[-1].set_xlabel(x_label)
         rew_axs[-1].legend(**leg_kwargs)
     else:
