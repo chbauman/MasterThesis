@@ -18,11 +18,13 @@ import time
 import warnings
 from datetime import datetime
 from functools import wraps
+from pathlib import Path
 from typing import Union, List, Tuple, Any, Sequence, TypeVar, Dict, Callable, Optional, Type
 
 import numpy as np
 
-BASE_DIR = ".."
+# BASE_DIR = ".."au 
+BASE_DIR = Path(os.path.dirname(os.path.realpath(__file__))).parent.parent
 TEMP_DIR = os.path.join(BASE_DIR, "Temp")
 
 #######################################################################################################
