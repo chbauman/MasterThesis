@@ -90,7 +90,7 @@ the number of steps used for training and the number of steps used
 for evaluation of the RL agent. :option:`-fl 50.0 22.0 24.0` lets
 you specify the balance factor alpha, and the lower and the upper
 temperature bounds. Note that also the previous flags, i.e. 
-:option:`--data_end_date`, :option:`--room_nr` and :option:`--train_data 
+:option:`--data_end_date`, :option:`--room_nr` and :option:`--train_data`
 may be specified to determine which model/data/room to use.
 
 Room control using RL
