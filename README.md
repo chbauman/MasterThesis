@@ -21,6 +21,10 @@ $ ./automate.ps1 -docs
 To build the docs. They will be built in the parent folder
 next to the current folder. Refer to the documentation
 for further instructions on how to use this repository.
+Tested on Windows only. If you are running MacOS or Linux,
+you might have to adjust the commands used in `automate.ps1`.
+Also, `setup.py` executes some system calls that might be different
+for other operating systems.
 
 ## [Overleaf @ ...](https://github.com/chbauman/Master-ThesisOverLeaf)
 
