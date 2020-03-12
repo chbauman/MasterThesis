@@ -1,6 +1,6 @@
 # MasterThesis
 
-This is the repository of my Master thesis. It contains all the codes, files etc.
+This is the repository of my Master thesis. It contains all the codes, files, etc.,
 that were generated during the thesis. 
 
 ## Installation
@@ -26,40 +26,6 @@ you might have to adjust the commands used in `automate.ps1`.
 Also, `setup.py` executes some system calls that might be different
 for other operating systems.
 
-## [Overleaf @ ...](https://github.com/chbauman/Master-ThesisOverLeaf)
-
-This folder contains the overleaf repository
-with all the latex code.
-
-## [BatchRL](BatchRL)
-
-This folder contains the python code
-for batch reinforcement learning. The code was tested using Python version 3.6,
-it is not compatible with version 3.5 or below. It was tested using PyCharm and
-Visual Studio, part of the code was also run on Euler.
-
-## [Data](Data)
-
-Here the data is put when the code is 
-executed. Should be empty on the git repo
-except for the [README.md](Data/README.md).
-
-## [Models](Models)
-
-This folder will be used to store the
-trained neural network models. 
-
-## [Plots](Plots)
-
-In this folder, the plots will be saved
-that will be generated.
-
-## [DocFiles](DocFiles)
-
-This folder contains some documentation
-files that will be used when creating the 
-documentation with Sphinx.
-
 ## Documentation
 
 The code was written in such a way that it
@@ -78,3 +44,39 @@ $ ./make html
 Or you can directly use the Windows Powershell script [make_doc.ps1](make_doc.ps1)
 which basically runs these commands. The script also removes previously existing
 folders 'Docs', so it can be used to update the documentation.
+
+## Repo structure
+
+### [Overleaf @ ...](https://github.com/chbauman/Master-ThesisOverLeaf)
+
+This folder contains the overleaf repository
+with all the latex code.
+
+### [BatchRL](BatchRL)
+
+This folder contains the python code
+for batch reinforcement learning. The code was tested using Python version 3.6,
+it is not compatible with version 3.5 or below. It was tested using PyCharm and
+Visual Studio, part of the code was also run on Euler.
+
+### [Data](Data)
+
+Here the data is put when the code is 
+executed. Should be empty on the git repo
+except for the [README.md](Data/README.md).
+
+### [Models](Models)
+
+This folder will be used to store the
+trained neural network models. 
+
+### [Plots](Plots)
+
+In this folder, the plots will be saved
+that will be generated.
+
+### [DocFiles](DocFiles)
+
+This folder contains some documentation
+files that will be used when creating the 
+documentation with Sphinx.
