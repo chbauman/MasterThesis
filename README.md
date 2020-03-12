@@ -1,7 +1,26 @@
 # MasterThesis
 
 This is the repository of my Master thesis. It contains all the codes, files etc.
-that were generated for the thesis. 
+that were generated during the thesis. 
+
+## Installation
+
+To install all necessary stuff, run:
+
+```console
+$ python setup.py
+```
+
+This will setup a virtual python env and guide you through
+other steps needed. Afterwards, run:
+
+```console
+$ ./automate.ps1 -docs
+```
+
+To build the docs. They will be built in the parent folder
+next to the current folder. Refer to the documentation
+for further instructions on how to use this repository.
 
 ## [Overleaf @ ...](https://github.com/chbauman/Master-ThesisOverLeaf)
 
