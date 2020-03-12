@@ -12,13 +12,13 @@ $ python setup.py
 ```
 
 This will setup a virtual python env and guide you through
-other steps needed. Afterwards, run:
+other steps needed. Afterwards, to build the docs, run:
 
 ```console
 $ ./automate.ps1 -docs
 ```
 
-To build the docs. They will be built in the parent folder
+They will be built in the parent folder
 next to the current folder. Refer to the documentation
 for further instructions on how to use this repository.
 Tested on Windows only. If you are running MacOS or Linux,
@@ -41,11 +41,13 @@ $ cp ../MasterThesis/conf.py .
 $ ./make html
 ```
 
-Or you can directly use the Windows Powershell script [make_doc.ps1](make_doc.ps1)
+Alternatively, you can directly use the Windows Powershell script [make_doc.ps1](make_doc.ps1)
 which basically runs these commands. The script also removes previously existing
 folders 'Docs', so it can be used to update the documentation.
 
 ## Repo structure
+
+This repository contains the following sub-directories.
 
 ### [Overleaf @ ...](https://github.com/chbauman/Master-ThesisOverLeaf)
 
