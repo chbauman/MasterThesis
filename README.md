@@ -44,6 +44,22 @@ Here the data is put when the code is
 executed. Should be empty on the git repo
 except for the [README.md](Data/README.md).
 
+## [Models](Models)
+
+This folder will be used to store the
+trained neural network models. 
+
+## [Plots](Plots)
+
+In this folder, the plots will be saved
+that will be generated.
+
+## [DocFiles](DocFiles)
+
+This folder contains some documentation
+files that will be used when creating the 
+documentation with Sphinx.
+
 ## Documentation
 
 The code was written in such a way that it
