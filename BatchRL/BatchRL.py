@@ -823,10 +823,10 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                                                   RNNDynamicModel) for k in c_mods]
 
     # Battery model plots
-    with ProgWrap(f"Running battery...", verbose > 0):
-        with change_dir_name("Battery"):
-            run_battery(do_rl=True, overwrite=overwrite,
-                        verbose=prog_verb(verbose), put_on_ol=not debug)
+    # with ProgWrap(f"Running battery...", verbose > 0):
+    #     with change_dir_name("Battery"):
+    #         run_battery(do_rl=True, overwrite=overwrite,
+    #                     verbose=prog_verb(verbose), put_on_ol=not debug)
 
     # Get data and constraints
     date_str = "2020-01-21"
@@ -925,10 +925,10 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                  date_str=date_str,
                                  hop_eval_set="val",
                                  from_hop=True, fit=True, verbose=False)
-            room_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
-                                      verbose=prog_verb(verbose) > 0, one_file=True,
-                                      save_to_ol=not debug, base_name="Room1W",
-                                      add_errors=False, eval_parts=eval_parts)
+            all_data = room_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
+                                                 verbose=prog_verb(verbose) > 0, one_file=True,
+                                                 save_to_ol=not debug, base_name="Room1W",
+                                                 add_errors=False, eval_parts=eval_parts, use_other_plot_function=False)
             room_mod.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
                                          overwrite=overwrite, metrics=METRICS, parts=parts)
             plot_performance_graph([room_mod], parts, METRICS, "RTempPerformance",
@@ -969,11 +969,11 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                                  date_str=date_str,
                                  hop_eval_set="val",
                                  from_hop=True, fit=True, verbose=False)
-            full_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
-                                      verbose=prog_verb(verbose) > 0, one_file=True,
-                                      save_to_ol=not debug, base_name="Room1W",
-                                      add_errors=False, eval_parts=eval_parts,
-                                      series_mask=[4])
+            all_data_full = full_mod.analyze_visually(n_steps=[24], overwrite=overwrite,
+                                                      verbose=prog_verb(verbose) > 0, one_file=True,
+                                                      save_to_ol=not debug, base_name="Room1W",
+                                                      add_errors=False, eval_parts=eval_parts,
+                                                      series_mask=[4])
             full_mod.analyze_performance(n_steps=N_PERFORMANCE_STEPS, verbose=prog_verb(verbose),
                                          overwrite=overwrite, metrics=METRICS, parts=parts)
             full_mods = [full_mod]
@@ -996,6 +996,12 @@ def update_overleaf_plots(verbose: int = 2, overwrite: bool = False,
                        put_on_ol=True,
                        set_title=False,
                        plot_folder=OVERLEAF_IMG_DIR)
+
+    all_data = [all_data, all_data_full]
+    un_dat = all_data[0][-1][0][0].get_unscaled_data()
+    gt = un_dat[:, 1]
+    pred_temp = un_dat[:, 0]
+    pred_full = all_data[1][-1][4][0].get_unscaled_data()[:, 0]
 
     # DDPG Performance Evaluation
     with ProgWrap(f"Analyzing DDPG performance...", verbose > 0):

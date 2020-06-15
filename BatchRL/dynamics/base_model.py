@@ -494,7 +494,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                                put_on_ol: bool = False,
                                add_errors: bool = False,
                                n_ts_off: int = 0,
-                               series_mask: List[int] = None) -> None:
+                               series_mask: List[int] = None,
+                               ):
         """Plots predictions of the model over one week.
 
         If `const_steps` = 0, the predictions are done in a continuous way,
@@ -554,6 +555,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                                    series_mask=series_mask,
                                    fig_size=LONG_FIG_SIZE)
 
+        return all_plt_dat
+
     def _get_plt_or_ol_path(self, full_b_name: str, put_on_ol: bool = False):
         if put_on_ol:
             curr_name = os.path.join(OVERLEAF_IMG_DIR, full_b_name)
@@ -598,7 +601,8 @@ class BaseDynamicsModel(KerasBase, ABC):
                          one_file: bool = False,
                          add_errors: bool = False,
                          eval_parts: List[str] = None,
-                         series_mask: List[int] = None) -> None:
+                         series_mask: List[int] = None,
+                         use_other_plot_function=False):
         """Analyzes the trained model.
 
         Makes some plots using the fitted model and the streak data.
@@ -645,6 +649,7 @@ class BaseDynamicsModel(KerasBase, ABC):
         ext_list = [f"EV_" + e.capitalize() + dat_ext for e in eval_parts]
 
         # Do the same for train and validation set
+        all_data = []
         for ct, p_str in enumerate(eval_parts):
             dat_1, dat_2, n = d.get_streak(p_str)
             dat = [dat_1, dat_2]
@@ -663,14 +668,19 @@ class BaseDynamicsModel(KerasBase, ABC):
             # Plot fixed number of step predictions
             for n_s in n_steps:
                 curr_b_name = None if base_name is None else base_name + str(n_s)
-                self.plot_one_week_analysis(dat_copy, n_s,
-                                            base=curr_b_name,
-                                            **base_kwargs)
+                all_data += [self.plot_one_week_analysis(dat_copy, n_s,
+                                                         base=curr_b_name,
+                                                         **base_kwargs)]
 
             # Plot for continuous predictions
-            self.plot_one_week_analysis(copy_arr_list(dat), 0,
-                                        base=base_name,
-                                        **base_kwargs)
+            if use_other_plot_function:
+                pass
+            else:
+                all_data += [self.plot_one_week_analysis(copy_arr_list(dat), 0,
+                                                         base=base_name,
+                                                         **base_kwargs)]
+
+        return all_data
 
     def analyze_performance(self, n_steps: Sequence = (1, 4, 20),
                             verbose: int = 0,
